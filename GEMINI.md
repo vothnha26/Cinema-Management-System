@@ -1,25 +1,22 @@
-# StarCinema Project Mandates
+# 🎖️ StarCinema Elite Engineering Mandates
 
-## Core Principles
-- **SOLID Compliance:** Mọi logic nghiệp vụ và cấu trúc mã nguồn phải tuân thủ nghiêm ngặt 5 nguyên tắc SOLID.
-    - *Single Responsibility:* Mỗi class/module chỉ đảm nhận một nhiệm vụ duy nhất.
-    - *Open/Closed:* Ưu tiên sử dụng **Strategy Pattern**, **Template Method**, hoặc **Factory Pattern** thay vì lạm dụng `if-else` hoặc `switch-case` khi xử lý logic phân loại (Type/Enum).
-- **Design Patterns Encouragement:** Luôn xem xét áp dụng các mẫu thiết kế phù hợp (Creational, Structural, Behavioral) để giải quyết các vấn đề phức tạp, giúp mã nguồn linh hoạt và dễ bảo trì hơn. 
-    - *Ví dụ:* Sử dụng **Facade** để gom nhóm các service phức tạp, **Observer** cho hệ thống thông báo, hoặc **Builder** cho các Object có nhiều thuộc tính.
-    - *Liskov Substitution:* Đảm bảo các lớp con có thể thay thế lớp cha mà không làm hỏng logic.
-    - *Interface Segregation:* Chia nhỏ interface, không ép buộc implement các phương thức không cần thiết.
-    - *Dependency Inversion:* Luôn inject dependency qua Constructor, ưu tiên phụ thuộc vào Abstraction thay vì Concretion.
+## 1. Kiến trúc & Nguyên tắc cốt lõi (Bắt buộc)
+- **SOLID Absolute Compliance:** Mọi dòng code viết ra phải được đối soát với 5 nguyên tắc SOLID.
+    - *Single Responsibility (SRP):* Tách biệt logic nghiệp vụ, mapping, và validation.
+    - *Open/Closed (OCP):* **Bắt buộc** áp dụng Design Patterns (Strategy, Factory, Template Method) thay vì dùng logic rẽ nhánh `if-else`/`switch-case` khi xử lý các loại (Types/Enums) hoặc quy tắc thay đổi.
+    - *Liskov Substitution (LSP) & Interface Segregation (ISP):* Thiết kế Interface tinh gọn, đảm bảo tính kế thừa đúng đắn.
+    - *Dependency Inversion (DIP):* Chỉ phụ thuộc vào Abstraction, luôn inject qua Constructor.
 
-- **Standard Development Workflow (Bắt buộc):**
-    1. **Vẽ Sequence Diagram:** Thiết kế logic, xác định API Contract và các ràng buộc nghiệp vụ trước khi code.
-    2. **Triển khai Code:** Viết mã nguồn Backend (Service, Controller, Repository) và tích hợp Giao diện (UI).
-    3. **Test tự động:** 
-        - *MockTest:* Viết Integration Test sử dụng MockMvc để kiểm tra logic API.
-        - *E2E Selenium Test:* Kiểm tra trình duyệt thực tế (sau khi test xong phải dọn dẹp môi trường sạch sẽ).
-    4. **Đăng lên GitHub:** Commit và Push mã nguồn nghiệp vụ sạch lên repository.
-    5. **Cập nhật Checklist:** Đánh dấu hoàn tất task tương ứng trong file `CONDUCTOR.md`.
-- **Testing:** Mỗi tính năng mới hoặc bản sửa lỗi đều phải có Unit Test hoặc Integration Test đi kèm để xác thực.
-- **Documentation:** Cập nhật tài liệu kỹ thuật và sơ đồ UML tương ứng với mỗi thay đổi lớn.
+- **Design Pattern First Mentality:** Trước khi triển khai một logic phức tạp (như Tính giá, Khuyến mãi, Thống kê), phải xem xét mẫu thiết kế nào (Facade, Observer, Decorator, Command...) là tối ưu nhất để đảm bảo tính mở rộng.
 
-## Current Architecture Insights
-- **Seat Layout:** Sử dụng Strategy Pattern (`SeatLayoutStrategy`) để khởi tạo sơ đồ ghế theo từng loại phòng (`RoomType`).
+## 2. Quy trình phát triển (Standard Flow)
+1. **Vẽ Sequence Diagram:** Thiết kế logic và API contract trước khi code.
+2. **Triển khai Code:** Backend sạch + UI tích hợp.
+3. **Automated Validation:** MockTest (Logic) + E2E Selenium (Giao diện).
+4. **Clean Push:** Đăng mã nguồn nghiệp vụ lên GitHub (loại bỏ test code).
+5. **Checklist Update:** Cập nhật trạng thái trong `CONDUCTOR.md`.
+
+## 3. Insight kiến trúc hiện tại
+- **Seat Layout:** Strategy Pattern (`SeatLayoutStrategy`).
+- **Showtime:** Refactored sang SRP (Mapping qua ModelMapper config).
+- **Media:** Facade Pattern cho Cloudinary integration.

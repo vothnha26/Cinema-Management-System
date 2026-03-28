@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Bảng giá – StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bg: #0f172a; --card: #1e293b; --accent: #e5133a; --text: #f8fafc; --text-muted: #94a3b8; --border: #334155;
+        }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; }
+        .header-section { padding: 40px 0; background: linear-gradient(to bottom, #1e293b, #0f172a); border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+        .price-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: all 0.3s; }
+        .price-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .price-value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; }
+        .form-control-custom { background: #0f172a; border: 1px solid var(--border); color: white; }
+        .form-control-custom:focus { background: #0f172a; color: white; border-color: var(--accent); box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<div class="header-section">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="fw-bold mb-1">Cấu hình bảng giá</h1>
+            <p class="text-muted mb-0">Thiết lập đơn giá cho từng loại ghế và loại phòng chiếu</p>
+        </div>
+        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#priceModal">
+            <i class="bi bi-plus-lg"></i> Cập nhật giá mới
+        </button>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4" id="priceList">
+        <!-- Rendered by JS -->
+    </div>
+</div>
+
+<!-- Modal Cập nhật giá -->
+<div class="modal fade" id="priceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold">Cập nhật đơn giá</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="priceForm">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Loại phòng</label>
+                        <select id="roomType" class="form-select form-control-custom" required>
+                            <option value="HALL_2D">Standard 2D</option>
+                            <option value="HALL_3D">Premium 3D</option>
+                            <option value="IMAX">IMAX</option>
+                            <option value="FOUR_DX">4DX</option>
+                            <option value="LUXURY">Luxury</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Loại ghế</label>
+                        <select id="seatType" class="form-select form-control-custom" required>
+                            <option value="STANDARD">Standard</option>
+                            <option value="VIP">VIP</option>
+                            <option value="COUPLE">Couple</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Đơn giá (VNĐ)</label>
+                        <input type="number" id="price" class="form-control form-control-custom" placeholder="80000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Ngày hiệu lực</label>
+                        <input type="date" id="effectiveDate" class="form-control form-control-custom" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="savePrice()">LƯU CẤU HÌNH</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPrices();
+        document.getElementById('effectiveDate').valueAsDate = new Date();
+    });
+
+    async function loadPrices() {
+        const response = await api.get('/pricing');
+        if (response.success) {
+            renderPrices(response.data);
+        }
+    }
+
+    function renderPrices(prices) {
+        const container = document.getElementById('priceList');
+        if (prices.length === 0) {
+            container.innerHTML = '<div class="text-center p-5 text-muted">Chưa có cấu hình giá nào được thiết lập</div>';
+            return;
+        }
+
+        container.innerHTML = prices.map(p => `
+            <div class="col-md-4">
+                <div class="price-card">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="badge bg-secondary">${p.roomType}</span>
+                        <span class="badge bg-info">${p.seatType}</span>
+                    </div>
+                    <div class="price-value mb-2">${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price)}</div>
+                    <div class="small text-muted">Hiệu lực: ${p.effectiveDate}</div>
+                    <div class="mt-2 small ${p.isActive ? 'text-success' : 'text-danger'}">
+                        <i class="bi bi-circle-fill" style="font-size:0.5rem"></i> ${p.isActive ? 'Đang áp dụng' : 'Hết hạn'}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function savePrice() {
+        const data = {
+            roomType: document.getElementById('roomType').value,
+            seatType: document.getElementById('seatType').value,
+            price: parseFloat(document.getElementById('price').value),
+            effectiveDate: document.getElementById('effectiveDate').value
+        };
+
+        const response = await api.put('/pricing', data);
+        if (response.success) {
+            alert('Cập nhật bảng giá thành công!');
+            bootstrap.Modal.getInstance(document.getElementById('priceModal')).hide();
+            loadPrices();
+        } else {
+            alert('Lỗi: ' + response.message);
+        }
+    }
+</script>
+</body>
+</html>
