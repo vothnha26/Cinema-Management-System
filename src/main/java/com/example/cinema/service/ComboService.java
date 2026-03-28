@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface ComboService {
     List<ComboResponse> getAllCombos();
-    ComboResponse createCombo(ComboRequest request);
-    ComboResponse updateCombo(Long id, ComboRequest request);
+    ComboResponse createCombo(ComboRequest request, String imageUrl);
+    ComboResponse updateCombo(Long id, ComboRequest request, String imageUrl);
     ComboResponse updateStock(Long id, Integer quantity);
     void deleteCombo(Long id);
 }

@@ -23,9 +23,22 @@
         .btn-add { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; }
         .form-control-custom { background: #0f172a; border: 1px solid var(--border); color: white; }
         .form-control-custom:focus { background: #0f172a; color: white; border-color: var(--accent); box-shadow: none; }
+        .toast-notification {
+            position: fixed; top: 20px; right: 20px;
+            background: var(--card); color: var(--text);
+            padding: 15px 25px; border-radius: 10px;
+            border-left: 5px solid var(--accent);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 2000; opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .toast-notification.show { opacity: 1; transform: translateX(0); }
     </style>
 </head>
 <body>
+
+<div id="toastContainer"></div>
 
 <div class="header-section">
     <div class="container d-flex justify-content-between align-items-center">
@@ -56,6 +69,19 @@
             <div class="modal-body p-4">
                 <form id="comboForm">
                     <input type="hidden" id="comboId">
+                    <div class="mb-4 text-center">
+                        <div class="position-relative d-inline-block">
+                            <div id="imagePreviewContainer" class="rounded-3 border border-secondary d-flex align-items-center justify-content-center overflow-hidden" style="width: 200px; height: 150px; background: #0f172a;">
+                                <i class="bi bi-image text-muted fs-1" id="placeholderIcon"></i>
+                                <img id="comboImagePreview" class="w-100 h-100 object-fit-cover d-none">
+                            </div>
+                            <label for="comboImage" class="btn btn-sm btn-accent position-absolute bottom-0 end-0 mb-n2 me-n2 rounded-circle shadow">
+                                <i class="bi bi-camera-fill"></i>
+                            </label>
+                            <input type="file" id="comboImage" class="d-none" accept="image/*" onchange="previewImage(this)">
+                        </div>
+                        <p class="small text-muted mt-2">Tải lên ảnh đồ ăn thật</p>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label small text-muted">Tên Combo</label>
                         <input type="text" id="name" class="form-control form-control-custom" required>
@@ -133,11 +159,26 @@
         document.getElementById('comboForm').reset();
         document.getElementById('comboId').value = '';
         document.getElementById('modalTitle').textContent = 'Thêm Combo mới';
+        document.getElementById('comboImagePreview').classList.add('d-none');
+        document.getElementById('placeholderIcon').classList.remove('d-none');
         comboModal.show();
+    }
+    
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('comboImagePreview');
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+                document.getElementById('placeholderIcon').classList.add('d-none');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
     }
 
     async function editCombo(id) {
-        const response = await api.get('/combos'); // Hoặc API getById nếu có
+        const response = await api.get('/combos');
         const combo = response.data.find(c => c.id === id);
         if (combo) {
             document.getElementById('comboId').value = combo.id;
@@ -145,6 +186,15 @@
             document.getElementById('description').value = combo.description;
             document.getElementById('price').value = combo.price;
             document.getElementById('stockQuantity').value = combo.stockQuantity;
+            if (combo.imageUrl) {
+                const preview = document.getElementById('comboImagePreview');
+                preview.src = combo.imageUrl;
+                preview.classList.remove('d-none');
+                document.getElementById('placeholderIcon').classList.add('d-none');
+            } else {
+                document.getElementById('comboImagePreview').classList.add('d-none');
+                document.getElementById('placeholderIcon').classList.remove('d-none');
+            }
             document.getElementById('modalTitle').textContent = 'Chỉnh sửa Combo';
             comboModal.show();
         }
@@ -152,19 +202,37 @@
 
     async function saveCombo() {
         const id = document.getElementById('comboId').value;
-        const data = {
-            name: document.getElementById('name').value,
-            description: document.getElementById('description').value,
-            price: parseFloat(document.getElementById('price').value),
-            stockQuantity: parseInt(document.getElementById('stockQuantity').value)
-        };
+        const formData = new FormData();
+        
+        formData.append('name', document.getElementById('name').value);
+        formData.append('description', document.getElementById('description').value);
+        formData.append('price', parseFloat(document.getElementById('price').value));
+        formData.append('stockQuantity', parseInt(document.getElementById('stockQuantity').value));
 
-        const response = id ? await api.put(`/combos/${id}`, data) : await api.post('/combos', data);
-        if (response.success) {
-            comboModal.hide();
-            loadCombos();
-        } else {
-            alert('Lỗi: ' + response.message);
+        const imageFile = document.getElementById('comboImage').files[0];
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
+
+        const url = id ? `/api/combos/${id}` : '/api/combos';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                comboModal.hide();
+                loadCombos();
+                showToast('Lưu combo thành công!');
+            } else {
+                showToast('Lỗi: ' + result.message, false);
+            }
+        } catch (error) {
+            showToast('Lỗi kết nối máy chủ', false);
         }
     }
 
@@ -178,6 +246,20 @@
             const response = await api.delete(`/combos/${id}`);
             if (response.success) loadCombos();
         }
+    }
+
+    function showToast(message, isSuccess = true) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        if (!isSuccess) toast.style.borderColor = '#ffc107';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => { toast.classList.add('show'); }, 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => { container.removeChild(toast); }, 500);
+        }, 3000);
     }
 </script>
 </body>

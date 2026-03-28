@@ -1,179 +1,95 @@
-# 🧪 Testing – Cinema Management System
+# 🧪 Testing – Cinema Management System (Elite Standard)
 
-## 1. Chiến lược testing
+## 1. Chiến lược kiểm thử (Elite Pipeline)
+
+Hệ thống áp dụng quy trình kiểm thử 3 lớp để đảm bảo tính đúng đắn của logic nghiệp vụ và giao diện:
 
 ```
-Pyramid Testing:
-         /\
-        /E2E\         ← Không bắt buộc (dùng Postman thủ công)
-       /──────\
-      /  Integ  \     ← Integration Test (Controller + DB)
-     /────────────\
-    /  Unit Tests  \  ← Bắt buộc: tất cả Service (JUnit 5 + Mockito)
-   /────────────────\
-```
-
----
-
-## 2. Unit Tests – Service Layer
-
-**Công cụ**: JUnit 5 + Mockito
-
-### Ví dụ: BookingServiceTest
-
-```java
-@ExtendWith(MockitoExtension.class)
-class BookingServiceTest {
-
-    @InjectMocks
-    private BookingServiceImpl bookingService;
-
-    @Mock private BookingRepository bookingRepository;
-    @Mock private ShowtimeRepository showtimeRepository;
-    @Mock private BookingDetailRepository bookingDetailRepository;
-    @Mock private CustomerService customerService;
-    @Mock private SeatPriceService seatPriceService;
-
-    @Test
-    @DisplayName("Đặt vé thành công khi ghế còn trống")
-    void createBooking_success() {
-        // Arrange
-        Showtime showtime = new Showtime();
-        showtime.setStatus(ShowtimeStatus.UPCOMING);
-        when(showtimeRepository.findById(10L)).thenReturn(Optional.of(showtime));
-        when(bookingDetailRepository.findBookedSeatIdsByShowtime(10L))
-            .thenReturn(List.of());  // Không có ghế nào bị đặt
-
-        BookingRequest request = new BookingRequest();
-        request.setShowtimeId(10L);
-        request.setSeatIds(List.of(101L, 102L));
-
-        // Act
-        BookingResponse response = bookingService.createBooking(request);
-
-        // Assert
-        assertNotNull(response.getBookingCode());
-        verify(bookingRepository, times(1)).save(any(Booking.class));
-    }
-
-    @Test
-    @DisplayName("Ném exception khi ghế đã bị đặt")
-    void createBooking_seatAlreadyBooked_throwsException() {
-        // Arrange
-        Showtime showtime = new Showtime();
-        showtime.setStatus(ShowtimeStatus.UPCOMING);
-        when(showtimeRepository.findById(10L)).thenReturn(Optional.of(showtime));
-        when(bookingDetailRepository.findBookedSeatIdsByShowtime(10L))
-            .thenReturn(List.of(101L));  // Ghế 101 đã bị đặt
-
-        BookingRequest request = new BookingRequest();
-        request.setShowtimeId(10L);
-        request.setSeatIds(List.of(101L, 102L));  // Chọn ghế 101
-
-        // Act & Assert
-        assertThrows(AppException.class, () -> bookingService.createBooking(request));
-        verify(bookingRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Ném exception khi suất chiếu không tồn tại")
-    void createBooking_showtimeNotFound_throwsException() {
-        when(showtimeRepository.findById(999L)).thenReturn(Optional.empty());
-        BookingRequest request = new BookingRequest();
-        request.setShowtimeId(999L);
-
-        assertThrows(AppException.class, () -> bookingService.createBooking(request));
-    }
-}
+Elite Testing Pyramid:
+         / \
+        /E2E\         ← Selenium: Kiểm tra giao diện & Luồng thực tế (Chrome)
+       /─────\
+      / Integ \       ← SpringBootTest + MockMvc: Kiểm tra API & DB Integration
+     /─────────\
+    / Unit Tests \    ← JUnit 5 + Mockito: Kiểm tra thuật toán (Pricing, AI)
+   /───────────────\
 ```
 
 ---
 
-## 3. Integration Tests – Controller Layer
+## 2. Các loại hình kiểm thử
 
-**Công cụ**: Spring Boot Test + MockMvc + H2 (in-memory DB)
+### 2.1. Unit & Integration Tests (MockTest)
+**Mục tiêu:** Xác thực thuật toán tính toán và các ràng buộc dữ liệu.
+- **Pricing Engine:** Kiểm tra Decorator Pattern có tính đúng giá cộng dồn không.
+- **AI Scheduling:** Kiểm tra thuật toán phân bổ giờ vàng (70/30) và dãn cách thời gian.
+- **Conflict Detection:** Xác thực việc chặn các suất chiếu trùng lịch.
 
 ```java
 @SpringBootTest
-@AutoConfigureMockMvc
 @Transactional
-class BookingControllerIntegrationTest {
-
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-
+class PricingIntegrationTest {
     @Test
-    @WithMockUser(roles = "CUSTOMER")
-    void postBooking_validRequest_returns201() throws Exception {
-        BookingRequest request = new BookingRequest();
-        // ... setup request
-
-        mockMvc.perform(post("/api/bookings")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.success").value(true))
-            .andExpect(jsonPath("$.data.bookingCode").isNotEmpty());
+    void testCalculate_withDecorators() {
+        // Giá gốc + VIP + IMAX + Monday Discount...
+        assertEquals(expected, pricingService.calculate(showtime, seat));
     }
+}
+```
 
+### 2.2. End-to-End (E2E) UI Testing
+**Công cụ:** Selenium WebDriver + WebDriverManager.
+**Quy trình tự động:**
+1. Khởi động server trên Port 8081.
+2. Selenium mở trình duyệt Chrome thật.
+3. Tự động nhập liệu, click nút, và kiểm tra thông báo (Alert/Toast).
+4. Kiểm tra dữ liệu hiển thị thực tế (ví dụ: Biểu đồ Dashboard, Danh sách phim).
+
+```java
+@SpringBootTest(webEnvironment = WebEnvironment.DEFINED_PORT)
+class MovieManagementE2ETest {
     @Test
-    void postBooking_noAuth_returns401() throws Exception {
-        mockMvc.perform(post("/api/bookings")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("{}"))
-            .andExpect(status().isUnauthorized());
+    void testAddMovieFlow() {
+        driver.get("http://localhost:8081/manage-movies.html");
+        // ... automation steps ...
+        assertTrue(driver.getPageSource().contains("Success"));
     }
 }
 ```
 
 ---
 
-## 4. Danh sách Test Cases tối thiểu
+## 3. Quy trình thực hiện (Workflow)
 
-### BookingService
-| Test case | Loại |
-|-----------|------|
-| Đặt vé thành công | Happy path |
-| Ghế đã bị đặt → exception | Edge case |
-| Suất chiếu không tồn tại → exception | Edge case |
-| Suất chiếu không ở trạng thái UPCOMING → exception | Business rule |
-| Promotion code không hợp lệ → exception | Business rule |
-| Tính giá đúng với seat_prices | Calculation |
-
-### CustomerService
-| Test case | Loại |
-|-----------|------|
-| Tích điểm sau booking thành công | Happy path |
-| Nâng hạng Silver khi đủ 500k | State change |
-| Nâng hạng Gold khi đủ 2tr | State change |
-
-### ShowtimeService
-| Test case | Loại |
-|-----------|------|
-| Tạo suất chiếu thành công | Happy path |
-| Xung đột lịch → exception | Conflict detection |
+Mọi tính năng mới đều phải đi qua các bước Validate:
+1. **MockMvc Test:** Chạy test API ngầm để xác nhận logic DB.
+2. **Selenium E2E:** Chạy test giao diện để xác nhận trải nghiệm người dùng.
+3. **Clean Up:** Sau khi test thành công, xóa bỏ code test và dữ liệu rác trước khi push lên GitHub.
 
 ---
 
-## 5. Chạy Test
+## 4. Lệnh chạy kiểm thử
 
 ```bash
-# Chạy tất cả test
+# Chạy toàn bộ test suite
 mvn test
 
-# Chạy test cụ thể
-mvn test -Dtest=BookingServiceTest
+# Chạy riêng Integration Tests
+mvn test -Dtest=*IntegrationTest
 
-# Chạy với coverage report (JaCoCo)
-mvn verify
-# Xem report tại: target/site/jacoco/index.html
+# Chạy riêng E2E UI Tests (Yêu cầu có trình duyệt Chrome)
+mvn test -Dtest=*E2ETest
 ```
 
 ---
 
-## 6. Test với Postman
+## 5. Danh sách các Test Case Elite đã thực hiện
 
-Import collection để test API thủ công:
-1. `POST /api/auth/login` → Lấy JWT token
-2. Set token vào Authorization header
-3. Chạy flow: Movies → Showtimes → Seats → Booking → Check-in
+| Module | Chức năng kiểm tra | Loại test |
+|--------|---------------------|-----------|
+| **Movie** | Upload Poster & Map Actor/Director | Integration |
+| **Room** | Tự động sinh sơ đồ ghế theo Strategy | Integration |
+| **Showtime** | Chặn suất chiếu trùng giờ dọn dẹp | Integration |
+| **Pricing** | Tính giá vé qua chuỗi Decorators | Unit |
+| **AI Scheduling** | Gợi ý lịch chiếu 70% giờ vàng | E2E |
+| **Audit Log** | Tự động ghi nhật ký qua AOP | MockMvc + E2E |

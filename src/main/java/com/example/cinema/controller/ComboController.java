@@ -16,9 +16,11 @@ import java.util.List;
 public class ComboController {
 
     private final ComboService comboService;
+    private final com.example.cinema.service.ComboMediaService comboMediaService;
 
-    public ComboController(ComboService comboService) {
+    public ComboController(ComboService comboService, com.example.cinema.service.ComboMediaService comboMediaService) {
         this.comboService = comboService;
+        this.comboMediaService = comboMediaService;
     }
 
     @GetMapping
@@ -26,14 +28,21 @@ public class ComboController {
         return ResponseEntity.ok(ApiResponse.ok(comboService.getAllCombos()));
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<ComboResponse>> createCombo(@RequestBody @Valid ComboRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(comboService.createCombo(request)));
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ComboResponse>> createCombo(
+            @ModelAttribute @Valid ComboRequest request,
+            @RequestPart(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) throws java.io.IOException {
+        String imageUrl = comboMediaService.uploadComboImage(image);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(comboService.createCombo(request, imageUrl)));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ComboResponse>> updateCombo(@PathVariable Long id, @RequestBody @Valid ComboRequest request) {
-        return ResponseEntity.ok(ApiResponse.ok(comboService.updateCombo(id, request)));
+    @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ComboResponse>> updateCombo(
+            @PathVariable Long id,
+            @ModelAttribute @Valid ComboRequest request,
+            @RequestPart(value = "image", required = false) org.springframework.web.multipart.MultipartFile image) throws java.io.IOException {
+        String imageUrl = comboMediaService.uploadComboImage(image);
+        return ResponseEntity.ok(ApiResponse.ok(comboService.updateCombo(id, request, imageUrl)));
     }
 
     @PatchMapping("/{id}/stock")

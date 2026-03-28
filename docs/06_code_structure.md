@@ -1,186 +1,78 @@
-# 📦 Cấu trúc Source Code – Cinema Management System
+# 📦 Cấu trúc Source Code – Cinema Management System (Elite Standard)
 
-## 1. Cấu trúc thư mục
+## 1. Cấu trúc thư mục (Package Structure)
+
+Hệ thống được tổ chức theo kiến trúc phân tầng kết hợp với các mẫu thiết kế (Design Patterns) chuyên sâu:
 
 ```
-d:\Fullit\projects\NNLTTT\Final\CINEMA_MANAGEMENT_SYSTEM\
+src/main/java/com/example/cinema/
 │
-├── src/
-│   ├── main/
-│   │   ├── java/com/example/cinema/
-│   │   │   │
-│   │   │   ├── config/                    # Cấu hình ứng dụng
-│   │   │   │   ├── SecurityConfig.java    # Spring Security, CORS, JWT filter
-│   │   │   │   ├── JwtConfig.java         # JWT secret, expiration
-│   │   │   │   └── AppConfig.java         # ModelMapper bean, etc.
-│   │   │   │
-│   │   │   ├── model/
-│   │   │   │   ├── entity/                # JPA Entities (ánh xạ bảng DB)
-│   │   │   │   │   ├── Movie.java
-│   │   │   │   │   ├── Genre.java
-│   │   │   │   │   ├── Director.java
-│   │   │   │   │   ├── Actor.java
-│   │   │   │   │   ├── Room.java
-│   │   │   │   │   ├── Seat.java
-│   │   │   │   │   ├── SeatPrice.java
-│   │   │   │   │   ├── Showtime.java
-│   │   │   │   │   ├── Booking.java
-│   │   │   │   │   ├── BookingDetail.java
-│   │   │   │   │   ├── BookingCombo.java
-│   │   │   │   │   ├── Combo.java
-│   │   │   │   │   ├── Payment.java
-│   │   │   │   │   ├── Promotion.java
-│   │   │   │   │   ├── User.java
-│   │   │   │   │   ├── Customer.java
-│   │   │   │   │   └── Notification.java
-│   │   │   │   │
-│   │   │   │   ├── dto/                   # Request / Response DTOs
-│   │   │   │   │   ├── request/
-│   │   │   │   │   │   ├── BookingRequest.java
-│   │   │   │   │   │   ├── ShowtimeRequest.java
-│   │   │   │   │   │   ├── MovieRequest.java
-│   │   │   │   │   │   └── LoginRequest.java
-│   │   │   │   │   └── response/
-│   │   │   │   │       ├── BookingResponse.java
-│   │   │   │   │       ├── MovieResponse.java
-│   │   │   │   │       ├── SeatMapResponse.java
-│   │   │   │   │       └── ApiResponse.java   # Wrapper chung
-│   │   │   │   │
-│   │   │   │   └── enums/                 # Enum types
-│   │   │   │       ├── Role.java
-│   │   │   │       ├── BookingStatus.java
-│   │   │   │       ├── ShowtimeStatus.java
-│   │   │   │       ├── SeatType.java
-│   │   │   │       ├── RoomType.java
-│   │   │   │       ├── MembershipTier.java
-│   │   │   │       └── PaymentMethod.java
-│   │   │   │
-│   │   │   ├── repository/                # Spring Data JPA Repositories
-│   │   │   │   ├── MovieRepository.java
-│   │   │   │   ├── ShowtimeRepository.java
-│   │   │   │   ├── BookingRepository.java
-│   │   │   │   ├── BookingDetailRepository.java
-│   │   │   │   ├── SeatRepository.java
-│   │   │   │   ├── SeatPriceRepository.java
-│   │   │   │   ├── CustomerRepository.java
-│   │   │   │   ├── PromotionRepository.java
-│   │   │   │   ├── PaymentRepository.java
-│   │   │   │   └── NotificationRepository.java
-│   │   │   │
-│   │   │   ├── service/                   # Service layer
-│   │   │   │   ├── MovieService.java      # Interface
-│   │   │   │   ├── ShowtimeService.java
-│   │   │   │   ├── BookingService.java
-│   │   │   │   ├── CustomerService.java
-│   │   │   │   ├── PaymentService.java
-│   │   │   │   ├── PromotionService.java
-│   │   │   │   ├── SeatPriceService.java
-│   │   │   │   ├── NotificationService.java
-│   │   │   │   ├── StatisticsService.java
-│   │   │   │   └── impl/                  # Implementations
-│   │   │   │       ├── MovieServiceImpl.java
-│   │   │   │       ├── BookingServiceImpl.java
-│   │   │   │       └── ...
-│   │   │   │
-│   │   │   ├── controller/                # REST Controllers
-│   │   │   │   ├── MovieController.java
-│   │   │   │   ├── ShowtimeController.java
-│   │   │   │   ├── BookingController.java
-│   │   │   │   ├── ComboController.java
-│   │   │   │   ├── CustomerController.java
-│   │   │   │   ├── PromotionController.java
-│   │   │   │   ├── NotificationController.java
-│   │   │   │   ├── StatisticsController.java
-│   │   │   │   └── AuthController.java
-│   │   │   │
-│   │   │   ├── security/                  # Spring Security
-│   │   │   │   ├── JwtUtil.java           # Generate / validate JWT
-│   │   │   │   ├── JwtFilter.java         # OncePerRequestFilter
-│   │   │   │   └── UserDetailsServiceImpl.java
-│   │   │   │
-│   │   │   ├── exception/                 # Exception handling
-│   │   │   │   ├── AppException.java      # Custom runtime exception
-│   │   │   │   └── GlobalExceptionHandler.java # @ControllerAdvice
-│   │   │   │
-│   │   │   ├── util/                      # Helper/Utility
-│   │   │   │   ├── BookingCodeGenerator.java
-│   │   │   │   └── DateTimeUtil.java
-│   │   │   │
-│   │   │   └── CinemaApplication.java     # @SpringBootApplication
-│   │   │
-│   │   └── resources/
-│   │       ├── application.properties     # Cấu hình DB, JWT, server
-│   │       ├── application-dev.properties
-│   │       └── static/                    # Frontend files
-│   │           ├── index.html
-│   │           ├── css/
-│   │           │   └── style.css
-│   │           ├── js/
-│   │           │   ├── api.js             # fetch wrapper, base URL
-│   │           │   ├── auth.js            # Login, lưu token
-│   │           │   ├── movies.js          # Trang danh sách phim
-│   │           │   ├── booking.js         # Trang đặt vé, sơ đồ ghế
-│   │           │   └── dashboard.js       # Thống kê Chart.js
-│   │           └── pages/
-│   │               ├── movies.html
-│   │               ├── booking.html
-│   │               ├── admin.html
-│   │               └── dashboard.html
-│   │
-│   └── test/
-│       └── java/com/example/cinema/
-│           ├── service/                   # Unit tests
-│           │   ├── BookingServiceTest.java
-│           │   └── CustomerServiceTest.java
-│           └── controller/                # Integration tests
-│               └── BookingControllerTest.java
+├── config/                    # Cấu hình hệ thống & Elite Interceptors
+│   ├── SecurityConfig.java    # Spring Security & JWT
+│   ├── AppConfig.java         # ModelMapper & RestTemplate Beans
+│   ├── LogAction.java         # Custom Annotation cho Audit Log
+│   └── AuditLogAspect.java    # AOP Aspect xử lý ghi nhật ký
 │
-├── pom.xml
-├── GUIDE.md
-└── docs/                                  # Tài liệu dự án (thư mục này)
-    ├── 01_overview.md
-    ├── 02_architecture.md
-    └── ...
+├── controller/                # REST Controllers (Presentation)
+│   ├── MovieController.java
+│   ├── SchedulingController.java # AI Scheduling API
+│   ├── PricingController.java    # Price Configuration API
+│   └── ...
+│
+├── model/
+│   ├── entity/                # JPA Entities (Database Mapping)
+│   │   ├── AuditLog.java      # Bảng nhật ký mới
+│   │   └── ...
+│   ├── dto/                   # Data Transfer Objects
+│   │   ├── request/           # Builder Pattern thường dùng cho Request
+│   │   └── response/          # Cấu trúc Response chuẩn hóa
+│   └── enums/                 # Elite Enums (AgeRating, RoomType, etc.)
+│
+├── service/                   # Business Logic Layer (Interface)
+│   ├── MovieService.java
+│   ├── SchedulingService.java # AI Algorithm Interface
+│   ├── BuzzAnalysisService.java # External Data Interface
+│   ├── pricing/               # 💎 Decorator Pattern Implementation
+│   │   ├── PriceCalculator.java
+│   │   ├── BasePriceCalculator.java
+│   │   ├── PriceDecorator.java
+│   │   ├── RoomTypeDecorator.java
+│   │   └── SeatTypeDecorator.java
+│   ├── strategy/              # 🎯 Strategy Pattern Implementation
+│   │   ├── SeatLayoutStrategy.java
+│   │   ├── StandardLayoutStrategy.java
+│   │   ├── ImaxLayoutStrategy.java
+│   │   └── SeatLayoutFactory.java
+│   └── impl/                  # Service Implementations
+│       ├── MovieServiceImpl.java (Facade Pattern)
+│       ├── SchedulingServiceImpl.java (AI Engine)
+│       └── ...
+│
+├── repository/                # Data Access Layer
+└── security/                  # Security Logic (JWT, UserDetails)
 ```
 
 ---
 
-## 2. Naming Conventions
+## 2. Elite Coding Standards
 
-| Thành phần | Convention | Ví dụ |
-|-----------|-----------|-------|
-| Entity | PascalCase | `Movie`, `BookingDetail` |
-| Repository | `{Entity}Repository` | `MovieRepository` |
-| Service Interface | `{Entity}Service` | `BookingService` |
-| Service Impl | `{Entity}ServiceImpl` | `BookingServiceImpl` |
-| Controller | `{Entity}Controller` | `MovieController` |
-| DTO Request | `{Action}Request` | `BookingRequest` |
-| DTO Response | `{Entity}Response` | `BookingResponse` |
-| Enum | PascalCase | `BookingStatus`, `SeatType` |
-| DB Tables | snake_case | `booking_details`, `seat_prices` |
-| DB Columns | snake_case | `total_price`, `is_active` |
-| API Endpoints | kebab-case | `/api/showtimes/{id}/seats` |
+### 2.1. Naming Conventions
+- **Decorator:** Tên lớp kết thúc bằng `Decorator` (ví dụ: `RoomTypeDecorator`).
+- **Strategy:** Tên lớp kết thúc bằng `Strategy` (ví dụ: `ImaxLayoutStrategy`).
+- **Factory:** Tên lớp kết thúc bằng `Factory`.
+- **AOP:** Các phương thức ghi nhật ký sử dụng annotation `@LogAction`.
+
+### 2.2. Dependency Injection
+- **Bắt buộc:** Luôn sử dụng Constructor Injection.
+- **Quy tắc:** Phụ thuộc vào Interface thay vì Implementation cụ thể (DIP).
+
+### 2.3. DTO Mapping
+- Sử dụng **ModelMapper** trung tâm (cấu hình trong `AppConfig.java`) để chuyển đổi tự động giữa Entity và DTO, đảm bảo SRP cho Service.
 
 ---
 
-## 3. ApiResponse Wrapper (chuẩn hóa response)
+## 3. Quản lý cấu hình nhạy cảm (DevOps)
 
-```java
-@Data @Builder
-public class ApiResponse<T> {
-    private boolean success;
-    private String message;
-    private T data;
-    private int code;
-
-    public static <T> ApiResponse<T> ok(T data) {
-        return ApiResponse.<T>builder()
-            .success(true).code(200).data(data).build();
-    }
-
-    public static <T> ApiResponse<T> error(String message, int code) {
-        return ApiResponse.<T>builder()
-            .success(false).message(message).code(code).build();
-    }
-}
-```
+- **Tệp `.env`**: Lưu trữ các biến môi trường nhạy cảm (TMDB_API_KEY, GMAIL_USER, CLOUDINARY_SECRET).
+- **Placeholder**: `application.properties` sử dụng cú pháp `${VARIABLE_NAME}` để tham chiếu.
+- **Bảo mật**: Tệp `.env` được đưa vào `.gitignore` để tránh rò rỉ mã nguồn.

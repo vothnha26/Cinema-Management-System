@@ -1,134 +1,72 @@
-# 🧠 Business Logic (BLL) – Cinema Management System
+# 🧠 Business Logic (BLL) – Cinema Management System (Elite Edition)
 
-## 1. Logic nằm ở đâu?
+## 1. Phân tầng & Trách nhiệm (SRP)
 
 ```
 Controller    ❌ KHÔNG chứa logic nghiệp vụ
-Service       ✅ TẤT CẢ logic nghiệp vụ nằm ở đây
-Repository    ❌ Chỉ truy vấn DB (có thể chứa @Query phức tạp)
-Entity        ❌ Chỉ là data model (không có hành vi nghiệp vụ)
+Service       ✅ TẤT CẢ logic nghiệp vụ nằm ở đây (Sử dụng Design Patterns)
+Pricing       💎 Decorator Pattern: Tính giá vé cộng dồn linh hoạt
+Scheduling    🤖 AI Algorithm: Tự động hóa xếp lịch theo xu hướng (TMDB)
+Aspects       🛡️ Audit Log: Tự động lưu vết thao tác (AOP)
+Repository    📦 Truy vấn dữ liệu, Native SQL thống kê nâng cao
 ```
 
 ---
 
-## 2. Các Service & Logic chính
+## 2. Các Logic Elite tiêu biểu
 
-### 2.1. BookingService – Logic đặt vé
+### 2.1. Pricing Engine (Decorator Pattern)
+Thay vì tính giá phẳng, hệ thống sử dụng cấu trúc lớp bọc (Layered Pricing):
+- **BasePrice**: Lấy từ cấu hình `seat_prices`.
+- **RoomTypeDecorator**: +50k cho IMAX, +80k cho 4DX.
+- **SeatTypeDecorator**: +20k cho VIP, +40k cho COUPLE.
+- **DayOfWeekDecorator**: -10k cho Thứ 2/3, +10k cho Cuối tuần.
+- **TimeSlotDecorator**: -15k cho Happy Hour (trước 12h sáng).
 
-```java
-// Rule 1: Kiểm tra suất chiếu hợp lệ
-if (showtime.getStatus() != ShowtimeStatus.UPCOMING)
-    throw new AppException("Suất chiếu không khả dụng");
+### 2.2. AI Scheduling Algorithm (Task 9)
+Thuật toán tự động gợi ý lịch chiếu dựa trên:
+1. **Priority Score**: `(Manual Priority * 20) + (TMDB Popularity Score)`.
+2. **70/30 Rule**: Dành 70% các slot "Giờ vàng" (Prime Time) cho các phim có điểm cao nhất.
+3. **Prime Time Logic**:
+    - Ngày thường: 17:00 - 22:00.
+    - Cuối tuần: 10:00 - 23:00 (Mở rộng).
+4. **Staggered Starts**: Giờ bắt đầu giữa các phòng lệch nhau 15-30p để tối ưu vận hành rạp.
 
-// Rule 2: Kiểm tra ghế chưa bị đặt
-List<Long> bookedSeats = bookingDetailRepo.findBookedSeatIdsByShowtime(showtimeId);
-if (request.getSeatIds().stream().anyMatch(bookedSeats::contains))
-    throw new AppException("Ghế đã được đặt, vui lòng chọn ghế khác");
+### 2.3. Showtime Conflict Detection
+Kiểm tra chính xác đến từng phút bằng logic Java:
+- Một suất chiếu mới `(S_new, E_new)` xung đột nếu tồn tại suất chiếu `(S_old, E_old)` sao cho: `S_new < E_old AND E_new > S_old`.
+- `E_old` luôn bao gồm **15 phút dọn dẹp** sau phim.
 
-// Rule 3: Tính giá vé theo SeatPrice
-BigDecimal seatTotal = seats.stream()
-    .map(seat -> seatPriceService.getPrice(room.getRoomType(), seat.getSeatType()))
-    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-// Rule 4: Tính giá combo
-BigDecimal comboTotal = comboOrders.stream()
-    .map(o -> o.getCombo().getPrice().multiply(BigDecimal.valueOf(o.getQuantity())))
-    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-// Rule 5: Áp ưu đãi (promotion code hoặc membership discount)
-BigDecimal discount = discountStrategy.calculate(customerId, promotionCode, subtotal);
-BigDecimal total = seatTotal.add(comboTotal).subtract(discount);
-```
-
-### 2.2. SeatPriceService – Logic tính giá vé
-
-```
-Giá vé = f(loại phòng, loại ghế)
-
-Bảng seat_prices:
-  IMAX + VIP      = 180,000đ
-  3D   + STANDARD = 95,000đ
-  2D   + COUPLE   = 160,000đ
-  ...
-
-Ưu tiên: Lấy bản ghi is_active=true & effective_date gần nhất
-```
-
-### 2.3. CustomerService – Logic thành viên
-
-```
-// Tích điểm: 1 điểm / 10,000đ chi tiêu
-int points = (int)(totalPrice / 10_000);
-customer.setPoints(customer.getPoints() + points);
-customer.setTotalSpent(customer.getTotalSpent().add(totalPrice));
-
-// Nâng hạng tự động
-if (totalSpent >= 5_000_000)       tier = PLATINUM  // -15%
-else if (totalSpent >= 2_000_000)  tier = GOLD      // -10%
-else if (totalSpent >= 500_000)    tier = SILVER    // -5%
-else                               tier = STANDARD
-```
-
-### 2.4. PromotionService – Logic khuyến mãi
-
-```
-Validation:
-  ✅ promotion.isActive() = true
-  ✅ Ngày hiện tại trong [start_date, end_date]
-  ✅ Hạng thành viên >= min_tier của promotion
-  ✅ Chưa từng dùng code này (tùy chọn)
-
-Tính discount:
-  PERCENT: discount = price * discount_value / 100
-  FIXED:   discount = discount_value
-```
-
-### 2.5. ShowtimeService – Kiểm tra xung đột lịch
-
-```java
-// Không cho tạo 2 suất chiếu cùng phòng, trùng thời gian
-boolean conflict = showtimeRepo
-    .existsByRoomIdAndStartTimeLessThanAndEndTimeGreaterThan(
-        roomId, endTime, startTime
-    );
-if (conflict) throw new AppException("Phòng đã có suất chiếu trong khung giờ này");
-```
+### 2.4. Promotion Engine (Builder Pattern)
+Sử dụng **Builder** để tạo chương trình khuyến mãi với các điều kiện tùy chọn:
+- `minOrderAmount`: Đơn hàng tối thiểu.
+- `maxDiscountAmount`: Giới hạn giảm tối đa cho loại PERCENT.
+- `usageLimit`: Tổng lượt sử dụng toàn hệ thống.
+- `minTier`: Hạng thành viên tối thiểu (Standard, Silver, Gold, Diamond).
 
 ---
 
-## 3. Validation Rules
+## 3. Hệ thống Nhật ký & Kiểm toán (Audit Log)
 
-| Field | Rule |
-|-------|------|
-| `Booking.seatIds` | `@NotEmpty`, size ≥ 1, ≤ 8 ghế / lần đặt |
-| `Showtime.startTime` | Phải là tương lai, cách hiện tại ít nhất 30 phút |
-| `Movie.ageRating` | Enum: P, C13, C16, C18 |
-| `User.password` | ≥ 8 ký tự, có chữ hoa và số |
-| `Promo.discountValue` | PERCENT: 1–100; FIXED: > 0 |
+Sử dụng **Spring AOP** để tự động hóa việc giám sát Manager:
+- **Annotation `@LogAction`**: Đánh dấu các phương thức nhạy cảm (CREATE_MOVIE, DELETE_ROOM...).
+- **AuditLogAspect**: Interceptor tự động lấy thông tin `Username` từ SecurityContext, `Action`, `Target` và `Timestamp`.
+- **Async Logging**: Việc ghi log không làm chậm phản hồi của API chính.
 
 ---
 
-## 4. Discount Strategy (SOLID - Open/Closed)
+## 4. Quy tắc chuẩn hóa dữ liệu (Validation)
 
-```java
-interface DiscountStrategy {
-    BigDecimal calculate(BigDecimal price, Object context);
-}
-
-// Các implementation:
-class MembershipDiscount  implements DiscountStrategy { ... }
-class PromotionCodeDiscount implements DiscountStrategy { ... }
-class BirthdayDiscount    implements DiscountStrategy { ... } // mở rộng thêm không sửa code cũ
-
-// Kết hợp nhiều strategy (Chain):
-BigDecimal finalPrice = strategies.stream()
-    .reduce(price, (p, s) -> s.calculate(p, context), (a, b) -> b);
-```
+| Đối tượng | Quy tắc (Elite Standard) |
+|-----------|--------------------------|
+| **Phim** | Nhãn độ tuổi chuẩn: P, K, T13, T16, T18. |
+| **Phòng** | Tự động sinh sơ đồ ghế theo Strategy (IMAX, 2D, 4DX). |
+| **Suất chiếu** | Không cho phép cập nhật nếu suất chiếu đã bắt đầu hoặc kết thúc. |
+| **Bảng giá** | Tự động vô hiệu hóa cấu hình cũ khi cập nhật giá mới cho cùng loại phòng/ghế. |
 
 ---
 
-## 5. Transaction & Data Integrity
-
-- `@Transactional` bọc toàn bộ quá trình tạo booking (Booking + Details + Combos + Payment).
-- Nếu payment thất bại → rollback toàn bộ → ghế không bị giữ.
-- `PESSIMISTIC_WRITE` lock trên bảng `booking_details` để tránh 2 user chọn cùng ghế cùng lúc.
+## 5. Thống kê nâng cao (Native SQL)
+- **Doanh thu thực tế**: Chỉ tính các Booking ở trạng thái `CONFIRMED` hoặc `CHECKED_IN`.
+- **Tỷ trọng phim**: Tính % đóng góp doanh thu của từng phim trong tổng doanh thu rạp.
+- **Biểu đồ 7 ngày**: Truy vấn theo Group By DATE(created_at) để vẽ chuỗi thời gian (Time-series).

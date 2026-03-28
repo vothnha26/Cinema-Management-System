@@ -35,8 +35,9 @@ public class ComboServiceImpl implements ComboService {
     @Override
     @Transactional
     @LogAction(action = "CREATE", target = "COMBO")
-    public ComboResponse createCombo(ComboRequest request) {
+    public ComboResponse createCombo(ComboRequest request, String imageUrl) {
         Combo combo = modelMapper.map(request, Combo.class);
+        combo.setImageUrl(imageUrl);
         combo.setIsActive(true);
         Combo saved = comboRepository.save(combo);
         return modelMapper.map(saved, ComboResponse.class);
@@ -45,11 +46,14 @@ public class ComboServiceImpl implements ComboService {
     @Override
     @Transactional
     @LogAction(action = "UPDATE", target = "COMBO")
-    public ComboResponse updateCombo(Long id, ComboRequest request) {
+    public ComboResponse updateCombo(Long id, ComboRequest request, String imageUrl) {
         Combo combo = comboRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
         
         modelMapper.map(request, combo);
+        if (imageUrl != null) {
+            combo.setImageUrl(imageUrl);
+        }
         Combo updated = comboRepository.save(combo);
         return modelMapper.map(updated, ComboResponse.class);
     }
