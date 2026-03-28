@@ -29,6 +29,12 @@ public class Showtime {
     @Column(nullable = false)
     private ShowtimeStatus status;
 
+    @org.hibernate.annotations.Formula("(SELECT COUNT(*) FROM booking_details bd JOIN bookings b ON bd.booking_id = b.id WHERE b.showtime_id = id AND b.status = 'CONFIRMED')")
+    private int soldSeats;
+
+    @Column(name = "total_seats", nullable = false)
+    private int totalSeats = 0;
+
     public Showtime() {}
 
     public Long getId() { return id; }
@@ -48,4 +54,10 @@ public class Showtime {
 
     public ShowtimeStatus getStatus() { return status; }
     public void setStatus(ShowtimeStatus status) { this.status = status; }
+
+    public int getSoldSeats() { return soldSeats; }
+    public void setSoldSeats(int soldSeats) { this.soldSeats = soldSeats; }
+
+    public int getTotalSeats() { return totalSeats; }
+    public void setTotalSeats(int totalSeats) { this.totalSeats = totalSeats; }
 }

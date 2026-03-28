@@ -75,47 +75,100 @@ public class SchedulingServiceImpl implements SchedulingService {
             staggeredOffset = (staggeredOffset + 15) % 45;
             currentTime = currentTime.plusMinutes(staggeredOffset);
 
+            // Lấy danh sách suất chiếu hiện có của PHÒNG này, sắp xếp theo thời gian
+            final Long currentRoomId = room.getId();
+            List<Showtime> roomExisting = existingShowtimes.stream()
+                    .filter(s -> s.getRoom().getId().equals(currentRoomId))
+                    .sorted(Comparator.comparing(Showtime::getStartTime))
+                    .collect(Collectors.toList());
+
             while (currentTime.isBefore(LocalTime.of(23, 30))) {
                 final LocalTime startTimeFinal = currentTime;
                 
-                // Nếu là FILL, kiểm tra xem có bị trùng với suất chiếu hiện có không
-                if (mode != null && mode.equalsIgnoreCase("FILL")) {
-                    boolean isOverlap = existingShowtimes.stream()
-                        .filter(s -> s.getRoom().getId().equals(room.getId()))
+                // 1. Kiểm tra xem thời điểm currentTime có đang nằm TRONG suất chiếu nào không
+                Optional<Showtime> overlappingShowtime = roomExisting.stream()
+                    .filter(s -> {
+                        LocalTime sStart = s.getStartTime().toLocalTime();
+                        LocalTime sEnd = s.getEndTime().toLocalTime().plusMinutes(15);
+                        return !startTimeFinal.isBefore(sStart) && startTimeFinal.isBefore(sEnd);
+                    })
+                    .findFirst();
+
+                if (overlappingShowtime.isPresent()) {
+                    currentTime = overlappingShowtime.get().getEndTime().toLocalTime().plusMinutes(15);
+                    continue;
+                }
+
+                // 2. Tìm phim phù hợp nhất cho khoảng trống này
+                Movie movieToSchedule = null;
+                // Thử từng phim trong danh sách đã sắp xếp theo Buzz Score
+                for (Movie m : activeMovies) {
+                    int durationPlusClean = m.getDuration() + 15;
+                    LocalTime expectedEndTime = currentTime.plusMinutes(durationPlusClean);
+                    
+                    // Kiểm tra xem phim có bị tràn qua ngày hôm sau không (nếu currentTime + duration < currentTime nghĩa là đã qua nửa đêm)
+                    boolean wrapsToNextDay = expectedEndTime.isBefore(currentTime);
+                    if (wrapsToNextDay || expectedEndTime.isAfter(LocalTime.of(23, 55))) {
+                        continue; 
+                    }
+
+                    final LocalTime startTimeRef = currentTime;
+                    final LocalTime endTimeRef = expectedEndTime;
+                    
+                    boolean willOverlapNext = roomExisting.stream()
                         .anyMatch(s -> {
                             LocalTime sStart = s.getStartTime().toLocalTime();
-                            LocalTime sEnd = s.getEndTime().toLocalTime();
-                            return startTimeFinal.isBefore(sEnd) && startTimeFinal.plusMinutes(120).isAfter(sStart);
+                            return endTimeRef.isAfter(sStart) && startTimeRef.isBefore(sStart);
                         });
-                    
-                    if (isOverlap) {
-                        currentTime = currentTime.plusMinutes(30); // Nhảy 30p để tìm chỗ trống tiếp theo
-                        continue;
+
+                    if (!willOverlapNext) {
+                        movieToSchedule = m;
+                        break; // Tìm thấy phim vừa vặn nhất (ưu tiên cao nhất) thì dừng lại
                     }
                 }
 
-                Movie movieToSchedule;
-                boolean isPrimeTime = !currentTime.isBefore(primeStart) && currentTime.isBefore(primeEnd);
-                if (isPrimeTime && Math.random() < 0.7) {
-                    movieToSchedule = activeMovies.get(0);
-                } else {
-                    movieToSchedule = activeMovies.get(new Random().nextInt(activeMovies.size()));
+                if (movieToSchedule == null) {
+                    // Nếu không có phim nào vừa, nhích 15p để tìm khe hở khác
+                    currentTime = currentTime.plusMinutes(15);
+                    continue;
                 }
 
+                // Đủ điều kiện tạo suất mới
                 ShowtimeResponse res = new ShowtimeResponse();
+                res.setId(-1L); // Đánh dấu là bản thảo AI (ID âm)
                 res.setMovieId(movieToSchedule.getId());
                 res.setMovieTitle(movieToSchedule.getTitle());
+                res.setMovieDuration(movieToSchedule.getDuration());
                 res.setRoomId(room.getId());
                 res.setRoomName(room.getName());
                 
                 LocalDateTime start = LocalDateTime.of(targetDate, currentTime);
                 res.setStartTime(start);
-                res.setEndTime(start.plusMinutes(movieToSchedule.getDuration() + 15));
+                res.setEndTime(start.plusMinutes(movieToSchedule.getDuration()));
                 
                 suggestions.add(res);
-                currentTime = currentTime.plusMinutes(movieToSchedule.getDuration() + 30);
+                currentTime = currentTime.plusMinutes(movieToSchedule.getDuration() + 15);
             }
         }
+        
+        // Nếu là FILL, gộp suất chiếu cũ vào (với ID dương) để UI hiển thị
+        if (mode != null && mode.equalsIgnoreCase("FILL")) {
+            for (Showtime es : existingShowtimes) {
+                ShowtimeResponse er = new ShowtimeResponse();
+                er.setId(es.getId());
+                er.setMovieId(es.getMovie().getId());
+                er.setMovieTitle(es.getMovie().getTitle());
+                er.setMovieDuration(es.getMovie().getDuration());
+                er.setRoomId(es.getRoom().getId());
+                er.setRoomName(es.getRoom().getName());
+                er.setStartTime(es.getStartTime());
+                er.setEndTime(es.getEndTime());
+                er.setTotalSeats(es.getTotalSeats());
+                er.setSoldSeats(es.getSoldSeats());
+                suggestions.add(er);
+            }
+        }
+
         return suggestions;
     }
 
@@ -124,19 +177,31 @@ public class SchedulingServiceImpl implements SchedulingService {
     public void applySuggestions(List<ShowtimeResponse> suggestions, boolean overwrite) {
         if (overwrite && !suggestions.isEmpty()) {
             LocalDate targetDate = suggestions.get(0).getStartTime().toLocalDate();
-            // Xóa suất chiếu cũ của ngày đó (Chỉ xóa những suất chưa có vé - Giả định logic cơ bản)
             showtimeRepository.deleteByStartTimeBetween(
                 targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX));
         }
 
         for (ShowtimeResponse res : suggestions) {
+            // CHỈ LƯU NHỮNG SUẤT CHIẾU MỚI (ID âm hoặc null)
+            if (res.getId() != null && res.getId() > 0) {
+                continue; 
+            }
+            
             Showtime s = new Showtime();
-            s.setMovie(movieRepository.getReferenceById(res.getMovieId()));
-            s.setRoom(roomRepository.getReferenceById(res.getRoomId()));
-            s.setStartTime(res.getStartTime());
-            s.setEndTime(res.getEndTime());
-            s.setStatus(ShowtimeStatus.UPCOMING);
-            showtimeRepository.save(s);
+            Long movieId = res.getMovieId();
+            Long roomId = res.getRoomId();
+            
+            if (movieId != null && roomId != null) {
+                s.setMovie(movieRepository.getReferenceById(movieId));
+                Room room = roomRepository.getReferenceById(roomId);
+                s.setRoom(room);
+                s.setStartTime(res.getStartTime());
+                s.setEndTime(res.getEndTime());
+                s.setStatus(ShowtimeStatus.UPCOMING);
+                s.setTotalSeats(room.getCapacity());
+                s.setSoldSeats(0);
+                showtimeRepository.save(s);
+            }
         }
     }
 }

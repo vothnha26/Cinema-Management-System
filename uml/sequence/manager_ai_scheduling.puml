@@ -3,17 +3,19 @@ title Sequence Diagram: Gợi ý lịch chiếu AI với TMDB API (Task 9)
 skinparam theme cerulean
 
 actor Manager
-boundary "manage-showtimes.html (AI Mode)" as UI
+boundary "manage-showtimes.html (AI Modal)" as UI
 control "SchedulingController" as Ctrl
 entity "SchedulingService" as Svc
 entity "BuzzAnalysisService" as BuzzSvc
 participant "TMDB External API" as TMDB
-entity "AnalyticsService" as AnalyticsSvc
 database "Database" as DB
 
 == Giai đoạn 1: Gợi ý & Xem trước (Preview) ==
-Manager -> UI: Chọn ngày & Chế độ (Ghi đè/Lấp đầy)
 Manager -> UI: Nhấn "Gợi ý AI"
+UI -> UI: Hiển thị Modal gán ngày mặc định
+Manager -> UI: Chọn ngày & Chế độ (Ghi đè/Lấp đầy)
+Manager -> UI: Nhấn "Bắt đầu tính toán"
+
 UI -> Ctrl: POST /api/scheduling/suggest?date=...&mode=...
 activate Ctrl
 
@@ -30,15 +32,19 @@ TMDB --> BuzzSvc: Popularity & Vote Stats
 BuzzSvc -> BuzzSvc: Chuẩn hóa điểm Buzz (0-100)
 BuzzSvc --> Svc: Map<MovieId, BuzzScore>
 
-Svc -> Svc: Phân bổ 70% Giờ vàng cho Phim HOT \n(Staggered Starts giữa các phòng)
+Svc -> Svc: Phân bổ 70% Giờ vàng cho Phim HOT \n(Thử từng phim để khớp khoảng trống)
 
-Svc --> Ctrl: List<ShowtimeResponse> (Draft)
+alt mode == 'FILL'
+    Svc -> Svc: Gộp suất chiếu cũ & Gợi ý mới (ID âm)
+end
+
+Svc --> Ctrl: List<ShowtimeResponse> (Drafts + Existing)
 deactivate Svc
 
 Ctrl --> UI: 200 OK (Dữ liệu dự thảo)
 deactivate Ctrl
 
-UI -> Manager: Hiển thị Banner Preview & Cập nhật Timeline tạm thời
+UI -> Manager: Hiển thị Banner Preview & Timeline (Suất mới dạng nét đứt)
 
 == Giai đoạn 2: Xác nhận & Áp dụng (Apply) ==
 Manager -> UI: Kiểm tra lịch & Nhấn "Áp dụng chính thức"
@@ -51,7 +57,9 @@ Ctrl -> Svc: applySuggestions(suggestions, overwrite)
 activate Svc
 
 alt overwrite == true
-    Svc -> DB: Xóa các suất chiếu cũ của ngày đó \n(Ngoại trừ suất đã có vé)
+    Svc -> DB: Xóa các suất chiếu cũ của ngày đó
+else mode == 'FILL'
+    Svc -> Svc: Lọc bỏ các suất chiếu cũ (ID dương) \nChỉ lưu các bản ghi mới
 end
 
 Svc -> DB: saveAll(newShowtimes)

@@ -14,7 +14,7 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     List<Showtime> findByStatusWithMovieAndRoom(@Param("status") ShowtimeStatus status);
 
     @Query("SELECT s FROM Showtime s WHERE s.room.id = :roomId " +
-           "AND s.startTime >= :startOfDay AND s.startTime <= :endOfDay " +
+           "AND s.endTime >= :startOfDay AND s.startTime <= :endOfDay " +
            "AND s.status != 'CANCELLED'")
     List<Showtime> findByRoomAndDate(
             @Param("roomId") Long roomId, 

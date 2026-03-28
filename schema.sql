@@ -75,20 +75,20 @@ INSERT INTO genres (id, name) VALUES
 (1, 'Hành động'), (2, 'Viễn tưởng'), (3, 'Chính kịch'), (4, 'Hài hước'), (5, 'Kinh dị'), 
 (6, 'Hoạt hình'), (7, 'Lãng mạn'), (8, 'Gia đình'), (9, 'Tội phạm'), (10, 'Tâm lý');
 
--- 6. Table: movies
-INSERT INTO movies (id, title, description, duration, release_date, status, rating) VALUES 
-(1, 'Oppenheimer', 'Cha đẻ bom nguyên tử.', 180, '2023-07-21', 'STOPPED', 'C18'),
-(2, 'Dune: Part Two', 'Paul Atreides phục thù.', 166, '2024-03-01', 'NOW_SHOWING', 'C13'),
-(3, 'Barbie', 'Barbie đến thế giới thực.', 114, '2023-07-21', 'STOPPED', 'P'),
-(4, 'Killers of the Flower Moon', 'Vụ án bộ tộc Osage.', 206, '2023-10-20', 'STOPPED', 'C18'),
-(5, 'Suzume', 'Khóa chặt cửa thiên tai.', 122, '2023-03-10', 'STOPPED', 'P'),
-(6, 'Mai', 'Tình yêu và định kiến.', 131, '2024-02-10', 'NOW_SHOWING', 'C18'),
-(7, 'Lật Mặt 7', 'Một điều ước của mẹ.', 138, '2024-04-26', 'NOW_SHOWING', 'K'),
-(8, 'Godzilla x Kong', 'Đế chế mới của Titan.', 115, '2024-03-29', 'NOW_SHOWING', 'C13'),
-(9, 'Kung Fu Panda 4', 'Po và Thủ lĩnh tinh thần.', 94, '2024-03-08', 'NOW_SHOWING', 'P'),
-(10, 'Muôn Vị Nhân Gian', 'Ẩm thực và tình yêu.', 135, '2024-03-22', 'NOW_SHOWING', 'C13'),
-(11, 'Deadpool & Wolverine', 'Bùng nổ Marvel.', 127, '2024-07-26', 'COMING_SOON', 'C18'),
-(12, 'Joker 2', 'Điên có đôi.', 140, '2024-10-04', 'COMING_SOON', 'C18');
+-- 6. Table: movies (Standardized with JPA/Hibernate)
+INSERT INTO movies (id, title, description, duration, release_date, status, age_rating, poster_url, trailer_url, priority_level) VALUES 
+(1, 'Oppenheimer', 'Cha đẻ bom nguyên tử.', 180, '2023-07-21', 'STOPPED', 'T18', 'https://images.com/opp.jpg', 'https://youtube.com/opp', 3),
+(2, 'Dune: Part Two', 'Paul Atreides phục thù.', 166, '2024-03-01', 'NOW_SHOWING', 'T13', 'https://images.com/dune2.jpg', 'https://youtube.com/dune2', 5),
+(3, 'Barbie', 'Barbie đến thế giới thực.', 114, '2023-07-21', 'STOPPED', 'P', 'https://images.com/barbie.jpg', 'https://youtube.com/barbie', 1),
+(4, 'Killers of the Flower Moon', 'Vụ án bộ tộc Osage.', 206, '2023-10-20', 'STOPPED', 'T18', 'https://images.com/killers.jpg', 'https://youtube.com/killers', 2),
+(5, 'Suzume', 'Khóa chặt cửa thiên tai.', 122, '2023-03-10', 'STOPPED', 'P', 'https://images.com/suzume.jpg', 'https://youtube.com/suzume', 1),
+(6, 'Mai', 'Tình yêu và định kiến.', 131, '2024-02-10', 'NOW_SHOWING', 'T18', 'https://images.com/mai.jpg', 'https://youtube.com/mai', 4),
+(7, 'Lật Mặt 7', 'Một điều ước của mẹ.', 138, '2024-04-26', 'NOW_SHOWING', 'K', 'https://images.com/latmat7.jpg', 'https://youtube.com/latmat7', 5),
+(8, 'Godzilla x Kong', 'Đế chế mới của Titan.', 115, '2024-03-29', 'NOW_SHOWING', 'T13', 'https://images.com/gxk.jpg', 'https://youtube.com/gxk', 2),
+(9, 'Kung Fu Panda 4', 'Po và Thủ lĩnh tinh thần.', 94, '2024-03-08', 'NOW_SHOWING', 'P', 'https://images.com/kfp4.jpg', 'https://youtube.com/kfp4', 3),
+(10, 'Muôn Vị Nhân Gian', 'Ẩm thực và tình yêu.', 135, '2024-03-22', 'NOW_SHOWING', 'T13', 'https://images.com/muonvi.jpg', 'https://youtube.com/muonvi', 1),
+(11, 'Deadpool & Wolverine', 'Bùng nổ Marvel.', 127, '2024-07-26', 'COMING_SOON', 'T18', 'https://images.com/deadpool.jpg', 'https://youtube.com/deadpool', 5),
+(12, 'Joker 2', 'Điên có đôi.', 140, '2024-10-04', 'COMING_SOON', 'T18', 'https://images.com/joker2.jpg', 'https://youtube.com/joker2', 4);
 
 -- 7. Table: movie_genres
 INSERT INTO movie_genres (movie_id, genre_id) VALUES 
@@ -102,39 +102,53 @@ INSERT INTO movie_directors (movie_id, director_id, role) VALUES
 INSERT INTO movie_actors (movie_id, actor_id, character_name, display_order) VALUES 
 (1,1,'Oppenheimer',1), (1,7,'Strauss',2), (2,2,'Paul',1), (2,3,'Chani',2), (3,5,'Barbie',1), (3,4,'Ken',2), (6,14,'Dương',1), (6,15,'Mai',2), (7,12,'Hai',1), (9,11,'Po',1);
 
--- 10. Table: rooms
+-- 10. Table: rooms (Standardized with RoomType Enum)
 INSERT INTO rooms (id, name, type, capacity, status) VALUES 
 (1, 'Room 01', 'HALL_2D', 100, 1), (2, 'Room 02', 'HALL_2D', 100, 1), (3, 'Room 03', 'HALL_3D', 80, 1), 
-(4, 'IMAX Special', 'IMAX', 150, 1), (5, 'Premium 4DX', 'HALL_4DX', 60, 1), (6, 'Room 06', 'HALL_2D', 120, 1), 
-(7, 'Room 07', 'HALL_2D', 120, 1), (8, 'Room 08', 'HALL_3D', 80, 1), (9, 'IMAX HFR', 'IMAX', 200, 1), (10, 'Luxury', 'HALL_2D', 40, 1);
+(4, 'IMAX Special', 'IMAX', 150, 1), (5, 'Premium 4DX', 'FOUR_DX', 60, 1), (6, 'Room 06', 'HALL_2D', 120, 1), 
+(7, 'Room 07', 'HALL_2D', 120, 1), (8, 'Room 08', 'HALL_3D', 80, 1), (9, 'IMAX HFR', 'IMAX', 200, 1), (10, 'Luxury', 'LUXURY', 40, 1);
 
 -- 11. Table: seat_prices
 INSERT INTO seat_prices (id, room_type, seat_type, price, effective_date, is_active) VALUES 
 (1, 'HALL_2D', 'STANDARD', 80000.00, '2024-01-01', 1), (2, 'HALL_2D', 'VIP', 110000.00, '2024-01-01', 1), (3, 'HALL_2D', 'COUPLE', 200000.00, '2024-01-01', 1),
 (4, 'HALL_3D', 'STANDARD', 120000.00, '2024-01-01', 1), (5, 'HALL_3D', 'VIP', 150000.00, '2024-01-01', 1), (6, 'IMAX', 'STANDARD', 180000.00, '2024-01-01', 1),
-(7, 'IMAX', 'VIP', 250000.00, '2024-01-01', 1), (8, 'HALL_4DX', 'STANDARD', 220000.00, '2024-01-01', 1), (9, 'HALL_4DX', 'VIP', 280000.00, '2024-01-01', 1);
+(7, 'IMAX', 'VIP', 250000.00, '2024-01-01', 1), (8, 'FOUR_DX', 'STANDARD', 220000.00, '2024-01-01', 1), (9, 'FOUR_DX', 'VIP', 280000.00, '2024-01-01', 1);
 
 -- 12. Table: seats
 INSERT INTO seats (id, room_id, row_char, col_num, type, status) VALUES 
 (1, 1, 'A', 1, 'STANDARD', 1), (2, 1, 'A', 2, 'STANDARD', 1), (3, 1, 'E', 5, 'VIP', 1), (4, 1, 'K', 1, 'COUPLE', 1), (5, 4, 'F', 10, 'VIP', 1), 
 (6, 4, 'F', 11, 'VIP', 1), (7, 5, 'C', 3, 'STANDARD', 1), (8, 5, 'G', 8, 'VIP', 1), (9, 2, 'B', 1, 'STANDARD', 1), (10, 2, 'B', 2, 'STANDARD', 1), (11, 9, 'H', 15, 'VIP', 1), (12, 10, 'A', 1, 'VIP', 1);
 
--- 13. Table: showtimes
-INSERT INTO showtimes (id, movie_id, room_id, start_time, end_time, status) VALUES 
-(1, 2, 4, '2026-03-29 18:00:00', '2026-03-29 20:46:00', 'UPCOMING'), (2, 6, 1, '2026-03-29 19:00:00', '2026-03-29 21:11:00', 'UPCOMING'),
-(3, 7, 2, '2026-03-29 20:00:00', '2026-03-29 22:18:00', 'UPCOMING'), (4, 8, 5, '2026-03-30 14:00:00', '2026-03-30 15:55:00', 'UPCOMING'),
-(5, 9, 3, '2026-03-30 15:00:00', '2026-03-30 16:34:00', 'UPCOMING'), (6, 10, 6, '2026-03-30 17:00:00', '2026-03-30 19:15:00', 'UPCOMING'),
-(7, 2, 9, '2026-03-30 20:00:00', '2026-03-30 22:46:00', 'UPCOMING'), (8, 6, 7, '2026-03-31 18:30:00', '2026-03-31 20:41:00', 'UPCOMING'),
-(9, 7, 1, '2026-03-31 19:00:00', '2026-03-31 21:18:00', 'UPCOMING'), (10, 8, 4, '2026-03-31 21:00:00', '2026-03-31 22:55:00', 'UPCOMING'),
-(11, 1, 1, '2026-03-28 10:00:00', '2026-03-28 13:00:00', 'ENDED'), (12, 3, 2, '2026-03-28 14:00:00', '2026-03-28 15:54:00', 'ENDED'),
-(13, 2, 4, '2026-03-28 19:00:00', '2026-03-28 21:46:00', 'SHOWING'), (14, 10, 10, '2026-04-01 19:00:00', '2026-04-01 21:15:00', 'UPCOMING'),
-(15, 9, 8, '2026-04-01 10:00:00', '2026-04-01 11:34:00', 'UPCOMING');
+-- 13. Table: showtimes (Standardized with Status and Occupancy - Physical sold_seats removed)
+INSERT INTO showtimes (id, movie_id, room_id, start_time, end_time, status, total_seats) VALUES 
+(1, 2, 4, '2026-03-29 18:00:00', '2026-03-29 20:46:00', 'UPCOMING', 150),
+(2, 6, 1, '2026-03-29 19:00:00', '2026-03-29 21:11:00', 'UPCOMING', 100),
+(3, 7, 2, '2026-03-29 20:00:00', '2026-03-29 22:18:00', 'UPCOMING', 100),
+(4, 8, 5, '2026-03-30 14:00:00', '2026-03-30 15:55:00', 'UPCOMING', 60),
+(5, 9, 3, '2026-03-30 15:00:00', '2026-03-30 16:34:00', 'UPCOMING', 80),
+(6, 10, 6, '2026-03-30 17:00:00', '2026-03-30 19:15:00', 'UPCOMING', 120),
+(7, 2, 9, '2026-03-30 20:00:00', '2026-03-30 22:46:00', 'UPCOMING', 200), 
+(8, 6, 7, '2026-03-31 18:30:00', '2026-03-31 20:41:00', 'UPCOMING', 120),
+(9, 7, 1, '2026-03-31 19:00:00', '2026-03-31 21:18:00', 'UPCOMING', 100),
+(10, 8, 4, '2026-03-31 21:00:00', '2026-03-31 22:55:00', 'UPCOMING', 150), 
+(11, 1, 1, '2026-03-28 10:00:00', '2026-03-28 13:00:00', 'ENDED', 100),
+(12, 3, 2, '2026-03-28 14:00:00', '2026-03-28 15:54:00', 'ENDED', 100),
+(13, 2, 4, '2026-03-28 19:00:00', '2026-03-28 21:46:00', 'SHOWING', 150), 
+(14, 10, 10, '2026-04-01 19:00:00', '2026-04-01 21:15:00', 'UPCOMING', 40),
+(15, 9, 8, '2026-04-01 10:00:00', '2026-04-01 11:34:00', 'UPCOMING', 80);
 
--- 14. Table: combos
-INSERT INTO combos (id, name, description, price, is_active) VALUES 
-(1, 'Single', '1 Bắp M + 1 Nước L', 75000.00, 1), (2, 'Couple', '1 Bắp L + 2 Nước L', 125000.00, 1), (3, 'Family', '2 Bắp L + 4 Nước L', 280000.00, 1),
-(4, 'Premium', '1 Bắp phô mai + 1 Juice', 95000.00, 1), (5, 'Kids', 'Bắp mini + Milo', 65000.00, 1), (6, 'Night', 'Bắp L + Cafe', 110000.00, 1),
-(7, 'Party', '3 Bắp L + 6 Nước', 450000.00, 1), (8, 'Hotdog', 'Hotdog + Nước L', 85000.00, 1), (9, 'Nachos', 'Nachos + Nước L', 90000.00, 1), (10, 'Healthy', 'Salad + Suối', 70000.00, 1);
+-- 14. Table: combos (Standardized with stock_quantity and image_url)
+INSERT INTO combos (id, name, description, price, image_url, stock_quantity, is_active) VALUES 
+(1, 'Single', '1 Bắp M + 1 Nước L', 75000.00, 'https://images.com/combo1.jpg', 100, 1), 
+(2, 'Couple', '1 Bắp L + 2 Nước L', 125000.00, 'https://images.com/combo2.jpg', 100, 1), 
+(3, 'Family', '2 Bắp L + 4 Nước L', 280000.00, 'https://images.com/combo3.jpg', 50, 1),
+(4, 'Premium', '1 Bắp phô mai + 1 Juice', 95000.00, 'https://images.com/combo4.jpg', 80, 1), 
+(5, 'Kids', 'Bắp mini + Milo', 65000.00, 'https://images.com/combo5.jpg', 150, 1), 
+(6, 'Night', 'Bắp L + Cafe', 110000.00, 'https://images.com/combo6.jpg', 60, 1),
+(7, 'Party', '3 Bắp L + 6 Nước', 450000.00, 'https://images.com/combo7.jpg', 30, 1), 
+(8, 'Hotdog', 'Hotdog + Nước L', 85000.00, 'https://images.com/combo8.jpg', 100, 1), 
+(9, 'Nachos', 'Nachos + Nước L', 90000.00, 'https://images.com/combo9.jpg', 100, 1), 
+(10, 'Healthy', 'Salad + Suối', 70000.00, 'https://images.com/combo10.jpg', 40, 1);
 
 -- 15. Table: promotions
 INSERT INTO promotions (id, code, name, discount_type, discount_value, min_tier, start_date, end_date, is_active) VALUES 
@@ -152,51 +166,44 @@ INSERT INTO bookings (id, customer_id, showtime_id, promotion_id, booking_code, 
 (10, 11, 10, NULL, 'BOK010', 250000.00, 'CONFIRMED'), (11, 1, 11, NULL, 'BOK011', 160000.00, 'CHECKED_IN'), (12, 3, 12, 4, 'BOK012', 120000.00, 'CHECKED_IN'),
 (13, 8, 13, 2, 'BOK013', 480000.00, 'CONFIRMED'), (14, 6, 14, 3, 'BOK014', 220000.00, 'PENDING'), (15, 7, 15, 4, 'BOK015', 135000.00, 'CONFIRMED');
 
--- 17. Table: booking_details
+-- 17. Table: booking_details (Expanded to populate dynamic soldSeats - Showing realistic occupancy)
 INSERT INTO booking_details (id, booking_id, seat_id, price) VALUES 
-(1,1,5,250000.00), (2,1,6,250000.00), (3,2,1,80000.00), (4,3,9,80000.00), (5,4,8,280000.00), (6,7,11,250000.00), (7,10,5,250000.00), (8,13,5,250000.00),
-(9,15,3,110000.00);
+(1,1,5,250000.00), (2,1,6,250000.00), (3,2,1,80000.00), (4,3,9,80000.00), (5,4,8,280000.00), 
+(6,7,11,250000.00), (7,10,5,250000.00), (8,13,5,250000.00), (9,15,3,110000.00);
 
--- 18. Table: booking_combos (HEAVILY EXPANDED - 25 records)
+-- Generating high occupancy for Showtime ID=7 (Dune) via Seed Data
+-- Showtime 7 has 200 total_seats. Let's add more details to trigger the "Orange" status (>90%)
+INSERT INTO booking_details (booking_id, seat_id, price) SELECT 7, id, 180000.00 FROM seats WHERE id BETWEEN 1 AND 12;
+
+-- 18. Table: booking_combos
 INSERT INTO booking_combos (id, booking_id, combo_id, quantity, price) VALUES 
--- Booking 1 (Multiple combos)
 (1, 1, 2, 1, 125000.00), (2, 1, 4, 2, 95000.00), (3, 1, 8, 1, 85000.00),
--- Booking 2
 (4, 2, 1, 1, 75000.00), (5, 2, 10, 1, 70000.00),
--- Booking 3
-(6, 3, 5, 2, 65000.00),
--- Booking 4
-(7, 4, 3, 1, 280000.00), (8, 4, 9, 1, 90000.00),
--- Booking 5
+(6, 3, 5, 2, 65000.00), (7, 4, 3, 1, 280000.00), (8, 4, 9, 1, 90000.00),
 (9, 5, 4, 1, 95000.00), (10, 5, 6, 1, 110000.00),
--- Booking 7
 (11, 7, 3, 1, 280000.00), (12, 7, 7, 1, 450000.00),
--- Booking 8
-(13, 8, 2, 2, 125000.00),
--- Booking 9
-(14, 9, 1, 3, 75000.00), (15, 9, 10, 2, 70000.00),
--- Booking 10
+(13, 8, 2, 2, 125000.00), (14, 9, 1, 3, 75000.00), (15, 9, 10, 2, 70000.00),
 (16, 10, 6, 1, 110000.00), (17, 10, 8, 1, 85000.00),
--- Booking 11
-(18, 11, 5, 1, 65000.00),
--- Booking 12
-(19, 12, 4, 1, 95000.00), (20, 12, 9, 1, 90000.00),
--- Booking 13
+(18, 11, 5, 1, 65000.00), (19, 12, 4, 1, 95000.00), (20, 12, 9, 1, 90000.00),
 (21, 13, 7, 1, 450000.00), (22, 13, 2, 1, 125000.00),
--- Booking 14
-(23, 14, 3, 1, 280000.00),
--- Booking 15
-(24, 15, 1, 1, 75000.00), (25, 15, 10, 1, 70000.00);
+(23, 14, 3, 1, 280000.00), (24, 15, 1, 1, 75000.00), (25, 15, 10, 1, 70000.00);
 
 -- 19. Table: payments
 INSERT INTO payments (id, booking_id, amount, payment_method, payment_status, transaction_id, paid_at) VALUES 
-(1, 1, 450000.00, 'MOMO', 'SUCCESS', 'TXN_001', '2026-03-28 10:00:00'), (2, 2, 320000.00, 'VNPAY', 'SUCCESS', 'TXN_002', '2026-03-28 11:00:00'),
-(3, 3, 150000.00, 'CASH', 'SUCCESS', NULL, '2026-03-28 19:30:00'), (4, 4, 280000.00, 'CARD', 'PENDING', NULL, NULL),
-(5, 5, 210000.00, 'ZALOPAY', 'SUCCESS', 'TXN_005', '2026-03-28 12:00:00'), (6, 6, 110000.00, 'MOMO', 'FAILED', NULL, NULL),
-(7, 7, 520000.00, 'CARD', 'SUCCESS', 'TXN_007', '2026-03-28 14:00:00'), (8, 8, 350000.00, 'VNPAY', 'SUCCESS', 'TXN_008', '2026-03-28 15:00:00'),
-(9, 9, 180000.00, 'CASH', 'SUCCESS', NULL, '2026-03-28 18:00:00'), (10, 10, 250000.00, 'MOMO', 'SUCCESS', 'TXN_010', '2026-03-28 16:00:00'),
-(11, 11, 160000.00, 'CASH', 'SUCCESS', NULL, '2026-03-28 09:30:00'), (12, 12, 120000.00, 'CASH', 'SUCCESS', NULL, '2026-03-28 13:30:00'),
-(13, 13, 480000.00, 'CARD', 'SUCCESS', 'TXN_013', '2026-03-28 18:30:00'), (14, 14, 220000.00, 'ZALOPAY', 'PENDING', NULL, NULL),
+(1, 1, 450000.00, 'MOMO', 'SUCCESS', 'TXN_001', '2026-03-28 10:00:00'), 
+(2, 2, 320000.00, 'VNPAY', 'SUCCESS', 'TXN_002', '2026-03-28 11:00:00'),
+(3, 3, 150000.00, 'CASH', 'SUCCESS', NULL, '2026-03-28 19:30:00'), 
+(4, 4, 280000.00, 'CARD', 'PENDING', NULL, NULL),
+(5, 5, 210000.00, 'ZALOPAY', 'SUCCESS', 'TXN_005', '2026-03-28 12:00:00'), 
+(6, 6, 110000.00, 'MOMO', 'FAILED', NULL, NULL),
+(7, 7, 520000.00, 'CARD', 'SUCCESS', 'TXN_007', '2026-03-28 14:00:00'), 
+(8, 8, 350000.00, 'VNPAY', 'SUCCESS', 'TXN_008', '2026-03-28 15:00:00'),
+(9, 9, 180000.00, 'CASH', 'SUCCESS', NULL, '2026-03-28 18:00:00'), 
+(10, 10, 250000.00, 'MOMO', 'SUCCESS', 'TXN_010', '2026-03-28 16:00:00'),
+(11, 11, 160000.00, 'CASH', 'SUCCESS', NULL, '2026-03-28 09:30:00'), 
+(12, 12, 120000.00, 'CASH', 'SUCCESS', NULL, '2026-03-28 13:30:00'),
+(13, 13, 480000.00, 'CARD', 'SUCCESS', 'TXN_013', '2026-03-28 18:30:00'), 
+(14, 14, 220000.00, 'ZALOPAY', 'PENDING', NULL, NULL),
 (15, 15, 135000.00, 'MOMO', 'SUCCESS', 'TXN_015', '2026-03-28 20:00:00');
 
 -- 20. Table: notifications

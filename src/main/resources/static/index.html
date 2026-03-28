@@ -484,22 +484,26 @@
 </footer>
 
 <script>
-    const MOVIES_SHOWING = [
-      { id:1, title:'Avengers: Secret Wars', genres:['Action','Sci-Fi'], rating:9.2, duration:'2h 48m', age:'c13', label:'hot', poster:'pg-1', emoji:'⚡', genre_keys:['action','scifi'] },
-      { id:2, title:'The Dark Knight Returns', genres:['Action','Drama'], rating:8.9, duration:'2h 32m', age:'c16', label:'new', poster:'pg-2', emoji:'🦇', genre_keys:['action','drama'] },
-      { id:3, title:'Jurassic World 4', genres:['Action','Sci-Fi'], rating:7.8, duration:'2h 10m', age:'c13', label:'hot', poster:'pg-3', emoji:'🦕', genre_keys:['action','scifi'] },
-      { id:4, title:'La La Land 2', genres:['Romance','Drama'], rating:8.5, duration:'1h 58m', age:'p', label:'', poster:'pg-4', emoji:'🎶', genre_keys:['romance','drama'] },
-      { id:5, title:'Midnight Horror', genres:['Horror'], rating:7.2, duration:'1h 45m', age:'c18', label:'', poster:'pg-5', emoji:'👻', genre_keys:['horror'] },
-      { id:6, title:'The Grand Comedy', genres:['Comedy'], rating:8.1, duration:'1h 50m', age:'p', label:'new', poster:'pg-6', emoji:'😂', genre_keys:['comedy'] },
-      { id:7, title:'Robot Warriors', genres:['Sci-Fi','Action'], rating:8.4, duration:'2h 15m', age:'c13', label:'hot', poster:'pg-7', emoji:'🤖', genre_keys:['scifi','action'] },
-      { id:8, title:'Ocean Dreams', genres:['Animation'], rating:9.0, duration:'1h 40m', age:'p', label:'new', poster:'pg-8', emoji:'🐋', genre_keys:['animation'] },
-    ];
-    const MOVIES_COMING = [
-      { id:9,  title:'Star Wars: Episode X', genres:['Sci-Fi','Action'], rating:null, duration:'2h 20m', age:'c13', releaseDate:'15/02/2025', poster:'pg-2', emoji:'🚀', genre_keys:['scifi','action'] },
-      { id:10, title:'Frozen 3', genres:['Animation','Family'], rating:null, duration:'1h 55m', age:'p', releaseDate:'28/02/2025', poster:'pg-8', emoji:'❄️', genre_keys:['animation'] },
-      { id:11, title:'Mission Impossible 9', genres:['Action','Thriller'], rating:null, duration:'2h 30m', age:'c16', releaseDate:'10/03/2025', poster:'pg-1', emoji:'💣', genre_keys:['action'] },
-      { id:12, title:'Romance in Tokyo', genres:['Romance'], rating:null, duration:'1h 45m', age:'c13', releaseDate:'20/03/2025', poster:'pg-4', emoji:'🌸', genre_keys:['romance'] },
-    ];
+    let MOVIES_SHOWING = [];
+    let MOVIES_COMING = [];
+
+    async function fetchMovies() {
+      try {
+        const resp = await fetch('/api/movies');
+        if (!resp.ok) throw new Error('Không thể tải dữ liệu phim');
+
+        const payload = await resp.json();
+        const movies = Array.isArray(payload?.data) ? payload.data : [];
+
+        MOVIES_SHOWING = movies.filter(m => m.status === 'NOW_SHOWING' || m.status === 'ACTIVE');
+        MOVIES_COMING = movies.filter(m => m.status === 'PRE_RELEASE' || m.status === 'COMING_SOON' || m.status === 'UPCOMING');
+      } catch (err) {
+        console.warn('Không thể gọi API movies, dùng trạng thái mặc định rỗng:', err);
+        MOVIES_SHOWING = [];
+        MOVIES_COMING = [];
+      }
+      render();
+    }
 
     let currentStatus = 'showing';
     let currentGenre = 'all';
@@ -597,7 +601,7 @@
     }
     setInterval(() => setHero((heroIdx + 1) % HEROES.length), 5000);
 
-    render();
+    fetchMovies();
 </script>
 </body>
 </html>

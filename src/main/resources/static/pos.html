@@ -304,39 +304,52 @@
 <script>
     // ──── DATA ────
     const SEAT_PRICE = { S:95000, V:150000, C:180000 };
-    const COMBOS = [
-      {id:1,name:'Combo 1 người',price:65000,emoji:'🍿'},
-      {id:2,name:'Combo đôi',price:115000,emoji:'💑'},
-      {id:3,name:'Mega Combo',price:145000,emoji:'🎉'},
-      {id:4,name:'Snack Pack',price:85000,emoji:'🌭'},
-    ];
-    const SHOWTIMES_TODAY = {
-      '28/01': [
-        {id:'s1',time:'10:30',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:35,total:80},
-        {id:'s2',time:'12:00',movie:'The Dark Knight',hall:'3D Hall 2',type:'3d',avail:12,total:60},
-        {id:'s3',time:'14:30',movie:'La La Land 2',hall:'2D Hall 1',type:'2d',avail:48,total:60},
-        {id:'s4',time:'16:00',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:5,total:80},
-        {id:'s5',time:'17:00',movie:'Robot Warriors',hall:'3D Hall 3',type:'3d',avail:30,total:60},
-        {id:'s6',time:'19:30',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:22,total:80},
-        {id:'s7',time:'20:00',movie:'Midnight Horror',hall:'3D Hall 2',type:'3d',avail:55,total:60},
-        {id:'s8',time:'22:00',movie:'The Dark Knight',hall:'3D Hall 3',type:'3d',avail:18,total:60},
-      ],
-      '29/01':[
-        {id:'s9',time:'11:00',movie:'Ocean Dreams',hall:'IMAX Hall 1',type:'imax',avail:62,total:80},
-        {id:'s10',time:'14:00',movie:'Jurassic World 4',hall:'3D Hall 2',type:'3d',avail:20,total:60},
-      ]
-    };
-    const BOOKED_SEATS = ['B3','B4','C2','C3','D5','D6','E1','F4','F5','G3','G4'];
-    const FAKE_BOOKINGS = {
-      'SC-A7B3C1': { code:'SC-A7B3C1', movie:'Avengers: Secret Wars', date:'28/01/2025', time:'19:30', hall:'IMAX Hall 1', seats:['F4','F5'], customer:'Nguyễn Văn A', total:300000, status:'CONFIRMED' },
-      'SC-9D2E4F': { code:'SC-9D2E4F', movie:'The Dark Knight Returns', date:'28/01/2025', time:'20:00', hall:'3D Hall 2', seats:['D3','D4'], customer:'Trần Thị B', total:190000, status:'CHECKED_IN' },
-      'SC-INVALID': null,
-    };
-    const RECENT_CHECKINS = [
-      { code:'SC-B1C2D3', name:'Lê Văn C', movie:'Avengers: Secret Wars', seats:'E3,E4', time:'19:28' },
-      { code:'SC-E4F5G6', name:'Phạm Thị D', movie:'Midnight Horror', seats:'B2', time:'19:25' },
-      { code:'SC-H7I8J9', name:'Hoàng Minh E', movie:'Avengers: Secret Wars', seats:'G5,G6', time:'19:20' },
-    ];
+    let COMBOS = [];
+    let SHOWTIMES_TODAY = {};
+    let BOOKED_SEATS = [];
+    const FAKE_BOOKINGS = {}; // Tạm thời giữ để kiểm thử nếu cần, backend nên cung cấp endpoint book/checkin.
+    let RECENT_CHECKINS = [];
+
+    async function initializePOSData() {
+      try {
+        const comboResp = await fetch('/api/combos');
+        const showtimeResp = await fetch('/api/showtimes');
+
+        if (comboResp.ok) {
+          const combosJson = await comboResp.json();
+          COMBOS = Array.isArray(combosJson?.data) ? combosJson.data : [];
+        }
+
+        if (showtimeResp.ok) {
+          const showtimeJson = await showtimeResp.json();
+          const shows = Array.isArray(showtimeJson?.data) ? showtimeJson.data : [];
+          SHOWTIMES_TODAY = shows.reduce((acc, s) => {
+            const dateKey = s.date || 'today';
+            if (!acc[dateKey]) acc[dateKey] = [];
+            acc[dateKey].push(s);
+            return acc;
+          }, {});
+          if (Object.keys(SHOWTIMES_TODAY).length === 0) {
+            SHOWTIMES_TODAY = {};
+          }
+        }
+
+        BOOKED_SEATS = [];
+        RECENT_CHECKINS = [];
+      selectedDates = Object.keys(SHOWTIMES_TODAY);
+      selDate = selectedDates.length > 0 ? selectedDates[0] : null;
+      selectedST = null;
+      posSeats = [];
+      comboQty = {};
+      payMethod = 'CASH';
+      custFound = null;
+    } catch (err) {
+      console.error('Lỗi tải dữ liệu POS:', err);
+    }
+    renderShowtimes();
+    renderComboPOS();
+    updateOrder();
+    }
 
     // ──── STATE ────
     let selectedST = null;
@@ -634,7 +647,7 @@
     }
 
     // ──── INIT ────
-    renderShowtimes(); renderComboPOS(); updateOrder();
+    initializePOSData();
 </script>
 </body>
 </html>

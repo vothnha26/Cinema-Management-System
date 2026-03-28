@@ -283,22 +283,9 @@
 </div>
 
 <script>
-    const TICKETS = [
-      { id:'SC-A7B3C1', movie:'Avengers: Secret Wars', date:'28/01/2025', time:'19:30', hall:'IMAX Hall 1', cinema:'Quận 1', seats:['F4','F5'], combos:'Combo đôi x1', total:415000, status:'CONFIRMED', poster:'pg-1', emoji:'⚡', points:41 },
-      { id:'SC-9D2E4F', movie:'The Dark Knight Returns', date:'22/01/2025', time:'21:00', hall:'3D Hall 2', cinema:'Thủ Đức', seats:['D3','D4','D5'], combos:'–', total:285000, status:'CHECKED_IN', poster:'pg-2', emoji:'🦇', points:28 },
-      { id:'SC-6G1H8I', movie:'Jurassic World 4', date:'15/01/2025', time:'15:30', hall:'2D Hall 1', cinema:'Gò Vấp', seats:['C2'], combos:'Combo 1 người x1', total:160000, status:'CHECKED_IN', poster:'pg-3', emoji:'🦕', points:16 },
-      { id:'SC-3J5K2L', movie:'La La Land 2', date:'08/01/2025', time:'14:00', hall:'3D Hall 3', cinema:'Quận 1', seats:['H7','H8'], combos:'Mega Combo x1', total:390000, status:'CHECKED_IN', poster:'pg-4', emoji:'🎶', points:39 },
-      { id:'SC-7M4N0O', movie:'Midnight Horror', date:'01/01/2025', time:'22:30', hall:'3D Hall 2', cinema:'Thủ Đức', seats:['B3'], combos:'Snack Pack x1', total:180000, status:'CANCELLED', poster:'pg-5', emoji:'👻', points:0 },
-    ];
-    const POINTS_HISTORY = [
-      { type:'earn', icon:'🎟', title:'Đặt vé – Avengers: Secret Wars', sub:'28/01/2025', amount:'+41 điểm' },
-      { type:'earn', icon:'🎟', title:'Đặt vé – The Dark Knight Returns', sub:'22/01/2025', amount:'+28 điểm' },
-      { type:'use',  icon:'🎁', title:'Sử dụng điểm – Giảm giá vé', sub:'18/01/2025', amount:'-100 điểm' },
-      { type:'earn', icon:'🎟', title:'Đặt vé – Jurassic World 4', sub:'15/01/2025', amount:'+16 điểm' },
-      { type:'earn', icon:'🎟', title:'Đặt vé – La La Land 2', sub:'08/01/2025', amount:'+39 điểm' },
-      { type:'earn', icon:'🏅', title:'Thưởng hạng Gold đầu tiên', sub:'05/01/2025', amount:'+200 điểm' },
-      { type:'earn', icon:'🎟', title:'Đặt vé – Midnight Horror', sub:'01/01/2025', amount:'+0 điểm (đã hủy)' },
-    ];
+    const TICKETS = [];
+    const POINTS_HISTORY = [];
+
 
     const STATUS_CLASS = {CONFIRMED:'status-confirmed',CHECKED_IN:'status-checked',CANCELLED:'status-cancelled',PENDING:'status-pending'};
     const STATUS_LABEL = {CONFIRMED:'✅ Đã xác nhận',CHECKED_IN:'🎬 Đã check-in',CANCELLED:'❌ Đã hủy',PENDING:'⏳ Chờ xử lý'};

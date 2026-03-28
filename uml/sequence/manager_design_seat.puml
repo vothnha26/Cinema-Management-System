@@ -12,20 +12,19 @@ Manager -> UI: Chọn nhiều ghế trên lưới Grid
 Manager -> UI: Chọn loại ghế (VIP/Couple/Hỏng)
 Manager -> UI: Nhấn "Lưu sơ đồ"
 
-UI -> Ctrl: PATCH /api/rooms/{id}/seats (List<SeatUpdateRequest>)
+UI -> Ctrl: PUT /api/rooms/{id}/layout (SeatBulkRequest)
 activate Ctrl
 
-Ctrl -> Svc: updateSeats(roomId, seatDataList)
+Ctrl -> Svc: updateSeats(roomId, request)
 activate Svc
 
-Svc -> DB: findAllByRoomIdAndRowCharAndColNum(...)
-Svc -> Svc: Cập nhật SeatType và Status cho từng Entity
+Svc -> Svc: Duyệt danh sách ghế cần cập nhật
 Svc -> DB: saveAll(updatedSeats)
 activate DB
 DB --> Svc: success
 deactivate DB
 
-Svc --> Ctrl: success
+Svc --> Ctrl: RoomResponse
 deactivate Svc
 
 Ctrl --> UI: 200 OK (Cập nhật thành công)

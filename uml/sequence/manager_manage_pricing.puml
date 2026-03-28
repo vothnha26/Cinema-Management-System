@@ -13,7 +13,7 @@ entity "SeatPriceRepository" as Repo
 Manager -> UI: Cập nhật đơn giá cho loại ghế/phòng
 UI -> Ctrl: PUT /api/pricing (SeatPriceRequest)
 activate Ctrl
-Ctrl -> Svc: updatePricing(request)
+Ctrl -> Svc: updateSeatPrice(request)
 Svc -> Repo: save(seatPrice)
 Svc --> Ctrl: 200 OK
 Ctrl --> UI: Thông báo thành công

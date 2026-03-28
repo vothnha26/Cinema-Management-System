@@ -355,29 +355,40 @@
 <script>
     // ──── DATA ────
     const SEAT_PRICE = { STANDARD: 95000, VIP: 150000, COUPLE: 180000 };
-    const COMBOS = [
-      { id:1, name:'Combo 1 người', desc:'1 bắp rang lớn + 1 nước L', price:65000, emoji:'🍿' },
-      { id:2, name:'Combo đôi', desc:'2 bắp rang lớn + 2 nước L', price:115000, emoji:'💑' },
-      { id:3, name:'Mega Combo', desc:'2 bắp rang XL + 2 nước L + 1 nachos', price:145000, emoji:'🎉' },
-      { id:4, name:'Snack Pack', desc:'1 nachos + 1 hotdog + 1 nước M', price:85000, emoji:'🌭' },
-    ];
-    const DATES = [
-      {label:'Hôm nay',day:'28/1'},{label:'Thứ 5',day:'29/1'},{label:'Thứ 6',day:'30/1'},
-      {label:'Thứ 7',day:'31/1'},{label:'CN',day:'1/2'},{label:'Thứ 2',day:'2/2'},
-    ];
-    const SHOWTIMES = [
-      { cinema:'StarCinema Quận 1', times:[
-        {time:'10:30',hall:'IMAX Hall 1',type:'imax'},{time:'13:15',hall:'IMAX Hall 1',type:'imax'},
-        {time:'16:00',hall:'3D Hall 2',type:'3d'},{time:'19:30',hall:'IMAX Hall 1',type:'imax'},
-        {time:'22:00',hall:'3D Hall 3',type:'3d'}
-      ]},
-      { cinema:'StarCinema Thủ Đức', times:[
-        {time:'11:00',hall:'2D Hall 1',type:'2d'},{time:'14:30',hall:'3D Hall 2',type:'3d'},
-        {time:'18:00',hall:'3D Hall 2',type:'3d'},{time:'21:15',hall:'2D Hall 1',type:'2d'}
-      ]},
-    ];
-    // Booked seats
-    const BOOKED = ['B3','B4','C2','C3','C4','D5','D6','E1','E2','F4','F5','F6','G3','G4'];
+    let COMBOS = [];
+    let DATES = [];
+    let SHOWTIMES = [];
+    let BOOKED = [];
+
+    async function initializeBookingFromAPI() {
+      try {
+        const comboResp = await fetch('/api/combos');
+        const showtimeResp = await fetch('/api/showtimes');
+
+        if (comboResp.ok) {
+          const combosJson = await comboResp.json();
+          COMBOS = Array.isArray(combosJson?.data) ? combosJson.data : [];
+        } else {
+          console.warn('Không lấy được combo từ API');
+        }
+
+        if (showtimeResp.ok) {
+          const showJson = await showtimeResp.json();
+          const showtimes = Array.isArray(showJson?.data) ? showJson.data : [];
+          SHOWTIMES = showtimes.map(s => ({ cinema: s.cinemaName || s.cinema, times: s.times || [] }));
+          DATES = Array.from(new Set(showtimes.map(s => s.date))).map(d => ({ label: d, day: d }));
+        } else {
+          console.warn('Không lấy được showtime từ API');
+        }
+
+        // Dùng danh sách ghế đã book nếu endpoint tương ứng được cập nhật sau.
+        BOOKED = [];
+      } catch (err) {
+        console.error('Lỗi khi lấy dữ liệu booking từ API:', err);
+      }
+      renderDates();
+      renderShowtimes();
+    }
 
     // ──── STATE ────
     let currentStep = 1;
@@ -629,8 +640,7 @@
     }
 
     // ──── INIT ────
-    renderDates();
-    renderShowtimes();
+    initializeBookingFromAPI();
     updateSummary();
 </script>
 </body>

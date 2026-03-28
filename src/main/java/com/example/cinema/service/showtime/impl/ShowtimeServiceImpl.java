@@ -100,18 +100,24 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     }
 
     private void validateShowtimeConflict(Long excludeId, Long roomId, LocalDateTime startTime, LocalDateTime endTime) {
-        LocalDateTime startOfDay = startTime.toLocalDate().atStartOfDay();
-        LocalDateTime endOfDay = startTime.toLocalDate().atTime(23, 59, 59);
+        // Mở rộng phạm vi tìm kiếm sang cả ngày hôm trước và hôm sau để xử lý suất xuyên đêm
+        LocalDateTime searchStart = startTime.toLocalDate().minusDays(1).atStartOfDay();
+        LocalDateTime searchEnd = startTime.toLocalDate().plusDays(1).atTime(23, 59, 59);
         
-        List<Showtime> existingShowtimes = showtimeRepository.findByRoomAndDate(roomId, startOfDay, endOfDay);
+        List<Showtime> existingShowtimes = showtimeRepository.findByRoomAndDate(roomId, searchStart, searchEnd);
 
         for (Showtime s : existingShowtimes) {
-            // Bỏ qua nếu là chính suất chiếu đang cập nhật
             if (excludeId != null && s.getId().equals(excludeId)) continue;
 
+            // Logic Overlap: [Start1, End1] giao [Start2, End2] nếu Start1 < End2 và End1 > Start2
             if (startTime.isBefore(s.getEndTime()) && endTime.isAfter(s.getStartTime())) {
-                throw new AppException("Xung đột lịch chiếu: Phòng đã có suất chiếu từ " + 
-                    s.getStartTime().toLocalTime() + " đến " + s.getEndTime().toLocalTime());
+                String movieTitle = (s.getMovie() != null) ? s.getMovie().getTitle() : "Phim khác";
+                throw new AppException(String.format(
+                    "XUNG ĐỘT LỊCH CHIẾU: Phòng này đã có suất chiếu phim '%s' từ %s đến %s (đã bao gồm thời gian dọn dẹp).",
+                    movieTitle,
+                    s.getStartTime().toLocalTime(),
+                    s.getEndTime().toLocalTime()
+                ));
             }
         }
     }
