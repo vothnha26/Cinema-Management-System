@@ -352,48 +352,79 @@
 
 </main>
 
+<script src="/js/api.js"></script>
 <script>
     // Set current date
     const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
     document.getElementById('currentDate').textContent = new Date().toLocaleDateString('vi-VN', options);
 
-    // Revenue Chart
-    const revCtx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(revCtx, {
-        type: 'line',
-        data: {
-            labels: ['14/05', '15/05', '16/05', '17/05', '18/05', '19/05', '20/05'],
-            datasets: [{
-                label: 'Doanh thu (triệu VNĐ)',
-                data: [28, 35, 32, 48, 65, 72, 42.5],
-                borderColor: '#E5133A',
-                backgroundColor: 'rgba(229,19,58,0.1)',
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#E5133A',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 5
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: {
-                    grid: { color: '#252A3D' },
-                    ticks: { color: '#7B82A0', font: { family: 'Outfit' } }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: '#7B82A0', font: { family: 'Outfit' } }
-                }
-            }
-        }
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboardData();
     });
 
-    // Genre Chart
+    async function loadDashboardData() {
+        const response = await api.get('/statistics/overview');
+        if (response.success) {
+            updateStats(response.data);
+            renderRevenueChart(response.data.revenueByMovie);
+        }
+    }
+
+    function updateStats(data) {
+        // Cập nhật thẻ Doanh thu
+        const revValue = document.querySelector('.stat-card .icon-revenue').parentElement.querySelector('.stat-value');
+        revValue.innerHTML = `${(data.totalRevenue / 1000000).toFixed(1)}M <span class="stat-trend trend-up">↑ thực</span>`;
+        
+        // Cập nhật thẻ Vé
+        const ticketValue = document.querySelector('.stat-card .icon-tickets').parentElement.querySelector('.stat-value');
+        ticketValue.innerHTML = `${data.totalTicketsSold.toLocaleString()} <span class="stat-trend trend-up">↑</span>`;
+
+        // Cập nhật thẻ Tỷ lệ lấp đầy (Dùng thay cho Thành viên mới trong Dashboard Manager)
+        const rateCard = document.querySelector('.stat-card .icon-members').parentElement;
+        rateCard.querySelector('.stat-icon').innerHTML = '<i class="bi bi-percent"></i>';
+        rateCard.querySelector('.stat-label').textContent = 'Tỷ lệ lấp đầy ghế';
+        rateCard.querySelector('.stat-value').innerHTML = `${data.averageOccupancyRate}%`;
+    }
+
+    function renderRevenueChart(revenueMap) {
+        const labels = Object.keys(revenueMap);
+        const values = Object.values(revenueMap).map(v => v / 1000); // Đổi sang k VNĐ
+
+        const revCtx = document.getElementById('revenueChart').getContext('2d');
+        if (window.myRevenueChart) window.myRevenueChart.destroy();
+        
+        window.myRevenueChart = new Chart(revCtx, {
+            type: 'bar', // Chuyển sang bar để xem doanh thu theo phim rõ hơn
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Doanh thu (k VNĐ)',
+                    data: values,
+                    backgroundColor: 'rgba(229,19,58,0.6)',
+                    borderColor: '#E5133A',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        grid: { color: '#252A3D' },
+                        ticks: { color: '#7B82A0', font: { family: 'Outfit' } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#7B82A0', font: { family: 'Outfit' } }
+                    }
+                }
+            }
+        });
+    }
+
+    // Giữ nguyên biểu đồ thể loại (Fake data hoặc tính toán từ Genre sau)
     const genCtx = document.getElementById('genreChart').getContext('2d');
     new Chart(genCtx, {
         type: 'doughnut',
