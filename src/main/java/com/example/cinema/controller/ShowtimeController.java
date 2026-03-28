@@ -31,6 +31,11 @@ public class ShowtimeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(showtimeService.createShowtime(request)));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ShowtimeResponse>> updateShowtime(@PathVariable Long id, @RequestBody @Valid ShowtimeRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(showtimeService.updateShowtime(id, request)));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteShowtime(@PathVariable Long id) {
         showtimeService.deleteShowtime(id);

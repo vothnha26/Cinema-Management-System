@@ -15,8 +15,7 @@
           --gradient: linear-gradient(135deg, #E5133A, #8B0020);
           --sidebar-width: 260px;
         }
-        * { box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; margin: 0; }
         
         /* ── SIDEBAR ── */
         .sidebar {
@@ -26,27 +25,27 @@
         }
         .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; }
         .brand span { color: var(--accent); }
+        .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .nav-item { margin-bottom: 8px; }
         .nav-link-admin {
           display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted);
-          text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500; margin-bottom: 8px;
+          text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500;
         }
+        .nav-link-admin i { font-size: 1.2rem; }
         .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
         .nav-link-admin.active { background: var(--gradient); color: #fff; }
 
+        .user-panel { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
+        .admin-profile { display: flex; align-items: center; gap: 12px; }
+        .admin-avatar {
+          width: 40px; height: 40px; border-radius: 10px; background: var(--gradient);
+          display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff;
+        }
+
         /* ── MAIN CONTENT ── */
-        .main-content { margin-left: var(--sidebar-width); padding: 40px; min-height: 100vh; }
+        .main-content { margin-left: var(--sidebar-width); padding: 40px; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
-
-        /* ── FILTERS ── */
-        .filter-bar { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 30px; }
-        .form-select-custom, .form-control-custom {
-            background: var(--surface); border: 1px solid var(--border); color: var(--text);
-            padding: 10px 16px; border-radius: 10px; font-size: 0.9rem;
-        }
-        .form-select-custom:focus, .form-control-custom:focus {
-            border-color: var(--accent); background: var(--surface); color: var(--text); outline: none; box-shadow: none;
-        }
 
         /* ── GRID SCHEDULE ── */
         .schedule-container { display: flex; flex-direction: column; gap: 24px; }
@@ -56,165 +55,96 @@
         .room-meta { font-size: 0.85rem; color: var(--text-muted); }
 
         .time-timeline { position: relative; padding: 40px 24px; overflow-x: auto; white-space: nowrap; min-height: 180px; display: flex; gap: 20px; align-items: center; }
-        .timeline-hour {
-            position: absolute; top: 10px; color: var(--text-muted); font-size: 0.75rem; font-weight: 600;
-            border-left: 1px dashed var(--border); height: calc(100% - 20px); padding-left: 8px;
-        }
-
+        
         .showtime-block {
             background: rgba(229,19,58,0.1); border: 1.5px solid var(--accent); border-radius: 12px;
-            padding: 12px 16px; min-width: 160px; position: relative; cursor: pointer;
+            padding: 12px 16px; min-width: 180px; position: relative; cursor: pointer;
             transition: all 0.2s;
         }
         .showtime-block:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); background: rgba(229,19,58,0.15); }
         .showtime-movie { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; display: block; overflow: hidden; text-overflow: ellipsis; }
         .showtime-time { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
         
-        .conflict-warning { border-color: #f5a623 !important; background: rgba(245,166,35,0.1) !important; }
-        .conflict-icon { color: var(--accent-gold); position: absolute; top: -10px; right: -10px; background: var(--card); border-radius: 50%; font-size: 1.2rem; }
-
         /* ── MODAL ── */
         .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
         .modal-header { border-bottom: 1px solid var(--border); padding: 24px; }
         .modal-footer { border-top: 1px solid var(--border); padding: 24px; }
         .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; }
+        .form-select-custom, .form-control-custom { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; }
+        .form-select-custom:focus, .form-control-custom:focus { background: var(--surface); color: var(--text); border-color: var(--accent); box-shadow: none; }
 
         .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; transition: opacity 0.2s; }
         .btn-add:hover { opacity: 0.9; color: #fff; }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { height: 8px; width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
     </style>
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
     <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-    <ul class="nav-menu list-unstyled">
-        <li><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li><a href="manage-movies.html" class="nav-link-admin"><i class="bi bi-film"></i> Quản lý phim</a></li>
-        <li><a href="manage-showtimes.html" class="nav-link-admin active"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
-        <li><a href="#" class="nav-link-admin"><i class="bi bi-ticket-perforated"></i> Quản lý vé</a></li>
-        <li><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
-        <li><a href="#" class="nav-link-admin"><i class="bi bi-gear"></i> Cài đặt</a></li>
+    <ul class="nav-menu">
+        <li class="nav-item"><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
+        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin"><i class="bi bi-film"></i> Quản lý phim</a></li>
+        <li class="nav-item"><a href="manage-showtimes.html" class="nav-link-admin active"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
+        <li class="nav-item"><a href="manage-rooms.html" class="nav-link-admin"><i class="bi bi-door-open"></i> Phòng chiếu</a></li>
+        <li class="nav-item"><a href="manage-combos.html" class="nav-link-admin"><i class="bi bi-cup-straw"></i> Combo & F&B</a></li>
+        <li class="nav-item"><a href="manage-pricing.html" class="nav-link-admin"><i class="bi bi-tags"></i> Bảng giá</a></li>
+        <li class="nav-item"><a href="manage-promotions.html" class="nav-link-admin"><i class="bi bi-percent"></i> Khuyến mãi</a></li>
+        <li class="nav-item"><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
     </ul>
+    <div class="user-panel">
+        <div class="admin-profile">
+            <div class="admin-avatar">AD</div>
+            <div>
+                <div style="font-size:0.9rem;font-weight:600">Manager</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">Quản lý hệ thống</div>
+            </div>
+            <a href="auth.html" class="ms-auto text-muted"><i class="bi bi-box-arrow-right"></i></a>
+        </div>
+    </div>
 </aside>
 
-<!-- MAIN CONTENT -->
 <main class="main-content">
     <div class="header-section">
-        <div>
-            <h1 class="page-title">Quản lý lịch chiếu</h1>
-            <p class="text-muted m-0">Sắp xếp và điều chỉnh lịch chiếu tại các phòng</p>
-        </div>
-        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addShowtimeModal">
-            <i class="bi bi-plus-lg me-2"></i> THÊM SUẤT CHIẾU
-        </button>
-    </div>
-
-    <!-- FILTERS -->
-    <div class="filter-bar">
-        <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label small fw-bold text-muted">Chọn Rạp</label>
-                <select class="form-select form-select-custom">
-                    <option>StarCinema Quận 1</option>
-                    <option>StarCinema Thủ Đức</option>
-                    <option>StarCinema Gò Vấp</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label small fw-bold text-muted">Chọn Ngày</label>
-                <input type="date" class="form-control form-control-custom" value="2024-05-20">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label small fw-bold text-muted">Phòng chiếu</label>
-                <select class="form-select form-select-custom">
-                    <option>Tất cả phòng</option>
-                    <option>Phòng 1 (Standard)</option>
-                    <option>Phòng 2 (IMAX)</option>
-                </select>
-            </div>
+        <h1 class="page-title">Quản lý suất chiếu</h1>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-info px-4 fw-bold" onclick="generateAISuggestions()" id="btnAI">
+                <i class="bi bi-robot"></i> Gợi ý AI
+            </button>
+            <button class="btn-add" onclick="openAddModal()">
+                <i class="bi bi-plus-lg"></i> Thêm suất chiếu
+            </button>
         </div>
     </div>
 
-    <!-- SCHEDULE LIST -->
-    <div class="schedule-container">
-        <!-- Room 1 -->
-        <div class="room-row">
-            <div class="room-header">
-                <div class="room-title">PHÒNG CHIẾU 1 <span class="badge bg-secondary ms-2" style="font-size:0.6rem">STANDARD</span></div>
-                <div class="room-meta">Sức chứa: 120 ghế | Trạng thái: <span class="text-success">Hoạt động</span></div>
-            </div>
-            <div class="time-timeline scroll-hide">
-                <div class="showtime-block">
-                    <span class="showtime-movie">Avengers: Secret Wars</span>
-                    <span class="showtime-time"><i class="bi bi-clock"></i> 09:00 - 11:48</span>
-                </div>
-                <div class="showtime-block">
-                    <span class="showtime-movie">The Dark Knight Returns</span>
-                    <span class="showtime-time"><i class="bi bi-clock"></i> 12:30 - 15:02</span>
-                </div>
-                <div class="showtime-block conflict-warning">
-                    <i class="bi bi-exclamation-triangle-fill conflict-icon"></i>
-                    <span class="showtime-movie">Jurassic World 4</span>
-                    <span class="showtime-time"><i class="bi bi-clock"></i> 15:00 - 17:10</span>
-                </div>
-                <div class="showtime-block">
-                    <span class="showtime-movie">Avengers: Secret Wars</span>
-                    <span class="showtime-time"><i class="bi bi-clock"></i> 18:00 - 20:48</span>
-                </div>
-                <div class="showtime-block">
-                    <span class="showtime-movie">Midnight Horror</span>
-                    <span class="showtime-time"><i class="bi bi-clock"></i> 21:30 - 23:15</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Room 2 -->
-        <div class="room-row">
-            <div class="room-header">
-                <div class="room-title">PHÒNG CHIẾU 2 <span class="badge bg-warning text-dark ms-2" style="font-size:0.6rem">IMAX LASER</span></div>
-                <div class="room-meta">Sức chứa: 250 ghế | Trạng thái: <span class="text-success">Hoạt động</span></div>
-            </div>
-            <div class="time-timeline">
-                <div class="showtime-block" style="border-color:var(--accent-gold); background:rgba(245,166,35,0.05)">
-                    <span class="showtime-movie">Avengers: Secret Wars</span>
-                    <span class="showtime-time"><i class="bi bi-clock"></i> 13:00 - 15:48</span>
-                </div>
-                <div class="showtime-block" style="border-color:var(--accent-gold); background:rgba(245,166,35,0.05)">
-                    <span class="showtime-movie">Avengers: Secret Wars</span>
-                    <span class="showtime-time"><i class="bi bi-clock"></i> 19:30 - 22:18</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- CONFLICT ALERT UI -->
-    <div class="mt-4 p-3 rounded-3" style="background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.2)">
-        <div class="d-flex align-items-center gap-3">
-            <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:1.5rem"></i>
+    <div id="aiPreviewBanner" class="alert alert-info border-info mb-4 d-none" style="background: rgba(13,202,240,0.1); color: #0dcaf0; border-radius: 12px;">
+        <div class="d-flex justify-content-between align-items-center">
             <div>
-                <div class="fw-bold text-warning">Cảnh báo trùng lịch chiếu</div>
-                <div class="small text-muted">Phòng 1: Suất chiếu "Jurassic World 4" (15:00) bị trùng với thời gian dọn dẹp của suất trước đó.</div>
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong>Chế độ Xem trước AI:</strong> Hệ thống đã tự động phân bổ lịch chiếu tối ưu dựa trên xu hướng và độ ưu tiên.
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-info" onclick="cancelAI()">Hủy bỏ</button>
+                <button class="btn btn-sm btn-info text-dark fw-bold" onclick="applyAI()">Áp dụng chính thức</button>
             </div>
         </div>
+    </div>
+
+    <div class="schedule-container">
+        <!-- Rendered by JS -->
     </div>
 </main>
 
-<!-- ADD SHOWTIME MODAL -->
-<div class="modal fade" id="addShowtimeModal" tabindex="-1" aria-hidden="true">
+<!-- Modal Suất Chiếu -->
+<div class="modal fade" id="addShowtimeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">THÊM SUẤT CHIẾU MỚI</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="modalTitle">Thiết lập suất chiếu</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <form id="showtimeForm">
+                    <input type="hidden" id="showtimeId">
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Phim</label>
                         <select id="movieId" class="form-select form-select-custom" required>
@@ -241,7 +171,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="saveShowtime()">XÁC NHẬN</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" id="btnSubmit" onclick="saveShowtime()">XÁC NHẬN</button>
             </div>
         </div>
     </div>
@@ -253,33 +183,25 @@
     let movies = [];
     let rooms = [];
     let showtimes = [];
+    const showtimeModal = new bootstrap.Modal(document.getElementById('addShowtimeModal'));
 
-    document.addEventListener('DOMContentLoaded', () => {
-        loadData();
-    });
+    document.addEventListener('DOMContentLoaded', loadData);
 
     async function loadData() {
         const [movieRes, roomRes, showRes] = await Promise.all([
-            api.get('/movies'),
-            api.get('/rooms'),
-            api.get('/showtimes')
+            api.get('/movies'), api.get('/rooms'), api.get('/showtimes')
         ]);
-
         if (movieRes.success) movies = movieRes.data;
         if (roomRes.success) rooms = roomRes.data;
         if (showRes.success) showtimes = showRes.data;
-
         populateSelects();
         renderSchedule();
     }
 
     function populateSelects() {
-        const movieSelect = document.getElementById('movieId');
-        movieSelect.innerHTML = '<option value="">Chọn phim...</option>' + 
+        document.getElementById('movieId').innerHTML = '<option value="">Chọn phim...</option>' + 
             movies.map(m => `<option value="${m.id}">${m.title} (${m.duration}p)</option>`).join('');
-
-        const roomSelect = document.getElementById('roomId');
-        roomSelect.innerHTML = '<option value="">Chọn phòng...</option>' + 
+        document.getElementById('roomId').innerHTML = '<option value="">Chọn phòng...</option>' + 
             rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
     }
 
@@ -289,67 +211,104 @@
             container.innerHTML = '<div class="text-center p-5 text-muted">Chưa có dữ liệu phòng chiếu</div>';
             return;
         }
-
         container.innerHTML = rooms.map(room => {
             const roomShowtimes = showtimes.filter(s => s.roomId === room.id);
             return `
                 <div class="room-row">
                     <div class="room-header">
                         <div class="room-title">${room.name.toUpperCase()} <span class="badge bg-secondary ms-2" style="font-size:0.6rem">${room.type}</span></div>
-                        <div class="room-meta">Sức chứa: ${room.capacity} ghế | Trạng thái: <span class="text-success">Hoạt động</span></div>
+                        <div class="room-meta">Sức chứa: ${room.capacity} ghế</div>
                     </div>
                     <div class="time-timeline">
                         ${roomShowtimes.length > 0 ? roomShowtimes.map(s => {
                             const start = new Date(s.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                             const end = new Date(s.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                             return `
-                                <div class="showtime-block">
+                                <div class="showtime-block" onclick="editShowtime(${s.id})">
                                     <span class="showtime-movie">${s.movieTitle}</span>
                                     <span class="showtime-time"><i class="bi bi-clock"></i> ${start} - ${end}</span>
-                                    <button class="btn btn-sm text-danger p-0 position-absolute top-0 end-0 me-2 mt-1" onclick="deleteShowtime(${s.id})">
+                                    <button class="btn btn-sm text-danger p-0 position-absolute top-0 end-0 me-2 mt-1" onclick="event.stopPropagation(); deleteShowtime(${s.id})">
                                         <i class="bi bi-x-circle"></i>
                                     </button>
                                 </div>
                             `;
-                        }).join('') : '<div class="text-muted small ps-4">Chưa có suất chiếu nào trong ngày</div>'}
+                        }).join('') : '<div class="text-muted small ps-4">Chưa có suất chiếu nào</div>'}
                     </div>
                 </div>
             `;
         }).join('');
     }
 
+    function editShowtime(id) {
+        const s = showtimes.find(st => st.id === id);
+        if (!s) return;
+        document.getElementById('showtimeId').value = s.id;
+        document.getElementById('movieId').value = s.movieId;
+        document.getElementById('roomId').value = s.roomId;
+        const dt = new Date(s.startTime);
+        document.getElementById('showDate').value = dt.toISOString().split('T')[0];
+        document.getElementById('showTime').value = dt.toTimeString().slice(0,5);
+        document.getElementById('modalTitle').textContent = 'Chỉnh sửa suất chiếu';
+        showtimeModal.show();
+    }
+
     async function saveShowtime() {
-        const movieId = document.getElementById('movieId').value;
-        const roomId = document.getElementById('roomId').value;
-        const showDate = document.getElementById('showDate').value;
-        const showTime = document.getElementById('showTime').value;
-
-        if (!movieId || !roomId || !showDate || !showTime) {
-            alert('Vui lòng điền đầy đủ thông tin');
-            return;
-        }
-
+        const id = document.getElementById('showtimeId').value;
         const data = {
-            movieId: parseInt(movieId),
-            roomId: parseInt(roomId),
-            startTime: `${showDate}T${showTime}:00`
+            movieId: parseInt(document.getElementById('movieId').value),
+            roomId: parseInt(document.getElementById('roomId').value),
+            startTime: `${document.getElementById('showDate').value}T${document.getElementById('showTime').value}:00`
         };
-
-        const response = await api.post('/showtimes', data);
+        const response = id ? await api.put(`/showtimes/${id}`, data) : await api.post('/showtimes', data);
         if (response.success) {
-            alert('Thêm suất chiếu thành công!');
-            bootstrap.Modal.getInstance(document.getElementById('addShowtimeModal')).hide();
+            showtimeModal.hide();
             loadData();
         } else {
-            // Hiển thị lỗi xung đột hoặc các lỗi khác từ Backend
             alert('LỖI: ' + response.message);
         }
     }
 
     async function deleteShowtime(id) {
-        if (confirm('Bạn có chắc chắn muốn xóa suất chiếu này?')) {
+        if (confirm('Xóa suất chiếu này?')) {
             const response = await api.delete(`/showtimes/${id}`);
             if (response.success) loadData();
+        }
+    }
+
+    let aiSuggestions = [];
+
+    async function generateAISuggestions() {
+        const targetDate = document.getElementById('showDate').value;
+        if (!targetDate) {
+            alert('Vui lòng chọn ngày trước khi yêu cầu AI gợi ý!');
+            return;
+        }
+
+        const response = await api.post(`/scheduling/suggest?date=${targetDate}`);
+        if (response.success) {
+            aiSuggestions = response.data;
+            showtimes = aiSuggestions; // Tạm thời ghi đè để preview
+            renderSchedule();
+            document.getElementById('aiPreviewBanner').classList.remove('d-none');
+            document.getElementById('btnAI').disabled = true;
+        }
+    }
+
+    function cancelAI() {
+        document.getElementById('aiPreviewBanner').classList.add('d-none');
+        document.getElementById('btnAI').disabled = false;
+        loadData(); // Load lại dữ liệu thật từ DB
+    }
+
+    async function applyAI() {
+        if (confirm('Bạn có chắc chắn muốn áp dụng toàn bộ lịch chiếu AI vừa gợi ý?')) {
+            const response = await api.post('/scheduling/apply', aiSuggestions);
+            if (response.success) {
+                alert('Đã áp dụng lịch chiếu AI thành công!');
+                cancelAI();
+            } else {
+                alert('Lỗi: ' + response.message);
+            }
         }
     }
 </script>

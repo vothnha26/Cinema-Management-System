@@ -11,9 +11,10 @@ public class MovieResponse {
     private Integer duration;
     private LocalDate releaseDate;
     private MovieStatus status;
-    private String rating;
+    private com.example.cinema.model.enums.AgeRating ageRating;
     private String posterUrl;
     private String trailerUrl;
+    private Integer priorityLevel;
     private Set<GenreResponse> genres;
     private Set<ActorResponse> actors;
     private Set<DirectorResponse> directors;
@@ -49,14 +50,22 @@ public class MovieResponse {
     public MovieStatus getStatus() { return status; }
     public void setStatus(MovieStatus status) { this.status = status; }
 
-    public String getRating() { return rating; }
-    public void setRating(String rating) { this.rating = rating; }
+    public com.example.cinema.model.enums.AgeRating getAgeRating() { return ageRating; }
+    public void setAgeRating(com.example.cinema.model.enums.AgeRating ageRating) { this.ageRating = ageRating; }
+
+    public String getRating() { return ageRating != null ? ageRating.name() : null; }
+    public void setRating(String rating) { 
+        if (rating != null) this.ageRating = com.example.cinema.model.enums.AgeRating.valueOf(rating);
+    }
 
     public String getPosterUrl() { return posterUrl; }
     public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
 
     public String getTrailerUrl() { return trailerUrl; }
     public void setTrailerUrl(String trailerUrl) { this.trailerUrl = trailerUrl; }
+
+    public Integer getPriorityLevel() { return priorityLevel; }
+    public void setPriorityLevel(Integer priorityLevel) { this.priorityLevel = priorityLevel; }
 
     public Set<GenreResponse> getGenres() { return genres; }
     public void setGenres(Set<GenreResponse> genres) { this.genres = genres; }

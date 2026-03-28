@@ -7,5 +7,6 @@ import java.util.List;
 public interface ShowtimeService {
     List<ShowtimeResponse> getAllShowtimes();
     ShowtimeResponse createShowtime(ShowtimeRequest request);
+    ShowtimeResponse updateShowtime(Long id, ShowtimeRequest request);
     void deleteShowtime(Long id);
 }

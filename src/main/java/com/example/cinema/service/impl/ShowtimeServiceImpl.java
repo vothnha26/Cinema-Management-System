@@ -54,14 +54,11 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng"));
 
-        // 1. Tính toán endTime dựa trên thời lượng phim + dọn dẹp
         LocalDateTime startTime = request.getStartTime();
         LocalDateTime endTime = startTime.plusMinutes(movie.getDuration() + CLEANING_TIME_MINUTES);
 
-        // 2. Kiểm tra xung đột phòng chiếu
-        validateShowtimeConflict(room.getId(), startTime, endTime);
+        validateShowtimeConflict(null, room.getId(), startTime, endTime);
 
-        // 3. Tạo mới
         Showtime showtime = new Showtime();
         showtime.setMovie(movie);
         showtime.setRoom(room);
@@ -73,13 +70,42 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         return modelMapper.map(saved, ShowtimeResponse.class);
     }
 
-    private void validateShowtimeConflict(Long roomId, LocalDateTime startTime, LocalDateTime endTime) {
+    @Override
+    @Transactional
+    public ShowtimeResponse updateShowtime(Long id, ShowtimeRequest request) {
+        Showtime showtime = showtimeRepository.findById(id)
+                .orElseThrow(() -> new AppException("Không tìm thấy suất chiếu"));
+        
+        Movie movie = movieRepository.findById(request.getMovieId())
+                .orElseThrow(() -> new AppException("Không tìm thấy phim"));
+        Room room = roomRepository.findById(request.getRoomId())
+                .orElseThrow(() -> new AppException("Không tìm thấy phòng"));
+
+        LocalDateTime startTime = request.getStartTime();
+        LocalDateTime endTime = startTime.plusMinutes(movie.getDuration() + CLEANING_TIME_MINUTES);
+
+        // Kiểm tra xung đột, loại trừ chính nó
+        validateShowtimeConflict(id, room.getId(), startTime, endTime);
+
+        showtime.setMovie(movie);
+        showtime.setRoom(room);
+        showtime.setStartTime(startTime);
+        showtime.setEndTime(endTime);
+
+        Showtime updated = showtimeRepository.save(showtime);
+        return modelMapper.map(updated, ShowtimeResponse.class);
+    }
+
+    private void validateShowtimeConflict(Long excludeId, Long roomId, LocalDateTime startTime, LocalDateTime endTime) {
         LocalDateTime startOfDay = startTime.toLocalDate().atStartOfDay();
         LocalDateTime endOfDay = startTime.toLocalDate().atTime(23, 59, 59);
         
         List<Showtime> existingShowtimes = showtimeRepository.findByRoomAndDate(roomId, startOfDay, endOfDay);
 
         for (Showtime s : existingShowtimes) {
+            // Bỏ qua nếu là chính suất chiếu đang cập nhật
+            if (excludeId != null && s.getId().equals(excludeId)) continue;
+
             if (startTime.isBefore(s.getEndTime()) && endTime.isAfter(s.getStartTime())) {
                 throw new AppException("Xung đột lịch chiếu: Phòng đã có suất chiếu từ " + 
                     s.getStartTime().toLocalTime() + " đến " + s.getEndTime().toLocalTime());

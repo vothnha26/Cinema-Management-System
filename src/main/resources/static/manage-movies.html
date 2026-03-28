@@ -201,11 +201,13 @@
     <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
     <ul class="nav-menu">
         <li class="nav-item"><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin active"><i class="bi bi-film"></i> Quản lý phim</a></li>
+        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin active"><i class="bi bi-film"></i> Phim</a></li>
         <li class="nav-item"><a href="manage-showtimes.html" class="nav-link-admin"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
-        <li class="nav-item"><a href="#" class="nav-link-admin"><i class="bi bi-ticket-perforated"></i> Quản lý vé</a></li>
+        <li class="nav-item"><a href="manage-rooms.html" class="nav-link-admin"><i class="bi bi-door-open"></i> Phòng chiếu</a></li>
+        <li class="nav-item"><a href="manage-combos.html" class="nav-link-admin"><i class="bi bi-cup-straw"></i> Combo & F&B</a></li>
+        <li class="nav-item"><a href="manage-pricing.html" class="nav-link-admin"><i class="bi bi-tags"></i> Bảng giá</a></li>
+        <li class="nav-item"><a href="manage-promotions.html" class="nav-link-admin"><i class="bi bi-percent"></i> Khuyến mãi</a></li>
         <li class="nav-item"><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
-        <li class="nav-item"><a href="#" class="nav-link-admin"><i class="bi bi-gear"></i> Cài đặt</a></li>
     </ul>
     <div class="user-panel">
         <div class="admin-profile">
@@ -214,7 +216,7 @@
                 <div style="font-size:0.9rem;font-weight:600">Admin User</div>
                 <div style="font-size:0.75rem;color:var(--text-muted)">Quản trị viên</div>
             </div>
-            <a href="#" class="ms-auto text-muted"><i class="bi bi-box-arrow-right"></i></a>
+            <a href="auth.html" class="ms-auto text-muted"><i class="bi bi-box-arrow-right"></i></a>
         </div>
     </div>
 </aside>
@@ -377,9 +379,16 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Đánh giá</label>
-                                    <input type="text" id="rating" class="form-control" placeholder="Ví dụ: 9.2">
+                                    <label class="form-label">Nhãn độ tuổi</label>
+                                    <select id="rating" class="form-select">
+                                        <option value="P">P - Mọi độ tuổi</option>
+                                        <option value="K">K - Dưới 13 (giám hộ)</option>
+                                        <option value="T13">T13 - Trên 13 tuổi</option>
+                                        <option value="T16">T16 - Trên 16 tuổi</option>
+                                        <option value="T18">T18 - Trên 18 tuổi</option>
+                                    </select>
                                 </div>
+
                                 <div class="col-md-6">
                                     <label class="form-label">Trailer URL</label>
                                     <input type="text" id="trailerUrl" class="form-control" placeholder="https://youtube.com/...">

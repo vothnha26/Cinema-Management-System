@@ -1,0 +1,45 @@
+@startuml Manager AI Scheduling
+title Sequence Diagram: Gợi ý lịch chiếu thông minh (Task 9)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-showtimes.html (AI Mode)" as UI
+control "SchedulingController" as Ctrl
+entity "SchedulingService" as Svc
+entity "BuzzAnalysisService" as BuzzSvc
+entity "AnalyticsService" as AnalyticsSvc
+database "Database" as DB
+
+== Khởi tạo gợi ý lịch chiếu AI ==
+Manager -> UI: Nhấn nút "Gợi ý lịch chiếu AI"
+UI -> Ctrl: POST /api/scheduling/suggest (targetDate)
+activate Ctrl
+
+Ctrl -> Svc: generateAIPlan(targetDate)
+activate Svc
+
+Svc -> BuzzSvc: getExternalBuzzScores()
+BuzzSvc -> BuzzSvc: Scrape News/Reviews (Simulated)
+BuzzSvc --> Svc: Map<MovieId, BuzzScore>
+
+Svc -> AnalyticsSvc: getInternalPerformance()
+AnalyticsSvc -> DB: Query Revenue & Bookings
+DB --> AnalyticsSvc: Stats
+AnalyticsSvc --> Svc: Map<MovieId, InternalScore>
+
+Svc -> Svc: Calculate Final Priority Score \n(Manual + Buzz + Internal)
+
+Svc -> Svc: Run Scheduling Algorithm \n(70/30 Prime Time, Staggered Starts)
+
+Svc --> Ctrl: List<ShowtimeDraftResponse>
+deactivate Svc
+
+Ctrl --> UI: 200 OK (Bản dự thảo lịch chiếu)
+deactivate Ctrl
+
+UI -> Manager: Hiển thị bản Preview trên Timeline
+Manager -> UI: Điều chỉnh & Nhấn "Áp dụng chính thức"
+UI -> Ctrl: POST /api/scheduling/apply (draftIds)
+Ctrl -> DB: bulkSave(showtimes)
+Ctrl --> UI: Success
+@enduml
