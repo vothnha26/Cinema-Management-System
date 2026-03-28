@@ -22,19 +22,27 @@ public class Combo {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "stock_quantity", nullable = false)
+    private Integer stockQuantity = 0;
+
     @Column(name = "is_active")
     private Boolean isActive = true;
 
     public Combo() {}
 
-    public Combo(Long id, String name, String description, BigDecimal price, String imageUrl, Boolean isActive) {
+    public Combo(Long id, String name, String description, BigDecimal price, String imageUrl, Integer stockQuantity, Boolean isActive) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.price = price;
         this.imageUrl = imageUrl;
+        this.stockQuantity = stockQuantity;
         this.isActive = isActive;
     }
+
+    // ... getters/setters ...
+    public Integer getStockQuantity() { return stockQuantity; }
+    public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
 
     public Long getId() {
         return id;

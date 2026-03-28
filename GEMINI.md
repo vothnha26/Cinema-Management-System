@@ -3,7 +3,7 @@
 ## 1. Kiến trúc & Nguyên tắc cốt lõi (Bắt buộc)
 - **SOLID Absolute Compliance:** Mọi dòng code viết ra phải được đối soát với 5 nguyên tắc SOLID.
     - *Single Responsibility (SRP):* Tách biệt logic nghiệp vụ, mapping, và validation.
-    - *Open/Closed (OCP):* **Bắt buộc** áp dụng Design Patterns (Strategy, Factory, Template Method) thay vì dùng logic rẽ nhánh `if-else`/`switch-case` khi xử lý các loại (Types/Enums) hoặc quy tắc thay đổi.
+    - *Open/Closed (OCP):* **Bắt buộc** nghiên cứu và áp dụng các mẫu thiết kế (Design Patterns) phù hợp để thay thế cho logic rẽ nhánh `if-else` hoặc `switch-case` khi xử lý các loại (Types/Enums) hoặc các quy tắc nghiệp vụ dễ thay đổi. Mục tiêu là để hệ thống có thể mở rộng tính năng mới mà không cần sửa đổi mã nguồn hiện có.
     - *Liskov Substitution (LSP) & Interface Segregation (ISP):* Thiết kế Interface tinh gọn, đảm bảo tính kế thừa đúng đắn.
     - *Dependency Inversion (DIP):* Chỉ phụ thuộc vào Abstraction, luôn inject qua Constructor.
 

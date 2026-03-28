@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Combo – StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bg: #0f172a; --card: #1e293b; --accent: #e5133a; --text: #f8fafc; --text-muted: #94a3b8; --border: #334155;
+        }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; }
+        .header-section { padding: 40px 0; background: linear-gradient(to bottom, #1e293b, #0f172a); border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+        .combo-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: all 0.3s; position: relative; }
+        .combo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .combo-img { width: 100%; height: 180px; object-fit: cover; background: #334155; }
+        .combo-body { padding: 20px; }
+        .combo-price { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
+        .stock-badge { position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; }
+        .form-control-custom { background: #0f172a; border: 1px solid var(--border); color: white; }
+        .form-control-custom:focus { background: #0f172a; color: white; border-color: var(--accent); box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<div class="header-section">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="fw-bold mb-1">Quản lý Combo & F&B</h1>
+            <p class="text-muted mb-0">Tạo mới và cập nhật số lượng tồn kho đồ ăn thức uống</p>
+        </div>
+        <button class="btn-add" onclick="openAddModal()">
+            <i class="bi bi-plus-lg"></i> Thêm Combo mới
+        </button>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4" id="comboList">
+        <!-- Rendered by JS -->
+    </div>
+</div>
+
+<!-- Modal Combo -->
+<div class="modal fade" id="comboModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold" id="modalTitle">Thiết lập Combo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="comboForm">
+                    <input type="hidden" id="comboId">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Tên Combo</label>
+                        <input type="text" id="name" class="form-control form-control-custom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Mô tả</label>
+                        <textarea id="description" class="form-control form-control-custom" rows="2"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label small text-muted">Giá bán (VNĐ)</label>
+                            <input type="number" id="price" class="form-control form-control-custom" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label small text-muted">Số lượng kho</label>
+                            <input type="number" id="stockQuantity" class="form-control form-control-custom" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="saveCombo()">LƯU THÔNG TIN</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const comboModal = new bootstrap.Modal(document.getElementById('comboModal'));
+
+    document.addEventListener('DOMContentLoaded', loadCombos);
+
+    async function loadCombos() {
+        const response = await api.get('/combos');
+        if (response.success) {
+            renderCombos(response.data);
+        }
+    }
+
+    function renderCombos(combos) {
+        const container = document.getElementById('comboList');
+        if (combos.length === 0) {
+            container.innerHTML = '<div class="text-center p-5 text-muted">Chưa có combo nào được tạo</div>';
+            return;
+        }
+
+        container.innerHTML = combos.map(c => `
+            <div class="col-md-4 col-lg-3">
+                <div class="combo-card">
+                    <div class="stock-badge">Kho: ${c.stockQuantity}</div>
+                    <img src="${c.imageUrl || 'https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?q=80&w=500'}" class="combo-img" alt="${c.name}">
+                    <div class="combo-body">
+                        <h5 class="fw-bold mb-1">${c.name}</h5>
+                        <p class="small text-muted mb-3">${c.description || 'Không có mô tả'}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="combo-price">${new Intl.NumberFormat('vi-VN').format(c.price)} ₫</div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-light" onclick="editCombo(${c.id})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCombo(${c.id})"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
+                        <div class="mt-3 d-flex gap-2">
+                            <button class="btn btn-sm btn-secondary w-100" onclick="updateStock(${c.id}, 10)">+10 Kho</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openAddModal() {
+        document.getElementById('comboForm').reset();
+        document.getElementById('comboId').value = '';
+        document.getElementById('modalTitle').textContent = 'Thêm Combo mới';
+        comboModal.show();
+    }
+
+    async function editCombo(id) {
+        const response = await api.get('/combos'); // Hoặc API getById nếu có
+        const combo = response.data.find(c => c.id === id);
+        if (combo) {
+            document.getElementById('comboId').value = combo.id;
+            document.getElementById('name').value = combo.name;
+            document.getElementById('description').value = combo.description;
+            document.getElementById('price').value = combo.price;
+            document.getElementById('stockQuantity').value = combo.stockQuantity;
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa Combo';
+            comboModal.show();
+        }
+    }
+
+    async function saveCombo() {
+        const id = document.getElementById('comboId').value;
+        const data = {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+            price: parseFloat(document.getElementById('price').value),
+            stockQuantity: parseInt(document.getElementById('stockQuantity').value)
+        };
+
+        const response = id ? await api.put(`/combos/${id}`, data) : await api.post('/combos', data);
+        if (response.success) {
+            comboModal.hide();
+            loadCombos();
+        } else {
+            alert('Lỗi: ' + response.message);
+        }
+    }
+
+    async function updateStock(id, quantity) {
+        const response = await api.patch(`/combos/${id}/stock?quantity=${quantity}`);
+        if (response.success) loadCombos();
+    }
+
+    async function deleteCombo(id) {
+        if (confirm('Xóa combo này?')) {
+            const response = await api.delete(`/combos/${id}`);
+            if (response.success) loadCombos();
+        }
+    }
+</script>
+</body>
+</html>
