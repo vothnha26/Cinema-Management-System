@@ -47,23 +47,50 @@
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
-        /* ── GRID SCHEDULE ── */
-        .schedule-container { display: flex; flex-direction: column; gap: 24px; }
-        .room-row { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-        .room-header { background: var(--surface); padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .room-title { font-weight: 700; font-size: 1.1rem; color: var(--accent-gold); }
-        .room-meta { font-size: 0.85rem; color: var(--text-muted); }
+        /* ── TIMELINE GRID ── */
+        .timeline-container { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+        .timeline-header { 
+            display: flex; margin-left: 180px; background: var(--card); border-bottom: 1px solid var(--border);
+            height: 50px; align-items: center; position: relative;
+        }
+        .time-marker { 
+            position: absolute; font-size: 0.75rem; color: var(--text-muted); transform: translateX(-50%);
+            border-left: 1px dashed rgba(255,255,255,0.1); height: 100%; padding-left: 4px; padding-top: 15px;
+        }
 
-        .time-timeline { position: relative; padding: 40px 24px; overflow-x: auto; white-space: nowrap; min-height: 180px; display: flex; gap: 20px; align-items: center; }
+        .schedule-container { display: flex; flex-direction: column; }
+        .room-row { display: flex; border-bottom: 1px solid var(--border); min-height: 120px; }
+        .room-info { 
+            width: 180px; padding: 20px; background: var(--surface); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; justify-content: center; flex-shrink: 0;
+        }
+        .room-title { font-weight: 700; color: var(--accent-gold); font-size: 0.95rem; margin-bottom: 4px; }
+        .room-meta { font-size: 0.75rem; color: var(--text-muted); }
+
+        .timeline-track { 
+            flex-grow: 1; position: relative; background: repeating-linear-gradient(to right, transparent, transparent calc(100% / 18 - 1px), rgba(255,255,255,0.03) calc(100% / 18));
+            padding: 20px 0; overflow-x: hidden;
+        }
         
         .showtime-block {
-            background: rgba(229,19,58,0.1); border: 1.5px solid var(--accent); border-radius: 12px;
-            padding: 12px 16px; min-width: 180px; position: relative; cursor: pointer;
-            transition: all 0.2s;
+            position: absolute; height: 80px; border-radius: 12px; border-left: 4px solid var(--accent);
+            padding: 10px 15px; cursor: pointer; transition: all 0.2s; overflow: hidden;
+            background: linear-gradient(135deg, rgba(229,19,58,0.2), rgba(139,0,32,0.1));
+            backdrop-filter: blur(8px);
         }
-        .showtime-block:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); background: rgba(229,19,58,0.15); }
-        .showtime-movie { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; display: block; overflow: hidden; text-overflow: ellipsis; }
-        .showtime-time { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+        .showtime-block:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10; border-color: #ff2d55; }
+        .showtime-movie { font-weight: 700; font-size: 0.85rem; display: block; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .showtime-time { font-size: 0.7rem; color: var(--text-muted); margin-top: 4px; display: block; }
+        
+        .cleaning-zone {
+            position: absolute; height: 80px; background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.03) 5px, rgba(255,255,255,0.03) 10px);
+            border-radius: 0 12px 12px 0; pointer-events: none;
+        }
+
+        /* Status Colors */
+        .status-published { border-left-color: #00c853; background: linear-gradient(135deg, rgba(0,200,83,0.15), rgba(0,100,40,0.1)); }
+        .status-draft { border-left-color: #0dcaf0; background: linear-gradient(135deg, rgba(13,202,240,0.15), rgba(0,123,150,0.1)); }
+        .status-soldout { border-left-color: #ffab00; background: linear-gradient(135deg, rgba(255,171,0,0.15), rgba(200,100,0,0.1)); }
         
         /* ── MODAL ── */
         .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
@@ -134,8 +161,13 @@
         </div>
     </div>
 
-    <div class="schedule-container">
-        <!-- Rendered by JS -->
+    <div class="timeline-container">
+        <div class="timeline-header" id="timelineHeader">
+            <!-- Time markers generated by JS -->
+        </div>
+        <div class="schedule-container">
+            <!-- Rendered by JS -->
+        </div>
     </div>
 </main>
 
@@ -210,7 +242,34 @@
             rooms.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
     }
 
+    const START_HOUR = 8; // 08:00 AM
+    const TOTAL_HOURS = 18; // Until 02:00 AM next day
+
+    function renderTimeScale() {
+        const header = document.getElementById('timelineHeader');
+        let html = '';
+        for (let i = 0; i <= TOTAL_HOURS; i++) {
+            const hour = (START_HOUR + i) % 24;
+            const label = `${hour.toString().padStart(2, '0')}:00`;
+            const left = (i / TOTAL_HOURS) * 100;
+            html += `<div class="time-marker" style="left: ${left}%">${label}</div>`;
+        }
+        header.innerHTML = html;
+    }
+
+    function timeToPercent(dateStr) {
+        const date = new Date(dateStr);
+        const hours = date.getHours() + (date.getMinutes() / 60);
+        let adjustedHours = hours < START_HOUR ? hours + 24 : hours;
+        return ((adjustedHours - START_HOUR) / TOTAL_HOURS) * 100;
+    }
+
+    function durationToPercent(durationMinutes) {
+        return (durationMinutes / (TOTAL_HOURS * 60)) * 100;
+    }
+
     function renderSchedule() {
+        renderTimeScale();
         const container = document.querySelector('.schedule-container');
         if (rooms.length === 0) {
             container.innerHTML = '<div class="text-center p-5 text-muted">Chưa có dữ liệu phòng chiếu</div>';
@@ -220,24 +279,34 @@
             const roomShowtimes = showtimes.filter(s => s.roomId === room.id);
             return `
                 <div class="room-row">
-                    <div class="room-header">
-                        <div class="room-title">${room.name.toUpperCase()} <span class="badge bg-secondary ms-2" style="font-size:0.6rem">${room.type}</span></div>
-                        <div class="room-meta">Sức chứa: ${room.capacity} ghế</div>
+                    <div class="room-info">
+                        <div class="room-title">${room.name.toUpperCase()}</div>
+                        <div class="room-meta">${room.type} • ${room.capacity} ghế</div>
                     </div>
-                    <div class="time-timeline">
-                        ${roomShowtimes.length > 0 ? roomShowtimes.map(s => {
+                    <div class="timeline-track">
+                        ${roomShowtimes.map(s => {
+                            const left = timeToPercent(s.startTime);
+                            const width = durationToPercent(s.movieDuration || 120);
+                            const cleaningWidth = durationToPercent(15);
+                            const statusClass = s.id < 0 ? 'status-draft' : 'status-published'; // Mock status
+                            
                             const start = new Date(s.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                            const end = new Date(s.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            
                             return `
-                                <div class="showtime-block" onclick="editShowtime(${s.id})">
+                                <div class="showtime-block ${statusClass}" 
+                                     style="left: ${left}%; width: ${width}%" 
+                                     onclick="editShowtime(${s.id})"
+                                     title="${s.movieTitle} (${start})">
                                     <span class="showtime-movie">${s.movieTitle}</span>
-                                    <span class="showtime-time"><i class="bi bi-clock"></i> ${start} - ${end}</span>
-                                    <button class="btn btn-sm text-danger p-0 position-absolute top-0 end-0 me-2 mt-1" onclick="event.stopPropagation(); deleteShowtime(${s.id})">
+                                    <span class="showtime-time">${start}</span>
+                                    <button class="btn btn-sm text-danger p-0 position-absolute top-0 end-0 me-2 mt-1" 
+                                            onclick="event.stopPropagation(); deleteShowtime(${s.id})">
                                         <i class="bi bi-x-circle"></i>
                                     </button>
                                 </div>
+                                <div class="cleaning-zone" style="left: ${left + width}%; width: ${cleaningWidth}%"></div>
                             `;
-                        }).join('') : '<div class="text-muted small ps-4">Chưa có suất chiếu nào</div>'}
+                        }).join('')}
                     </div>
                 </div>
             `;
