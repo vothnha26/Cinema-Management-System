@@ -196,18 +196,18 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link-admin">
-                <i class="bi bi-ticket-perforated"></i> Quản lý vé
+            <a href="manage-combos.html" class="nav-link-admin">
+                <i class="bi bi-cup-straw"></i> Combo & F&B
             </a>
         </li>
         <li class="nav-item">
-            <a href="manage-users.html" class="nav-link-admin">
-                <i class="bi bi-people"></i> Người dùng
+            <a href="manage-pricing.html" class="nav-link-admin">
+                <i class="bi bi-tags"></i> Bảng giá
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link-admin">
-                <i class="bi bi-gear"></i> Cài đặt
+            <a href="manage-promotions.html" class="nav-link-admin">
+                <i class="bi bi-percent"></i> Khuyến mãi
             </a>
         </li>
     </ul>
@@ -235,7 +235,7 @@
             </button>
             <div class="text-end">
                 <div style="font-size:0.8rem;color:var(--text-muted)">Hôm nay</div>
-                <div style="font-weight:600" id="currentDate">20 Tháng 5, 2024</div>
+                <div style="font-weight:600" id="currentDate">...</div>
             </div>
         </div>
     </div>
@@ -245,14 +245,14 @@
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon icon-revenue"><i class="bi bi-currency-dollar"></i></div>
-                <div class="stat-value">42.5M <span class="stat-trend trend-up">↑ 12%</span></div>
-                <div class="stat-label">Doanh thu hôm nay</div>
+                <div class="stat-value">0.0M <span class="stat-trend trend-up">↑</span></div>
+                <div class="stat-label">Tổng doanh thu</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon icon-tickets"><i class="bi bi-ticket-detailed"></i></div>
-                <div class="stat-value">1,284 <span class="stat-trend trend-up">↑ 5%</span></div>
+                <div class="stat-value">0 <span class="stat-trend trend-up">↑</span></div>
                 <div class="stat-label">Vé đã bán</div>
             </div>
         </div>
@@ -265,9 +265,9 @@
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-icon icon-members"><i class="bi bi-person-plus"></i></div>
-                <div class="stat-value">48 <span class="stat-trend trend-down">↓ 2%</span></div>
-                <div class="stat-label">Thành viên mới</div>
+                <div class="stat-icon icon-members">...</div>
+                <div class="stat-value">0%</div>
+                <div class="stat-label">...</div>
             </div>
         </div>
     </div>
@@ -280,74 +280,15 @@
                 <canvas id="revenueChart" height="300"></canvas>
             </div>
         </div>
-        <!-- GENRE CHART -->
+        <!-- MOVIE CHART -->
         <div class="col-lg-4">
             <div class="chart-container">
-                <div class="chart-title"><i class="bi bi-pie-chart text-warning"></i> Tỷ trọng thể loại</div>
+                <div class="chart-title"><i class="bi bi-pie-chart text-warning"></i> Doanh thu theo phim</div>
                 <div style="height:300px; display:flex; align-items:center; justify-content:center">
                     <canvas id="genreChart"></canvas>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- RECENT BOOKINGS -->
-    <div class="chart-title mb-3"><i class="bi bi-clock-history text-primary"></i> Giao dịch gần nhất</div>
-    <div class="custom-table">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Mã đặt vé</th>
-                    <th>Khách hàng</th>
-                    <th>Phim</th>
-                    <th>Suất chiếu</th>
-                    <th>Giá trị</th>
-                    <th>Trạng thái</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><span class="fw-bold text-white">#ST-9482</span></td>
-                    <td>Nguyễn Trần Trung Quân</td>
-                    <td>Avengers: Secret Wars</td>
-                    <td>19:30 • 20/05</td>
-                    <td>240.000đ</td>
-                    <td><span class="status-pill status-success">Thành công</span></td>
-                </tr>
-                <tr>
-                    <td><span class="fw-bold text-white">#ST-9481</span></td>
-                    <td>Lê Thùy Linh</td>
-                    <td>Jurassic World 4</td>
-                    <td>18:15 • 20/05</td>
-                    <td>120.000đ</td>
-                    <td><span class="status-pill status-success">Thành công</span></td>
-                </tr>
-                <tr>
-                    <td><span class="fw-bold text-white">#ST-9480</span></td>
-                    <td>Phạm Hoàng Nam</td>
-                    <td>The Dark Knight Returns</td>
-                    <td>20:00 • 20/05</td>
-                    <td>180.000đ</td>
-                    <td><span class="status-pill status-pending">Đang chờ</span></td>
-                </tr>
-                <tr>
-                    <td><span class="fw-bold text-white">#ST-9479</span></td>
-                    <td>Trần Minh Anh</td>
-                    <td>Robot Warriors</td>
-                    <td>17:00 • 20/05</td>
-                    <td>110.000đ</td>
-                    <td><span class="status-pill status-success">Thành công</span></td>
-                </tr>
-                <tr>
-                    <td><span class="fw-bold text-white">#ST-9478</span></td>
-                    <td>Hoàng Thanh Tâm</td>
-                    <td>Midnight Horror</td>
-                    <td>21:45 • 20/05</td>
-                    <td>95.000đ</td>
-                    <td><span class="status-pill status-success">Thành công</span></td>
-                </tr>
-            </tbody>
-        </table>
     </div>
 
 </main>
@@ -365,45 +306,49 @@
     async function loadDashboardData() {
         const response = await api.get('/statistics/overview');
         if (response.success) {
-            updateStats(response.data);
-            renderRevenueChart(response.data.revenueByMovie);
+            const data = response.data;
+            updateStats(data);
+            renderRevenueChart(data.revenueByDay);
+            renderMovieChart(data.revenueByMovie);
         }
     }
 
     function updateStats(data) {
-        // Cập nhật thẻ Doanh thu
         const revValue = document.querySelector('.stat-card .icon-revenue').parentElement.querySelector('.stat-value');
-        revValue.innerHTML = `${(data.totalRevenue / 1000000).toFixed(1)}M <span class="stat-trend trend-up">↑ thực</span>`;
+        revValue.innerHTML = `${(data.totalRevenue / 1000000).toFixed(1)}M <span class="stat-trend trend-up">↑</span>`;
         
-        // Cập nhật thẻ Vé
         const ticketValue = document.querySelector('.stat-card .icon-tickets').parentElement.querySelector('.stat-value');
         ticketValue.innerHTML = `${data.totalTicketsSold.toLocaleString()} <span class="stat-trend trend-up">↑</span>`;
 
-        // Cập nhật thẻ Tỷ lệ lấp đầy (Dùng thay cho Thành viên mới trong Dashboard Manager)
         const rateCard = document.querySelector('.stat-card .icon-members').parentElement;
         rateCard.querySelector('.stat-icon').innerHTML = '<i class="bi bi-percent"></i>';
         rateCard.querySelector('.stat-label').textContent = 'Tỷ lệ lấp đầy ghế';
         rateCard.querySelector('.stat-value').innerHTML = `${data.averageOccupancyRate}%`;
     }
 
-    function renderRevenueChart(revenueMap) {
-        const labels = Object.keys(revenueMap);
-        const values = Object.values(revenueMap).map(v => v / 1000); // Đổi sang k VNĐ
+    function renderRevenueChart(dailyMap) {
+        const sortedDays = Object.keys(dailyMap).sort();
+        const labels = sortedDays.map(day => day.split('-').slice(1).reverse().join('/'));
+        const values = sortedDays.map(day => dailyMap[day] / 1000);
 
         const revCtx = document.getElementById('revenueChart').getContext('2d');
         if (window.myRevenueChart) window.myRevenueChart.destroy();
         
         window.myRevenueChart = new Chart(revCtx, {
-            type: 'bar', // Chuyển sang bar để xem doanh thu theo phim rõ hơn
+            type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Doanh thu (k VNĐ)',
                     data: values,
-                    backgroundColor: 'rgba(229,19,58,0.6)',
                     borderColor: '#E5133A',
-                    borderWidth: 1,
-                    borderRadius: 8
+                    backgroundColor: 'rgba(229,19,58,0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#E5133A',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5
                 }]
             },
             options: {
@@ -412,6 +357,7 @@
                 plugins: { legend: { display: false } },
                 scales: {
                     y: {
+                        beginAtZero: true,
                         grid: { color: '#252A3D' },
                         ticks: { color: '#7B82A0', font: { family: 'Outfit' } }
                     },
@@ -424,42 +370,37 @@
         });
     }
 
-    // Giữ nguyên biểu đồ thể loại (Fake data hoặc tính toán từ Genre sau)
-    const genCtx = document.getElementById('genreChart').getContext('2d');
-    new Chart(genCtx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Hành động', 'Khoa học viễn tưởng', 'Kinh dị', 'Tâm lý', 'Hoạt hình'],
-            datasets: [{
-                data: [35, 25, 15, 15, 10],
-                backgroundColor: [
-                    '#E5133A',
-                    '#F5A623',
-                    '#64C8FF',
-                    '#50C864',
-                    '#9C27B0'
-                ],
-                borderWidth: 0,
-                hoverOffset: 10
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: '#E8EAF0',
-                        font: { family: 'Outfit', size: 12 },
-                        padding: 20,
-                        usePointStyle: true
-                    }
-                }
+    function renderMovieChart(movieMap) {
+        const labels = Object.keys(movieMap);
+        const values = Object.values(movieMap);
+
+        const genCtx = document.getElementById('genreChart').getContext('2d');
+        if (window.myMovieChart) window.myMovieChart.destroy();
+
+        window.myMovieChart = new Chart(genCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#E5133A', '#F5A623', '#64C8FF', '#50C864', '#9C27B0'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
             },
-            cutout: '70%'
-        }
-    });
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#E8EAF0', font: { family: 'Outfit', size: 11 }, padding: 15, usePointStyle: true }
+                    }
+                },
+                cutout: '70%'
+            }
+        });
+    }
 </script>
 </body>
 </html>

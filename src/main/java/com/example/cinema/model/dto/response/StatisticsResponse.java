@@ -10,6 +10,7 @@ public class StatisticsResponse {
     private Long totalTicketsSold;
     private Double averageOccupancyRate;
     private Map<String, BigDecimal> revenueByMovie; // Movie Title -> Amount
+    private Map<String, BigDecimal> revenueByDay; // Date -> Amount
     private Map<String, Long> ticketsByDay; // Date -> Count
 
     public StatisticsResponse() {}
@@ -23,6 +24,7 @@ public class StatisticsResponse {
         public Builder totalTickets(Long count) { response.totalTicketsSold = count; return this; }
         public Builder occupancyRate(Double rate) { response.averageOccupancyRate = rate; return this; }
         public Builder revenueByMovie(Map<String, BigDecimal> data) { response.revenueByMovie = data; return this; }
+        public Builder revenueByDay(Map<String, BigDecimal> data) { response.revenueByDay = data; return this; }
         public Builder ticketsByDay(Map<String, Long> data) { response.ticketsByDay = data; return this; }
 
         public StatisticsResponse build() { return response; }
@@ -35,5 +37,6 @@ public class StatisticsResponse {
     public Long getTotalTicketsSold() { return totalTicketsSold; }
     public Double getAverageOccupancyRate() { return averageOccupancyRate; }
     public Map<String, BigDecimal> getRevenueByMovie() { return revenueByMovie; }
+    public Map<String, BigDecimal> getRevenueByDay() { return revenueByDay; }
     public Map<String, Long> getTicketsByDay() { return ticketsByDay; }
 }

@@ -19,4 +19,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT COUNT(b) FROM Booking b WHERE b.status IN ('CONFIRMED', 'CHECKED_IN')")
     Long countTotalTickets();
+
+    @Query("SELECT DATE(b.createdAt) as date, SUM(b.totalPrice) as amount " +
+           "FROM Booking b WHERE b.status IN ('CONFIRMED', 'CHECKED_IN') " +
+           "AND b.createdAt >= :startDate " +
+           "GROUP BY DATE(b.createdAt) ORDER BY DATE(b.createdAt) ASC")
+    List<Object[]> calculateRevenueByDate(@Param("startDate") LocalDateTime startDate);
 }
