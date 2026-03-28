@@ -204,10 +204,13 @@
         const id = document.getElementById('comboId').value;
         const formData = new FormData();
         
-        formData.append('name', document.getElementById('name').value);
-        formData.append('description', document.getElementById('description').value);
-        formData.append('price', parseFloat(document.getElementById('price').value));
-        formData.append('stockQuantity', parseInt(document.getElementById('stockQuantity').value));
+        const comboData = {
+            name: document.getElementById('name').value,
+            description: document.getElementById('description').value,
+            price: parseFloat(document.getElementById('price').value),
+            stockQuantity: parseInt(document.getElementById('stockQuantity').value)
+        };
+        formData.append('combo', new Blob([JSON.stringify(comboData)], { type: 'application/json' }));
 
         const imageFile = document.getElementById('comboImage').files[0];
         if (imageFile) {
