@@ -80,6 +80,12 @@ public class PricingServiceImpl implements PricingService {
         // Bọc thêm lớp Seat Type Surcharge
         calculator = new com.example.cinema.service.pricing.SeatTypeDecorator(calculator, seat.getType());
         
+        // Bọc thêm lớp Day of Week (Monday/Tuesday discounts, Weekend surcharge)
+        calculator = new com.example.cinema.service.pricing.DayOfWeekDecorator(calculator, showtime.getStartTime());
+        
+        // Bọc thêm lớp Time Slot (Happy Hour)
+        calculator = new com.example.cinema.service.pricing.TimeSlotDecorator(calculator, showtime.getStartTime());
+        
         return calculator.calculate();
     }
 }

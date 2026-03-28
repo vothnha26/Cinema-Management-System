@@ -1,0 +1,41 @@
+@startuml Manager Manage Advanced Pricing
+title Sequence Diagram: Tính giá nâng cao (Task 4 Enhancement)
+skinparam theme cerulean
+
+participant "PricingService" as Svc
+participant "BasePrice" as Base
+participant "RoomDecorator" as Room
+participant "SeatDecorator" as Seat
+participant "DayOfWeekDecorator" as Day
+participant "TimeSlotDecorator" as Time
+
+[-> Svc: calculateTicketPrice(showtime, seat)
+activate Svc
+
+Svc -> Base: new BasePrice(amount)
+Svc -> Room: wrap(Base, roomType)
+Svc -> Seat: wrap(Room, seatType)
+
+== Quy tắc mới bổ sung ==
+Svc -> Day: wrap(Seat, dayOfWeek)
+note right: Giảm giá Thứ 2/Thứ 3 (Early Week)
+Svc -> Time: wrap(Day, timeSlot)
+note right: Happy Hour (Trước 12h sáng)
+
+Svc -> Time: calculate()
+activate Time
+Time -> Day: calculate()
+Day -> Seat: calculate()
+Seat -> Room: calculate()
+Room -> Base: calculate()
+Base --> Room: 80k
+Room --> Seat: +50k (IMAX)
+Seat --> Day: +20k (VIP)
+Day --> Time: -10k (Monday Discount)
+Time --> Svc: Final Price (140k)
+deactivate Time
+
+[<-- Svc: Final Price
+deactivate Svc
+
+@enduml
