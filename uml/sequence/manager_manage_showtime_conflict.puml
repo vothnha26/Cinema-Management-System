@@ -1,0 +1,44 @@
+@startuml Manager Manage Showtime Conflict
+title Sequence Diagram: Quản lý Suất chiếu & Kiểm tra xung đột (Task 3.1)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-showtimes.html" as UI
+control "ShowtimeController" as Ctrl
+entity "ShowtimeService" as Svc
+entity "MovieRepository" as MovieDB
+entity "RoomRepository" as RoomDB
+entity "ShowtimeRepository" as ShowtimeDB
+
+== Thêm Suất chiếu mới ==
+Manager -> UI: Chọn Phim, Phòng, Ngày và Giờ bắt đầu
+UI -> Ctrl: POST /api/showtimes (ShowtimeRequest)
+activate Ctrl
+
+Ctrl -> Svc: createShowtime(request)
+activate Svc
+
+Svc -> MovieDB: findById(movieId)
+MovieDB --> Svc: Movie (để lấy duration)
+
+Svc -> Svc: Tính toán startTime & endTime \n(endTime = startTime + duration + 15p dọn dẹp)
+
+Svc -> ShowtimeDB: findOverlappingShowtimes(roomId, date, startTime, endTime)
+activate ShowtimeDB
+ShowtimeDB --> Svc: List<Showtime> (Các suất bị chồng chéo nếu có)
+deactivate ShowtimeDB
+
+alt Nếu có xung đột (List không rỗng)
+    Svc --> Ctrl: throw AppException("Phòng đã có lịch chiếu trong khung giờ này")
+    Ctrl --> UI: 400 Bad Request (Thông báo lỗi xung đột)
+else Không có xung đột
+    Svc -> ShowtimeDB: save(newShowtime)
+    Svc --> Ctrl: ShowtimeResponse
+    Ctrl --> UI: 201 Created (Thành công)
+end
+
+deactivate Svc
+deactivate Ctrl
+
+UI -> Manager: Cập nhật lịch chiếu lên giao diện
+@enduml

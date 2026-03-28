@@ -10,7 +10,14 @@
     - *Interface Segregation:* Chia nhỏ interface, không ép buộc implement các phương thức không cần thiết.
     - *Dependency Inversion:* Luôn inject dependency qua Constructor, ưu tiên phụ thuộc vào Abstraction thay vì Concretion.
 
-- **Feature-by-Feature Workflow:** Thực hiện theo quy trình: Sequence Diagram -> Backend Code -> UI Integration.
+- **Standard Development Workflow (Bắt buộc):**
+    1. **Vẽ Sequence Diagram:** Thiết kế logic, xác định API Contract và các ràng buộc nghiệp vụ trước khi code.
+    2. **Triển khai Code:** Viết mã nguồn Backend (Service, Controller, Repository) và tích hợp Giao diện (UI).
+    3. **Test tự động:** 
+        - *MockTest:* Viết Integration Test sử dụng MockMvc để kiểm tra logic API.
+        - *E2E Selenium Test:* Kiểm tra trình duyệt thực tế (sau khi test xong phải dọn dẹp môi trường sạch sẽ).
+    4. **Đăng lên GitHub:** Commit và Push mã nguồn nghiệp vụ sạch lên repository.
+    5. **Cập nhật Checklist:** Đánh dấu hoàn tất task tương ứng trong file `CONDUCTOR.md`.
 - **Testing:** Mỗi tính năng mới hoặc bản sửa lỗi đều phải có Unit Test hoặc Integration Test đi kèm để xác thực.
 - **Documentation:** Cập nhật tài liệu kỹ thuật và sơ đồ UML tương ứng với mỗi thay đổi lớn.
 
