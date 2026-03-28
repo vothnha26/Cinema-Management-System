@@ -5,6 +5,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface SchedulingService {
-    List<ShowtimeResponse> generateAISuggestions(LocalDate targetDate);
-    void applySuggestions(List<ShowtimeResponse> suggestions);
+    List<ShowtimeResponse> generateAISuggestions(LocalDate targetDate, String mode);
+    void applySuggestions(List<ShowtimeResponse> suggestions, boolean overwrite);
 }

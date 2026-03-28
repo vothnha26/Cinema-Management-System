@@ -23,13 +23,16 @@ public class SchedulingController {
 
     @PostMapping("/suggest")
     public ResponseEntity<ApiResponse<List<ShowtimeResponse>>> suggest(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.ok(schedulingService.generateAISuggestions(date)));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(defaultValue = "OVERWRITE") String mode) {
+        return ResponseEntity.ok(ApiResponse.ok(schedulingService.generateAISuggestions(date, mode)));
     }
 
     @PostMapping("/apply")
-    public ResponseEntity<ApiResponse<Void>> apply(@RequestBody List<ShowtimeResponse> suggestions) {
-        schedulingService.applySuggestions(suggestions);
+    public ResponseEntity<ApiResponse<Void>> apply(
+            @RequestBody List<ShowtimeResponse> suggestions,
+            @RequestParam(defaultValue = "false") boolean overwrite) {
+        schedulingService.applySuggestions(suggestions, overwrite);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

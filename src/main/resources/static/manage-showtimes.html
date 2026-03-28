@@ -106,8 +106,13 @@
 <main class="main-content">
     <div class="header-section">
         <h1 class="page-title">Quản lý suất chiếu</h1>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-info px-4 fw-bold" onclick="generateAISuggestions()" id="btnAI">
+        <div class="d-flex gap-2 align-items-center">
+            <input type="date" id="aiDate" class="form-control form-control-custom" style="width: 160px;">
+            <select id="aiMode" class="form-select form-select-custom" style="width: 140px;">
+                <option value="OVERWRITE">Ghi đè</option>
+                <option value="FILL">Lấp đầy</option>
+            </select>
+            <button class="btn btn-info px-4 fw-bold" onclick="generateAISuggestions()" id="btnAI">
                 <i class="bi bi-robot"></i> Gợi ý AI
             </button>
             <button class="btn-add" onclick="openAddModal()">
@@ -276,33 +281,48 @@
     }
 
     let aiSuggestions = [];
+    let currentAIMode = 'OVERWRITE';
 
     async function generateAISuggestions() {
-        const targetDate = document.getElementById('showDate').value;
+        const targetDate = document.getElementById('aiDate').value;
+        const mode = document.getElementById('aiMode').value;
+        
         if (!targetDate) {
-            alert('Vui lòng chọn ngày trước khi yêu cầu AI gợi ý!');
+            alert('Vui lòng chọn ngày để AI thực hiện gợi ý!');
             return;
         }
 
-        const response = await api.post(`/scheduling/suggest?date=${targetDate}`);
+        currentAIMode = mode;
+        const response = await api.post(`/scheduling/suggest?date=${targetDate}&mode=${mode}`);
         if (response.success) {
             aiSuggestions = response.data;
-            showtimes = aiSuggestions; // Tạm thời ghi đè để preview
+            if (aiSuggestions.length === 0) {
+                alert('AI không tìm thấy khoảng trống phù hợp hoặc không có phim đang chiếu.');
+                return;
+            }
+            showtimes = aiSuggestions; // Preview
             renderSchedule();
             document.getElementById('aiPreviewBanner').classList.remove('d-none');
             document.getElementById('btnAI').disabled = true;
+        } else {
+            alert('Lỗi: ' + response.message);
         }
     }
 
     function cancelAI() {
         document.getElementById('aiPreviewBanner').classList.add('d-none');
         document.getElementById('btnAI').disabled = false;
-        loadData(); // Load lại dữ liệu thật từ DB
+        loadData(); 
     }
 
     async function applyAI() {
-        if (confirm('Bạn có chắc chắn muốn áp dụng toàn bộ lịch chiếu AI vừa gợi ý?')) {
-            const response = await api.post('/scheduling/apply', aiSuggestions);
+        const overwrite = (currentAIMode === 'OVERWRITE');
+        const confirmMsg = overwrite 
+            ? 'CẢNH BÁO: Chế độ Ghi đè sẽ XÓA các suất chiếu cũ của ngày này. Bạn chắc chắn chứ?' 
+            : 'Bạn muốn áp dụng các suất chiếu AI gợi ý vào khoảng trống?';
+
+        if (confirm(confirmMsg)) {
+            const response = await api.post(`/scheduling/apply?overwrite=${overwrite}`, aiSuggestions);
             if (response.success) {
                 alert('Đã áp dụng lịch chiếu AI thành công!');
                 cancelAI();

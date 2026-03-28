@@ -40,7 +40,7 @@ public class SchedulingServiceImpl implements SchedulingService {
     }
 
     @Override
-    public List<ShowtimeResponse> generateAISuggestions(LocalDate targetDate) {
+    public List<ShowtimeResponse> generateAISuggestions(LocalDate targetDate, String mode) {
         List<Movie> activeMovies = movieRepository.findAll().stream()
                 .filter(m -> m.getStatus() == MovieStatus.NOW_SHOWING || m.getStatus() == MovieStatus.PRE_RELEASE)
                 .collect(Collectors.toList());
@@ -48,17 +48,21 @@ public class SchedulingServiceImpl implements SchedulingService {
         List<Room> rooms = roomRepository.findAll();
         Map<Long, Double> buzzScores = buzzAnalysisService.getExternalBuzzScores();
 
-        // 1. Tính toán Priority Score cuối cùng
+        // 1. Lấy suất chiếu hiện có nếu là chế độ lấp chỗ trống
+        List<Showtime> existingShowtimes = (mode != null && mode.equalsIgnoreCase("FILL")) 
+                ? showtimeRepository.findAllByStartTimeBetween(
+                    targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX))
+                : new ArrayList<>();
+
+        // Sort movies by Priority + Buzz
         activeMovies.sort((m1, m2) -> {
             int p1 = m1.getPriorityLevel() != null ? m1.getPriorityLevel() : 1;
             int p2 = m2.getPriorityLevel() != null ? m2.getPriorityLevel() : 1;
-            
             double s1 = p1 * 20 + buzzScores.getOrDefault(m1.getId(), 0.0);
             double s2 = p2 * 20 + buzzScores.getOrDefault(m2.getId(), 0.0);
-            return Double.compare(s2, s1); // Giảm dần
+            return Double.compare(s2, s1);
         });
 
-        // 2. Xác định khung giờ vàng (Prime Time)
         DayOfWeek dow = targetDate.getDayOfWeek();
         LocalTime primeStart = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) ? LocalTime.of(10, 0) : LocalTime.of(17, 0);
         LocalTime primeEnd = LocalTime.of(23, 0);
@@ -66,18 +70,34 @@ public class SchedulingServiceImpl implements SchedulingService {
         List<ShowtimeResponse> suggestions = new ArrayList<>();
         int staggeredOffset = 0;
 
-        // 3. Thuật toán phân bổ đơn giản (70/30)
         for (Room room : rooms) {
-            LocalTime currentTime = LocalTime.of(9, 0); // Bắt đầu từ 9h sáng
-            staggeredOffset = (staggeredOffset + 15) % 45; // Lệch giờ giữa các phòng (0, 15, 30p)
+            LocalTime currentTime = LocalTime.of(9, 0);
+            staggeredOffset = (staggeredOffset + 15) % 45;
             currentTime = currentTime.plusMinutes(staggeredOffset);
 
             while (currentTime.isBefore(LocalTime.of(23, 30))) {
+                final LocalTime startTimeFinal = currentTime;
+                
+                // Nếu là FILL, kiểm tra xem có bị trùng với suất chiếu hiện có không
+                if (mode != null && mode.equalsIgnoreCase("FILL")) {
+                    boolean isOverlap = existingShowtimes.stream()
+                        .filter(s -> s.getRoom().getId().equals(room.getId()))
+                        .anyMatch(s -> {
+                            LocalTime sStart = s.getStartTime().toLocalTime();
+                            LocalTime sEnd = s.getEndTime().toLocalTime();
+                            return startTimeFinal.isBefore(sEnd) && startTimeFinal.plusMinutes(120).isAfter(sStart);
+                        });
+                    
+                    if (isOverlap) {
+                        currentTime = currentTime.plusMinutes(30); // Nhảy 30p để tìm chỗ trống tiếp theo
+                        continue;
+                    }
+                }
+
                 Movie movieToSchedule;
                 boolean isPrimeTime = !currentTime.isBefore(primeStart) && currentTime.isBefore(primeEnd);
-
                 if (isPrimeTime && Math.random() < 0.7) {
-                    movieToSchedule = activeMovies.get(0); // Top 1 phim ưu tiên
+                    movieToSchedule = activeMovies.get(0);
                 } else {
                     movieToSchedule = activeMovies.get(new Random().nextInt(activeMovies.size()));
                 }
@@ -90,22 +110,25 @@ public class SchedulingServiceImpl implements SchedulingService {
                 
                 LocalDateTime start = LocalDateTime.of(targetDate, currentTime);
                 res.setStartTime(start);
-                res.setEndTime(start.plusMinutes(movieToSchedule.getDuration() + 15)); // Gồm dọn dẹp
+                res.setEndTime(start.plusMinutes(movieToSchedule.getDuration() + 15));
                 
                 suggestions.add(res);
-
-                // Nhảy đến slot tiếp theo
-                currentTime = currentTime.plusMinutes(movieToSchedule.getDuration() + 30); // 15p dọn dẹp + 15p dãn cách
+                currentTime = currentTime.plusMinutes(movieToSchedule.getDuration() + 30);
             }
         }
-
         return suggestions;
     }
 
     @Override
     @Transactional
-    public void applySuggestions(List<ShowtimeResponse> suggestions) {
-        // Logic lưu hàng loạt (Bulk Save) vào DB
+    public void applySuggestions(List<ShowtimeResponse> suggestions, boolean overwrite) {
+        if (overwrite && !suggestions.isEmpty()) {
+            LocalDate targetDate = suggestions.get(0).getStartTime().toLocalDate();
+            // Xóa suất chiếu cũ của ngày đó (Chỉ xóa những suất chưa có vé - Giả định logic cơ bản)
+            showtimeRepository.deleteByStartTimeBetween(
+                targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX));
+        }
+
         for (ShowtimeResponse res : suggestions) {
             Showtime s = new Showtime();
             s.setMovie(movieRepository.getReferenceById(res.getMovieId()));

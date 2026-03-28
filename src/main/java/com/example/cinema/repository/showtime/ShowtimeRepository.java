@@ -22,4 +22,8 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
             @Param("endOfDay") LocalDateTime endOfDay);
     
     List<Showtime> findByMovieIdAndStatus(Long movieId, ShowtimeStatus status);
+    
+    List<Showtime> findAllByStartTimeBetween(LocalDateTime start, LocalDateTime end);
+
+    void deleteByStartTimeBetween(LocalDateTime start, LocalDateTime end);
 }
