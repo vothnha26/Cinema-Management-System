@@ -321,9 +321,12 @@
                                     <label class="form-label">Tên phim</label>
                                     <input type="text" id="title" class="form-control" placeholder="Nhập tên phim..." required>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Thể loại (ID, cách nhau dấu phẩy)</label>
-                                    <input type="text" id="genreIds" class="form-control" placeholder="Ví dụ: 1,2,3">
+                                <div class="col-12">
+                                    <label class="form-label d-block">Thể loại</label>
+                                    <div id="genreCheckboxList" class="d-flex flex-wrap gap-3 p-3 rounded" style="background: var(--bg); border: 1px solid var(--border);">
+                                        <!-- Checkboxes will be rendered here -->
+                                        <span class="text-muted" style="font-size: 0.85rem;">Đang tải thể loại...</span>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Thời lượng (phút)</label>
@@ -366,16 +369,42 @@
     </div>
 </div>
 
-<script src="js/api.js"></script>
+<script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     let movies = [];
+    let genres = [];
     const movieModal = new bootstrap.Modal(document.getElementById('movieModal'));
 
     document.addEventListener('DOMContentLoaded', () => {
         loadMovies();
+        loadGenres();
     });
+
+    async function loadGenres() {
+        try {
+            const response = await api.get('/genres');
+            if (response.success) {
+                genres = response.data;
+                renderGenreCheckboxes();
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách thể loại:', error);
+        }
+    }
+
+    function renderGenreCheckboxes() {
+        const container = document.getElementById('genreCheckboxList');
+        container.innerHTML = genres.map(genre => `
+            <div class="form-check">
+                <input class="form-check-input genre-cb" type="checkbox" value="${genre.id}" id="genre-${genre.id}">
+                <label class="form-check-label" for="genre-${genre.id}" style="font-size: 0.9rem;">
+                    ${genre.name}
+                </label>
+            </div>
+        `).join('');
+    }
 
     async function loadMovies() {
         try {
@@ -472,7 +501,11 @@
         document.getElementById('rating').value = movie.rating;
         document.getElementById('trailerUrl').value = movie.trailerUrl;
         document.getElementById('description').value = movie.description;
-        document.getElementById('genreIds').value = movie.genres ? movie.genres.map(g => g.id).join(',') : '';
+        
+        // Reset and Set checkboxes
+        document.querySelectorAll('.genre-cb').forEach(cb => {
+            cb.checked = movie.genres && movie.genres.some(g => g.id == cb.value);
+        });
 
         if (movie.posterUrl) {
             const preview = document.getElementById('posterPreview');
@@ -490,6 +523,8 @@
         const id = document.getElementById('movieId').value;
         const formData = new FormData();
         
+        const selectedGenreIds = Array.from(document.querySelectorAll('.genre-cb:checked')).map(cb => parseInt(cb.value));
+
         const movieData = {
             title: document.getElementById('title').value,
             duration: document.getElementById('duration').value,
@@ -498,7 +533,7 @@
             rating: document.getElementById('rating').value,
             trailerUrl: document.getElementById('trailerUrl').value,
             description: document.getElementById('description').value,
-            genreIds: document.getElementById('genreIds').value.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+            genreIds: selectedGenreIds
         };
 
         formData.append('movie', new Blob([JSON.stringify(movieData)], { type: 'application/json' }));
