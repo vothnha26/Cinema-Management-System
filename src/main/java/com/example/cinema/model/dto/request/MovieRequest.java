@@ -27,6 +27,8 @@ public class MovieRequest {
     private String trailerUrl;
 
     private Set<Long> genreIds;
+    private Set<Long> actorIds;
+    private Set<Long> directorIds;
 
     public MovieRequest() {}
 
@@ -54,4 +56,10 @@ public class MovieRequest {
 
     public Set<Long> getGenreIds() { return genreIds; }
     public void setGenreIds(Set<Long> genreIds) { this.genreIds = genreIds; }
+
+    public Set<Long> getActorIds() { return actorIds; }
+    public void setActorIds(Set<Long> actorIds) { this.actorIds = actorIds; }
+
+    public Set<Long> getDirectorIds() { return directorIds; }
+    public void setDirectorIds(Set<Long> directorIds) { this.directorIds = directorIds; }
 }

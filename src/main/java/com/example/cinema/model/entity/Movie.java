@@ -44,6 +44,12 @@ public class Movie {
     )
     private Set<Genre> genres;
 
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<MovieActor> movieActors;
+
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<MovieDirector> movieDirectors;
+
     public Movie() {}
 
     public Long getId() { return id; }
@@ -75,4 +81,10 @@ public class Movie {
 
     public Set<Genre> getGenres() { return genres; }
     public void setGenres(Set<Genre> genres) { this.genres = genres; }
+
+    public Set<MovieActor> getMovieActors() { return movieActors; }
+    public void setMovieActors(Set<MovieActor> movieActors) { this.movieActors = movieActors; }
+
+    public Set<MovieDirector> getMovieDirectors() { return movieDirectors; }
+    public void setMovieDirectors(Set<MovieDirector> movieDirectors) { this.movieDirectors = movieDirectors; }
 }

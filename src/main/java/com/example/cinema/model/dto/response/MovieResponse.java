@@ -15,6 +15,8 @@ public class MovieResponse {
     private String posterUrl;
     private String trailerUrl;
     private Set<GenreResponse> genres;
+    private Set<ActorResponse> actors;
+    private Set<DirectorResponse> directors;
 
     public static class GenreResponse {
         private Long id;
@@ -58,4 +60,10 @@ public class MovieResponse {
 
     public Set<GenreResponse> getGenres() { return genres; }
     public void setGenres(Set<GenreResponse> genres) { this.genres = genres; }
+
+    public Set<ActorResponse> getActors() { return actors; }
+    public void setActors(Set<ActorResponse> actors) { this.actors = actors; }
+
+    public Set<DirectorResponse> getDirectors() { return directors; }
+    public void setDirectors(Set<DirectorResponse> directors) { this.directors = directors; }
 }
