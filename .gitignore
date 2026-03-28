@@ -1,0 +1,24 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+bin/
+*.class
+
+# IDE - IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# IDE - VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cloudinary / Secrets (Should be handled via Env Variables in production)
+# application.properties (Nếu bạn muốn giữ bí mật API Key, hãy bỏ comment dòng dưới)
+# src/main/resources/application.properties

@@ -1,0 +1,1 @@
+Tuân thủ SOLID và docs
