@@ -90,7 +90,7 @@
 <main class="main-content">
     <div class="header-section">
         <h1 class="page-title">Quản lý phòng chiếu</h1>
-        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#roomModal">
+        <button class="btn-add" onclick="openAddModal()">
             <i class="bi bi-plus-lg"></i> Thêm phòng mới
         </button>
     </div>
@@ -105,7 +105,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold" style="font-family:'Outfit'">Thiết lập phòng chiếu mới</h5>
+                <h5 class="modal-title fw-bold" id="modalTitle" style="font-family:'Outfit'">Thiết lập phòng chiếu mới</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
@@ -117,12 +117,15 @@
                     <div class="mb-3">
                         <label class="form-label">Loại phòng</label>
                         <select id="roomType" class="form-select">
+                            <option value="HALL_2D" selected>Standard 2D</option>
+                            <option value="HALL_3D">Premium 3D</option>
                             <option value="IMAX">IMAX</option>
-                            <option value="PREMIUM_3D">3D Premium</option>
-                            <option value="STANDARD_2D" selected>Standard 2D</option>
+                            <option value="FOUR_DX">4DX Hall</option>
+                            <option value="LUXURY">Luxury Suite</option>
                         </select>
                     </div>
-                    <div class="row">
+                    <input type="hidden" id="roomId">
+                    <div class="row" id="roomDimensions">
                         <div class="col-6 mb-3">
                             <label class="form-label">Số hàng ghế</label>
                             <input type="number" id="roomRows" class="form-control" value="8" min="1" max="20">
@@ -132,6 +135,9 @@
                             <input type="number" id="roomCols" class="form-control" value="10" min="1" max="20">
                         </div>
                     </div>
+                    <div id="editInfo" class="p-3 rounded bg-dark-subtle mt-2" style="font-size: 0.8rem; color: var(--accent-gold); display: none;">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Lưu ý: Không thể thay đổi số hàng/cột khi đang chỉnh sửa. Hãy xóa và tạo mới nếu muốn thay đổi kích thước.
+                    </div>
                     <div class="p-3 rounded bg-dark-subtle mt-2" style="font-size: 0.8rem; color: var(--text-muted)">
                         <i class="bi bi-info-circle me-1"></i> Hệ thống sẽ tự động sinh sơ đồ ghế. Bạn có thể tùy chỉnh loại ghế (VIP/Couple) sau khi tạo.
                     </div>
@@ -139,7 +145,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Hủy bỏ</button>
-                <button type="button" class="btn btn-add px-4" onclick="createRoom()">Khởi tạo phòng</button>
+                <button type="button" class="btn btn-add px-4" id="btnSubmitRoom" onclick="saveRoom()">Khởi tạo phòng</button>
             </div>
         </div>
     </div>
@@ -150,10 +156,63 @@
 <script>
     document.addEventListener('DOMContentLoaded', loadRooms);
 
+    const roomModal = new bootstrap.Modal(document.getElementById('roomModal'));
+
     async function loadRooms() {
         const response = await api.get('/rooms');
         if (response.success) {
             renderRooms(response.data);
+        }
+    }
+
+    function openAddModal() {
+        document.getElementById('roomForm').reset();
+        document.getElementById('roomId').value = '';
+        document.getElementById('roomDimensions').style.display = 'flex';
+        document.getElementById('editInfo').style.display = 'none';
+        document.getElementById('modalTitle').textContent = 'Thiết lập phòng chiếu mới';
+        document.getElementById('btnSubmitRoom').textContent = 'Khởi tạo phòng';
+        roomModal.show();
+    }
+
+    async function editRoom(id) {
+        const response = await api.get(`/rooms/${id}`);
+        if (response.success) {
+            const room = response.data;
+            document.getElementById('roomId').value = room.id;
+            document.getElementById('roomName').value = room.name;
+            document.getElementById('roomType').value = room.type;
+            
+            document.getElementById('roomDimensions').style.display = 'none';
+            document.getElementById('editInfo').style.display = 'block';
+            document.getElementById('modalTitle').textContent = 'Chỉnh sửa thông tin phòng';
+            document.getElementById('btnSubmitRoom').textContent = 'Lưu thay đổi';
+            roomModal.show();
+        }
+    }
+
+    async function saveRoom() {
+        const id = document.getElementById('roomId').value;
+        const data = {
+            name: document.getElementById('roomName').value,
+            type: document.getElementById('roomType').value
+        };
+
+        let response;
+        if (id) {
+            response = await api.put(`/rooms/${id}`, data);
+        } else {
+            data.rows = parseInt(document.getElementById('roomRows').value);
+            data.cols = parseInt(document.getElementById('roomCols').value);
+            response = await api.post('/rooms', data);
+        }
+
+        if (response.success) {
+            roomModal.hide();
+            loadRooms();
+            alert(id ? 'Cập nhật thành công!' : 'Khởi tạo phòng thành công!');
+        } else {
+            alert('Lỗi: ' + response.message);
         }
     }
 
@@ -162,7 +221,17 @@
         container.innerHTML = rooms.map(room => `
             <div class="col-md-4 col-lg-3">
                 <div class="room-card" onclick="viewRoomDetail(${room.id})">
-                    <span class="room-badge ${getBadgeClass(room.type)}">${room.type}</span>
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="room-badge ${getBadgeClass(room.type)}">${room.type.replace('HALL_', '')}</span>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-link text-muted p-0" onclick="event.stopPropagation(); editRoom(${room.id})">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-link text-danger p-0" onclick="event.stopPropagation(); deleteRoom(${room.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div class="room-name mt-2">${room.name}</div>
                     <div class="room-meta">
                         <span><i class="bi bi-grid-3x3"></i> ${room.capacity} ghế</span>
@@ -171,14 +240,10 @@
                     <div class="seat-grid-preview mt-3">
                         <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px;">SƠ ĐỒ MÔ PHỎNG</div>
                         <div class="d-flex flex-wrap gap-1">
-                            ${Array(15).fill('<div class="seat-min"></div>').join('')}
-                            ${Array(5).fill('<div class="seat-min vip"></div>').join('')}
+                            ${Array(12).fill('<div class="seat-min"></div>').join('')}
+                            ${Array(4).fill('<div class="seat-min vip"></div>').join('')}
+                            ${Array(1).fill('<div class="seat-min couple"></div>').join('')}
                         </div>
-                    </div>
-                    <div class="mt-3 d-flex justify-content-end">
-                        <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteRoom(${room.id})">
-                            <i class="bi bi-trash"></i>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -188,25 +253,20 @@
     function getBadgeClass(type) {
         if (type.includes('IMAX')) return 'badge-imax';
         if (type.includes('3D')) return 'badge-3d';
+        if (type.includes('4DX')) return 'badge-imax';
+        if (type.includes('LUXURY')) return 'badge-3d';
         return 'badge-2d';
     }
 
-    async function createRoom() {
-        const data = {
-            name: document.getElementById('roomName').value,
-            type: document.getElementById('roomType').value,
-            rows: parseInt(document.getElementById('roomRows').value),
-            cols: parseInt(document.getElementById('roomCols').value)
-        };
-
-        const response = await api.post('/rooms', data);
-        if (response.success) {
-            bootstrap.Modal.getInstance(document.getElementById('roomModal')).hide();
-            loadRooms();
-            alert('Khởi tạo phòng thành công!');
-        } else {
-            alert('Lỗi: ' + response.message);
+    async function deleteRoom(id) {
+        if (confirm('Xóa phòng sẽ xóa toàn bộ sơ đồ ghế liên quan. Tiếp tục?')) {
+            const response = await api.delete(`/rooms/${id}`);
+            if (response.success) loadRooms();
         }
+    }
+
+    function viewRoomDetail(id) {
+        window.location.href = `design-room.html?id=${id}`;
     }
 
     async function deleteRoom(id) {

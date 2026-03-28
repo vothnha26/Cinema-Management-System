@@ -37,6 +37,13 @@ public class RoomController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(roomService.createRoom(request)));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<RoomResponse>> updateRoom(
+            @PathVariable Long id, 
+            @RequestBody @Valid RoomRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(roomService.updateRoom(id, request)));
+    }
+
     @PutMapping("/{id}/layout")
     public ResponseEntity<ApiResponse<RoomResponse>> updateLayout(
             @PathVariable Long id, 

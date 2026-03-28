@@ -80,6 +80,20 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
+    public RoomResponse updateRoom(Long id, RoomRequest request) {
+        Room room = roomRepository.findById(id)
+                .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + id));
+        
+        room.setName(request.getName());
+        room.setType(request.getType());
+        // Không cập nhật capacity/rows/cols ở đây để bảo toàn sơ đồ ghế
+        
+        Room updatedRoom = roomRepository.save(room);
+        return getRoomById(updatedRoom.getId());
+    }
+
+    @Override
+    @Transactional
     public RoomResponse updateSeats(Long roomId, com.example.cinema.model.dto.request.SeatBulkRequest request) {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + roomId));
