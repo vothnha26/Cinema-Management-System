@@ -1,0 +1,35 @@
+@startuml Manager Design Seat Sequence
+title Sequence Diagram: Thiết kế sơ đồ ghế (Task 2.1)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-rooms.html (Design Mode)" as UI
+control "RoomController" as Ctrl
+entity "RoomService" as Svc
+entity "SeatRepository" as DB
+
+Manager -> UI: Chọn nhiều ghế trên lưới Grid
+Manager -> UI: Chọn loại ghế (VIP/Couple/Hỏng)
+Manager -> UI: Nhấn "Lưu sơ đồ"
+
+UI -> Ctrl: PATCH /api/rooms/{id}/seats (List<SeatUpdateRequest>)
+activate Ctrl
+
+Ctrl -> Svc: updateSeats(roomId, seatDataList)
+activate Svc
+
+Svc -> DB: findAllByRoomIdAndRowCharAndColNum(...)
+Svc -> Svc: Cập nhật SeatType và Status cho từng Entity
+Svc -> DB: saveAll(updatedSeats)
+activate DB
+DB --> Svc: success
+deactivate DB
+
+Svc --> Ctrl: success
+deactivate Svc
+
+Ctrl --> UI: 200 OK (Cập nhật thành công)
+deactivate Ctrl
+
+UI -> Manager: Thông báo thành công & Làm mới sơ đồ
+@enduml

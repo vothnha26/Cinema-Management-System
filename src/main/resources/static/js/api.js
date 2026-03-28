@@ -56,5 +56,17 @@ const api = {
             }
         });
         return await response.json();
+    },
+
+    async patch(endpoint, data) {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(data)
+        });
+        return await response.json();
     }
 };

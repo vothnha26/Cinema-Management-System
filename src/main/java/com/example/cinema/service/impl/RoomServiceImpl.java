@@ -2,6 +2,7 @@ package com.example.cinema.service.impl;
 
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.RoomRequest;
+import com.example.cinema.model.dto.request.SeatUpdateRequest;
 import com.example.cinema.model.dto.response.RoomResponse;
 import com.example.cinema.model.entity.Room;
 import com.example.cinema.model.entity.Seat;
@@ -23,11 +24,13 @@ public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
     private final SeatRepository seatRepository;
     private final ModelMapper modelMapper;
+    private final com.example.cinema.service.strategy.SeatLayoutFactory seatLayoutFactory;
 
-    public RoomServiceImpl(RoomRepository roomRepository, SeatRepository seatRepository, ModelMapper modelMapper) {
+    public RoomServiceImpl(RoomRepository roomRepository, SeatRepository seatRepository, ModelMapper modelMapper, com.example.cinema.service.strategy.SeatLayoutFactory seatLayoutFactory) {
         this.roomRepository = roomRepository;
         this.seatRepository = seatRepository;
         this.modelMapper = modelMapper;
+        this.seatLayoutFactory = seatLayoutFactory;
     }
 
     @Override
@@ -62,29 +65,9 @@ public class RoomServiceImpl implements RoomService {
 
         Room savedRoom = roomRepository.save(room);
 
-        // Tự động sinh ghế
-        List<Seat> seats = new ArrayList<>();
-        for (int i = 0; i < request.getRows(); i++) {
-            String rowChar = String.valueOf((char) ('A' + i));
-            for (int j = 1; j <= request.getCols(); j++) {
-                Seat seat = new Seat();
-                seat.setRoom(savedRoom);
-                seat.setRowChar(rowChar);
-                seat.setColNum(j);
-                
-                // Mặc định: Hàng F, G là VIP (cho phòng 8 hàng), hoặc tùy chỉnh logic sau
-                if (i >= 5 && i <= 6) {
-                    seat.setType(SeatType.VIP);
-                } else if (i == request.getRows() - 1) {
-                    seat.setType(SeatType.COUPLE);
-                } else {
-                    seat.setType(SeatType.STANDARD);
-                }
-                
-                seat.setStatus(true);
-                seats.add(seat);
-            }
-        }
+        List<Seat> seats = seatLayoutFactory.getStrategy(request.getType())
+                .generateSeats(savedRoom, request.getRows(), request.getCols());
+        
         seatRepository.saveAll(seats);
 
         RoomResponse response = modelMapper.map(savedRoom, RoomResponse.class);
@@ -97,11 +80,30 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
+    public RoomResponse updateSeats(Long roomId, com.example.cinema.model.dto.request.SeatBulkRequest request) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + roomId));
+
+        List<Seat> updatedSeats = new ArrayList<>();
+        for (SeatUpdateRequest req : request.getSeats()) {
+            Seat seat = seatRepository.findByRoomIdAndRowCharAndColNum(roomId, req.getRowChar(), req.getColNum())
+                    .orElseThrow(() -> new AppException("Không tìm thấy ghế " + req.getRowChar() + req.getColNum() + " trong phòng này"));
+            
+            seat.setType(req.getType());
+            seat.setStatus(req.getStatus());
+            updatedSeats.add(seat);
+        }
+        
+        seatRepository.saveAll(updatedSeats);
+        return getRoomById(roomId);
+    }
+
+    @Override
+    @Transactional
     public void deleteRoom(Long id) {
         if (!roomRepository.existsById(id)) {
             throw new AppException("Không tìm thấy phòng với ID: " + id);
         }
-        // Lưu ý: Trong thực tế cần kiểm tra xem phòng có đang có suất chiếu nào không
         seatRepository.deleteByRoomId(id);
         roomRepository.deleteById(id);
     }

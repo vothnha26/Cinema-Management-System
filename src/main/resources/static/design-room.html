@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarCinema – Thiết Kế Sơ Đồ Ghế</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+          --seat-available: #252A3D; --seat-vip: #F5A623; --seat-couple: #9B59B6;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; margin: 0; display: flex; }
+        
+        /* ── SIDEBAR TOOLBAR ── */
+        .toolbar {
+          width: 320px; background: var(--surface); border-right: 1px solid var(--border);
+          height: 100vh; position: fixed; right: 0; top: 0; padding: 32px;
+          display: flex; flex-direction: column; z-index: 100;
+        }
+        .tool-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; margin-bottom: 24px; }
+        .tool-section { margin-bottom: 32px; }
+        .tool-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        
+        .selection-info { background: rgba(229,19,58,0.1); border: 1px solid var(--accent); padding: 16px; border-radius: 12px; margin-bottom: 20px; }
+        
+        /* ── SEAT CANVAS ── */
+        .canvas-area { flex: 1; margin-right: 320px; padding: 60px; display: flex; flex-direction: column; align-items: center; overflow: auto; }
+        .screen {
+          width: 60%; height: 8px; background: var(--accent); border-radius: 4px;
+          box-shadow: 0 4px 20px rgba(229,19,58,0.4); margin-bottom: 60px; position: relative;
+        }
+        .screen::after {
+          content: 'MÀN HÌNH'; position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+          font-size: 0.7rem; letter-spacing: 4px; color: var(--text-muted);
+        }
+
+        .seat-grid { display: grid; gap: 8px; user-select: none; }
+        .seat {
+          width: 36px; height: 34px; border-radius: 6px; background: var(--seat-available);
+          border: 1.5px solid #3a4060; cursor: pointer; display: flex; align-items: center;
+          justify-content: center; font-size: 0.65rem; font-weight: 700; color: var(--text-muted);
+          transition: all 0.15s;
+        }
+        .seat:hover { transform: scale(1.1); border-color: var(--accent); }
+        .seat.selected { border-color: #fff; border-width: 2px; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        
+        .seat.VIP { background: rgba(245,166,35,0.2); border-color: var(--accent-gold); color: var(--accent-gold); }
+        .seat.COUPLE { background: rgba(155,89,182,0.2); border-color: var(--seat-couple); color: var(--seat-couple); width: 80px; }
+        .seat.DISABLED { background: #000; border-color: #111; color: transparent; opacity: 0.3; }
+
+        .row-label { width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-muted); }
+
+        .btn-save { background: var(--gradient); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 700; width: 100%; margin-top: auto; }
+        .type-opt {
+          display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px;
+          border: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        .type-opt:hover { background: rgba(255,255,255,0.05); }
+        .type-opt.active { border-color: var(--accent); background: rgba(229,19,58,0.05); }
+        .dot { width: 12px; height: 12px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="canvas-area">
+    <div class="d-flex align-items-center gap-3 mb-5" style="width: 100%; max-width: 800px;">
+        <a href="manage-rooms.html" class="btn btn-outline-secondary border-0"><i class="bi bi-arrow-left"></i></a>
+        <h2 id="roomTitle" style="font-family:'Bebas Neue'; letter-spacing: 1px; margin: 0;">Đang tải phòng...</h2>
+    </div>
+    <div class="screen"></div>
+    <div id="seatGrid" class="seat-grid"></div>
+</div>
+
+<aside class="toolbar">
+    <div class="tool-title">Công cụ thiết kế</div>
+    
+    <div class="tool-section">
+        <div class="tool-label">Đang chọn</div>
+        <div class="selection-info">
+            <div style="font-size: 1.2rem; font-weight: 700;" id="selectCount">0 ghế</div>
+            <div style="font-size: 0.8rem; opacity: 0.7;" id="selectNames">Vui lòng nhấp chọn ghế trên sơ đồ</div>
+        </div>
+        <button class="btn btn-sm btn-link text-accent p-0 text-decoration-none" onclick="clearSelection()">Bỏ chọn tất cả</button>
+    </div>
+
+    <div class="tool-section">
+        <div class="tool-label">Thay đổi loại ghế</div>
+        <div class="type-opt" onclick="setSeatType('STANDARD')">
+            <div class="dot" style="background: var(--seat-available); border: 1px solid #3a4060;"></div>
+            <span>Ghế Thường</span>
+        </div>
+        <div class="type-opt" onclick="setSeatType('VIP')">
+            <div class="dot" style="background: var(--seat-vip);"></div>
+            <span>Ghế VIP</span>
+        </div>
+        <div class="type-opt" onclick="setSeatType('COUPLE')">
+            <div class="dot" style="background: var(--seat-couple); width: 24px;"></div>
+            <span>Ghế Đôi (Couple)</span>
+        </div>
+        <div class="type-opt" onclick="setSeatType('DISABLED')">
+            <div class="dot" style="background: #000; border: 1px solid #222;"></div>
+            <span>Ghế Hỏng / Lối đi</span>
+        </div>
+    </div>
+
+    <div class="p-3 rounded mb-4" style="background: rgba(245,166,35,0.05); border: 1px solid rgba(245,166,35,0.2); font-size: 0.8rem; color: var(--accent-gold)">
+        <i class="bi bi-exclamation-triangle me-1"></i> Lưu ý: Thay đổi loại ghế sẽ ảnh hưởng trực tiếp đến giá vé khi khách hàng đặt chỗ.
+    </div>
+
+    <button class="btn-save" onclick="saveDesign()">
+        <i class="bi bi-cloud-check me-2"></i> LƯU SƠ ĐỒ
+    </button>
+</aside>
+
+<script src="/js/api.js"></script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('id');
+    let roomData = null;
+    let selectedSeats = new Set();
+
+    document.addEventListener('DOMContentLoaded', loadRoomDetail);
+
+    async function loadRoomDetail() {
+        if (!roomId) { window.location.href = 'manage-rooms.html'; return; }
+        const response = await api.get(`/rooms/${roomId}`);
+        if (response.success) {
+            roomData = response.data;
+            document.getElementById('roomTitle').textContent = `Thiết kế sơ đồ: ${roomData.name}`;
+            renderGrid();
+        }
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('seatGrid');
+        // Calculate max rows and cols
+        const rows = [...new Set(roomData.seats.map(s => s.rowChar))].sort();
+        const maxCol = Math.max(...roomData.seats.map(s => s.colNum));
+        
+        grid.style.gridTemplateColumns = `30px repeat(${maxCol}, auto)`;
+        grid.innerHTML = '';
+
+        rows.forEach(row => {
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.textContent = row;
+            grid.appendChild(label);
+
+            const rowSeats = roomData.seats.filter(s => s.rowChar === row);
+            // Sắp xếp ghế theo cột để render đúng thứ tự (tùy chọn nhưng tốt cho DOM)
+            rowSeats.sort((a,b) => a.colNum - b.colNum);
+
+            rowSeats.forEach(seat => {
+                const seatEl = document.createElement('div');
+                const seatId = `${seat.rowChar}${seat.colNum}`;
+                seatEl.className = `seat ${seat.type} ${selectedSeats.has(seatId) ? 'selected' : ''}`;
+                seatEl.id = `seat-${seatId}`;
+                seatEl.textContent = seat.type === 'DISABLED' ? '' : seatId;
+                
+                // Đảm bảo ghế nằm đúng vị trí cột dựa trên colNum
+                // Cột 1 là row-label, nên ghế thứ j nằm ở grid-column: j + 1
+                seatEl.style.gridColumn = seat.colNum + 1;
+                
+                seatEl.onclick = (e) => toggleSeat(seatId, e.shiftKey);
+                grid.appendChild(seatEl);
+            });
+        });
+    }
+
+    function toggleSeat(id, isShift) {
+        if (selectedSeats.has(id)) {
+            selectedSeats.delete(id);
+        } else {
+            selectedSeats.add(id);
+        }
+        updateSelectionUI();
+        renderGrid();
+    }
+
+    function updateSelectionUI() {
+        document.getElementById('selectCount').textContent = `${selectedSeats.size} ghế`;
+        document.getElementById('selectNames').textContent = selectedSeats.size > 0 
+            ? Array.from(selectedSeats).join(', ') 
+            : 'Vui lòng nhấp chọn ghế trên sơ đồ';
+    }
+
+    function clearSelection() {
+        selectedSeats.clear();
+        updateSelectionUI();
+        renderGrid();
+    }
+
+    function setSeatType(type) {
+        if (selectedSeats.size === 0) { alert('Vui lòng chọn ít nhất 1 ghế!'); return; }
+        
+        roomData.seats.forEach(seat => {
+            if (selectedSeats.has(`${seat.rowChar}${seat.colNum}`)) {
+                seat.type = type;
+                seat.status = (type !== 'DISABLED');
+            }
+        });
+        
+        renderGrid();
+    }
+
+    async function saveDesign() {
+        const updateRequests = roomData.seats.map(s => ({
+            rowChar: s.rowChar,
+            colNum: s.colNum,
+            type: s.type,
+            status: s.status
+        }));
+
+        const response = await api.put(`/rooms/${roomId}/layout`, { seats: updateRequests });
+        
+        if (response.success) {
+            alert('Đã lưu sơ đồ ghế thành công!');
+            selectedSeats.clear();
+            updateSelectionUI();
+        } else {
+            alert('Lỗi: ' + response.message);
+        }
+    }
+</script>
+</body>
+</html>
