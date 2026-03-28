@@ -22,6 +22,8 @@ import java.util.stream.Collectors;
 @Service
 public class ShowtimeServiceImpl implements ShowtimeService {
 
+    private static final int CLEANING_TIME_MINUTES = 15;
+
     private final ShowtimeRepository showtimeRepository;
     private final MovieRepository movieRepository;
     private final RoomRepository roomRepository;
@@ -40,12 +42,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     @Override
     public List<ShowtimeResponse> getAllShowtimes() {
         return showtimeRepository.findAll().stream()
-                .map(s -> {
-                    ShowtimeResponse res = modelMapper.map(s, ShowtimeResponse.class);
-                    res.setMovieTitle(s.getMovie().getTitle());
-                    res.setRoomName(s.getRoom().getName());
-                    return res;
-                })
+                .map(s -> modelMapper.map(s, ShowtimeResponse.class))
                 .collect(Collectors.toList());
     }
 
@@ -57,23 +54,12 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         Room room = roomRepository.findById(request.getRoomId())
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng"));
 
-        // 1. Tính toán endTime dựa trên thời lượng phim + 15p dọn dẹp
+        // 1. Tính toán endTime dựa trên thời lượng phim + dọn dẹp
         LocalDateTime startTime = request.getStartTime();
-        LocalDateTime endTime = startTime.plusMinutes(movie.getDuration() + 15);
+        LocalDateTime endTime = startTime.plusMinutes(movie.getDuration() + CLEANING_TIME_MINUTES);
 
-        // 2. Kiểm tra xung đột phòng chiếu bằng Java
-        LocalDateTime startOfDay = startTime.toLocalDate().atStartOfDay();
-        LocalDateTime endOfDay = startTime.toLocalDate().atTime(23, 59, 59);
-        
-        List<Showtime> existingShowtimes = showtimeRepository.findByRoomAndDate(room.getId(), startOfDay, endOfDay);
-
-        for (Showtime s : existingShowtimes) {
-            // Công thức chồng chéo: start1 < end2 AND start2 < end1
-            if (startTime.isBefore(s.getEndTime()) && endTime.isAfter(s.getStartTime())) {
-                throw new AppException("Xung đột lịch chiếu: Phòng " + room.getName() + 
-                    " đã có suất chiếu từ " + s.getStartTime().toLocalTime() + " đến " + s.getEndTime().toLocalTime());
-            }
-        }
+        // 2. Kiểm tra xung đột phòng chiếu
+        validateShowtimeConflict(room.getId(), startTime, endTime);
 
         // 3. Tạo mới
         Showtime showtime = new Showtime();
@@ -84,11 +70,21 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setStatus(ShowtimeStatus.UPCOMING);
 
         Showtime saved = showtimeRepository.save(showtime);
+        return modelMapper.map(saved, ShowtimeResponse.class);
+    }
+
+    private void validateShowtimeConflict(Long roomId, LocalDateTime startTime, LocalDateTime endTime) {
+        LocalDateTime startOfDay = startTime.toLocalDate().atStartOfDay();
+        LocalDateTime endOfDay = startTime.toLocalDate().atTime(23, 59, 59);
         
-        ShowtimeResponse response = modelMapper.map(saved, ShowtimeResponse.class);
-        response.setMovieTitle(movie.getTitle());
-        response.setRoomName(room.getName());
-        return response;
+        List<Showtime> existingShowtimes = showtimeRepository.findByRoomAndDate(roomId, startOfDay, endOfDay);
+
+        for (Showtime s : existingShowtimes) {
+            if (startTime.isBefore(s.getEndTime()) && endTime.isAfter(s.getStartTime())) {
+                throw new AppException("Xung đột lịch chiếu: Phòng đã có suất chiếu từ " + 
+                    s.getStartTime().toLocalTime() + " đến " + s.getEndTime().toLocalTime());
+            }
+        }
     }
 
     @Override

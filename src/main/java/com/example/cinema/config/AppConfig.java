@@ -32,6 +32,14 @@ public class AppConfig {
             mapper.map(src -> src.getMovieDirectors(), com.example.cinema.model.dto.response.MovieResponse::setDirectors);
         });
 
+        // Map Showtime -> ShowtimeResponse
+        modelMapper.typeMap(com.example.cinema.model.entity.Showtime.class, com.example.cinema.model.dto.response.ShowtimeResponse.class).addMappings(mapper -> {
+            mapper.map(src -> src.getMovie().getId(), com.example.cinema.model.dto.response.ShowtimeResponse::setMovieId);
+            mapper.map(src -> src.getMovie().getTitle(), com.example.cinema.model.dto.response.ShowtimeResponse::setMovieTitle);
+            mapper.map(src -> src.getRoom().getId(), com.example.cinema.model.dto.response.ShowtimeResponse::setRoomId);
+            mapper.map(src -> src.getRoom().getName(), com.example.cinema.model.dto.response.ShowtimeResponse::setRoomName);
+        });
+
         return modelMapper;
     }
 }
