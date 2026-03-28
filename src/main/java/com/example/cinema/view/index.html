@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarCinema – Phim Đang Chiếu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; }
+        a { text-decoration: none; color: inherit; }
+
+        /* ── NAVBAR ── */
+        .navbar-star {
+          background: rgba(8,11,20,0.92);
+          backdrop-filter: blur(16px);
+          border-bottom: 1px solid var(--border);
+          padding: 14px 0;
+          position: sticky; top: 0; z-index: 100;
+        }
+        .brand {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 1.8rem;
+          letter-spacing: 3px;
+          color: var(--text);
+        }
+        .brand span { color: var(--accent); }
+        .nav-link-star {
+          color: var(--text-muted);
+          font-size: 0.9rem;
+          font-weight: 500;
+          padding: 6px 16px;
+          border-radius: 6px;
+          transition: color 0.2s, background 0.2s;
+        }
+        .nav-link-star:hover, .nav-link-star.active {
+          color: var(--text);
+          background: rgba(255,255,255,0.05);
+        }
+        .nav-link-star.active { color: var(--accent); }
+        .btn-nav-login {
+          background: var(--gradient); color: #fff; border: none;
+          padding: 8px 20px; border-radius: 8px;
+          font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600;
+          cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-nav-login:hover { opacity: 0.85; }
+        .user-avatar {
+          width: 36px; height: 36px; border-radius: 50%;
+          background: var(--gradient); display: flex; align-items: center; justify-content: center;
+          font-size: 0.8rem; font-weight: 700; cursor: pointer; border: 2px solid transparent;
+          transition: border-color 0.2s;
+        }
+        .user-avatar:hover { border-color: var(--accent); }
+        .member-badge {
+          font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+          text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .badge-silver { background: rgba(192,192,192,0.15); color: #C0C0C0; border: 1px solid rgba(192,192,192,0.3); }
+        .badge-gold   { background: rgba(245,166,35,0.15); color: var(--accent-gold); border: 1px solid rgba(245,166,35,0.3); }
+        .badge-plat   { background: rgba(100,200,255,0.15); color: #64C8FF; border: 1px solid rgba(100,200,255,0.3); }
+
+        /* ── HERO ── */
+        .hero {
+          position: relative;
+          height: 520px;
+          overflow: hidden;
+          margin-bottom: 0;
+        }
+        .hero-bg {
+          position: absolute; inset: 0;
+          background: linear-gradient(to right, rgba(8,11,20,1) 40%, rgba(8,11,20,0.4) 100%),
+                      linear-gradient(to top, rgba(8,11,20,0.9) 0%, transparent 50%);
+          z-index: 1;
+        }
+        .hero-poster-bg {
+          position: absolute; right: -20px; top: -10px;
+          width: 65%; height: 110%;
+          background: linear-gradient(135deg, #0d1a3a, #1a0a20, #200a0a);
+          clip-path: polygon(8% 0, 100% 0, 100% 100%, 0% 100%);
+          overflow: hidden;
+        }
+        .hero-poster-img {
+          width: 100%; height: 100%; object-fit: cover; opacity: 0.45;
+        }
+        .hero-content {
+          position: relative; z-index: 2;
+          height: 100%; display: flex; flex-direction: column; justify-content: center;
+          padding: 0 60px;
+        }
+        .hero-tag {
+          font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+          color: var(--accent); margin-bottom: 12px;
+          display: flex; align-items: center; gap: 8px;
+        }
+        .hero-tag::before { content: ''; display: block; width: 24px; height: 2px; background: var(--accent); }
+        .hero-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 4rem; line-height: 1; letter-spacing: 2px; margin-bottom: 16px;
+        }
+        .hero-meta { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .hero-rating { color: var(--accent-gold); font-weight: 700; font-size: 1rem; }
+        .age-badge {
+          padding: 2px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 700;
+        }
+        .age-c18 { background: rgba(229,19,58,0.2); color: var(--accent); border: 1px solid var(--accent); }
+        .age-c16 { background: rgba(245,166,35,0.2); color: var(--accent-gold); border: 1px solid var(--accent-gold); }
+        .age-p   { background: rgba(80,200,100,0.2); color: #50C864; border: 1px solid #50C864; }
+        .age-c13 { background: rgba(100,180,255,0.2); color: #64B4FF; border: 1px solid #64B4FF; }
+
+        .hero-desc { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; max-width: 460px; margin-bottom: 28px; }
+        .hero-actions { display: flex; gap: 12px; }
+        .btn-hero-primary {
+          background: var(--gradient); color: #fff; border: none;
+          padding: 14px 32px; border-radius: 10px;
+          font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700;
+          cursor: pointer; transition: all 0.2s;
+          display: flex; align-items: center; gap: 10px;
+        }
+        .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(229,19,58,0.35); }
+        .btn-hero-secondary {
+          background: rgba(255,255,255,0.07); color: var(--text); border: 1.5px solid var(--border);
+          padding: 14px 28px; border-radius: 10px;
+          font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 500;
+          cursor: pointer; transition: all 0.2s;
+          display: flex; align-items: center; gap: 10px;
+          backdrop-filter: blur(8px);
+        }
+        .btn-hero-secondary:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
+
+        .hero-dots { display: flex; gap: 6px; position: absolute; bottom: 24px; left: 60px; z-index: 2; }
+        .hero-dot { width: 6px; height: 6px; border-radius: 3px; background: var(--border); transition: width 0.3s, background 0.3s; cursor: pointer; }
+        .hero-dot.active { width: 24px; background: var(--accent); }
+
+        /* ── FILTERS ── */
+        .section-filters {
+          background: var(--surface);
+          border-bottom: 1px solid var(--border);
+          padding: 16px 0;
+          position: sticky; top: 65px; z-index: 90;
+        }
+        .filter-tab {
+          border: 1.5px solid var(--border); background: transparent; color: var(--text-muted);
+          padding: 8px 20px; border-radius: 20px; font-family: 'Outfit', sans-serif;
+          font-size: 0.88rem; font-weight: 500; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .filter-tab:hover { border-color: var(--accent); color: var(--text); }
+        .filter-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .filter-tab.coming { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .filter-tab.coming.active { background: var(--accent-gold); border-color: var(--accent-gold); color: #000; }
+        .genre-pill {
+          border: 1px solid var(--border); background: var(--card); color: var(--text-muted);
+          padding: 5px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 500;
+          cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .genre-pill.active, .genre-pill:hover { border-color: var(--accent); color: var(--text); }
+        .search-bar-wrap { position: relative; }
+        .search-input {
+          background: var(--card); border: 1.5px solid var(--border); color: var(--text);
+          padding: 8px 16px 8px 40px; border-radius: 20px;
+          font-family: 'Outfit', sans-serif; font-size: 0.9rem; width: 240px;
+          transition: border-color 0.2s, width 0.3s;
+        }
+        .search-input:focus { border-color: var(--accent); outline: none; width: 300px; }
+        .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.9rem; }
+
+        /* ── SECTION ── */
+        .section-title {
+          font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 2px;
+          display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+        }
+        .section-title::before {
+          content: ''; display: block; width: 4px; height: 28px;
+          background: var(--gradient); border-radius: 2px;
+        }
+        .section-count {
+          font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 500;
+          color: var(--text-muted); margin-left: 4px;
+        }
+
+        /* ── MOVIE CARD ── */
+        .movie-card {
+          background: var(--card); border-radius: 14px; overflow: hidden;
+          border: 1px solid var(--border); transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+          cursor: pointer; position: relative;
+        }
+        .movie-card:hover {
+          transform: translateY(-6px);
+          box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(229,19,58,0.2);
+          border-color: rgba(229,19,58,0.3);
+        }
+        .movie-poster {
+          position: relative; aspect-ratio: 2/3; overflow: hidden;
+        }
+        .movie-poster-img {
+          width: 100%; height: 100%; object-fit: cover;
+          transition: transform 0.4s;
+        }
+        .movie-card:hover .movie-poster-img { transform: scale(1.05); }
+        .poster-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(to top, rgba(22,27,46,1) 0%, rgba(22,27,46,0.3) 50%, transparent 100%);
+          opacity: 0; transition: opacity 0.3s;
+        }
+        .movie-card:hover .poster-overlay { opacity: 1; }
+        .poster-play {
+          position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+          width: 52px; height: 52px; border-radius: 50%;
+          background: rgba(229,19,58,0.85); display: flex; align-items: center; justify-content: center;
+          opacity: 0; transition: opacity 0.3s; font-size: 1.2rem; color: #fff;
+        }
+        .movie-card:hover .poster-play { opacity: 1; }
+
+        .poster-age {
+          position: absolute; top: 10px; left: 10px;
+          padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700;
+        }
+        .poster-label {
+          position: absolute; top: 10px; right: 10px;
+          padding: 3px 10px; border-radius: 4px; font-size: 0.72rem; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .label-hot { background: var(--accent); color: #fff; }
+        .label-new { background: var(--accent-gold); color: #000; }
+        .label-soon { background: rgba(100,200,255,0.2); color: #64C8FF; border: 1px solid rgba(100,200,255,0.3); }
+
+        .movie-info { padding: 14px 16px 16px; }
+        .movie-title {
+          font-weight: 700; font-size: 1rem; margin-bottom: 6px;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .movie-meta-row {
+          display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+        }
+        .movie-rating { color: var(--accent-gold); font-size: 0.85rem; font-weight: 600; }
+        .movie-duration { color: var(--text-muted); font-size: 0.82rem; }
+        .movie-genres { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+        .genre-tag {
+          font-size: 0.72rem; font-weight: 500; color: var(--text-muted);
+          border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px;
+        }
+        .btn-book {
+          background: var(--gradient); color: #fff; border: none;
+          width: 100%; padding: 10px; border-radius: 8px;
+          font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 600;
+          cursor: pointer; transition: opacity 0.2s;
+        }
+        .btn-book:hover { opacity: 0.9; }
+        .btn-book-soon {
+          background: transparent; color: var(--accent-gold); border: 1.5px solid var(--accent-gold);
+          width: 100%; padding: 10px; border-radius: 8px;
+          font-family: 'Outfit', sans-serif; font-size: 0.88rem; font-weight: 600;
+          cursor: pointer; transition: all 0.2s;
+        }
+        .btn-book-soon:hover { background: rgba(245,166,35,0.1); }
+
+        /* ── PROMO BANNER ── */
+        .promo-banner {
+          background: linear-gradient(135deg, var(--card), #1a0a10);
+          border: 1px solid rgba(229,19,58,0.2); border-radius: 16px;
+          padding: 24px 32px; position: relative; overflow: hidden;
+        }
+        .promo-banner::before {
+          content: '🎟️'; position: absolute; right: 24px; top: 50%; transform: translateY(-50%);
+          font-size: 4rem; opacity: 0.15;
+        }
+        .promo-banner h4 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; margin-bottom: 4px; }
+        .promo-banner p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+        .promo-code {
+          background: rgba(229,19,58,0.15); border: 1.5px dashed var(--accent);
+          color: var(--accent); padding: 6px 16px; border-radius: 6px;
+          font-weight: 700; font-size: 1rem; letter-spacing: 2px;
+          display: inline-block; margin-top: 12px; cursor: pointer;
+          transition: background 0.2s;
+        }
+        .promo-code:hover { background: rgba(229,19,58,0.25); }
+
+        /* ── FOOTER ── */
+        .footer {
+          background: var(--surface); border-top: 1px solid var(--border);
+          padding: 40px 0 20px; margin-top: 64px;
+        }
+        .footer-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 8px; }
+        .footer-brand span { color: var(--accent); }
+        .footer-link { color: var(--text-muted); font-size: 0.88rem; transition: color 0.2s; display: block; margin-bottom: 8px; }
+        .footer-link:hover { color: var(--accent); }
+        .footer-copyright { color: var(--text-muted); font-size: 0.82rem; text-align: center; padding-top: 20px; border-top: 1px solid var(--border); margin-top: 32px; }
+
+        /* Poster gradient fills */
+        .pg-1 { background: linear-gradient(135deg, #1a0a0f, #4a1020, #8b1030); }
+        .pg-2 { background: linear-gradient(135deg, #0a0f1a, #102040, #1a3060); }
+        .pg-3 { background: linear-gradient(135deg, #0d1a0d, #1a3a1a, #2a5a2a); }
+        .pg-4 { background: linear-gradient(135deg, #1a140a, #3a2a10, #5a4010); }
+        .pg-5 { background: linear-gradient(135deg, #0a1215, #10252a, #1a3a40); }
+        .pg-6 { background: linear-gradient(135deg, #140a1a, #2a1040, #401560); }
+        .pg-7 { background: linear-gradient(135deg, #1a0a08, #4a1810, #701a0e); }
+        .pg-8 { background: linear-gradient(135deg, #080a1a, #101840, #141e60); }
+
+        .poster-placeholder {
+          width: 100%; height: 100%; display: flex; flex-direction: column;
+          align-items: center; justify-content: center; gap: 8px;
+          font-size: 2.5rem;
+        }
+        .poster-placeholder span { font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: rgba(255,255,255,0.3); letter-spacing: 1px; text-transform: uppercase; }
+
+        /* Notification dot */
+        .notif-dot {
+          position: absolute; top: 0; right: 0;
+          width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+          border: 1.5px solid var(--bg);
+        }
+
+        .scroll-hide { scrollbar-width: none; }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar-star">
+    <div class="container-xxl">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-4">
+                <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
+                <div class="d-none d-lg-flex gap-1">
+                    <a href="index.html" class="nav-link-star active">Phim</a>
+                    <a href="#" class="nav-link-star">Rạp &amp; Giá</a>
+                    <a href="history.html" class="nav-link-star">Vé của tôi</a>
+                    <a href="#" class="nav-link-star">Ưu đãi</a>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="search-bar-wrap d-none d-md-block">
+                    <i class="bi bi-search search-icon"></i>
+                    <input class="search-input" type="text" placeholder="Tìm phim..." oninput="filterMovies(this.value)">
+                </div>
+                <div class="position-relative" style="cursor:pointer">
+                    <i class="bi bi-bell" style="font-size:1.2rem;color:var(--text-muted)"></i>
+                    <span class="notif-dot"></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="user-avatar" title="Nguyễn Văn A">A</div>
+                    <div class="d-none d-md-block">
+                        <div style="font-size:0.85rem;font-weight:600;line-height:1.2">Nguyễn Văn A</div>
+                        <span class="member-badge badge-gold">Gold ⭐ 1,240đ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="heroSection">
+    <div class="hero-bg"></div>
+    <div class="hero-poster-bg">
+        <div class="poster-placeholder pg-1" style="opacity:0.6;font-size:5rem">🎬</div>
+    </div>
+    <div class="hero-content">
+        <div class="hero-tag">Phim nổi bật tuần này</div>
+        <h1 class="hero-title" id="heroTitle">AVENGERS:<br>SECRET WARS</h1>
+        <div class="hero-meta">
+            <span class="hero-rating">⭐ 9.2</span>
+            <span class="age-badge age-c13">C13</span>
+            <span style="color:var(--text-muted);font-size:0.9rem">2h 48m</span>
+            <span style="color:var(--text-muted);font-size:0.9rem">•</span>
+            <span style="color:var(--text-muted);font-size:0.9rem">Action • Sci-Fi</span>
+        </div>
+        <p class="hero-desc" id="heroDesc">Trận chiến cuối cùng giữa các Avengers và kẻ phản diện mạnh nhất từ trước đến nay. Số phận của đa vũ trụ được quyết định trong cuộc chiến này.</p>
+        <div class="hero-actions">
+            <button class="btn-hero-primary" onclick="window.location.href='booking.html'">
+                <i class="bi bi-ticket-perforated"></i> Đặt vé ngay
+            </button>
+            <button class="btn-hero-secondary">
+                <i class="bi bi-play-circle"></i> Xem trailer
+            </button>
+        </div>
+    </div>
+    <div class="hero-dots" id="heroDots"></div>
+</section>
+
+<!-- FILTERS -->
+<div class="section-filters">
+    <div class="container-xxl">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="d-flex gap-2">
+                <button class="filter-tab active" onclick="setShowStatus('showing', this)">🎬 Đang chiếu</button>
+                <button class="filter-tab coming" onclick="setShowStatus('coming', this)">⏳ Sắp chiếu</button>
+            </div>
+            <div class="d-flex gap-2 scroll-hide" style="overflow-x:auto;flex:1">
+                <button class="genre-pill active" onclick="setGenre('all', this)">Tất cả</button>
+                <button class="genre-pill" onclick="setGenre('action', this)">Action</button>
+                <button class="genre-pill" onclick="setGenre('drama', this)">Drama</button>
+                <button class="genre-pill" onclick="setGenre('comedy', this)">Comedy</button>
+                <button class="genre-pill" onclick="setGenre('scifi', this)">Sci-Fi</button>
+                <button class="genre-pill" onclick="setGenre('horror', this)">Horror</button>
+                <button class="genre-pill" onclick="setGenre('romance', this)">Romance</button>
+                <button class="genre-pill" onclick="setGenre('animation', this)">Animation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="container-xxl py-5">
+
+    <!-- PROMO BANNER -->
+    <div class="promo-banner mb-5">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4>🎉 Thứ 4 Vui Vẻ – Giảm 30% mọi ghế</h4>
+                <p>Đặt vé ngày thứ Tư, áp dụng cho tất cả suất chiếu trong ngày. Không giới hạn số lượng.</p>
+                <span class="promo-code" onclick="copyCode(this)">WED30 <i class="bi bi-copy ms-1" style="font-size:0.75rem"></i></span>
+            </div>
+            <div class="col-md-4 d-none d-md-flex justify-content-end align-items-center gap-3 mt-3 mt-md-0">
+                <div style="text-align:center">
+                    <div style="font-size:2rem;font-weight:700;color:var(--accent)">30%</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted)">Giảm giá</div>
+                </div>
+                <div style="width:1px;height:40px;background:var(--border)"></div>
+                <div style="text-align:center">
+                    <div style="font-size:2rem;font-weight:700;color:var(--accent-gold)">24H</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted)">Còn lại</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOW SHOWING -->
+    <div id="nowShowingSection">
+        <div class="section-title">Đang Chiếu <span class="section-count" id="showingCount">(8 phim)</span></div>
+        <div class="row g-3 g-lg-4" id="movieGrid"></div>
+    </div>
+
+    <!-- COMING SOON -->
+    <div id="comingSoonSection" style="display:none">
+        <div class="section-title">Sắp Chiếu <span class="section-count" id="comingCount">(4 phim)</span></div>
+        <div class="row g-3 g-lg-4" id="comingGrid"></div>
+    </div>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container-xxl">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="footer-brand">STAR<span>CINEMA</span></div>
+                <p style="color:var(--text-muted);font-size:0.88rem;line-height:1.7">Hệ thống rạp phim hiện đại với công nghệ chiếu phim tiên tiến nhất. Trải nghiệm điện ảnh đỉnh cao.</p>
+            </div>
+            <div class="col-6 col-md-2">
+                <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem">Khám phá</div>
+                <a class="footer-link" href="#">Phim đang chiếu</a>
+                <a class="footer-link" href="#">Sắp chiếu</a>
+                <a class="footer-link" href="#">Combo ưu đãi</a>
+                <a class="footer-link" href="#">Khuyến mãi</a>
+            </div>
+            <div class="col-6 col-md-2">
+                <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem">Hỗ trợ</div>
+                <a class="footer-link" href="#">Câu hỏi thường gặp</a>
+                <a class="footer-link" href="#">Chính sách hoàn vé</a>
+                <a class="footer-link" href="#">Liên hệ</a>
+            </div>
+            <div class="col-md-4">
+                <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem">Hệ thống rạp</div>
+                <div style="color:var(--text-muted);font-size:0.85rem;line-height:2">
+                    📍 StarCinema Quận 1 – 123 Nguyễn Huệ<br>
+                    📍 StarCinema Thủ Đức – 456 Võ Văn Ngân<br>
+                    📍 StarCinema Gò Vấp – 789 Quang Trung<br>
+                    📞 Hotline: 1900 1234
+                </div>
+            </div>
+        </div>
+        <div class="footer-copyright">© 2024 StarCinema. Designed with ❤️ for movie lovers.</div>
+    </div>
+</footer>
+
+<script>
+    const MOVIES_SHOWING = [
+      { id:1, title:'Avengers: Secret Wars', genres:['Action','Sci-Fi'], rating:9.2, duration:'2h 48m', age:'c13', label:'hot', poster:'pg-1', emoji:'⚡', genre_keys:['action','scifi'] },
+      { id:2, title:'The Dark Knight Returns', genres:['Action','Drama'], rating:8.9, duration:'2h 32m', age:'c16', label:'new', poster:'pg-2', emoji:'🦇', genre_keys:['action','drama'] },
+      { id:3, title:'Jurassic World 4', genres:['Action','Sci-Fi'], rating:7.8, duration:'2h 10m', age:'c13', label:'hot', poster:'pg-3', emoji:'🦕', genre_keys:['action','scifi'] },
+      { id:4, title:'La La Land 2', genres:['Romance','Drama'], rating:8.5, duration:'1h 58m', age:'p', label:'', poster:'pg-4', emoji:'🎶', genre_keys:['romance','drama'] },
+      { id:5, title:'Midnight Horror', genres:['Horror'], rating:7.2, duration:'1h 45m', age:'c18', label:'', poster:'pg-5', emoji:'👻', genre_keys:['horror'] },
+      { id:6, title:'The Grand Comedy', genres:['Comedy'], rating:8.1, duration:'1h 50m', age:'p', label:'new', poster:'pg-6', emoji:'😂', genre_keys:['comedy'] },
+      { id:7, title:'Robot Warriors', genres:['Sci-Fi','Action'], rating:8.4, duration:'2h 15m', age:'c13', label:'hot', poster:'pg-7', emoji:'🤖', genre_keys:['scifi','action'] },
+      { id:8, title:'Ocean Dreams', genres:['Animation'], rating:9.0, duration:'1h 40m', age:'p', label:'new', poster:'pg-8', emoji:'🐋', genre_keys:['animation'] },
+    ];
+    const MOVIES_COMING = [
+      { id:9,  title:'Star Wars: Episode X', genres:['Sci-Fi','Action'], rating:null, duration:'2h 20m', age:'c13', releaseDate:'15/02/2025', poster:'pg-2', emoji:'🚀', genre_keys:['scifi','action'] },
+      { id:10, title:'Frozen 3', genres:['Animation','Family'], rating:null, duration:'1h 55m', age:'p', releaseDate:'28/02/2025', poster:'pg-8', emoji:'❄️', genre_keys:['animation'] },
+      { id:11, title:'Mission Impossible 9', genres:['Action','Thriller'], rating:null, duration:'2h 30m', age:'c16', releaseDate:'10/03/2025', poster:'pg-1', emoji:'💣', genre_keys:['action'] },
+      { id:12, title:'Romance in Tokyo', genres:['Romance'], rating:null, duration:'1h 45m', age:'c13', releaseDate:'20/03/2025', poster:'pg-4', emoji:'🌸', genre_keys:['romance'] },
+    ];
+
+    let currentStatus = 'showing';
+    let currentGenre = 'all';
+    let searchQuery = '';
+
+    const AGE_CLASS = { p:'age-p', c13:'age-c13', c16:'age-c16', c18:'age-c18' };
+    const AGE_LABEL = { p:'P', c13:'C13', c16:'C16', c18:'C18' };
+    const LABEL_CLASS = { hot:'label-hot', new:'label-new', soon:'label-soon' };
+    const LABEL_TEXT = { hot:'HOT 🔥', new:'MỚI', soon:'SOON' };
+
+    function renderCard(m, isComing) {
+      return `
+      <div class="col-6 col-md-4 col-lg-3 movie-item" data-genres='${JSON.stringify(m.genre_keys)}' data-title="${m.title.toLowerCase()}">
+        <div class="movie-card" onclick="window.location.href='movie-detail.html'">
+          <div class="movie-poster">
+            <div class="poster-placeholder ${m.poster}" style="height:100%">
+              <span style="font-size:3rem">${m.emoji}</span>
+              <span style="font-size:0.7rem;opacity:0.4;text-align:center;padding:0 8px">${m.title}</span>
+            </div>
+            <div class="poster-overlay"></div>
+            <div class="poster-play"><i class="bi bi-play-fill"></i></div>
+            <div class="poster-age ${AGE_CLASS[m.age]}">${AGE_LABEL[m.age]}</div>
+            ${m.label ? `<div class="poster-label ${LABEL_CLASS[m.label]}">${LABEL_TEXT[m.label]}</div>` : ''}
+            ${isComing ? `<div class="poster-label label-soon">SOON</div>` : ''}
+          </div>
+          <div class="movie-info">
+            <div class="movie-title">${m.title}</div>
+            <div class="movie-meta-row">
+              <span class="movie-rating">${m.rating ? `⭐ ${m.rating}` : (isComing ? `📅 ${m.releaseDate}` : '')}</span>
+              <span class="movie-duration">⏱ ${m.duration}</span>
+            </div>
+            <div class="movie-genres">
+              ${m.genres.map(g=>`<span class="genre-tag">${g}</span>`).join('')}
+            </div>
+            ${isComing
+              ? `<button class="btn-book-soon">🔔 Nhắc tôi</button>`
+              : `<button class="btn-book" onclick="event.stopPropagation();window.location.href='booking.html'">🎫 Đặt vé</button>`}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function render() {
+      const sg = document.getElementById('movieGrid');
+      const cg = document.getElementById('comingGrid');
+      const filterFn = m => {
+        const genreOk = currentGenre === 'all' || m.genre_keys.includes(currentGenre);
+        const searchOk = !searchQuery || m.title.toLowerCase().includes(searchQuery);
+        return genreOk && searchOk;
+      };
+      const showing = MOVIES_SHOWING.filter(filterFn);
+      const coming = MOVIES_COMING.filter(filterFn);
+      sg.innerHTML = showing.map(m => renderCard(m, false)).join('') || '<div class="text-center py-5" style="color:var(--text-muted);width:100%">Không tìm thấy phim phù hợp</div>';
+      cg.innerHTML = coming.map(m => renderCard(m, true)).join('') || '<div class="text-center py-5" style="color:var(--text-muted);width:100%">Không tìm thấy phim phù hợp</div>';
+      document.getElementById('showingCount').textContent = `(${showing.length} phim)`;
+      document.getElementById('comingCount').textContent = `(${coming.length} phim)`;
+      document.getElementById('nowShowingSection').style.display = currentStatus === 'showing' ? '' : 'none';
+      document.getElementById('comingSoonSection').style.display = currentStatus === 'coming' ? '' : 'none';
+    }
+
+    function setShowStatus(s, btn) {
+      currentStatus = s;
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active'); render();
+    }
+    function setGenre(g, btn) {
+      currentGenre = g;
+      document.querySelectorAll('.genre-pill').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active'); render();
+    }
+    function filterMovies(q) { searchQuery = q.toLowerCase(); render(); }
+    function copyCode(el) {
+      navigator.clipboard.writeText('WED30').catch(()=>{});
+      el.innerHTML = '✅ Đã sao chép!';
+      setTimeout(() => el.innerHTML = 'WED30 <i class="bi bi-copy ms-1" style="font-size:0.75rem"></i>', 2000);
+    }
+
+    // Hero dots
+    const HEROES = [
+      { title:'AVENGERS:<br>SECRET WARS', desc:'Trận chiến cuối cùng giữa các Avengers và kẻ phản diện mạnh nhất từ trước đến nay.' },
+      { title:'THE DARK KNIGHT<br>RETURNS', desc:'Batman quay trở lại Gotham trong cuộc chiến với mối đe dọa mới từ bóng tối.' },
+      { title:'JURASSIC<br>WORLD 4', desc:'Khủng long và con người – ai sẽ thống trị Trái Đất trong kỷ nguyên mới này?' },
+    ];
+    const dotsEl = document.getElementById('heroDots');
+    let heroIdx = 0;
+    HEROES.forEach((_, i) => {
+      const d = document.createElement('div'); d.className = 'hero-dot' + (i === 0 ? ' active' : '');
+      d.onclick = () => setHero(i); dotsEl.appendChild(d);
+    });
+    function setHero(i) {
+      heroIdx = i;
+      document.getElementById('heroTitle').innerHTML = HEROES[i].title;
+      document.getElementById('heroDesc').textContent = HEROES[i].desc;
+      document.querySelectorAll('.hero-dot').forEach((d,j) => d.classList.toggle('active', j === i));
+    }
+    setInterval(() => setHero((heroIdx + 1) % HEROES.length), 5000);
+
+    render();
+</script>
+</body>
+</html>

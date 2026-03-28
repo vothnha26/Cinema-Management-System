@@ -22,3 +22,4 @@ Thumbs.db
 # Cloudinary / Secrets (Should be handled via Env Variables in production)
 # application.properties (Nếu bạn muốn giữ bí mật API Key, hãy bỏ comment dòng dưới)
 # src/main/resources/application.properties
+*.md

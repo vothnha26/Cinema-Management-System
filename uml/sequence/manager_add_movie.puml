@@ -1,0 +1,35 @@
+@startuml Manager Manage Movie Sequence
+title Sequence Diagram: Thêm phim mới (Manager)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-movies.html" as UI
+control "MovieController" as Ctrl
+control "CloudinaryService" as CloudSvc
+entity "MovieService" as Svc
+database "MySQL" as DB
+
+Manager -> UI: Nhập thông tin & chọn file Poster
+UI -> Ctrl: POST /api/movies (Multipart Form Data)
+activate Ctrl
+
+Ctrl -> CloudSvc: upload(file)
+activate CloudSvc
+CloudSvc -> CloudSvc: Thực hiện upload qua API Cloudinary
+CloudSvc --> Ctrl: Trả về secure_url & public_id
+deactivate CloudSvc
+
+Ctrl -> Svc: createMovie(movieDto, imageUrl)
+activate Svc
+Svc -> Svc: Map DTO to Entity
+Svc -> DB: save(movie)
+activate DB
+DB --> Svc: movieEntity
+deactivate DB
+Svc --> Ctrl: movieResponseDto
+deactivate Svc
+
+Ctrl --> UI: 201 Created (Success Message)
+deactivate Ctrl
+UI -> Manager: Hiển thị thông báo thành công & cập nhật bảng
+@enduml
