@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Khuyến mãi – StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bg: #0f172a; --card: #1e293b; --accent: #e5133a; --text: #f8fafc; --text-muted: #94a3b8; --border: #334155;
+        }
+        body { background-color: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; }
+        .header-section { padding: 40px 0; background: linear-gradient(to bottom, #1e293b, #0f172a); border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+        .promo-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: all 0.3s; height: 100%; position: relative; }
+        .promo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .promo-code { font-family: 'Monospace'; background: rgba(229,19,58,0.1); color: var(--accent); padding: 4px 12px; border-radius: 8px; font-weight: 700; border: 1px dashed var(--accent); }
+        .discount-badge { font-size: 1.5rem; font-weight: 700; margin: 15px 0; }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; }
+        .form-control-custom { background: #0f172a; border: 1px solid var(--border); color: white; }
+        .form-control-custom:focus { background: #0f172a; color: white; border-color: var(--accent); box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<div class="header-section">
+    <div class="container d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="fw-bold mb-1">Chiến dịch Khuyến mãi</h1>
+            <p class="text-muted mb-0">Quản lý mã giảm giá và các chương trình ưu đãi khách hàng</p>
+        </div>
+        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#promoModal">
+            <i class="bi bi-plus-lg"></i> Tạo khuyến mãi mới
+        </button>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4" id="promoList">
+        <!-- Rendered by JS -->
+    </div>
+</div>
+
+<!-- Modal Khuyến mãi -->
+<div class="modal fade" id="promoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold">Thiết lập chương trình khuyến mãi</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="promoForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted">Mã khuyến mãi (CODE)</label>
+                            <input type="text" id="code" class="form-control form-control-custom" placeholder="VD: STAR2026" required style="text-transform: uppercase;">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted">Tên chương trình</label>
+                            <input type="text" id="name" class="form-control form-control-custom" placeholder="VD: Khuyến mãi Hè" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted">Loại giảm giá</label>
+                            <select id="discountType" class="form-select form-control-custom">
+                                <option value="PERCENT">Giảm theo %</option>
+                                <option value="FIXED">Giảm số tiền cố định</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted">Giá trị giảm</label>
+                            <input type="number" id="discountValue" class="form-control form-control-custom" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted">Ngày bắt đầu</label>
+                            <input type="date" id="startDate" class="form-control form-control-custom" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small text-muted">Ngày kết thúc</label>
+                            <input type="date" id="endDate" class="form-control form-control-custom" required>
+                        </div>
+                    </div>
+                    <hr class="border-secondary my-4">
+                    <h6 class="fw-bold mb-3">Điều kiện áp dụng (Tùy chọn)</h6>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small text-muted">Đơn tối thiểu (VNĐ)</label>
+                            <input type="number" id="minOrderAmount" class="form-control form-control-custom" value="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small text-muted">Giảm tối đa (VNĐ)</label>
+                            <input type="number" id="maxDiscountAmount" class="form-control form-control-custom">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label small text-muted">Giới hạn lượt dùng</label>
+                            <input type="number" id="usageLimit" class="form-control form-control-custom">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Hạng thành viên tối thiểu</label>
+                        <select id="minTier" class="form-select form-control-custom">
+                            <option value="STANDARD">Standard</option>
+                            <option value="SILVER">Silver</option>
+                            <option value="GOLD">Gold</option>
+                            <option value="DIAMOND">Diamond</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="savePromotion()">TẠO CHIẾN DỊCH</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPromotions();
+        document.getElementById('startDate').valueAsDate = new Date();
+        const end = new Date(); end.setMonth(end.getMonth() + 1);
+        document.getElementById('endDate').valueAsDate = end;
+    });
+
+    async function loadPromotions() {
+        const response = await api.get('/promotions');
+        if (response.success) {
+            renderPromotions(response.data);
+        }
+    }
+
+    function renderPromotions(promos) {
+        const container = document.getElementById('promoList');
+        if (promos.length === 0) {
+            container.innerHTML = '<div class="text-center p-5 text-muted">Chưa có chương trình khuyến mãi nào</div>';
+            return;
+        }
+
+        container.innerHTML = promos.map(p => `
+            <div class="col-md-6 col-lg-4">
+                <div class="promo-card">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <span class="promo-code">${p.code}</span>
+                        <button class="btn btn-sm btn-link text-danger p-0" onclick="deletePromo(${p.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <h5 class="fw-bold mb-1">${p.name}</h5>
+                    <div class="discount-badge text-accent">
+                        ${p.discountType === 'PERCENTAGE' ? p.discountValue + '%' : new Intl.NumberFormat('vi-VN').format(p.discountValue) + ' ₫'}
+                        <small class="text-muted fs-6 fw-normal">giảm</small>
+                    </div>
+                    <div class="small text-muted mb-3">
+                        <i class="bi bi-calendar3 me-1"></i> ${p.startDate} - ${p.endDate}
+                    </div>
+                    <div class="bg-dark-subtle p-3 rounded mb-2" style="font-size: 0.8rem;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Đơn tối thiểu:</span>
+                            <span class="fw-bold">${new Intl.NumberFormat('vi-VN').format(p.minOrderAmount || 0)} ₫</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Đã dùng:</span>
+                            <span class="fw-bold">${p.usedCount} / ${p.usageLimit || '∞'}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Hạng áp dụng:</span>
+                            <span class="badge bg-secondary">${p.minTier}</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 ${p.isActive ? 'text-success' : 'text-danger'} small">
+                        <i class="bi bi-circle-fill" style="font-size:0.5rem"></i> ${p.isActive ? 'Đang kích hoạt' : 'Tạm dừng'}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function savePromotion() {
+        const data = {
+            code: document.getElementById('code').value.toUpperCase(),
+            name: document.getElementById('name').value,
+            discountType: document.getElementById('discountType').value,
+            discountValue: parseFloat(document.getElementById('discountValue').value),
+            startDate: document.getElementById('startDate').value,
+            endDate: document.getElementById('endDate').value,
+            minOrderAmount: parseFloat(document.getElementById('minOrderAmount').value || 0),
+            maxDiscountAmount: parseFloat(document.getElementById('maxDiscountAmount').value || 0),
+            usageLimit: parseInt(document.getElementById('usageLimit').value || 0) || null,
+            minTier: document.getElementById('minTier').value
+        };
+
+        const response = await api.post('/promotions', data);
+        if (response.success) {
+            bootstrap.Modal.getInstance(document.getElementById('promoModal')).hide();
+            loadPromotions();
+        } else {
+            alert('Lỗi: ' + response.message);
+        }
+    }
+
+    async function deletePromo(id) {
+        if (confirm('Xóa mã khuyến mãi này?')) {
+            const response = await api.delete(`/promotions/${id}`);
+            if (response.success) loadPromotions();
+        }
+    }
+</script>
+</body>
+</html>

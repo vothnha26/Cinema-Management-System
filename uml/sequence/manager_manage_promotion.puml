@@ -1,0 +1,46 @@
+@startuml Manager Manage Promotion
+title Sequence Diagram: Quản lý Khuyến mãi & Promotion Engine (Task 6)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-promotions.html" as UI
+control "PromotionController" as Ctrl
+entity "PromotionService" as Svc
+entity "PromotionBuilder" as Builder
+database "Database" as DB
+
+== Tạo chương trình khuyến mãi mới ==
+Manager -> UI: Nhập thông tin (nhiều trường tùy chọn)
+UI -> Ctrl: POST /api/promotions (PromotionRequest)
+activate Ctrl
+
+Ctrl -> Svc: createPromotion(request)
+activate Svc
+
+Svc -> Builder: start building from request
+Builder -> Builder: set mandatory fields (code, value)
+Builder -> Builder: set optional fields (minOrder, maxDiscount, expiry)
+Builder --> Svc: Promotion Entity
+
+Svc -> DB: save(promotion)
+Svc --> Ctrl: PromotionResponse
+deactivate Svc
+
+Ctrl --> UI: 201 Created
+deactivate Ctrl
+
+== Kiểm tra hiệu lực mã (Dành cho Booking) ==
+[-> Svc: validatePromotion(code, orderAmount)
+activate Svc
+Svc -> DB: findByCode(code)
+DB --> Svc: Promotion
+Svc -> Svc: Check isActive, expiryDate, usageLimit
+Svc -> Svc: Check minOrderAmount
+alt Hợp lệ
+    Svc --> [ : Promotion Details (Discount value)
+else Không hợp lệ
+    Svc --> [ : throw AppException("Mã không hợp lệ hoặc đã hết hạn")
+end
+deactivate Svc
+
+@enduml
