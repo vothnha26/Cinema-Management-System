@@ -12,10 +12,19 @@ public class ShowtimeResponse {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private ShowtimeStatus status;
+    private int soldSeats;
+    private int totalSeats;
+    private int movieDuration;
 
     public ShowtimeResponse() {}
 
     // Getters and Setters
+    public int getSoldSeats() { return soldSeats; }
+    public void setSoldSeats(int soldSeats) { this.soldSeats = soldSeats; }
+    public int getTotalSeats() { return totalSeats; }
+    public void setTotalSeats(int totalSeats) { this.totalSeats = totalSeats; }
+    public int getMovieDuration() { return movieDuration; }
+    public void setMovieDuration(int movieDuration) { this.movieDuration = movieDuration; }
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getMovieId() { return movieId; }
