@@ -1,8 +1,8 @@
 package com.example.cinema.service.impl;
 
 import com.example.cinema.model.dto.response.StatisticsResponse;
-import com.example.cinema.repository.BookingRepository;
-import com.example.cinema.service.StatisticsService;
+import com.example.cinema.repository.booking.BookingRepository;
+import com.example.cinema.service.analytics.StatisticsService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

@@ -1,7 +1,7 @@
 package com.example.cinema.service.impl;
 
-import com.example.cinema.service.CloudinaryService;
-import com.example.cinema.service.ComboMediaService;
+import com.example.cinema.service.infrastructure.CloudinaryService;
+import com.example.cinema.service.commerce.ComboMediaService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -18,7 +18,8 @@ public class ComboMediaServiceImpl implements ComboMediaService {
 
     @Override
     public String uploadComboImage(MultipartFile file) throws IOException {
-        if (file == null || file.isEmpty()) return null;
+        if (file == null || file.isEmpty())
+            return null;
         Map result = cloudinaryService.upload(file, "combos");
         return (String) result.get("secure_url");
     }

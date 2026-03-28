@@ -1,7 +1,7 @@
 package com.example.cinema.config;
 
 import com.example.cinema.model.entity.AuditLog;
-import com.example.cinema.repository.AuditLogRepository;
+import com.example.cinema.repository.analytics.AuditLogRepository;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;

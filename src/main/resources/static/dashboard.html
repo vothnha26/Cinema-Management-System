@@ -134,7 +134,8 @@
           border: 1px solid var(--border);
           border-radius: 16px;
           padding: 24px;
-          height: 100%;
+          height: 400px; /* Cố định chiều cao để tránh vòng lặp resize */
+          position: relative; /* Bắt buộc cho responsive Chart.js */
         }
         .chart-title {
           font-weight: 600;
@@ -294,7 +295,7 @@
         <div class="col-lg-4">
             <div class="chart-container">
                 <div class="chart-title"><i class="bi bi-pie-chart text-warning"></i> Doanh thu theo phim</div>
-                <div style="height:300px; display:flex; align-items:center; justify-content:center">
+                <div style="height:300px; position: relative; display:flex; align-items:center; justify-content:center">
                     <canvas id="genreChart"></canvas>
                 </div>
             </div>

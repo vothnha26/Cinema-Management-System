@@ -1,7 +1,7 @@
 package com.example.cinema.service.impl;
 
-import com.example.cinema.service.CloudinaryService;
-import com.example.cinema.service.MovieMediaService;
+import com.example.cinema.service.infrastructure.CloudinaryService;
+import com.example.cinema.service.movie.MovieMediaService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
