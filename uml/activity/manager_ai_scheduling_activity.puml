@@ -1,0 +1,45 @@
+@startuml AI Scheduling Activity
+title Activity Diagram: Quy trình Gợi ý & Áp dụng lịch chiếu AI (Task 9)
+skinparam theme cerulean
+
+start
+:Chọn ngày (Date Picker);
+:Chọn chế độ (Mode);
+:Nhấn Gợi ý AI;
+
+partition "AI Suggestion Engine" {
+    :Lấy danh sách Phim & Phòng;
+    :Lấy điểm Buzz (TMDB);
+    :Ưu tiên Phim HOT;
+    
+    if (Chế độ == 'Lấp đầy (FILL)') then (Có)
+        :Lấy lịch chiếu hiện tại của ngày đó;
+    else (Không)
+        :Khởi tạo lịch trống;
+    endif
+    
+    while (Có Slot thời gian trống?) is (Có)
+        if (Giờ vàng?) then (Đúng)
+            :Bố trí Phim HOT (70/30);
+        else (Sai)
+            :Phân bổ phim ngẫu nhiên;
+        endif
+        :Kiểm tra trùng lịch (Overlap);
+        :Thêm vào danh sách Suggestions;
+    endwhile (Hết slot)
+}
+
+:Hiển thị Preview trên Timeline;
+
+if (Manager xác nhận Áp dụng?) then (Có)
+    if (Chế độ == 'Ghi đè (OVERWRITE)') then (Đúng)
+        :Xóa lịch chiếu cũ (Trừ các suất đã có vé);
+    endif
+    :Lưu danh sách mới vào Database;
+    :Thông báo Thành công;
+else (Không)
+    :Hủy bỏ & Reload dữ liệu cũ;
+endif
+
+stop
+@enduml

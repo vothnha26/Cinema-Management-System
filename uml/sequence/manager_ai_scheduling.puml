@@ -12,12 +12,17 @@ entity "AnalyticsService" as AnalyticsSvc
 database "Database" as DB
 
 == Giai đoạn 1: Gợi ý & Xem trước (Preview) ==
-Manager -> UI: Chọn ngày & Nhấn "Gợi ý AI"
-UI -> Ctrl: POST /api/scheduling/suggest?date=...
+Manager -> UI: Chọn ngày & Chế độ (Ghi đè/Lấp đầy)
+Manager -> UI: Nhấn "Gợi ý AI"
+UI -> Ctrl: POST /api/scheduling/suggest?date=...&mode=...
 activate Ctrl
 
-Ctrl -> Svc: generateAISuggestions(targetDate)
+Ctrl -> Svc: generateAISuggestions(targetDate, mode)
 activate Svc
+
+alt mode == 'FILL'
+    Svc -> DB: Lấy suất chiếu hiện hữu của ngày đó
+end
 
 Svc -> BuzzSvc: getExternalBuzzScores()
 BuzzSvc -> TMDB: GET /search/movie (api_key, query)
@@ -40,9 +45,15 @@ Manager -> UI: Kiểm tra lịch & Nhấn "Áp dụng chính thức"
 UI -> UI: Hiển thị Confirm Dialog "Bạn có chắc chắn?"
 Manager -> UI: Nhấn OK
 
-UI -> Ctrl: POST /api/scheduling/apply (List<ShowtimeResponse>)
+UI -> Ctrl: POST /api/scheduling/apply?overwrite=... (List<ShowtimeResponse>)
 activate Ctrl
-Ctrl -> Svc: applySuggestions(suggestions)
+Ctrl -> Svc: applySuggestions(suggestions, overwrite)
+activate Svc
+
+alt overwrite == true
+    Svc -> DB: Xóa các suất chiếu cũ của ngày đó \n(Ngoại trừ suất đã có vé)
+end
+
 Svc -> DB: saveAll(newShowtimes)
 Svc --> Ctrl: Success
 deactivate Svc
