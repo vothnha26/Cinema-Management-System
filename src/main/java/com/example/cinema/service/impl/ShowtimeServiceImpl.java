@@ -1,5 +1,6 @@
 package com.example.cinema.service.impl;
 
+import com.example.cinema.config.LogAction;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.ShowtimeRequest;
 import com.example.cinema.model.dto.response.ShowtimeResponse;
@@ -48,6 +49,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     @Override
     @Transactional
+    @LogAction(action = "CREATE", target = "SHOWTIME")
     public ShowtimeResponse createShowtime(ShowtimeRequest request) {
         Movie movie = movieRepository.findById(request.getMovieId())
                 .orElseThrow(() -> new AppException("Không tìm thấy phim"));
@@ -72,6 +74,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     @Override
     @Transactional
+    @LogAction(action = "UPDATE", target = "SHOWTIME")
     public ShowtimeResponse updateShowtime(Long id, ShowtimeRequest request) {
         Showtime showtime = showtimeRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy suất chiếu"));
@@ -115,6 +118,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     @Override
     @Transactional
+    @LogAction(action = "DELETE", target = "SHOWTIME")
     public void deleteShowtime(Long id) {
         if (!showtimeRepository.existsById(id)) {
             throw new AppException("Không tìm thấy suất chiếu");

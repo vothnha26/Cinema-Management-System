@@ -1,5 +1,6 @@
 package com.example.cinema.service.impl;
 
+import com.example.cinema.config.LogAction;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.SeatPriceRequest;
 import com.example.cinema.model.dto.response.SeatPriceResponse;
@@ -38,6 +39,7 @@ public class PricingServiceImpl implements PricingService {
 
     @Override
     @Transactional
+    @LogAction(action = "UPDATE", target = "PRICING")
     public SeatPriceResponse updateSeatPrice(SeatPriceRequest request) {
         // 1. Vô hiệu hóa tất cả các cấu hình giá cũ của cùng loại phòng/ghế
         List<SeatPrice> oldPrices = seatPriceRepository

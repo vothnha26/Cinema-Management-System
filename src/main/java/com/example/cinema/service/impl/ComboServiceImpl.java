@@ -1,5 +1,6 @@
 package com.example.cinema.service.impl;
 
+import com.example.cinema.config.LogAction;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.ComboRequest;
 import com.example.cinema.model.dto.response.ComboResponse;
@@ -33,6 +34,7 @@ public class ComboServiceImpl implements ComboService {
 
     @Override
     @Transactional
+    @LogAction(action = "CREATE", target = "COMBO")
     public ComboResponse createCombo(ComboRequest request) {
         Combo combo = modelMapper.map(request, Combo.class);
         combo.setIsActive(true);
@@ -42,6 +44,7 @@ public class ComboServiceImpl implements ComboService {
 
     @Override
     @Transactional
+    @LogAction(action = "UPDATE", target = "COMBO")
     public ComboResponse updateCombo(Long id, ComboRequest request) {
         Combo combo = comboRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
@@ -53,6 +56,7 @@ public class ComboServiceImpl implements ComboService {
 
     @Override
     @Transactional
+    @LogAction(action = "UPDATE_STOCK", target = "COMBO")
     public ComboResponse updateStock(Long id, Integer quantity) {
         Combo combo = comboRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
@@ -68,6 +72,7 @@ public class ComboServiceImpl implements ComboService {
 
     @Override
     @Transactional
+    @LogAction(action = "DELETE", target = "COMBO")
     public void deleteCombo(Long id) {
         if (!comboRepository.existsById(id)) {
             throw new AppException("Không tìm thấy Combo");

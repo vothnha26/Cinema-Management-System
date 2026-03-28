@@ -35,6 +35,7 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     @Transactional
+    @com.example.cinema.config.LogAction(action = "CREATE", target = "PROMOTION")
     public PromotionResponse createPromotion(PromotionRequest request) {
         if (promotionRepository.existsByCode(request.getCode())) {
             throw new AppException("Mã khuyến mãi đã tồn tại");
@@ -85,6 +86,7 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     @Transactional
+    @com.example.cinema.config.LogAction(action = "DELETE", target = "PROMOTION")
     public void deletePromotion(Long id) {
         if (!promotionRepository.existsById(id)) {
             throw new AppException("Không tìm thấy chương trình khuyến mãi");

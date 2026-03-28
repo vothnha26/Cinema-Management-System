@@ -1,5 +1,6 @@
 package com.example.cinema.service.impl;
 
+import com.example.cinema.config.LogAction;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.RoomRequest;
 import com.example.cinema.model.dto.request.SeatUpdateRequest;
@@ -56,6 +57,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
+    @LogAction(action = "CREATE", target = "ROOM")
     public RoomResponse createRoom(RoomRequest request) {
         Room room = new Room();
         room.setName(request.getName());
@@ -80,6 +82,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
+    @LogAction(action = "UPDATE", target = "ROOM")
     public RoomResponse updateRoom(Long id, RoomRequest request) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + id));
@@ -114,6 +117,7 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional
+    @LogAction(action = "DELETE", target = "ROOM")
     public void deleteRoom(Long id) {
         if (!roomRepository.existsById(id)) {
             throw new AppException("Không tìm thấy phòng với ID: " + id);

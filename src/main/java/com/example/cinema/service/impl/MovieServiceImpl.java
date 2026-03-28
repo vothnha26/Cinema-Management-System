@@ -74,6 +74,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     @Transactional
+    @com.example.cinema.config.LogAction(action = "CREATE", target = "MOVIE")
     public MovieResponse createMovie(MovieRequest request, MultipartFile poster) {
         Movie movie = modelMapper.map(request, Movie.class);
         
@@ -91,6 +92,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     @Transactional
+    @com.example.cinema.config.LogAction(action = "UPDATE", target = "MOVIE")
     public MovieResponse updateMovie(Long id, MovieRequest request, MultipartFile poster) {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy phim với ID: " + id));
@@ -159,6 +161,7 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     @Transactional
+    @com.example.cinema.config.LogAction(action = "DELETE", target = "MOVIE")
     public void deleteMovie(Long id) {
         if (!movieRepository.existsById(id)) {
             throw new AppException("Không tìm thấy phim với ID: " + id);
