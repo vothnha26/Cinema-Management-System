@@ -4,9 +4,16 @@ import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.PromotionRequest;
 import com.example.cinema.model.dto.response.PromotionResponse;
 import com.example.cinema.model.entity.Promotion;
+import com.example.cinema.model.entity.Customer;
+import com.example.cinema.model.enums.MembershipTier;
 import com.example.cinema.repository.commerce.PromotionRepository;
+import com.example.cinema.repository.user.CustomerRepository;
 import com.example.cinema.service.commerce.PromotionService;
+import com.example.cinema.service.commerce.pricing.DiscountStrategy;
+import com.example.cinema.service.commerce.pricing.DiscountStrategyFactory;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,10 +26,17 @@ import java.util.stream.Collectors;
 public class PromotionServiceImpl implements PromotionService {
 
     private final PromotionRepository promotionRepository;
+    private final CustomerRepository customerRepository;
+    private final DiscountStrategyFactory strategyFactory;
     private final ModelMapper modelMapper;
 
-    public PromotionServiceImpl(PromotionRepository promotionRepository, ModelMapper modelMapper) {
+    public PromotionServiceImpl(PromotionRepository promotionRepository, 
+                                CustomerRepository customerRepository,
+                                DiscountStrategyFactory strategyFactory,
+                                ModelMapper modelMapper) {
         this.promotionRepository = promotionRepository;
+        this.customerRepository = customerRepository;
+        this.strategyFactory = strategyFactory;
         this.modelMapper = modelMapper;
     }
 
@@ -41,7 +55,6 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException("Mã khuyến mãi đã tồn tại");
         }
 
-        // Áp dụng Builder Pattern để tạo đối tượng Promotion
         Promotion promotion = new Promotion.Builder(
                 request.getCode(),
                 request.getName(),
@@ -64,6 +77,19 @@ public class PromotionServiceImpl implements PromotionService {
         Promotion promotion = promotionRepository.findByCode(code)
                 .orElseThrow(() -> new AppException("Mã khuyến mãi không tồn tại"));
 
+        validatePromotionRules(promotion, orderAmount);
+
+        // Áp dụng Strategy Pattern để tính số tiền giảm
+        DiscountStrategy strategy = strategyFactory.getStrategy(promotion.getDiscountType());
+        BigDecimal discountAmount = strategy.calculateDiscount(promotion, orderAmount);
+
+        PromotionResponse response = modelMapper.map(promotion, PromotionResponse.class);
+        response.setAppliedDiscountAmount(discountAmount);
+        
+        return response;
+    }
+
+    private void validatePromotionRules(Promotion promotion, BigDecimal orderAmount) {
         if (!promotion.getIsActive()) {
             throw new AppException("Mã khuyến mãi đã bị vô hiệu hóa");
         }
@@ -81,7 +107,20 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException("Đơn hàng chưa đạt giá trị tối thiểu " + promotion.getMinOrderAmount() + " VNĐ");
         }
 
-        return modelMapper.map(promotion, PromotionResponse.class);
+        // Kiểm tra Hạng thành viên (Mandate: Tier Check)
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            String username = ((UserDetails) principal).getUsername();
+            Customer customer = customerRepository.findByUserUsername(username)
+                    .orElse(null); // Manager/Admin might not be in Customer table
+            
+            if (customer != null && promotion.getMinTier() != null) {
+                if (customer.getMembershipTier().ordinal() < promotion.getMinTier().ordinal()) {
+                    throw new AppException("Hạng thành viên của bạn (" + customer.getMembershipTier() + 
+                            ") chưa đủ điều kiện áp dụng mã này (Yêu cầu tối thiểu: " + promotion.getMinTier() + ")");
+                }
+            }
+        }
     }
 
     @Override

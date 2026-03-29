@@ -1,20 +1,41 @@
 @startuml Manager Promotion Activity
-title Quản lý Khuyến mãi (Member 2)
+title Activity Diagram: Quản lý Khuyến mãi (Task 6 Refactored)
 skinparam theme cerulean
 
 start
 :Truy cập Quản lý Khuyến mãi;
 :Nhấn "Tạo chương trình mới";
-:Nhập Tên chương trình và Mã (Code);
-:Thiết lập mức giảm (VD: 10%, 50.000đ);
+:Nhập Mã (Code), Tên, Loại giảm (%, Cố định), Mức giảm;
 
-partition "Điều kiện áp dụng" {
-    :Chọn Hạng thành viên tối thiểu;
-    :Chọn Khoảng thời gian hiệu lực;
-    :Nhập Số lượng mã phát hành;
+partition "Thiết lập Điều kiện áp dụng" {
+    :Chọn Hạng thành viên tối thiểu (Min Tier);
+    :Chọn Khoảng thời gian hiệu lực (Start-End);
+    :Nhập Đơn hàng tối thiểu (Min Order Amount);
+    :Nhập Mức giảm tối đa (Max Discount);
+    :Nhập Giới hạn lượt dùng (Usage Limit);
 }
 
-:Kích hoạt chương trình;
-:Hệ thống thông báo cho Khách hàng (Optional);
+if (Dữ liệu hợp lệ?) then (Có)
+    :Lưu chương trình (Sử dụng Builder Pattern);
+    :Thông báo "Tạo khuyến mãi thành công";
+else (Không)
+    :Yêu cầu chỉnh sửa;
+    stop
+endif
+
+partition "Promotion Engine (Khi áp dụng mã)" {
+    :Kiểm tra Trạng thái, Thời hạn;
+    :Kiểm tra Hạng thành viên (Security Context);
+    :Kiểm tra Lượt dùng & Giá trị đơn hàng;
+    
+    if (Hợp lệ?) then (Đúng)
+        :Xác định Strategy (Factory);
+        :Tính toán số tiền giảm thực tế;
+        :Hiển thị số tiền giảm lên UI;
+    else (Sai)
+        :Thông báo lý do từ chối (Exception);
+    endif
+}
+
 stop
 @enduml

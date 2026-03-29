@@ -19,10 +19,14 @@ public class PromotionResponse {
     private Integer usedCount;
     private MembershipTier minTier;
     private Boolean isActive;
+    private BigDecimal appliedDiscountAmount;
 
     public PromotionResponse() {}
 
     // Getters/Setters
+    public BigDecimal getAppliedDiscountAmount() { return appliedDiscountAmount; }
+    public void setAppliedDiscountAmount(BigDecimal appliedDiscountAmount) { this.appliedDiscountAmount = appliedDiscountAmount; }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getCode() { return code; }

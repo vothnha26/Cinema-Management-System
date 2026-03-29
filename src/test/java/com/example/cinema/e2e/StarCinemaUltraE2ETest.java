@@ -72,6 +72,8 @@ public class StarCinemaUltraE2ETest {
         
         driver.findElement(By.id("title")).sendKeys(movieName);
         Thread.sleep(1000);
+        driver.findElement(By.id("duration")).sendKeys("120"); // Bổ sung thời lượng
+        Thread.sleep(500);
         driver.findElement(By.id("description")).sendKeys("Mô tả phim được tạo tự động bởi Ultra Test");
         Thread.sleep(1000);
 
@@ -83,7 +85,11 @@ public class StarCinemaUltraE2ETest {
         // 4. Lưu (Dùng JS click cho nút Lưu)
         WebElement saveBtn = driver.findElement(By.id("btnSaveMovie"));
         ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", saveBtn);
-        Thread.sleep(3000);
+        
+        // Đợi và xử lý Alert
+        wait.until(ExpectedConditions.alertIsPresent());
+        driver.switchTo().alert().accept();
+        Thread.sleep(2000);
 
         // 5. Kiểm tra
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(text(), '" + movieName + "')]")));
@@ -113,9 +119,13 @@ public class StarCinemaUltraE2ETest {
         Thread.sleep(1000);
 
         // 3. Lưu (ID chuẩn: btnSubmitRoom)
-        WebElement saveBtn = driver.findElement(By.id("btnSubmitRoom"));
-        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", saveBtn);
-        Thread.sleep(3000);
+        WebElement submitBtn = driver.findElement(By.id("btnSubmitRoom"));
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", submitBtn);
+        
+        // Đợi và xử lý Alert
+        wait.until(ExpectedConditions.alertIsPresent());
+        driver.switchTo().alert().accept();
+        Thread.sleep(2000);
 
         // 4. Kiểm tra
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[contains(text(), '" + roomName + "')]")));
@@ -145,9 +155,81 @@ public class StarCinemaUltraE2ETest {
         Thread.sleep(1000);
 
         driver.findElement(By.xpath("//button[contains(text(), 'LƯU THÔNG TIN')]")).click();
+        
+        // Đợi và xử lý Alert (nếu có)
+        try {
+            wait.until(ExpectedConditions.alertIsPresent());
+            driver.switchTo().alert().accept();
+        } catch (Exception e) {}
+        
         Thread.sleep(2000);
 
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//h5[contains(text(), '" + comboName + "')]")));
         System.out.println("PASSED: Ultra Add Combo");
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("Ultra Test 4: Quản lý Khuyến mãi (Đa kịch bản)")
+    void testManagePromotionScenarios() throws InterruptedException {
+        driver.get(baseUrl + "/manage-promotions.html");
+        Thread.sleep(1500);
+
+        // --- Scenario 1: Tạo Khuyến mãi % với Max Discount ---
+        createPromotionUI("PERC" + (System.currentTimeMillis() % 1000), "Giảm 20% Ultra", "PERCENT", "20", "50000", "200000", "GOLD");
+        verifyPromotionExists("Giảm 20% Ultra");
+        System.out.println("PASSED: Scenario 1 - Percentage Discount with Max Cap");
+
+        // --- Scenario 2: Tạo Khuyến mãi Tiền cố định với Min Order ---
+        createPromotionUI("FIXED" + (System.currentTimeMillis() % 1000), "Giảm 100k Ultra", "FIXED", "100000", "0", "500000", "SILVER");
+        verifyPromotionExists("Giảm 100k Ultra");
+        System.out.println("PASSED: Scenario 2 - Fixed Discount with Min Order");
+
+        // --- Scenario 3: Kiểm tra xóa khuyến mãi ---
+        deleteFirstPromotion();
+        System.out.println("PASSED: Scenario 3 - Delete Promotion");
+        
+        Thread.sleep(2000); // Giữ trình duyệt để quan sát
+    }
+
+    private void createPromotionUI(String code, String name, String type, String value, String max, String minOrder, String tier) throws InterruptedException {
+        WebElement addBtn = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".btn-add")));
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", addBtn);
+        
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("promoModal")));
+        Thread.sleep(800);
+        
+        driver.findElement(By.id("code")).clear();
+        driver.findElement(By.id("code")).sendKeys(code);
+        driver.findElement(By.id("name")).clear();
+        driver.findElement(By.id("name")).sendKeys(name);
+        
+        driver.findElement(By.id("discountType")).sendKeys(type);
+        driver.findElement(By.id("discountValue")).clear();
+        driver.findElement(By.id("discountValue")).sendKeys(value);
+        
+        driver.findElement(By.id("maxDiscountAmount")).clear();
+        driver.findElement(By.id("maxDiscountAmount")).sendKeys(max);
+        driver.findElement(By.id("minOrderAmount")).clear();
+        driver.findElement(By.id("minOrderAmount")).sendKeys(minOrder);
+        
+        driver.findElement(By.id("minTier")).sendKeys(tier);
+        Thread.sleep(500);
+
+        WebElement saveBtn = driver.findElement(By.xpath("//button[contains(text(), 'TẠO CHIẾN DỊCH')]"));
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", saveBtn);
+        Thread.sleep(2000);
+    }
+
+    private void verifyPromotionExists(String name) {
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//h5[contains(text(), '" + name + "')]")));
+    }
+
+    private void deleteFirstPromotion() throws InterruptedException {
+        WebElement deleteBtn = wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".btn-link.text-danger")));
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", deleteBtn);
+        Thread.sleep(1000);
+        driver.switchTo().alert().accept();
+        Thread.sleep(1500);
     }
 }
