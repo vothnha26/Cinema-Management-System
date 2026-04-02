@@ -1,4 +1,4 @@
-package com.example.cinema.service.impl;
+package com.example.cinema.service.analytics.impl;
 
 import com.example.cinema.model.dto.response.StatisticsResponse;
 import com.example.cinema.repository.booking.BookingRepository;

@@ -1,4 +1,4 @@
-package com.example.cinema.service.impl;
+package com.example.cinema.service.movie.impl;
 
 import com.example.cinema.service.infrastructure.CloudinaryService;
 import com.example.cinema.service.movie.MovieMediaService;
