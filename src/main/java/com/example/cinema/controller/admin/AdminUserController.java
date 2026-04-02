@@ -1,14 +1,16 @@
 package com.example.cinema.controller.admin;
 
+import com.example.cinema.model.dto.request.CreateStaffRequest;
+import com.example.cinema.model.dto.request.UpdateUserRequest;
 import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.model.dto.response.UserResponse;
 import com.example.cinema.model.enums.Role;
 import com.example.cinema.service.user.IUserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Controller quản lý User dành riêng cho ADMIN (SRP).
@@ -43,21 +45,22 @@ public class AdminUserController {
      * Admin tạo tài khoản Staff/Manager.
      * Body: { "username": "...", "email": "...", "password": "...", "role": "STAFF" }
      */
-    @PostMapping
-    public ResponseEntity<ApiResponse<UserResponse>> createStaffAccount(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
-        String email = body.get("email");
-        String password = body.get("password");
-        Role role = Role.valueOf(body.getOrDefault("role", "STAFF"));
-
-        UserResponse created = userService.createStaffAccount(username, email, password, role);
-        return ResponseEntity.ok(ApiResponse.ok(created));
+    @PostMapping("/staff")
+    public ResponseEntity<ApiResponse<UserResponse>> createStaffAccount(@RequestBody CreateStaffRequest request) {
+        Role role = request.getRole() != null ? Role.valueOf(request.getRole()) : Role.STAFF;
+        UserResponse created = userService.createStaffAccount(
+                request.getUsername(),
+                request.getEmail(),
+                request.getPassword(),
+                role
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(created));
     }
 
     /**
      * Toggle khóa/mở tài khoản.
      */
-    @PatchMapping("/{id}/toggle-status")
+    @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<UserResponse>> toggleStatus(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(userService.toggleUserStatus(id)));
     }
@@ -67,10 +70,8 @@ public class AdminUserController {
      * Body: { "email": "...", "role": "STAFF" }
      */
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserResponse>> updateUser(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        Role role = Role.valueOf(body.get("role"));
-        return ResponseEntity.ok(ApiResponse.ok(userService.updateUser(id, email, role)));
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(userService.updateUser(id, request.getEmail(), request.getRole())));
     }
 
     /**

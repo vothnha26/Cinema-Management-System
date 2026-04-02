@@ -10,6 +10,7 @@ import com.example.cinema.model.enums.PaymentStatus;
 import com.example.cinema.repository.booking.BookingRepository;
 import com.example.cinema.repository.booking.PaymentRepository;
 import com.example.cinema.repository.commerce.ComboRepository;
+import com.example.cinema.repository.showtime.ShowtimeRepository;
 import com.example.cinema.repository.user.CustomerRepository;
 import com.example.cinema.service.notification.TicketBookedEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,17 +42,20 @@ public class StaffPosFacade {
     private final PaymentRepository paymentRepository;
     private final ComboRepository comboRepository;
     private final CustomerRepository customerRepository;
+    private final ShowtimeRepository showtimeRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public StaffPosFacade(BookingRepository bookingRepository,
                           PaymentRepository paymentRepository,
                           ComboRepository comboRepository,
                           CustomerRepository customerRepository,
+                          ShowtimeRepository showtimeRepository,
                           ApplicationEventPublisher eventPublisher) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.comboRepository = comboRepository;
         this.customerRepository = customerRepository;
+        this.showtimeRepository = showtimeRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -69,6 +73,10 @@ public class StaffPosFacade {
             throw new AppException("Vui lòng chọn suất chiếu.");
         }
 
+        // Tìm Showtime (BẮT BUỘC vì nullable=false)
+        Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
+                .orElseThrow(() -> new AppException("Suất chiếu không tồn tại."));
+
         // 2. Tìm customer nếu có SĐT (tích điểm)
         Customer customer = null;
         if (request.getCustomerPhone() != null && !request.getCustomerPhone().isBlank()) {
@@ -76,6 +84,13 @@ public class StaffPosFacade {
                     .filter(c -> request.getCustomerPhone().equals(c.getPhone()))
                     .findFirst()
                     .orElse(null);
+        }
+
+        // Nếu DB bắt buộc customer (nullable=false), ta phải có customer
+        if (customer == null) {
+            // Trong thực tế, có thể tự động tạo 1 Guest Customer hoặc yêu cầu staff nhập.
+            // Ở đây throw exception để debug nếu test không cung cấp customer đúng.
+            throw new AppException("Không tìm thấy thông tin khách hàng. Bán vé tại quầy yêu cầu thông tin khách hàng (nullable=false).");
         }
 
         // 3. Tạo booking code
@@ -101,11 +116,8 @@ public class StaffPosFacade {
         booking.setBookingCode(bookingCode);
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.CONFIRMED); // POS = xác nhận ngay
-        // Customer & Showtime sẽ được set khi tích hợp đầy đủ service
-        // Tạm thời lưu booking mà không link showtime/customer nếu chưa có
-        if (customer != null) {
-            booking.setCustomer(customer);
-        }
+        booking.setShowtime(showtime);
+        booking.setCustomer(customer);
         bookingRepository.save(booking);
 
         // 7. Tạo Payment - POS thanh toán ngay

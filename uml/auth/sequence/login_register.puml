@@ -1,0 +1,49 @@
+@startuml auth_login_register
+actor User
+participant "AuthController" as AC
+participant "AuthServiceImpl" as ASI
+participant "UserRepository" as UR
+participant "PasswordEncoder" as PE
+participant "JwtUtil" as JWT
+database "Database" as DB
+
+== Registration ==
+User -> AC : POST /api/auth/register (RegisterRequest)
+activate AC
+AC -> ASI : register(request)
+activate ASI
+ASI -> UR : existsByUsername/Email()
+UR --> ASI : false
+ASI -> PE : encode(password)
+PE --> ASI : hashedPassword
+ASI -> UR : save(User)
+activate UR
+UR -> DB : INSERT
+DB --> UR : OK
+UR --> ASI : savedUser
+deactivate UR
+ASI --> AC : AuthResponse
+deactivate ASI
+AC --> User : 201 Created (Token/Success)
+deactivate AC
+
+== Login ==
+User -> AC : POST /api/auth/login (LoginRequest)
+activate AC
+AC -> ASI : login(request)
+activate ASI
+ASI -> UR : findByUsername(username)
+activate UR
+UR --> ASI : UserEntity
+deactivate UR
+ASI -> PE : matches(rawPassword, hashedPassword)
+PE --> ASI : true
+ASI -> JWT : generateToken(UserEntity)
+activate JWT
+JWT --> ASI : "jwt.token.string"
+deactivate JWT
+ASI --> AC : AuthResponse (Token, UserDetails)
+deactivate ASI
+AC --> User : 200 OK (Token)
+deactivate AC
+@enduml

@@ -87,6 +87,43 @@ public class TicketWorkflowManager {
     }
 
     /**
+     * Lấy lịch sử tất cả các booking để hiển thị cho Staff.
+     */
+    public List<BookingResponse> getAllHistory() {
+        return bookingRepository.findAll().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Tra cứu vé bằng ID.
+     */
+    public BookingResponse findById(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "ID", id.toString()));
+        return toResponse(booking);
+    }
+
+    /**
+     * Validate/Check-in vé bằng ID.
+     */
+    @Transactional
+    public BookingResponse validateById(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "ID", id.toString()));
+
+        BookingStatus currentStatus = booking.getStatus();
+        BookingStatus targetStatus = BookingStatus.CHECKED_IN;
+
+        validateTransition(currentStatus, targetStatus, booking.getBookingCode());
+
+        booking.setStatus(targetStatus);
+        bookingRepository.save(booking);
+
+        return toResponse(booking);
+    }
+
+    /**
      * Hủy vé: Chuyển trạng thái sang CANCELLED.
      */
     @Transactional

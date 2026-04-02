@@ -35,6 +35,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
-        return ResponseEntity.ok(ApiResponse.ok(response));
+        return new ResponseEntity<>(ApiResponse.created(response), org.springframework.http.HttpStatus.CREATED);
     }
 }

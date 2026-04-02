@@ -39,6 +39,9 @@ public class StarCinemaUltraE2ETest {
     void setupTest() {
         baseUrl = "http://localhost:" + port;
         ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new"); // Chạy chế độ ẩn
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--disable-gpu");
         options.addArguments("--window-size=1920,1080");
         

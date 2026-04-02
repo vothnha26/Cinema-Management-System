@@ -26,8 +26,8 @@ public class StaffPosController {
      * Xác nhận bán vé tại quầy.
      * Staff chỉ gọi 1 API này → Facade xử lý toàn bộ phía sau.
      */
-    @PostMapping("/checkout")
-    public ResponseEntity<ApiResponse<BookingResponse>> checkout(@RequestBody PosBookingRequest request) {
+    @PostMapping("/book")
+    public ResponseEntity<ApiResponse<BookingResponse>> book(@RequestBody PosBookingRequest request) {
         BookingResponse response = posFacade.processDirectBooking(request);
         return ResponseEntity.ok(ApiResponse.ok(response));
     }
