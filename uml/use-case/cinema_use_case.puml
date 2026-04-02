@@ -1,0 +1,68 @@
+@startuml StarCinema Use Case Diagram
+left to right direction
+skinparam packageStyle rectangle
+skinparam theme cerulean
+
+actor "Khách hàng" as Customer
+actor "Nhân viên" as Staff
+actor "Quản lý" as Manager
+actor "Quản trị viên" as Admin
+
+rectangle "StarCinema Management System" {
+    
+    ' Phân hệ Khách hàng
+    usecase "Đăng nhập / Đăng ký" as UC_Auth
+    usecase "Xem danh sách & Chi tiết phim" as UC_ViewMovie
+    usecase "Đặt vé trực tuyến" as UC_Booking
+    usecase "Chọn ghế ngồi" as UC_SelectSeat
+    usecase "Chọn Combo bắp nước" as UC_SelectCombo
+    usecase "Thanh toán trực tuyến" as UC_Payment
+    usecase "Xem lịch sử đặt vé" as UC_History
+    usecase "Quản lý thông tin & Điểm thưởng" as UC_Profile
+
+    ' Phân hệ Nhân viên
+    usecase "Bán vé tại quầy (POS)" as UC_POS
+    usecase "Check-in vé (QR/Code)" as UC_Checkin
+    usecase "Xem lịch chiếu hôm nay" as UC_ViewSchedule
+
+    ' Phân hệ Quản lý
+    usecase "Xem thống kê & Báo cáo" as UC_Stats
+    usecase "Quản lý Phim (CRUD)" as UC_ManageMovie
+    usecase "Quản lý Suất chiếu" as UC_ManageShowtime
+    usecase "Quản lý Combo & Khuyến mãi" as UC_ManagePromo
+
+    ' Phân hệ Quản trị viên
+    usecase "Quản lý Người dùng" as UC_ManageUser
+    usecase "Cấu hình Rạp & Phòng chiếu" as UC_ConfigSystem
+}
+
+' Mối quan hệ Khách hàng
+Customer --> UC_Auth
+Customer --> UC_ViewMovie
+Customer --> UC_Booking
+Customer --> UC_History
+Customer --> UC_Profile
+
+UC_Booking ..> UC_SelectSeat : <<include>>
+UC_Booking ..> UC_SelectCombo : <<extend>>
+UC_Booking ..> UC_Payment : <<include>>
+
+' Mối quan hệ Nhân viên
+Staff --> UC_Auth
+Staff --> UC_POS
+Staff --> UC_Checkin
+Staff --> UC_ViewSchedule
+
+' Mối quan hệ Quản lý
+Manager --> UC_Auth
+Manager --> UC_Stats
+Manager --> UC_ManageMovie
+Manager --> UC_ManageShowtime
+Manager --> UC_ManagePromo
+
+' Mối quan hệ Quản trị viên
+Admin --|> Manager
+Admin --> UC_ManageUser
+Admin --> UC_ConfigSystem
+
+@enduml

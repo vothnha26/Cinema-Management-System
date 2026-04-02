@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarCinema – Đặt vé</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
+    <style>
+        :root {
+          --bg:#080B14;--surface:#0F1320;--card:#161B2E;--border:#252A3D;
+          --accent:#E5133A;--accent-gold:#F5A623;--text:#E8EAF0;--text-muted:#7B82A0;
+          --gradient:linear-gradient(135deg,#E5133A,#8B0020);
+          --seat-available:#252A3D;--seat-selected:#E5133A;--seat-booked:#1a1a2a;
+          --seat-vip:#F5A623;--seat-couple:#9B59B6;
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh}
+        a{text-decoration:none;color:inherit}
+
+        /* NAVBAR */
+        .navbar-star{background:rgba(8,11,20,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:14px 0;position:sticky;top:0;z-index:100}
+        .brand{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px}
+        .brand span{color:var(--accent)}
+
+        /* STEPS */
+        .steps-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0}
+        .steps-inner{display:flex;overflow-x:auto;scrollbar-width:none}
+        .steps-inner::-webkit-scrollbar{display:none}
+        .step{display:flex;align-items:center;padding:16px 24px;gap:10px;white-space:nowrap;position:relative;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.25s}
+        .step.done{border-bottom-color:transparent}
+        .step.active{border-bottom-color:var(--accent)}
+        .step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;border:2px solid var(--border);color:var(--text-muted);transition:all 0.25s}
+        .step.active .step-num{background:var(--accent);border-color:var(--accent);color:#fff}
+        .step.done .step-num{background:rgba(229,19,58,0.2);border-color:var(--accent);color:var(--accent)}
+        .step-label{font-size:0.9rem;font-weight:500;color:var(--text-muted);transition:color 0.25s}
+        .step.active .step-label{color:var(--text)}
+        .step.done .step-label{color:var(--accent)}
+        .step-arrow{color:var(--border);font-size:0.8rem;padding:0 4px}
+
+        /* LAYOUT */
+        .booking-layout{display:grid;grid-template-columns:1fr 320px;gap:24px;max-width:1100px;margin:0 auto;padding:32px 20px}
+        @media(max-width:900px){.booking-layout{grid-template-columns:1fr}}
+        .booking-sidebar{position:sticky;top:90px;height:fit-content}
+        @media(max-width:900px){.booking-sidebar{position:static}}
+
+        /* MOVIE INFO BAR */
+        .movie-info-bar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:24px;display:flex;gap:16px;align-items:center}
+        .movie-mini-poster{width:60px;height:85px;border-radius:8px;overflow:hidden;flex-shrink:0;background:linear-gradient(135deg,#1a0a0f,#4a1020)}
+        .movie-mini-poster div{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.8rem}
+        .movie-mini-info h3{font-size:1.1rem;font-weight:700;margin-bottom:4px}
+        .movie-mini-meta{display:flex;gap:10px;flex-wrap:wrap}
+        .mini-tag{font-size:0.75rem;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+        .age-badge{padding:2px 8px;border-radius:4px;font-size:0.72rem;font-weight:700}
+        .age-c13{background:rgba(100,180,255,.2);color:#64B4FF;border:1px solid #64B4FF}
+        .age-c18{background:rgba(229,19,58,.2);color:var(--accent);border:1px solid var(--accent)}
+        .age-p{background:rgba(80,200,100,.2);color:#50C864;border:1px solid #50C864}
+        .age-c16{background:rgba(245,166,35,.2);color:var(--accent-gold);border:1px solid var(--accent-gold)}
+
+        /* PANEL */
+        .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px}
+        .panel-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+        .panel-title i{color:var(--accent)}
+
+        /* SHOWTIME SELECTOR */
+        .date-tabs{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
+        .date-tabs::-webkit-scrollbar{display:none}
+        .date-tab{border:1.5px solid var(--border);background:transparent;color:var(--text-muted);padding:8px 16px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:500;cursor:pointer;transition:all 0.2s;text-align:center;min-width:64px;white-space:nowrap}
+        .date-tab:hover{border-color:var(--accent);color:var(--text)}
+        .date-tab.active{background:rgba(229,19,58,.15);border-color:var(--accent);color:var(--text)}
+        .date-tab .day-name{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.5px}
+        .date-tab .day-num{font-size:1.2rem;font-weight:700;line-height:1}
+
+        .cinema-group{margin-bottom:20px}
+        .cinema-name{font-size:0.8rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+        .cinema-name::before{content:'📍';font-size:0.9rem}
+        .showtime-grid{display:flex;flex-wrap:wrap;gap:8px}
+        .showtime-btn{border:1.5px solid var(--border);background:var(--surface);color:var(--text-muted);padding:8px 16px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:0.88rem;font-weight:500;cursor:pointer;transition:all 0.2s}
+        .showtime-btn:hover{border-color:var(--accent);color:var(--text)}
+        .showtime-btn.active{background:rgba(229,19,58,.15);border-color:var(--accent);color:var(--text)}
+        .showtime-btn .st-time{font-weight:700;display:block;font-size:1rem}
+        .showtime-btn .st-hall{font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+        .showtime-btn.active .st-hall{color:var(--accent);opacity:0.8}
+        .hall-tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:0.68rem;font-weight:700;margin-left:4px}
+        .hall-imax{background:rgba(100,200,255,.2);color:#64C8FF;border:1px solid rgba(100,200,255,.3)}
+        .hall-3d{background:rgba(80,200,100,.2);color:#50C864;border:1px solid rgba(80,200,100,.3)}
+        .hall-2d{background:rgba(200,200,200,.1);color:#aaa;border:1px solid rgba(200,200,200,.2)}
+
+        /* SEAT MAP */
+        .screen-wrap{text-align:center;margin-bottom:24px}
+        .screen{background:linear-gradient(to bottom,rgba(229,19,58,.3),transparent);border-top:2px solid var(--accent);padding:6px 40px 16px;border-radius:0 0 60% 60%;display:inline-block;min-width:200px}
+        .screen-label{font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--accent)}
+
+        .seat-legend{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:24px}
+        .legend-item{display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--text-muted)}
+        .legend-seat{width:18px;height:18px;border-radius:4px;flex-shrink:0}
+        .ls-available{background:var(--seat-available);border:1.5px solid #3a4060}
+        .ls-selected{background:var(--seat-selected)}
+        .ls-booked{background:var(--seat-booked);border:1.5px solid #1e1e2e}
+        .ls-vip{background:rgba(245,166,35,.2);border:1.5px solid var(--accent-gold)}
+        .ls-couple{background:rgba(155,89,182,.2);border:1.5px solid var(--seat-couple)}
+
+        .seat-grid-wrap{overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+        .seat-grid{display:grid;gap:5px;margin:0 auto;width:fit-content}
+        .seat{width:30px;height:28px;border-radius:5px 5px 3px 3px;background:var(--seat-available);border:1.5px solid #3a4060;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:600;color:var(--text-muted);transition:all 0.15s;position:relative;user-select:none}
+        .seat:hover:not(.booked){transform:scale(1.15);z-index:2}
+        .seat.vip{background:rgba(245,166,35,.12);border-color:rgba(245,166,35,.4);color:rgba(245,166,35,.7)}
+        .seat.couple{background:rgba(155,89,182,.12);border-color:rgba(155,89,182,.4);color:rgba(155,89,182,.7);width:64px}
+        .seat.selected{background:var(--seat-selected);border-color:var(--accent);color:#fff;box-shadow:0 0 8px rgba(229,19,58,.4)}
+        .seat.vip.selected{background:var(--accent-gold);border-color:var(--accent-gold);color:#000}
+        .seat.couple.selected{background:rgba(155,89,182,.6);border-color:var(--seat-couple);color:#fff}
+        .seat.booked{background:var(--seat-booked);border-color:#1e1e2e;color:transparent;cursor:not-allowed;pointer-events:none}
+        .seat.booked::after{content:'✕';color:#2a2a3a;position:absolute;font-size:0.7rem}
+        .row-label{width:22px;height:28px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;color:var(--text-muted);flex-shrink:0}
+
+        /* COMBO */
+        .combo-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;transition:border-color 0.2s;margin-bottom:10px}
+        .combo-card:hover{border-color:var(--accent)}
+        .combo-emoji{font-size:2rem;flex-shrink:0;width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:var(--card);border-radius:10px}
+        .combo-info{flex:1}
+        .combo-name{font-weight:700;font-size:0.95rem;margin-bottom:2px}
+        .combo-desc{font-size:0.8rem;color:var(--text-muted)}
+        .combo-price{font-weight:700;color:var(--accent-gold);font-size:1rem;white-space:nowrap}
+        .qty-ctrl{display:flex;align-items:center;gap:8px}
+        .qty-btn{width:28px;height:28px;border-radius:6px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-family:'Outfit',sans-serif}
+        .qty-btn:hover{border-color:var(--accent);color:var(--accent)}
+        .qty-num{font-weight:700;font-size:0.95rem;min-width:20px;text-align:center}
+        .promo-list{display:grid;gap:10px;margin-top:14px}
+        .promo-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+        .promo-card.active{border-color:var(--accent)}
+        .promo-card .promo-name{font-weight:700;font-size:0.92rem;margin-bottom:4px}
+        .promo-card .promo-meta{font-size:0.8rem;color:var(--text-muted);line-height:1.5}
+        .promo-code{display:inline-block;margin-top:8px;padding:4px 8px;border-radius:6px;background:rgba(229,19,58,.14);border:1px solid rgba(229,19,58,.3);color:var(--accent);font-size:0.78rem;font-weight:700;letter-spacing:0.5px}
+        .promo-action{background:transparent;border:1.5px solid var(--accent);color:var(--accent);padding:8px 12px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;white-space:nowrap}
+        .promo-empty{color:var(--text-muted);font-size:0.84rem;padding:12px 0}
+
+        /* PAYMENT */
+        .pay-method{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
+        .pay-opt{border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;text-align:center}
+        .pay-opt:hover{border-color:var(--accent)}
+        .pay-opt.active{border-color:var(--accent);background:rgba(229,19,58,.08)}
+        .pay-opt .pay-icon{font-size:1.6rem;display:block;margin-bottom:4px}
+        .pay-opt .pay-label{font-size:0.8rem;font-weight:600;color:var(--text-muted)}
+        .pay-opt.active .pay-label{color:var(--text)}
+
+        /* SIDEBAR */
+        .summary-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:sticky;top:90px}
+        .summary-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+        .summary-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.9rem}
+        .summary-row.total{padding-top:12px;border-top:1px solid var(--border);font-weight:700;font-size:1.1rem}
+        .summary-row.total .val{color:var(--accent);font-size:1.2rem}
+        .seat-chips{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0}
+        .seat-chip{background:rgba(229,19,58,.15);border:1px solid rgba(229,19,58,.3);color:var(--accent);padding:2px 8px;border-radius:4px;font-size:0.78rem;font-weight:600}
+        .discount-row{color:#50C864;font-size:0.88rem}
+
+        .btn-next{background:var(--gradient);color:#fff;border:none;width:100%;padding:14px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+        .btn-next:hover{opacity:.9;transform:translateY(-1px)}
+        .btn-next:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+        .promo-input-wrap{display:flex;gap:8px;margin-top:12px}
+        .promo-input{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:0.88rem;flex:1}
+        .promo-input:focus{border-color:var(--accent);outline:none}
+        .btn-promo{background:transparent;border:1.5px solid var(--accent);color:var(--accent);padding:10px 16px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+        .btn-promo:hover{background:rgba(229,19,58,.1)}
+
+        /* SUCCESS */
+        .success-overlay{position:fixed;inset:0;background:rgba(8,11,20,.95);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+        .success-overlay.show{display:flex}
+        .success-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px;max-width:440px;width:90%;text-align:center;animation:popIn .4s ease}
+        @keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+        .success-icon{font-size:4rem;margin-bottom:16px}
+        .success-code{background:var(--surface);border:2px dashed var(--accent);border-radius:10px;padding:14px;margin:16px 0}
+        .success-code span{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:4px;color:var(--accent)}
+        .payment-overlay{position:fixed;inset:0;background:rgba(8,11,20,.95);z-index:210;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+        .payment-overlay.show{display:flex}
+        .payment-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px;max-width:520px;width:92%;text-align:center;animation:popIn .4s ease}
+        .payment-card h3{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:8px}
+        .payment-meta{display:grid;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin:18px 0}
+        .payment-meta div{display:flex;justify-content:space-between;gap:12px;font-size:0.92rem}
+        .payment-meta span:first-child{color:var(--text-muted)}
+        .payment-qr{width:240px;height:240px;object-fit:cover;border-radius:16px;border:1px solid var(--border);background:#fff;padding:10px;margin:10px auto 16px}
+        .payment-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+        .payment-actions button,.payment-actions a{min-width:150px;padding:12px 20px;border-radius:10px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer;text-decoration:none}
+        .payment-actions .btn-primary{background:var(--gradient);border:none;color:#fff}
+        .payment-actions .btn-secondary{background:var(--surface);border:1.5px solid var(--border);color:var(--text)}
+        .payment-note{font-size:0.84rem;color:var(--text-muted);line-height:1.6}
+        .step-panel{display:none}
+        .step-panel.active{display:block}
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar-star">
+    <div class="container-fluid px-4">
+        <div class="d-flex align-items-center justify-content-between">
+            <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
+            <div class="d-flex align-items-center gap-3">
+                <a href="index.html" style="color:var(--text-muted);font-size:0.9rem"><i class="bi bi-arrow-left me-1"></i>Quay lại</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- STEPS BAR -->
+<div class="steps-bar">
+    <div class="container" style="max-width:1100px">
+        <div class="steps-inner">
+            <div class="step active" id="step-tab-1" onclick="goToStep(1)">
+                <div class="step-num" id="sn-1">1</div>
+                <span class="step-label">Chọn suất chiếu</span>
+            </div>
+            <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+            <div class="step" id="step-tab-2" onclick="goToStep(2)">
+                <div class="step-num" id="sn-2">2</div>
+                <span class="step-label">Chọn ghế</span>
+            </div>
+            <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+            <div class="step" id="step-tab-3" onclick="goToStep(3)">
+                <div class="step-num" id="sn-3">3</div>
+                <span class="step-label">Combo & Ưu đãi</span>
+            </div>
+            <span class="step-arrow"><i class="bi bi-chevron-right"></i></span>
+            <div class="step" id="step-tab-4" onclick="goToStep(4)">
+                <div class="step-num" id="sn-4">4</div>
+                <span class="step-label">Thanh toán</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="booking-layout">
+    <!-- MAIN -->
+    <div>
+        <!-- Movie Info -->
+        <div class="movie-info-bar">
+            <div class="movie-mini-poster"><div>⚡</div></div>
+            <div class="movie-mini-info">
+                <h3>Avengers: Secret Wars</h3>
+                <div class="movie-mini-meta">
+                    <span class="mini-tag">⭐ 9.2</span>
+                    <span class="age-badge age-c13">C13</span>
+                    <span class="mini-tag">⏱ 2h 48m</span>
+                    <span class="mini-tag">🎭 Action · Sci-Fi</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 1: Chọn suất chiếu -->
+        <div class="step-panel active" id="panel-1">
+            <div class="panel">
+                <div class="panel-title"><i class="bi bi-calendar3"></i> Chọn ngày</div>
+                <div class="date-tabs" id="dateTabs"></div>
+                <div class="panel-title mt-3"><i class="bi bi-clock"></i> Chọn suất chiếu</div>
+                <div id="showtimeList"></div>
+            </div>
+        </div>
+
+        <!-- STEP 2: Sơ đồ ghế -->
+        <div class="step-panel" id="panel-2">
+            <div class="panel">
+                <div class="panel-title"><i class="bi bi-grid-3x3-gap"></i> Sơ đồ ghế – IMAX Hall 1</div>
+                <div class="screen-wrap">
+                    <div class="screen"><div class="screen-label">Màn hình chiếu</div></div>
+                </div>
+                <div class="seat-legend">
+                    <div class="legend-item"><div class="legend-seat ls-available"></div>Trống</div>
+                    <div class="legend-item"><div class="legend-seat ls-selected"></div>Đang chọn</div>
+                    <div class="legend-item"><div class="legend-seat ls-booked"></div>Đã đặt</div>
+                    <div class="legend-item"><div class="legend-seat ls-vip"></div>VIP</div>
+                    <div class="legend-item"><div class="legend-seat ls-couple"></div>Couple</div>
+                </div>
+                <div class="seat-grid-wrap">
+                    <div class="seat-grid" id="seatGrid"></div>
+                </div>
+                <div style="text-align:center;margin-top:16px;color:var(--text-muted);font-size:0.85rem">
+                    Nhấp vào ghế để chọn · Tối đa 8 ghế mỗi lần đặt
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3: Combo -->
+        <div class="step-panel" id="panel-3">
+            <div class="panel">
+                <div class="panel-title"><i class="bi bi-bag3"></i> Thêm Combo Bắp Nước</div>
+                <div id="comboList"></div>
+                <div class="panel-title mt-4"><i class="bi bi-tag"></i> Mã khuyến mãi</div>
+                <div style="color:var(--text-muted);font-size:0.88rem;margin-bottom:8px">Nhập mã để nhận ưu đãi thêm</div>
+                <div class="promo-input-wrap">
+                    <input class="promo-input" type="text" placeholder="Nhập mã khuyến mãi (vd: GOLD10)" id="promoInputMain">
+                    <button class="btn-promo" onclick="applyPromo()">Áp dụng</button>
+                </div>
+                <div id="promoResult" style="margin-top:8px;font-size:0.85rem"></div>
+                <div id="activePromoList" class="promo-list"></div>
+            </div>
+        </div>
+
+        <!-- STEP 4: Thanh toán -->
+        <div class="step-panel" id="panel-4">
+            <div class="panel">
+                <div class="panel-title"><i class="bi bi-credit-card"></i> Phương thức thanh toán</div>
+                <div class="pay-method" id="payMethods">
+                    <div class="pay-opt active" onclick="selectPay(this,'MOMO')"><span class="pay-icon">💳</span><span class="pay-label">MoMo</span></div>
+                    <div class="pay-opt" onclick="selectPay(this,'VNPAY')"><span class="pay-icon">🏦</span><span class="pay-label">VNPay</span></div>
+                    <div class="pay-opt" onclick="selectPay(this,'ZALOPAY')"><span class="pay-icon">⚡</span><span class="pay-label">ZaloPay</span></div>
+                    <div class="pay-opt" onclick="selectPay(this,'CARD')"><span class="pay-icon">💰</span><span class="pay-label">Thẻ ngân hàng</span></div>
+                </div>
+                <div class="panel-title mt-2"><i class="bi bi-receipt"></i> Xác nhận đơn hàng</div>
+                <div id="orderConfirm" style="color:var(--text-muted);font-size:0.9rem;line-height:2"></div>
+                <div style="background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:8px;padding:12px 16px;margin-top:12px;font-size:0.85rem;color:var(--accent-gold)">
+                    🎁 Bạn sẽ nhận được <strong id="pointsEarn">0</strong> điểm thưởng sau giao dịch này!
+                </div>
+            </div>
+        </div>
+
+        <!-- NAV BUTTONS -->
+        <div class="d-flex gap-3 mt-2">
+            <button id="btnPrev" class="btn-next" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);flex:0 0 auto;width:120px" onclick="prevStep()" disabled>
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </button>
+            <button id="btnNext" class="btn-next" onclick="nextStep()">
+                Tiếp tục <i class="bi bi-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="booking-sidebar">
+        <div class="summary-card">
+            <div class="summary-title">🎟 Tóm tắt đơn hàng</div>
+            <div class="summary-row">
+                <span style="color:var(--text-muted)">Phim</span>
+                <span style="font-weight:600;font-size:0.88rem;text-align:right;max-width:160px">Avengers: Secret Wars</span>
+            </div>
+            <div class="summary-row" id="sum-showtime">
+                <span style="color:var(--text-muted)">Suất chiếu</span>
+                <span style="color:var(--text-muted);font-style:italic">Chưa chọn</span>
+            </div>
+            <div class="summary-row" id="sum-hall">
+                <span style="color:var(--text-muted)">Phòng</span>
+                <span style="color:var(--text-muted);font-style:italic">–</span>
+            </div>
+            <div id="sum-seats-wrap" style="margin-bottom:8px">
+                <div style="color:var(--text-muted);font-size:0.88rem;margin-bottom:4px">Ghế đã chọn</div>
+                <div class="seat-chips" id="sum-seats"><span style="color:var(--text-muted);font-style:italic;font-size:0.82rem">Chưa chọn ghế</span></div>
+            </div>
+            <div class="summary-row"><span style="color:var(--text-muted)">Giá vé</span><span id="sum-ticket-price">–</span></div>
+            <div class="summary-row" id="sum-combo-row" style="display:none"><span style="color:var(--text-muted)">Combo</span><span id="sum-combo-price">–</span></div>
+            <div class="summary-row discount-row" id="sum-discount-row" style="display:none"><span>Giảm giá</span><span id="sum-discount">–</span></div>
+            <div class="summary-row total"><span>Tổng cộng</span><span class="val" id="sum-total">0đ</span></div>
+            <div class="promo-input-wrap mt-3">
+                <input class="promo-input" type="text" placeholder="Mã ưu đãi" id="promoInputSide" style="font-size:0.82rem">
+                <button class="btn-promo" style="padding:8px 12px;font-size:0.8rem" onclick="applyPromoSide()">OK</button>
+            </div>
+            <div id="memberDiscount" style="margin-top:8px;font-size:0.82rem;color:#50C864"></div>
+        </div>
+    </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+    <div class="success-card">
+        <div class="success-icon">🎉</div>
+        <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:8px">Đặt vé thành công!</h3>
+        <p style="color:var(--text-muted);font-size:0.9rem">Mã booking của bạn:</p>
+        <div class="success-code"><span id="bookingCode">SC-2024-XXXXX</span></div>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px">Vui lòng lưu mã này để check-in tại quầy hoặc nhận tại máy tự phục vụ.</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <button onclick="window.location.href='history.html'" style="background:var(--gradient);color:#fff;border:none;padding:12px 24px;border-radius:8px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer">Xem lịch sử</button>
+            <button onclick="window.location.href='index.html'" style="background:var(--surface);color:var(--text);border:1.5px solid var(--border);padding:12px 24px;border-radius:8px;font-family:'Outfit',sans-serif;font-weight:600;cursor:pointer">Về trang chủ</button>
+        </div>
+    </div>
+</div>
+
+<div class="payment-overlay" id="paymentOverlay">
+    <div class="payment-card">
+        <div class="success-icon" style="font-size:3.4rem;margin-bottom:8px">ðŸ’³</div>
+        <h3>Cho thanh toan</h3>
+        <p class="payment-note" id="paymentMessage">Quet ma QR ben duoi de hoan tat giao dich cho booking cua ban.</p>
+        <div class="payment-meta">
+            <div><span>Ma booking</span><strong id="paymentBookingCode">BKG-XXXXXXX</strong></div>
+            <div><span>Phuong thuc</span><strong id="paymentMethodLabel">MOMO</strong></div>
+            <div><span>So tien</span><strong id="paymentAmount">0d</strong></div>
+        </div>
+        <img id="paymentQrImage" class="payment-qr" alt="Payment QR code">
+        <div class="payment-note">Sau khi chuyen khoan hoac quet QR xong, he thong se tu kiem tra trang thai. Nut ben duoi chi la phuong an du phong.</div>
+        <div class="payment-actions">
+            <a id="paymentCheckoutLink" class="btn-secondary" href="#" target="_blank" rel="noopener noreferrer">Mo QR trong tab moi</a>
+            <button class="btn-primary" type="button" onclick="confirmPendingPayment()">Toi da thanh toan</button>
+            <button class="btn-secondary" type="button" onclick="failPendingPayment()">Huy giao dich</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ──── STATE ────
+    let currentStep = 2; // Default to seat selection if we have showtimeId
+    const getParam = (p) => new URLSearchParams(window.location.search).get(p);
+    const showtimeId = getParam('showtimeId');
+    
+    let selectedSeats = [];
+    const token = localStorage.getItem('cinemaToken');
+    let allSeats = [];
+    let combos = [];
+    let activePromotions = [];
+    let selectedCombos = {};
+    let appliedPromotionCode = '';
+    let appliedPromotionPreview = null;
+    let customerProfile = null;
+    let pendingBookingCode = '';
+    let paymentStatusPoller = null;
+    let selectedPaymentMethod = 'MOMO';
+
+    const tierOrder = { STANDARD: 0, SILVER: 1, GOLD: 2, PLATINUM: 3 };
+    const tierDiscount = { STANDARD: 0, SILVER: 5, GOLD: 10, PLATINUM: 15 };
+    
+    if (!showtimeId) {
+        alert('Vui lòng chọn suất chiếu từ trang chi tiết phim!');
+        window.location.href = 'index.html';
+    }
+
+    // ──── DATA FETCH ────
+    async function safeJson(resp) {
+        const text = await resp.text();
+        if (!text) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            return { message: text };
+        }
+    }
+
+    async function fetchJson(url, options = {}) {
+        const resp = await fetch(url, options);
+        const data = await safeJson(resp);
+        if (!resp.ok) {
+            throw new Error(data?.message || 'Request failed');
+        }
+        return data;
+    }
+
+    async function loadShowtimeData() {
+        try {
+            // Need to fetch showtime info - we might need an endpoint for this or just use what we have
+            const tasks = [
+                fetchJson(`/api/showtimes/${showtimeId}/seats`),
+                fetchJson('/api/combos'),
+                fetchJson('/api/promotions/active')
+            ];
+
+            if (token) {
+                tasks.push(fetchJson('/api/customers/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }));
+            }
+
+            const results = await Promise.allSettled(tasks);
+            if (results[0].status !== 'fulfilled') {
+                throw results[0].reason;
+            }
+
+            allSeats = results[0].value || [];
+            combos = results[1].status === 'fulfilled' ? (results[1].value || []) : [];
+            activePromotions = results[2].status === 'fulfilled' ? (results[2].value || []) : [];
+            customerProfile = results[3]?.status === 'fulfilled' ? results[3].value : null;
+
+            renderSeats();
+            renderCombos();
+            renderPromotions();
+            updateMembershipBanner();
+            updateSummary();
+            applyStep();
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi tải sơ đồ ghế!');
+        }
+    }
+
+    // ──── SEAT MAP ────
+    function renderSeats() {
+      const grid = document.getElementById('seatGrid');
+      // Group seats by rowChar
+      const rows = [...new Set(allSeats.map(s => s.rowChar))].sort();
+      const maxCol = Math.max(...allSeats.map(s => s.colNum));
+      
+      grid.style.gridTemplateColumns = `22px repeat(${maxCol}, 30px)`;
+      grid.innerHTML = '';
+      
+      rows.forEach(row => {
+        const lbl = document.createElement('div'); lbl.className = 'row-label'; lbl.textContent = row;
+        grid.appendChild(lbl);
+        
+        for(let c = 1; c <= maxCol; c++) {
+          const seatData = allSeats.find(s => s.rowChar === row && s.colNum === c);
+          if (!seatData) {
+              grid.appendChild(document.createElement('div'));
+              continue;
+          }
+          
+          const isSelected = selectedSeats.find(s => s.id === seatData.id);
+          const isBooked = seatData.available === false;
+          const seat = document.createElement('div');
+          seat.className = `seat ${seatData.seatType.toLowerCase()} ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}`;
+          seat.textContent = isBooked ? '' : seatData.seatCode;
+          
+          if(!isBooked) {
+              seat.onclick = () => toggleSeat(seatData);
+          }
+          grid.appendChild(seat);
+        }
+      });
+    }
+
+    function toggleSeat(seatData) {
+      const idx = selectedSeats.findIndex(s => s.id === seatData.id);
+      if(idx > -1) {
+        selectedSeats.splice(idx, 1);
+      } else {
+        if(selectedSeats.length >= 8) { alert('Tối đa 8 ghế mỗi lần đặt!'); return; }
+        selectedSeats.push(seatData);
+      }
+      renderSeats(); updateSummary();
+    }
+
+    function renderCombos() {
+      const comboList = document.getElementById('comboList');
+      if (!comboList) return;
+      if (!combos.length) {
+        comboList.innerHTML = '<div class="promo-empty">Chua co combo dang hoat dong.</div>';
+        return;
+      }
+
+      comboList.innerHTML = combos.map((combo) => {
+        const quantity = selectedCombos[combo.id] || 0;
+        const image = combo.imageUrl
+          ? `<img src="${combo.imageUrl}" alt="${combo.name}" style="width:48px;height:48px;object-fit:cover;border-radius:10px">`
+          : '🍿';
+
+        return `
+          <div class="combo-card">
+            <div class="combo-emoji">${image}</div>
+            <div class="combo-info">
+              <div class="combo-name">${combo.name}</div>
+              <div class="combo-desc">${combo.description || 'Combo bap nuoc cho buoi xem phim.'}</div>
+            </div>
+            <div class="combo-price">${fmt(combo.price)}</div>
+            <div class="qty-ctrl">
+              <button class="qty-btn" onclick="changeComboQty(${combo.id}, -1)">-</button>
+              <div class="qty-num">${quantity}</div>
+              <button class="qty-btn" onclick="changeComboQty(${combo.id}, 1)">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPromotions() {
+      const container = document.getElementById('activePromoList');
+      if (!container) return;
+      if (!activePromotions.length) {
+        container.innerHTML = '<div class="promo-empty">Chua co uu dai dang hoat dong.</div>';
+        return;
+      }
+
+      container.innerHTML = activePromotions.map((promotion) => {
+        const isActive = promotion.code === appliedPromotionCode;
+        const discountLabel = promotion.discountType === 'PERCENT'
+          ? `Giam ${promotion.discountValue}%`
+          : `Giam ${fmt(promotion.discountValue)}`;
+
+        return `
+          <div class="promo-card ${isActive ? 'active' : ''}">
+            <div>
+              <div class="promo-name">${promotion.name}</div>
+              <div class="promo-meta">
+                ${discountLabel}<br>
+                Hang toi thieu: ${promotion.minTier || 'STANDARD'}<br>
+                Hieu luc den: ${promotion.endDate}
+              </div>
+              <div class="promo-code">${promotion.code}</div>
+            </div>
+            <button class="promo-action" onclick="selectPromotionCode('${promotion.code}')">Dung ma</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function changeComboQty(comboId, delta) {
+      const currentQty = selectedCombos[comboId] || 0;
+      const nextQty = Math.max(0, currentQty + delta);
+      if (nextQty === 0) {
+        delete selectedCombos[comboId];
+      } else {
+        selectedCombos[comboId] = nextQty;
+      }
+
+      renderCombos();
+      updateSummary();
+    }
+
+    function syncPromoInputs(value) {
+      const mainInput = document.getElementById('promoInputMain');
+      const sideInput = document.getElementById('promoInputSide');
+      if (mainInput) mainInput.value = value;
+      if (sideInput) sideInput.value = value;
+    }
+
+    function selectPromotionCode(code) {
+      syncPromoInputs(code);
+      applyPromo(code);
+    }
+
+    function getSelectedPromotionCode(providedCode) {
+      if (providedCode) {
+        return providedCode.trim().toUpperCase();
+      }
+      const mainValue = document.getElementById('promoInputMain')?.value?.trim() || '';
+      const sideValue = document.getElementById('promoInputSide')?.value?.trim() || '';
+      return (mainValue || sideValue).toUpperCase();
+    }
+
+    function getPromotionPreview(code) {
+      return activePromotions.find((promotion) => promotion.code.toUpperCase() === code.toUpperCase()) || null;
+    }
+
+    function isPromotionEligible(promotion) {
+      if (!promotion) return false;
+      const minTier = promotion.minTier || 'STANDARD';
+      if ((tierOrder[minTier] || 0) === 0) {
+        return true;
+      }
+      if (!customerProfile?.membershipTier) {
+        return false;
+      }
+      return tierOrder[customerProfile.membershipTier] >= tierOrder[minTier];
+    }
+
+    function getPromoStatus(promotion) {
+      if (!promotion) {
+        return { valid: false, message: 'Ma khuyen mai khong hop le hoac da het han.', color: 'var(--accent)' };
+      }
+      if (!isPromotionEligible(promotion)) {
+        return {
+          valid: false,
+          message: `Ma nay yeu cau hang ${promotion.minTier || 'STANDARD'}. Dang nhap dung tai khoan de duoc ap dung.`,
+          color: 'var(--accent-gold)'
+        };
+      }
+      return { valid: true, message: `Da ap dung ma ${promotion.code}: ${promotion.name}.`, color: '#50C864' };
+    }
+
+    function setPromoMessage(message, color) {
+      const promoResult = document.getElementById('promoResult');
+      if (!promoResult) return;
+      promoResult.textContent = message;
+      promoResult.style.color = color;
+    }
+
+    function applyPromo(code) {
+      appliedPromotionCode = getSelectedPromotionCode(code);
+      syncPromoInputs(appliedPromotionCode);
+
+      if (!appliedPromotionCode) {
+        appliedPromotionPreview = null;
+        setPromoMessage('', 'var(--text-muted)');
+        renderPromotions();
+        updateSummary();
+        return;
+      }
+
+      appliedPromotionPreview = getPromotionPreview(appliedPromotionCode);
+      const promoStatus = getPromoStatus(appliedPromotionPreview);
+      setPromoMessage(promoStatus.message, promoStatus.color);
+      renderPromotions();
+      updateSummary();
+    }
+
+    function applyPromoSide() {
+      applyPromo();
+    }
+
+    function updateMembershipBanner() {
+      const memberDiscount = document.getElementById('memberDiscount');
+      if (!memberDiscount) return;
+      if (!customerProfile?.membershipTier) {
+        memberDiscount.textContent = '';
+        return;
+      }
+
+      const percent = tierDiscount[customerProfile.membershipTier] || 0;
+      if (percent > 0) {
+        memberDiscount.textContent = `Hang ${customerProfile.membershipTier}: giam them ${percent}% sau promo.`;
+      } else {
+        memberDiscount.textContent = `Hang ${customerProfile.membershipTier}: chua co uu dai thanh vien.`;
+      }
+    }
+
+    // ──── SUMMARY ────
+    function fmt(n) { return n.toLocaleString('vi-VN') + 'đ'; }
+    function getTicketSubtotal() {
+      return selectedSeats.reduce((sum, seat) => sum + Number(seat.price || 0), 0);
+    }
+
+    function getComboSubtotal() {
+      return combos.reduce((sum, combo) => sum + (Number(combo.price || 0) * (selectedCombos[combo.id] || 0)), 0);
+    }
+
+    function calculateTotals() {
+      const ticketSubtotal = getTicketSubtotal();
+      const comboSubtotal = getComboSubtotal();
+      const subtotal = ticketSubtotal + comboSubtotal;
+
+      let promotionDiscount = 0;
+      if (appliedPromotionPreview && getPromoStatus(appliedPromotionPreview).valid) {
+        if (appliedPromotionPreview.discountType === 'PERCENT') {
+          promotionDiscount = subtotal * (Number(appliedPromotionPreview.discountValue || 0) / 100);
+        } else {
+          promotionDiscount = Number(appliedPromotionPreview.discountValue || 0);
+        }
+      }
+
+      promotionDiscount = Math.min(promotionDiscount, subtotal);
+      const afterPromotion = Math.max(0, subtotal - promotionDiscount);
+      const membershipPercent = customerProfile?.membershipTier ? (tierDiscount[customerProfile.membershipTier] || 0) : 0;
+      const membershipDiscount = afterPromotion * (membershipPercent / 100);
+      const total = Math.max(0, afterPromotion - membershipDiscount);
+      const pointsEarn = Math.floor(total / 10000);
+
+      return { ticketSubtotal, comboSubtotal, promotionDiscount, membershipDiscount, total, pointsEarn };
+    }
+
+    function updateSummary() {
+      // Update seats chips
+      const sc = document.getElementById('sum-seats');
+      if(selectedSeats.length > 0) {
+        sc.innerHTML = selectedSeats.map(s => `<span class="seat-chip">${s.seatCode}</span>`).join('');
+      } else {
+        sc.innerHTML = '<span style="color:var(--text-muted);font-style:italic;font-size:0.82rem">Chưa chọn ghế</span>';
+      }
+
+      // Calculate totals (Mocking prices if backend doesn't provide them per seat in the response, but we can assume)
+      let ticketTotal = selectedSeats.reduce((sum, s) => {
+          return sum + Number(s.price || 0);
+      }, 0);
+
+      document.getElementById('sum-ticket-price').textContent = ticketTotal > 0 ? fmt(ticketTotal) : '–';
+      document.getElementById('sum-total').textContent = fmt(ticketTotal);
+      const totals = calculateTotals();
+      document.getElementById('sum-ticket-price').textContent = totals.ticketSubtotal > 0 ? fmt(totals.ticketSubtotal) : '0d';
+      document.getElementById('sum-total').textContent = fmt(totals.total);
+
+      const comboRow = document.getElementById('sum-combo-row');
+      const comboPrice = document.getElementById('sum-combo-price');
+      if (comboRow && comboPrice) {
+        comboRow.style.display = totals.comboSubtotal > 0 ? 'flex' : 'none';
+        comboPrice.textContent = totals.comboSubtotal > 0 ? fmt(totals.comboSubtotal) : '0d';
+      }
+
+      const discountRow = document.getElementById('sum-discount-row');
+      const discountValue = document.getElementById('sum-discount');
+      if (discountRow && discountValue) {
+        if (totals.promotionDiscount > 0) {
+          discountRow.style.display = 'flex';
+          discountValue.textContent = `- ${fmt(totals.promotionDiscount)}`;
+        } else {
+          discountRow.style.display = 'none';
+        }
+      }
+
+      const pointsEarn = document.getElementById('pointsEarn');
+      if (pointsEarn) {
+        pointsEarn.textContent = totals.pointsEarn.toLocaleString('vi-VN');
+      }
+      
+      const oc = document.getElementById('orderConfirm');
+      if (oc) {
+        const selectedComboItems = combos
+          .filter((combo) => (selectedCombos[combo.id] || 0) > 0)
+          .map((combo) => `${combo.name} x${selectedCombos[combo.id]}`);
+        const lines = [
+          `<div>Ghe da chon: <b>${selectedSeats.length ? selectedSeats.map((seat) => seat.seatCode).join(', ') : 'Chua chon'}</b></div>`
+        ];
+
+        if (selectedComboItems.length) {
+          lines.push(`<div>Combo: <b>${selectedComboItems.join(', ')}</b></div>`);
+        }
+        if (appliedPromotionCode) {
+          lines.push(`<div>Promo code: <b>${appliedPromotionCode}</b></div>`);
+        }
+        if (totals.membershipDiscount > 0) {
+          lines.push(`<div>Giam thanh vien: <b>- ${fmt(totals.membershipDiscount)}</b></div>`);
+        }
+
+        lines.push(`<div>Thanh toan: <b>${selectedPaymentMethod}</b></div>`);
+        lines.push(`<div>Tong cong: <b>${fmt(totals.total)}</b></div>`);
+        oc.innerHTML = lines.join('');
+        return;
+      }
+      if(oc) {
+        oc.innerHTML = `
+          <div>💺 Ghế đã chọn: <b>${selectedSeats.map(s=>s.seatCode).join(', ')}</b></div>
+          <div>💰 Tổng cộng: <b>${fmt(ticketTotal)}</b></div>
+        `;
+      }
+    }
+
+    // ──── STEPS NAV ────
+    function nextStep() {
+      if(currentStep === 2 && selectedSeats.length === 0) { alert('Vui lòng chọn ít nhất 1 ghế!'); return; }
+      if(currentStep === 4) { handleFinalBooking(); return; }
+      currentStep = Math.min(4, currentStep + 1);
+      applyStep();
+    }
+    function prevStep() {
+      currentStep = Math.max(2, currentStep - 1);
+      applyStep();
+    }
+    function applyStep() {
+      document.querySelectorAll('.step-panel').forEach((p,i) => p.classList.toggle('active', i+1 === currentStep));
+      document.querySelectorAll('.step').forEach((s,i) => {
+        s.classList.toggle('active', i+1 === currentStep);
+        s.classList.toggle('done', i+1 < currentStep);
+      });
+      document.getElementById('btnPrev').disabled = currentStep === 2;
+      const nb = document.getElementById('btnNext');
+      nb.innerHTML = currentStep === 4 ? '🎟 Xác nhận đặt vé' : 'Tiếp tục <i class="bi bi-arrow-right"></i>';
+    }
+
+    async function handleFinalBooking() {
+        const token = localStorage.getItem('cinemaToken');
+        if (!token) {
+            alert('Vui lòng đăng nhập trước khi đặt vé!');
+            window.location.href = 'auth.html';
+            return;
+        }
+
+        const body = {
+            showtimeId: parseInt(showtimeId),
+            seatIds: selectedSeats.map(s => s.id),
+            combos: {} // Not implemented yet
+        };
+
+        try {
+            const resp = await fetch('/api/bookings', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                document.getElementById('bookingCode').textContent = data.bookingCode;
+                document.getElementById('successOverlay').classList.add('show');
+            } else {
+                const err = await resp.json();
+                alert('Đặt vé thất bại: ' + (err.message || 'Lỗi không xác định'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi kết nối máy chủ!');
+        }
+    }
+
+    function fmt(n) {
+      return Number(n || 0).toLocaleString('vi-VN') + 'd';
+    }
+
+    function updateSummary() {
+      const sc = document.getElementById('sum-seats');
+      if (selectedSeats.length > 0) {
+        sc.innerHTML = selectedSeats.map((seat) => `<span class="seat-chip">${seat.seatCode}</span>`).join('');
+      } else {
+        sc.innerHTML = '<span style="color:var(--text-muted);font-style:italic;font-size:0.82rem">Chua chon ghe</span>';
+      }
+
+      const totals = calculateTotals();
+      document.getElementById('sum-ticket-price').textContent = totals.ticketSubtotal > 0 ? fmt(totals.ticketSubtotal) : '0d';
+      document.getElementById('sum-total').textContent = fmt(totals.total);
+
+      const comboRow = document.getElementById('sum-combo-row');
+      const comboPrice = document.getElementById('sum-combo-price');
+      if (comboRow && comboPrice) {
+        comboRow.style.display = totals.comboSubtotal > 0 ? 'flex' : 'none';
+        comboPrice.textContent = totals.comboSubtotal > 0 ? fmt(totals.comboSubtotal) : '0d';
+      }
+
+      const discountRow = document.getElementById('sum-discount-row');
+      const discountValue = document.getElementById('sum-discount');
+      if (discountRow && discountValue) {
+        if (totals.promotionDiscount > 0) {
+          discountRow.style.display = 'flex';
+          discountValue.textContent = `- ${fmt(totals.promotionDiscount)}`;
+        } else {
+          discountRow.style.display = 'none';
+        }
+      }
+
+      const pointsEarn = document.getElementById('pointsEarn');
+      if (pointsEarn) {
+        pointsEarn.textContent = totals.pointsEarn.toLocaleString('vi-VN');
+      }
+
+      const oc = document.getElementById('orderConfirm');
+      if (!oc) {
+        return;
+      }
+
+      const selectedComboItems = combos
+        .filter((combo) => (selectedCombos[combo.id] || 0) > 0)
+        .map((combo) => `${combo.name} x${selectedCombos[combo.id]}`);
+      const lines = [
+        `<div>Ghe da chon: <b>${selectedSeats.length ? selectedSeats.map((seat) => seat.seatCode).join(', ') : 'Chua chon'}</b></div>`
+      ];
+
+      if (selectedComboItems.length) {
+        lines.push(`<div>Combo: <b>${selectedComboItems.join(', ')}</b></div>`);
+      }
+      if (appliedPromotionCode) {
+        lines.push(`<div>Promo code: <b>${appliedPromotionCode}</b></div>`);
+      }
+      if (totals.membershipDiscount > 0) {
+        lines.push(`<div>Giam thanh vien: <b>- ${fmt(totals.membershipDiscount)}</b></div>`);
+      }
+
+      lines.push(`<div>Thanh toan: <b>${selectedPaymentMethod}</b></div>`);
+      lines.push(`<div>Tong cong: <b>${fmt(totals.total)}</b></div>`);
+      oc.innerHTML = lines.join('');
+    }
+
+    function goToStep(step) {
+      if (step < 2 || step > 4) {
+        return;
+      }
+      if (step > 2 && selectedSeats.length === 0) {
+        alert('Vui long chon it nhat 1 ghe!');
+        return;
+      }
+      currentStep = step;
+      applyStep();
+    }
+
+    function nextStep() {
+      if (currentStep === 2 && selectedSeats.length === 0) {
+        alert('Vui long chon it nhat 1 ghe!');
+        return;
+      }
+      if (currentStep === 4) {
+        handleFinalBooking();
+        return;
+      }
+      currentStep = Math.min(4, currentStep + 1);
+      applyStep();
+    }
+
+    function prevStep() {
+      currentStep = Math.max(2, currentStep - 1);
+      applyStep();
+    }
+
+    function applyStep() {
+      document.querySelectorAll('.step-panel').forEach((panel, index) => panel.classList.toggle('active', index + 1 === currentStep));
+      document.querySelectorAll('.step').forEach((stepItem, index) => {
+        stepItem.classList.toggle('active', index + 1 === currentStep);
+        stepItem.classList.toggle('done', index + 1 < currentStep);
+      });
+      document.getElementById('btnPrev').disabled = currentStep === 2;
+      const nb = document.getElementById('btnNext');
+      nb.innerHTML = currentStep === 4 ? 'Xac nhan dat ve' : 'Tiep tuc <i class="bi bi-arrow-right"></i>';
+    }
+
+    function selectPay(element, method) {
+      selectedPaymentMethod = method;
+      document.querySelectorAll('#payMethods .pay-opt').forEach((item) => item.classList.remove('active'));
+      element.classList.add('active');
+      updateSummary();
+    }
+
+    function buildComboPayload() {
+      return Object.entries(selectedCombos).reduce((payload, [comboId, quantity]) => {
+        if (quantity > 0) {
+          payload[comboId] = quantity;
+        }
+        return payload;
+      }, {});
+    }
+
+    function openSuccessOverlay(bookingCode) {
+      stopPaymentPolling();
+      document.getElementById('bookingCode').textContent = bookingCode;
+      document.getElementById('successOverlay').classList.add('show');
+    }
+
+    function showPaymentOverlay(bookingResponse, checkoutResponse) {
+      stopPaymentPolling();
+      pendingBookingCode = bookingResponse.bookingCode;
+      document.getElementById('paymentBookingCode').textContent = bookingResponse.bookingCode;
+      document.getElementById('paymentMethodLabel').textContent = bookingResponse.paymentMethod || selectedPaymentMethod;
+      document.getElementById('paymentAmount').textContent = fmt(bookingResponse.totalPrice || checkoutResponse.amount || 0);
+      document.getElementById('paymentMessage').textContent = checkoutResponse.message || 'Quet ma QR ben duoi de hoan tat giao dich cho booking cua ban.';
+      document.getElementById('paymentQrImage').src = checkoutResponse.qrCodeUrl || '';
+      document.getElementById('paymentCheckoutLink').href = checkoutResponse.checkoutUrl || checkoutResponse.qrCodeUrl || '#';
+      document.getElementById('paymentOverlay').classList.add('show');
+      startPaymentPolling();
+    }
+
+    function stopPaymentPolling() {
+      if (paymentStatusPoller) {
+        clearInterval(paymentStatusPoller);
+        paymentStatusPoller = null;
+      }
+    }
+
+    async function checkPaymentStatusSilently() {
+      if (!pendingBookingCode || !token) {
+        return;
+      }
+
+      try {
+        const payment = await fetchJson(`/api/payments/${pendingBookingCode}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (payment.paymentStatus === 'SUCCESS') {
+          document.getElementById('paymentOverlay').classList.remove('show');
+          openSuccessOverlay(payment.bookingCode);
+          return;
+        }
+
+        if (payment.paymentStatus === 'FAILED' || payment.paymentStatus === 'REFUNDED') {
+          stopPaymentPolling();
+          document.getElementById('paymentOverlay').classList.remove('show');
+          alert('Giao dich thanh toan khong thanh cong. Booking da duoc cap nhat.');
+          window.location.href = 'history.html?tab=payments';
+        }
+      } catch (err) {
+        console.error('Polling payment status failed', err);
+      }
+    }
+
+    function startPaymentPolling() {
+      stopPaymentPolling();
+      checkPaymentStatusSilently();
+      paymentStatusPoller = setInterval(checkPaymentStatusSilently, 5000);
+    }
+
+    async function confirmPendingPayment() {
+      if (!pendingBookingCode) {
+        return;
+      }
+
+      try {
+        const payment = await fetchJson(`/api/payments/${pendingBookingCode}/confirm`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        document.getElementById('paymentOverlay').classList.remove('show');
+        openSuccessOverlay(payment.bookingCode);
+      } catch (err) {
+        console.error(err);
+        alert('Xac nhan thanh toan that bai: ' + err.message);
+      }
+    }
+
+    async function failPendingPayment() {
+      if (!pendingBookingCode) {
+        return;
+      }
+
+      try {
+        await fetchJson(`/api/payments/${pendingBookingCode}/fail`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        stopPaymentPolling();
+        document.getElementById('paymentOverlay').classList.remove('show');
+        alert('Giao dich da duoc huy. Booking da chuyen sang CANCELLED.');
+        window.location.href = 'history.html?tab=payments';
+      } catch (err) {
+        console.error(err);
+        alert('Khong the huy giao dich: ' + err.message);
+      }
+    }
+
+    async function handleFinalBooking() {
+      if (!token) {
+        alert('Vui long dang nhap truoc khi dat ve!');
+        window.location.href = 'auth.html';
+        return;
+      }
+
+      if (selectedSeats.length === 0) {
+        alert('Vui long chon it nhat 1 ghe!');
+        return;
+      }
+
+      const body = {
+        showtimeId: parseInt(showtimeId, 10),
+        seatIds: selectedSeats.map((seat) => seat.id),
+        combos: buildComboPayload(),
+        promotionCode: appliedPromotionCode || null,
+        paymentMethod: selectedPaymentMethod
+      };
+
+      try {
+        const data = await fetchJson('/api/bookings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (data.paymentStatus === 'PENDING') {
+          const checkout = await fetchJson(`/api/payments/${data.bookingCode}/checkout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          showPaymentOverlay(data, checkout);
+          return;
+        }
+
+        openSuccessOverlay(data.bookingCode);
+      } catch (err) {
+        console.error(err);
+        alert('Dat ve that bai: ' + err.message);
+      }
+    }
+
+    loadShowtimeData();
+    window.addEventListener('beforeunload', stopPaymentPolling);
+</script>
+</body>
+</html>

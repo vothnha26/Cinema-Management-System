@@ -1,0 +1,229 @@
+@startuml
+' hide the spot
+hide circle
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity "users" as users {
+  * id : BIGINT <<PK>>
+  --
+  username : VARCHAR
+  password : VARCHAR
+  email : VARCHAR
+  role : ENUM('ADMIN','MANAGER','STAFF','CUSTOMER')
+  status : BOOLEAN
+  created_at : TIMESTAMP
+}
+
+entity "customers" as customers {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  full_name : VARCHAR
+  phone : VARCHAR
+  membership_tier : ENUM('STANDARD','SILVER','GOLD','PLATINUM')
+  total_spending : DECIMAL
+}
+
+entity "movies" as movies {
+  * id : BIGINT <<PK>>
+  --
+  title : VARCHAR
+  description : TEXT
+  duration : INT
+  release_date : DATE
+  status : ENUM('COMING_SOON','NOW_SHOWING','STOPPED')
+  rating : VARCHAR
+  poster_url : VARCHAR
+  trailer_url : VARCHAR
+}
+
+entity "genres" as genres {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+}
+
+entity "directors" as directors {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  avatar_url : VARCHAR
+}
+
+entity "actors" as actors {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  avatar_url : VARCHAR
+}
+
+entity "movie_genres" as movie_genres {
+  * movie_id : BIGINT <<PK, FK>>
+  * genre_id : BIGINT <<PK, FK>>
+  --
+}
+
+entity "movie_directors" as movie_directors {
+  * movie_id : BIGINT <<PK, FK>>
+  * director_id : BIGINT <<PK, FK>>
+  --
+  role : ENUM('MAIN','CO_DIRECTOR')
+}
+
+entity "movie_actors" as movie_actors {
+  * movie_id : BIGINT <<PK, FK>>
+  * actor_id : BIGINT <<PK, FK>>
+  --
+  character_name : VARCHAR
+  display_order : INT
+}
+
+entity "rooms" as rooms {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  type : ENUM('HALL_2D','HALL_3D','IMAX','HALL_4DX')
+  capacity : INT
+  status : BOOLEAN
+}
+
+entity "seats" as seats {
+  * id : BIGINT <<PK>>
+  --
+  room_id : BIGINT <<FK>>
+  row_char : VARCHAR
+  col_num : INT
+  type : ENUM('STANDARD','VIP','COUPLE')
+  status : BOOLEAN
+}
+
+entity "seat_prices" as seat_prices {
+  * id : BIGINT <<PK>>
+  --
+  room_type : ENUM('HALL_2D','HALL_3D','IMAX','HALL_4DX')
+  seat_type : ENUM('STANDARD','VIP','COUPLE')
+  price : DECIMAL(10,2)
+  effective_date : DATE
+  is_active : BOOLEAN
+}
+
+entity "showtimes" as showtimes {
+  * id : BIGINT <<PK>>
+  --
+  movie_id : BIGINT <<FK>>
+  room_id : BIGINT <<FK>>
+  start_time : DATETIME
+  end_time : DATETIME
+  status : ENUM('UPCOMING','SHOWING','ENDED','CANCELLED')
+}
+
+entity "bookings" as bookings {
+  * id : BIGINT <<PK>>
+  --
+  customer_id : BIGINT <<FK>>
+  showtime_id : BIGINT <<FK>>
+  promotion_id : BIGINT <<FK>>
+  booking_code : VARCHAR
+  total_price : DECIMAL(10,2)
+  status : ENUM('PENDING','CONFIRMED','CANCELLED','CHECKED_IN')
+  created_at : TIMESTAMP
+}
+
+entity "booking_details" as booking_details {
+  * id : BIGINT <<PK>>
+  --
+  booking_id : BIGINT <<FK>>
+  seat_id : BIGINT <<FK>>
+  price : DECIMAL(10,2)
+}
+
+entity "combos" as combos {
+  * id : BIGINT <<PK>>
+  --
+  name : VARCHAR
+  description : TEXT
+  price : DECIMAL(10,2)
+  image_url : VARCHAR
+  is_active : BOOLEAN
+}
+
+entity "booking_combos" as booking_combos {
+  * id : BIGINT <<PK>>
+  --
+  booking_id : BIGINT <<FK>>
+  combo_id : BIGINT <<FK>>
+  quantity : INT
+  price : DECIMAL(10,2)
+}
+
+entity "promotions" as promotions {
+  * id : BIGINT <<PK>>
+  --
+  code : VARCHAR
+  name : VARCHAR
+  discount_type : ENUM('PERCENT','FIXED')
+  discount_value : DECIMAL(10,2)
+  min_tier : ENUM('STANDARD','SILVER','GOLD','PLATINUM')
+  start_date : DATE
+  end_date : DATE
+  is_active : BOOLEAN
+}
+
+entity "payments" as payments {
+  * id : BIGINT <<PK>>
+  --
+  booking_id : BIGINT <<FK>>
+  amount : DECIMAL(10,2)
+  payment_method : ENUM('CASH','CARD','MOMO','VNPAY','ZALOPAY')
+  payment_status : ENUM('PENDING','SUCCESS','FAILED','REFUNDED')
+  transaction_id : VARCHAR
+  paid_at : TIMESTAMP
+}
+
+entity "notifications" as notifications {
+  * id : BIGINT <<PK>>
+  --
+  user_id : BIGINT <<FK>>
+  title : VARCHAR
+  message : TEXT
+  type : ENUM('BOOKING','REMINDER','PROMOTION','SYSTEM')
+  is_read : BOOLEAN
+  created_at : TIMESTAMP
+}
+
+' Relationships
+users ||--o| customers : "1:1"
+users ||--o{ notifications : "1:N"
+
+movies ||--o{ movie_genres : "1:N"
+genres ||--o{ movie_genres : "1:N"
+
+movies ||--o{ movie_directors : "1:N"
+directors ||--o{ movie_directors : "1:N"
+
+movies ||--o{ movie_actors : "1:N"
+actors ||--o{ movie_actors : "1:N"
+
+movies ||--o{ showtimes : "1:N"
+rooms ||--o{ showtimes : "1:N"
+
+rooms ||--o{ seats : "1:N"
+
+showtimes ||--o{ bookings : "1:N"
+customers ||--o{ bookings : "1:N"
+promotions |o--o{ bookings : "1:N"
+
+bookings ||--o{ booking_details : "1:N"
+seats ||--o{ booking_details : "1:N"
+
+bookings ||--o{ booking_combos : "1:N"
+combos ||--o{ booking_combos : "1:N"
+
+bookings ||--|| payments : "1:1"
+
+' Logical matches
+rooms }o..o{ seat_prices : "match room_type"
+seats }o..o{ seat_prices : "match seat_type"
+
+@enduml

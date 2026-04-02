@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarCinema – Quản Lý Người Dùng</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+          --sidebar-width: 260px;
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        
+        /* ── SIDEBAR ── */
+        .sidebar {
+          width: var(--sidebar-width);
+          background: var(--surface);
+          border-right: 1px solid var(--border);
+          height: 100vh;
+          position: fixed;
+          top: 0; left: 0;
+          z-index: 1000;
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+        }
+        .brand {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 1.8rem;
+          letter-spacing: 3px;
+          color: var(--text);
+          margin-bottom: 40px;
+          text-decoration: none;
+          display: block;
+        }
+        .brand span { color: var(--accent); }
+        
+        .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .nav-item { margin-bottom: 8px; }
+        .nav-link-admin {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          color: var(--text-muted);
+          text-decoration: none;
+          border-radius: 10px;
+          transition: all 0.2s;
+          font-weight: 500;
+        }
+        .nav-link-admin i { font-size: 1.2rem; }
+        .nav-link-admin:hover, .nav-link-admin.active {
+          background: rgba(229,19,58,0.1);
+          color: var(--accent);
+        }
+        .nav-link-admin.active {
+          background: var(--gradient);
+          color: #fff;
+        }
+
+        .user-panel {
+          border-top: 1px solid var(--border);
+          padding-top: 20px;
+          margin-top: 20px;
+        }
+        .admin-profile {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .admin-avatar {
+          width: 40px; height: 40px; border-radius: 10px;
+          background: var(--gradient);
+          display: flex; align-items: center; justify-content: center;
+          font-weight: 700; color: #fff;
+        }
+
+        /* ── MAIN CONTENT ── */
+        .main-content {
+          margin-left: var(--sidebar-width);
+          padding: 40px;
+          min-height: 100vh;
+        }
+        
+        .header-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 32px;
+        }
+        .page-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 2.5rem;
+          letter-spacing: 1px;
+          margin: 0;
+        }
+
+        /* ── TABS ── */
+        .nav-tabs-custom {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 24px;
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 12px;
+        }
+        .tab-item {
+          padding: 8px 20px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          color: var(--text-muted);
+          transition: all 0.2s;
+        }
+        .tab-item.active {
+          background: rgba(229,19,58,0.1);
+          color: var(--accent);
+        }
+        .tab-item:hover:not(.active) {
+          color: var(--text);
+          background: rgba(255,255,255,0.05);
+        }
+
+        /* ── TABLE ── */
+        .custom-table-container {
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          overflow: hidden;
+        }
+        .table { margin: 0; color: var(--text); border-color: var(--border); }
+        .table thead { background: var(--surface); }
+        .table th {
+          border: none; padding: 16px 24px;
+          color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase;
+        }
+        .table td { border-top: 1px solid var(--border); padding: 16px 24px; vertical-align: middle; }
+        
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-avatar-round {
+          width: 40px; height: 40px; border-radius: 50%;
+          object-fit: cover; border: 2px solid var(--border);
+        }
+        .user-name { font-weight: 600; color: var(--text); display: block; }
+        .user-email { font-size: 0.8rem; color: var(--text-muted); }
+
+        .role-badge {
+          padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+          text-transform: uppercase;
+        }
+        .role-admin { background: rgba(229,19,58,0.15); color: var(--accent); }
+        .role-staff { background: rgba(100,180,255,0.15); color: #64B4FF; }
+        .role-customer { background: rgba(245,166,35,0.15); color: var(--accent-gold); }
+
+        .status-pill {
+          padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+          display: inline-flex; align-items: center; gap: 6px;
+        }
+        .status-active { background: rgba(80,200,100,0.1); color: #50C864; }
+        .status-locked { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+        .status-pill i { font-size: 0.6rem; }
+
+        .btn-action {
+          width: 32px; height: 32px; border-radius: 8px;
+          display: inline-flex; align-items: center; justify-content: center;
+          border: 1px solid var(--border); background: var(--surface);
+          color: var(--text-muted); transition: all 0.2s;
+        }
+        .btn-action:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── MODAL ── */
+        .modal-content {
+          background: var(--card);
+          border: 1px solid var(--border);
+          color: var(--text);
+          border-radius: 16px;
+        }
+        .modal-header { border-bottom: 1px solid var(--border); padding: 24px; }
+        .modal-body { padding: 24px; }
+        .modal-footer { border-top: 1px solid var(--border); padding: 20px 24px; }
+        
+        .form-label { font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-bottom: 8px; }
+        .form-control, .form-select {
+          background: var(--surface); border: 1px solid var(--border); color: var(--text);
+          border-radius: 10px; padding: 12px 16px;
+        }
+        .form-control:focus, .form-select:focus {
+          background: var(--surface); border-color: var(--accent); color: var(--text);
+          box-shadow: 0 0 0 3px rgba(229,19,58,0.1);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
+    
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="dashboard.html" class="nav-link-admin">
+                <i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="manage-movies.html" class="nav-link-admin">
+                <i class="bi bi-film"></i> Quản lý phim
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="manage-showtimes.html" class="nav-link-admin">
+                <i class="bi bi-calendar-event"></i> Suất chiếu
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link-admin">
+                <i class="bi bi-ticket-perforated"></i> Quản lý vé
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="manage-users.html" class="nav-link-admin active">
+                <i class="bi bi-people"></i> Người dùng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link-admin">
+                <i class="bi bi-gear"></i> Cài đặt
+            </a>
+        </li>
+    </ul>
+
+    <div class="user-panel">
+        <div class="admin-profile">
+            <div class="admin-avatar">AD</div>
+            <div>
+                <div style="font-size:0.9rem;font-weight:600">Admin User</div>
+                <div style="font-size:0.75rem;color:var(--text-muted)">Quản trị viên</div>
+            </div>
+            <a href="auth.html" class="ms-auto text-muted"><i class="bi bi-box-arrow-right"></i></a>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+    
+    <div class="header-section">
+        <h1 class="page-title">Quản lý người dùng</h1>
+        <button class="btn btn-danger px-4 py-2" style="border-radius:10px; font-weight:600; background:var(--gradient); border:none" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="bi bi-person-plus me-2"></i> Thêm nhân viên
+        </button>
+    </div>
+
+    <!-- TABS -->
+    <div class="nav-tabs-custom">
+        <div class="tab-item active" onclick="switchUserTab('staff', this)">Nhân viên</div>
+        <div class="tab-item" onclick="switchUserTab('customer', this)">Khách hàng</div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="custom-table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Người dùng</th>
+                    <th>Số điện thoại</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody">
+                <!-- Data populated by JS -->
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+<!-- MODAL ADD USER -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Thêm nhân viên mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="mb-3 text-center">
+                        <div style="width:80px; height:80px; border-radius:50%; background:var(--surface); display:inline-flex; align-items:center; justify-content:center; border:2px dashed var(--border); color:var(--text-muted); cursor:pointer">
+                            <i class="bi bi-camera" style="font-size:1.5rem"></i>
+                        </div>
+                        <div class="mt-2" style="font-size:0.75rem; color:var(--text-muted)">Tải lên ảnh đại diện</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Họ và tên</label>
+                        <input type="text" class="form-control" placeholder="Nhập họ tên nhân viên">
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" placeholder="example@gmail.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số điện thoại</label>
+                            <input type="tel" class="form-control" placeholder="090 123 4567">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Vai trò</label>
+                        <select class="form-select">
+                            <option value="STAFF">Nhân viên bán vé (Staff)</option>
+                            <option value="MANAGER">Quản lý (Manager)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu tạm thời</label>
+                        <input type="password" class="form-control" value="StarCinema@123">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius:10px">Hủy</button>
+                <button type="button" class="btn btn-danger px-4" style="border-radius:10px; background:var(--gradient); border:none">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const USERS = [
+        { id: 1, name: 'Lê Minh Tuấn', email: 'tuan.le@starcinema.vn', phone: '0901 223 445', role: 'MANAGER', status: 'ACTIVE', type: 'staff', avatar: 'https://i.pravatar.cc/150?u=1' },
+        { id: 2, name: 'Nguyễn Thùy Chi', email: 'chi.nt@starcinema.vn', phone: '0902 556 778', role: 'STAFF', status: 'ACTIVE', type: 'staff', avatar: 'https://i.pravatar.cc/150?u=2' },
+        { id: 3, name: 'Phạm Hoàng Nam', email: 'nam.ph@starcinema.vn', phone: '0903 889 001', role: 'STAFF', status: 'LOCKED', type: 'staff', avatar: 'https://i.pravatar.cc/150?u=3' },
+        { id: 4, name: 'Trần Minh Anh', email: 'anh.tm@gmail.com', phone: '0912 334 556', role: 'CUSTOMER', status: 'ACTIVE', type: 'customer', avatar: 'https://i.pravatar.cc/150?u=4' },
+        { id: 5, name: 'Vũ Thị Thanh', email: 'thanh.vt@gmail.com', phone: '0913 667 889', role: 'CUSTOMER', status: 'ACTIVE', type: 'customer', avatar: 'https://i.pravatar.cc/150?u=5' },
+        { id: 6, name: 'Đặng Quốc Bảo', email: 'bao.dq@gmail.com', phone: '0914 990 112', role: 'CUSTOMER', status: 'LOCKED', type: 'customer', avatar: 'https://i.pravatar.cc/150?u=6' },
+    ];
+
+    let currentTab = 'staff';
+
+    function renderUsers() {
+        const tbody = document.getElementById('userTableBody');
+        const filteredUsers = USERS.filter(u => u.type === currentTab);
+        
+        tbody.innerHTML = filteredUsers.map(u => `
+            <tr>
+                <td>
+                    <div class="user-info">
+                        <img src="${u.avatar}" class="user-avatar-round" alt="Avatar">
+                        <div>
+                            <span class="user-name">${u.name}</span>
+                            <span class="user-email">${u.email}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>${u.phone}</td>
+                <td>
+                    <span class="role-badge ${getRoleClass(u.role)}">${u.role}</span>
+                </td>
+                <td>
+                    <span class="status-pill ${u.status === 'ACTIVE' ? 'status-active' : 'status-locked'}">
+                        <i class="bi bi-circle-fill"></i> ${u.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
+                    </span>
+                </td>
+                <td class="text-end">
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn-action" title="Sửa thông tin"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn-action" title="Cấp quyền"><i class="bi bi-shield-lock"></i></button>
+                        <button class="btn-action" title="${u.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa'}">
+                            <i class="bi ${u.status === 'ACTIVE' ? 'bi-lock' : 'bi-unlock'}"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function getRoleClass(role) {
+        if (role === 'ADMIN' || role === 'MANAGER') return 'role-admin';
+        if (role === 'STAFF') return 'role-staff';
+        return 'role-customer';
+    }
+
+    function switchUserTab(tab, el) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+        el.classList.add('active');
+        renderUsers();
+    }
+
+    // Initial render
+    renderUsers();
+</script>
+</body>
+</html>
