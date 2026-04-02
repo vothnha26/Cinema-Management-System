@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
@@ -103,8 +105,18 @@
           background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border);
           transition: transform 0.3s; cursor: pointer;
         }
-        .suggested-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-        .suggested-poster { aspect-ratio: 2/3; background: #1a1a1a; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .suggested-card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+        .suggested-poster { 
+            aspect-ratio: 2/3; background: var(--surface); display: flex; align-items: center; justify-content: center; 
+            font-size: 2.5rem; color: rgba(255,255,255,0.1); border-bottom: 1px solid var(--border);
+            position: relative; overflow: hidden;
+        }
+        .suggested-poster i { position: relative; z-index: 2; transition: all 0.3s; }
+        .suggested-card:hover .suggested-poster i { color: var(--accent); transform: scale(1.2); }
+        .suggested-poster::after {
+            content: ''; position: absolute; inset: 0; 
+            background: linear-gradient(to top, rgba(8,11,20,0.8), transparent);
+        }
 
         /* FOOTER */
         .footer { background: var(--surface); border-top: 1px solid var(--border); padding: 40px 0 20px; margin-top: 80px; }
@@ -173,7 +185,7 @@
                     <button class="btn btn-danger px-4 py-2 fw-bold" onclick="document.getElementById('bookingSection').scrollIntoView({behavior:'smooth'})">
                         <i class="bi bi-ticket-perforated me-2"></i> ĐẶT VÉ NGAY
                     </button>
-                    <button class="btn btn-outline-light px-4 py-2 fw-bold">
+                    <button class="btn btn-outline-light px-4 py-2 fw-bold" id="btnTrailer">
                         <i class="bi bi-play-fill me-2"></i> XEM TRAILER
                     </button>
                 </div>
@@ -236,7 +248,7 @@
                     </div>
                 </div>
 
-                <span class="section-label">Trailer</span>
+                <span class="section-label" id="trailerSection">Trailer</span>
                 <div class="trailer-wrap">
                     <div class="trailer-placeholder">
                         <i class="bi bi-play-circle-fill" style="font-size:4rem;color:var(--accent);cursor:pointer"></i>
@@ -245,53 +257,20 @@
                     <!-- Virtual Embed -->
                     <div class="w-100 h-100 bg-black d-none"></div>
                 </div>
+
+                <!-- SUGGESTED MOVIES (Moved Inside) -->
+                <div class="mt-5 pt-4 border-top border-secondary border-opacity-25">
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <span class="section-label m-0">Phim gợi ý cho bạn</span>
+                        <a href="index.html" class="text-accent" style="font-size:0.9rem">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                    <div class="row g-4" id="suggestedMovieContainer">
+                        <!-- Phim gợi ý sẽ được nạp động tại đây -->
+                        <div class="text-center py-4 text-muted small">Đang tải phim gợi ý...</div>
+                    </div>
+                </div>
             </div>
 
-            <!-- SUGGESTED MOVIES -->
-            <div class="mt-5">
-                <div class="d-flex align-items-center justify-content-between mb-4">
-                    <span class="section-label m-0">Phim gợi ý cho bạn</span>
-                    <a href="index.html" class="text-accent" style="font-size:0.9rem">Xem tất cả <i class="bi bi-arrow-right"></i></a>
-                </div>
-                <div class="row g-4">
-                    <div class="col-6 col-md-3">
-                        <div class="suggested-card" onclick="window.location.reload()">
-                            <div class="suggested-poster pg-2">🎬</div>
-                            <div class="p-3">
-                                <div class="fw-bold text-truncate" style="font-size:0.9rem">The Dark Knight Returns</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted)">Action • Drama</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="suggested-card" onclick="window.location.reload()">
-                            <div class="suggested-poster pg-3">🎬</div>
-                            <div class="p-3">
-                                <div class="fw-bold text-truncate" style="font-size:0.9rem">Jurassic World 4</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted)">Action • Sci-Fi</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="suggested-card" onclick="window.location.reload()">
-                            <div class="suggested-poster pg-1">🎬</div>
-                            <div class="p-3">
-                                <div class="fw-bold text-truncate" style="font-size:0.9rem">Robot Warriors</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted)">Sci-Fi • Action</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6 col-md-3">
-                        <div class="suggested-card" onclick="window.location.reload()">
-                            <div class="suggested-poster pg-2">🎬</div>
-                            <div class="p-3">
-                                <div class="fw-bold text-truncate" style="font-size:0.9rem">Midnight Horror</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted)">Horror</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- RIGHT: BOOKING -->
@@ -369,6 +348,17 @@
 </footer>
 
 <script>
+    // Utility for URL params
+    const getParam = (p) => new URLSearchParams(window.location.search).get(p);
+    const movieId = getParam('id');
+    const AGE_CLASS = { p:'age-p', c13:'age-c13', c16:'age-c16', c18:'age-c18' };
+    const AGE_LABEL = { p:'P', c13:'C13', c16:'C16', c18:'C18' };
+
+    if (!movieId) {
+        alert('Không tìm thấy ID phim!');
+        window.location.href = 'index.html';
+    }
+
     // Navbar scroll effect
     window.addEventListener('scroll', () => {
         const nav = document.getElementById('navbar');
@@ -376,26 +366,258 @@
         else nav.classList.remove('scrolled');
     });
 
-    // Generate Dates
+    async function loadMovieDetail() {
+        try {
+            const resp = await fetch(`/api/movies/${movieId}`);
+            if (!resp.ok) throw new Error('Movie not found');
+            const m = await resp.json();
+            
+            document.title = `${m.title} – StarCinema`;
+            document.querySelector('.movie-title').textContent = m.title;
+            document.querySelector('.movie-desc').textContent = m.description || 'Chưa có mô tả cho phim này.';
+            
+            // Xếp hạng (Rating)
+            const ratingVal = m.rating || 0;
+            document.querySelector('.rating-box').innerHTML = `⭐ ${ratingVal.toFixed(1)} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400">/10</span>`;
+            
+            document.querySelector('.age-badge').textContent = (m.ageRating || 'P').toUpperCase();
+            document.querySelector('.age-badge').className = `age-badge ${AGE_CLASS[m.ageRating?.toLowerCase()] || 'age-p'}`;
+            document.querySelector('.movie-header .header-meta span:last-child').textContent = `⏱ ${m.duration} phút`;
+            
+            // 1. Genres (Thể loại)
+            const genreContainer = document.querySelector('.movie-header .d-flex.gap-2.mb-4');
+            genreContainer.innerHTML = (m.genres || []).map(g => `<span class="badge bg-dark border border-secondary px-3 py-2">${g}</span>`).join('');
+            
+            // 2. Poster & Backdrop (Ảnh nền & Ảnh bìa)
+            if (m.posterUrl) {
+                const fullPosterUrl = m.posterUrl.startsWith('http') ? m.posterUrl : `https://image.tmdb.org/t/p/w500${m.posterUrl}`;
+                const fullBackdropUrl = m.posterUrl.startsWith('http') ? m.posterUrl : `https://image.tmdb.org/t/p/original${m.posterUrl}`;
+                
+                document.querySelector('.header-poster').innerHTML = `<img src="${fullPosterUrl}" alt="${m.title}" style="width:100%; height:100%; object-fit:cover">`;
+                document.querySelector('.backdrop-wrap').innerHTML = `
+                    <img src="${fullBackdropUrl}" class="backdrop-img" alt="Backdrop">
+                    <div class="backdrop-overlay"></div>
+                `;
+            }
+
+            // 3. Render Đạo diễn (Directors)
+            const directorContainer = document.querySelector('.info-card .row.mb-5 .col-md-6:first-child');
+            if (m.directors && m.directors.length > 0) {
+                const d = m.directors[0]; // Lấy đạo diễn đầu tiên
+                directorContainer.innerHTML = `
+                    <span class="section-label">Đạo diễn</span>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="cast-avatar m-0">
+                            <img src="${d.avatarUrl || 'https://via.placeholder.com/100'}" alt="${d.name}">
+                        </div>
+                        <div>
+                            <span class="fw-bold">${d.name}</span>
+                            <div class="cast-role">Director</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                directorContainer.innerHTML = '<span class="section-label">Đạo diễn</span><div class="text-muted small">Thông tin đang cập nhật</div>';
+            }
+
+            // 4. Render Diễn viên (Actors)
+            const actorList = document.querySelector('.cast-list');
+            if (m.actors && m.actors.length > 0) {
+                actorList.innerHTML = m.actors.map(a => `
+                    <div class="cast-item">
+                        <div class="cast-avatar">
+                            <img src="${a.avatarUrl || 'https://via.placeholder.com/100'}" alt="${a.name}">
+                        </div>
+                        <span class="cast-name">${a.name}</span>
+                    </div>
+                `).join('');
+            } else {
+                actorList.innerHTML = '<div class="text-muted small">Thông tin đang cập nhật</div>';
+            }
+
+            // 5. Xử lý Trailer YouTube
+            if (m.trailerUrl) {
+                let videoId = '';
+                if (m.trailerUrl.includes('v=')) {
+                    videoId = m.trailerUrl.split('v=')[1].split('&')[0];
+                } else if (m.trailerUrl.includes('youtu.be/')) {
+                    videoId = m.trailerUrl.split('youtu.be/')[1].split('?')[0];
+                }
+
+                if (videoId) {
+                    const trailerWrap = document.querySelector('.trailer-wrap');
+                    const playFn = () => {
+                        trailerWrap.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                    };
+                    trailerWrap.onclick = playFn;
+
+                    // Gắn sự kiện cho nút Xem Trailer ở Header
+                    document.getElementById('btnTrailer').onclick = () => {
+                        document.getElementById('trailerSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(playFn, 800); // Đợi cuộn xong rồi phát
+                    };
+                }
+            }
+
+            loadShowtimes();
+            loadSuggestedMovies();
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi tải thông tin phim.');
+        }
+    }
+
+    async function loadShowtimes() {
+        try {
+            const resp = await fetch(`/api/showtimes?movieId=${movieId}`);
+            const showtimes = await resp.json();
+
+            const bookingCard = document.querySelector('.booking-card');
+            const noteCard = bookingCard?.querySelector('.p-3.rounded-3');
+            const oldScheduleBlocks = bookingCard ? Array.from(bookingCard.querySelectorAll('.mb-4')) : [];
+            oldScheduleBlocks.forEach((block) => block.remove());
+
+            if (!bookingCard || !noteCard) {
+                return;
+            }
+
+            if (showtimes.length === 0) {
+                noteCard.insertAdjacentHTML(
+                    'beforebegin',
+                    '<div class="text-center py-3" style="color:var(--text-muted)">Hien chua co lich chieu cho phim nay.</div>'
+                );
+                return;
+            }
+
+            const groupedShowtimes = showtimes.reduce((groups, showtime) => {
+                const key = `${showtime.roomType || 'ROOM'}|${showtime.roomName || 'Phong chieu'}`;
+                if (!groups[key]) {
+                    groups[key] = {
+                        roomType: showtime.roomType || 'ROOM',
+                        roomName: showtime.roomName || 'Phong chieu',
+                        items: []
+                    };
+                }
+                groups[key].items.push(showtime);
+                return groups;
+            }, {});
+
+            const scheduleHtml = Object.values(groupedShowtimes).map((group) => {
+                const isPremium = (group.roomType || '').includes('IMAX');
+                const titleColor = isPremium ? 'var(--accent-gold)' : 'var(--text-muted)';
+
+                const buttons = group.items
+                    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+                    .map((showtime) => {
+                        const time = new Date(showtime.startTime).toLocaleTimeString('vi-VN', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        const premiumStyle = isPremium ? ' style="border-color:var(--accent-gold);color:var(--accent-gold)"' : '';
+                        return `<a href="booking.html?showtimeId=${showtime.id}" class="time-btn"${premiumStyle}>${time}</a>`;
+                    })
+                    .join('');
+
+                return `
+                    <div class="mb-4">
+                        <div style="font-size:0.8rem;font-weight:700;margin-bottom:8px;color:${titleColor}">
+                            ${group.roomType} - ${group.roomName}
+                        </div>
+                        <div class="time-grid">${buttons}</div>
+                    </div>
+                `;
+            }).join('');
+
+            noteCard.insertAdjacentHTML('beforebegin', scheduleHtml);
+            return;
+             
+            const container = document.getElementById('bookingSection');
+            // Basic grouping by date could be added here, for now just list them
+            const timeGrid = document.querySelector('.time-grid');
+            if (showtimes.length === 0) {
+                timeGrid.parentElement.innerHTML = '<div class="text-center py-3" style="color:var(--text-muted)">Hiện chưa có lịch chiếu cho phim này.</div>';
+                return;
+            }
+
+            timeGrid.innerHTML = showtimes.map(s => {
+                const time = new Date(s.startTime).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+                return `<a href="booking.html?showtimeId=${s.id}" class="time-btn">${time}</a>`;
+            }).join('');
+
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadSuggestedMovies() {
+        try {
+            const resp = await fetch('/api/movies/showing');
+            if (!resp.ok) return;
+            const allMovies = await resp.json();
+            
+            // Lọc bỏ phim hiện tại và chỉ lấy tối đa 4 phim
+            const suggestions = allMovies
+                .filter(m => m.id != movieId)
+                .slice(0, 4);
+
+            const container = document.getElementById('suggestedMovieContainer');
+            if (suggestions.length === 0) {
+                container.innerHTML = '<div class="text-center py-3 text-muted small">Chưa có phim gợi ý khác.</div>';
+                return;
+            }
+
+            container.innerHTML = suggestions.map(m => {
+                const posterUrl = m.posterUrl 
+                    ? (m.posterUrl.startsWith('http') ? m.posterUrl : `https://image.tmdb.org/t/p/w300${m.posterUrl}`)
+                    : null;
+                const genres = (m.genres || []).join(' • ');
+                
+                return `
+                    <div class="col-6 col-md-3">
+                        <div class="suggested-card" onclick="window.location.href='movie-detail.html?id=${m.id}'">
+                            <div class="suggested-poster ${posterUrl ? '' : 'pg-1'}">
+                                ${posterUrl ? `<img src="${posterUrl}" alt="${m.title}" style="width:100%; height:100%; object-fit:cover">` : '<i class="bi bi-film"></i>'}
+                            </div>
+                            <div class="p-3">
+                                <div class="fw-bold text-truncate" style="font-size:0.9rem">${m.title}</div>
+                                <div style="font-size:0.75rem;color:var(--text-muted)">${genres || 'Phim mới'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (err) {
+            console.error('Failed to load suggestions', err);
+        }
+    }
+
+    // Generate Dates (Visual only for now)
     const dateSelector = document.getElementById('dateSelector');
     const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
     const now = new Date();
-    
     for (let i = 0; i < 7; i++) {
-        const d = new Date();
-        d.setDate(now.getDate() + i);
-        
+        const d = new Date(); d.setDate(now.getDate() + i);
         const item = document.createElement('div');
         item.className = `date-item ${i === 0 ? 'active' : ''}`;
-        item.innerHTML = `
-            <span class="day">${i === 0 ? 'Hôm nay' : days[d.getDay()]}</span>
-            <span class="num">${d.getDate()}</span>
-        `;
-        item.onclick = () => {
-            document.querySelectorAll('.date-item').forEach(el => el.classList.remove('active'));
-            item.classList.add('active');
-        };
+        item.innerHTML = `<span class="day">${i === 0 ? 'Hôm nay' : days[d.getDay()]}</span><span class="num">${d.getDate()}</span>`;
         dateSelector.appendChild(item);
+    }
+
+    loadMovieDetail();
+
+    // Check auth for navbar
+    const token = localStorage.getItem('cinemaToken');
+    const username = localStorage.getItem('cinemaUsername');
+    if (token && username) {
+        document.querySelector('.btn-nav-login').outerHTML = `
+            <div class="d-flex align-items-center gap-2" onclick="window.location.href='history.html'" style="cursor:pointer">
+                <div style="width:36px; height:36px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700">
+                    ${username.charAt(0).toUpperCase()}
+                </div>
+                <span class="d-none d-md-block">${username}</span>
+            </div>
+        `;
     }
 </script>
 </body>

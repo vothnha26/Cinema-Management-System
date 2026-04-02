@@ -40,10 +40,6 @@ public class Combo {
         this.isActive = isActive;
     }
 
-    // ... getters/setters ...
-    public Integer getStockQuantity() { return stockQuantity; }
-    public void setStockQuantity(Integer stockQuantity) { this.stockQuantity = stockQuantity; }
-
     public Long getId() {
         return id;
     }
@@ -82,6 +78,14 @@ public class Combo {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public Integer getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stockQuantity = stockQuantity;
     }
 
     public Boolean getIsActive() {

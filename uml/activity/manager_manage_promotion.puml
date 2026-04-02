@@ -1,0 +1,20 @@
+@startuml Manager Promotion Activity
+title Quản lý Khuyến mãi (Member 2)
+skinparam theme cerulean
+
+start
+:Truy cập Quản lý Khuyến mãi;
+:Nhấn "Tạo chương trình mới";
+:Nhập Tên chương trình và Mã (Code);
+:Thiết lập mức giảm (VD: 10%, 50.000đ);
+
+partition "Điều kiện áp dụng" {
+    :Chọn Hạng thành viên tối thiểu;
+    :Chọn Khoảng thời gian hiệu lực;
+    :Nhập Số lượng mã phát hành;
+}
+
+:Kích hoạt chương trình;
+:Hệ thống thông báo cho Khách hàng (Optional);
+stop
+@enduml

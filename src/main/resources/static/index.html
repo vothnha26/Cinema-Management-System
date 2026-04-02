@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
@@ -77,7 +79,7 @@
         }
         .hero-bg {
           position: absolute; inset: 0;
-          background: linear-gradient(to right, rgba(8,11,20,1) 40%, rgba(8,11,20,0.4) 100%),
+          background: linear-gradient(to right, rgba(8,11,20,1) 20%, rgba(8,11,20,0.4) 100%),
                       linear-gradient(to top, rgba(8,11,20,0.9) 0%, transparent 50%);
           z-index: 1;
         }
@@ -135,6 +137,13 @@
           backdrop-filter: blur(8px);
         }
         .btn-hero-secondary:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
+
+        /* Modal Trailer Styling */
+        .modal-trailer .modal-content { background: #000; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .modal-trailer .modal-header { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px 20px; }
+        .modal-trailer .btn-close { filter: invert(1); }
+        .trailer-container { position: relative; width: 100%; padding-top: 56.25%; /* 16:9 Aspect Ratio */ }
+        .trailer-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
         .hero-dots { display: flex; gap: 6px; position: absolute; bottom: 24px; left: 60px; z-index: 2; }
         .hero-dot { width: 6px; height: 6px; border-radius: 3px; background: var(--border); transition: width 0.3s, background 0.3s; cursor: pointer; }
@@ -311,12 +320,47 @@
         }
         .poster-placeholder span { font-family: 'Outfit', sans-serif; font-size: 0.75rem; color: rgba(255,255,255,0.3); letter-spacing: 1px; text-transform: uppercase; }
 
-        /* Notification dot */
-        .notif-dot {
-          position: absolute; top: 0; right: 0;
-          width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
-          border: 1.5px solid var(--bg);
+        /* Notification button */
+        .notif-btn {
+          position: relative;
+          width: 40px; height: 40px;
+          border-radius: 50%;
+          border: 1px solid var(--border);
+          background: rgba(255,255,255,0.04);
+          color: var(--text-muted);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
         }
+        .notif-btn:hover {
+          border-color: rgba(229,19,58,0.35);
+          color: var(--text);
+          background: rgba(229,19,58,0.08);
+          transform: translateY(-1px);
+        }
+        .notif-btn.has-unread {
+          color: var(--text);
+          border-color: rgba(229,19,58,0.25);
+        }
+        .notif-badge {
+          position: absolute;
+          top: -4px; right: -4px;
+          min-width: 18px; height: 18px;
+          padding: 0 5px;
+          border-radius: 999px;
+          background: var(--accent);
+          color: #fff;
+          border: 2px solid var(--bg);
+          font-size: 0.68rem;
+          font-weight: 700;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          line-height: 1;
+        }
+        .notif-badge.show { display: inline-flex; }
 
         .scroll-hide { scrollbar-width: none; }
         .scroll-hide::-webkit-scrollbar { display: none; }
@@ -342,16 +386,13 @@
                     <i class="bi bi-search search-icon"></i>
                     <input class="search-input" type="text" placeholder="Tìm phim..." oninput="filterMovies(this.value)">
                 </div>
-                <div class="position-relative" style="cursor:pointer">
-                    <i class="bi bi-bell" style="font-size:1.2rem;color:var(--text-muted)"></i>
-                    <span class="notif-dot"></span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <div class="user-avatar" title="Nguyễn Văn A">A</div>
-                    <div class="d-none d-md-block">
-                        <div style="font-size:0.85rem;font-weight:600;line-height:1.2">Nguyễn Văn A</div>
-                        <span class="member-badge badge-gold">Gold ⭐ 1,240đ</span>
-                    </div>
+                <button id="notificationBtn" class="notif-btn" type="button" onclick="openNotifications()" title="Thông báo">
+                    <i class="bi bi-bell" style="font-size:1.1rem"></i>
+                    <span id="notificationBadge" class="notif-badge">0</span>
+                </button>
+                <div class="d-flex align-items-center gap-2" id="authSection">
+                    <button class="btn-nav-login" onclick="window.location.href='auth.html'">Đăng nhập</button>
+                    <!-- Script will replace this if logged in -->
                 </div>
             </div>
         </div>
@@ -362,25 +403,26 @@
 <section class="hero" id="heroSection">
     <div class="hero-bg"></div>
     <div class="hero-poster-bg">
-        <div class="poster-placeholder pg-1" style="opacity:0.6;font-size:5rem">🎬</div>
+        <img id="heroImg" class="hero-poster-img" src="" alt="" style="display:none">
+        <div id="heroPlaceholder" class="poster-placeholder pg-1" style="opacity:0.6;font-size:5rem">🎬</div>
     </div>
     <div class="hero-content">
-        <div class="hero-tag">Phim nổi bật tuần này</div>
-        <h1 class="hero-title" id="heroTitle">AVENGERS:<br>SECRET WARS</h1>
+        <div class="hero-tag">Phim nổi bật</div>
+        <h1 class="hero-title" id="heroTitle">Đang tải...</h1>
         <div class="hero-meta">
-            <span class="hero-rating">⭐ 9.2</span>
-            <span class="age-badge age-c13">C13</span>
-            <span style="color:var(--text-muted);font-size:0.9rem">2h 48m</span>
+            <span class="hero-rating">⭐ –</span>
+            <span class="age-badge age-p">P</span>
+            <span style="color:var(--text-muted);font-size:0.9rem" id="heroDuration">–</span>
             <span style="color:var(--text-muted);font-size:0.9rem">•</span>
-            <span style="color:var(--text-muted);font-size:0.9rem">Action • Sci-Fi</span>
+            <span style="color:var(--text-muted);font-size:0.9rem" id="heroGenre">Phim mới</span>
         </div>
-        <p class="hero-desc" id="heroDesc">Trận chiến cuối cùng giữa các Avengers và kẻ phản diện mạnh nhất từ trước đến nay. Số phận của đa vũ trụ được quyết định trong cuộc chiến này.</p>
+        <p class="hero-desc" id="heroDesc">Vui lòng chờ trong giây lát trong khi chúng tôi chuẩn bị những bộ phim tuyệt vời nhất cho bạn...</p>
         <div class="hero-actions">
-            <button class="btn-hero-primary" onclick="window.location.href='booking.html'">
-                <i class="bi bi-ticket-perforated"></i> Đặt vé ngay
+            <button class="btn-hero-primary" id="btnHeroBook">
+                <i class="bi bi-ticket-perforated-fill"></i> ĐẶT VÉ NGAY
             </button>
-            <button class="btn-hero-secondary">
-                <i class="bi bi-play-circle"></i> Xem trailer
+            <button class="btn-hero-secondary" id="btnHeroTrailer">
+                <i class="bi bi-play-circle-fill"></i> Xem trailer
             </button>
         </div>
     </div>
@@ -487,23 +529,96 @@
     let MOVIES_SHOWING = [];
     let MOVIES_COMING = [];
 
-    async function fetchMovies() {
-      try {
-        const resp = await fetch('/api/movies');
-        if (!resp.ok) throw new Error('Không thể tải dữ liệu phim');
-
-        const payload = await resp.json();
-        const movies = Array.isArray(payload?.data) ? payload.data : [];
-
-        MOVIES_SHOWING = movies.filter(m => m.status === 'NOW_SHOWING' || m.status === 'ACTIVE');
-        MOVIES_COMING = movies.filter(m => m.status === 'PRE_RELEASE' || m.status === 'COMING_SOON' || m.status === 'UPCOMING');
-      } catch (err) {
-        console.warn('Không thể gọi API movies, dùng trạng thái mặc định rỗng:', err);
-        MOVIES_SHOWING = [];
-        MOVIES_COMING = [];
-      }
-      render();
+    // Helper: Map movie DTO to format required by frontend
+    function mapMovie(m) {
+        return {
+            id: m.id,
+            title: m.title,
+            description: m.description,
+            genres: m.genres || [],
+            genre_keys: (m.genres || []).map(g => g.toLowerCase()),
+            rating: m.rating || (m.status === 'SHOWING' ? 9.0 : null),
+            duration: m.duration ? m.duration + 'm' : '120m',
+            age: m.ageRating ? m.ageRating.toLowerCase() : 'p',
+            label: m.status === 'SHOWING' ? 'hot' : '',
+            poster: 'pg-' + ((m.id % 8) + 1),
+            posterUrl: m.posterUrl ? (m.posterUrl.startsWith('http') ? m.posterUrl : `https://image.tmdb.org/t/p/w500${m.posterUrl}`) : null,
+            emoji: '🍿',
+            releaseDate: m.releaseDate,
+            trailerUrl: m.trailerUrl
+        };
     }
+
+    // Fetch from real API
+    async function fetchMoviesData() {
+        try {
+            const [respShow, respCome] = await Promise.all([
+                fetch('/api/movies/showing'),
+                fetch('/api/movies/coming')
+            ]);
+            
+            if (respShow.ok) {
+                const dataShow = await respShow.json();
+                MOVIES_SHOWING = dataShow.map(mapMovie);
+                if (MOVIES_SHOWING.length > 0) initHeroSlider();
+            }
+            
+            if (respCome.ok) {
+                const dataCome = await respCome.json();
+                MOVIES_COMING = dataCome.map(mapMovie);
+            }
+
+            // Nếu không có phim nào, hiển thị thông báo thay vì "Đang tải"
+            if (MOVIES_SHOWING.length === 0 && MOVIES_COMING.length === 0) {
+                document.getElementById('heroTitle').innerHTML = "CHÀO MỪNG ĐẾN VỚI STAR<span>CINEMA</span>";
+                document.getElementById('heroDesc').textContent = "Hệ thống rạp phim hiện đại. Vui lòng đăng nhập để khám phá các bộ phim mới nhất!";
+            }
+
+            render();
+        } catch (err) {
+            console.error('Failed to fetch movies', err);
+            document.getElementById('heroTitle').innerHTML = "STAR<span>CINEMA</span>";
+            document.getElementById('heroDesc').textContent = "Lỗi kết nối Server. Vui lòng thử lại sau!";
+        }
+    }
+
+    function setHeroData(m) {
+        document.getElementById('heroTitle').innerHTML = m.title.replace(':', ':<br>');
+        document.getElementById('heroDesc').textContent = m.description || 'Trải nghiệm điện ảnh đỉnh cao tại StarCinema.';
+        document.querySelector('.hero-rating').textContent = m.rating ? `⭐ ${m.rating}` : '⭐ 9.0';
+        
+        const ageBadge = document.querySelector('.hero-meta .age-badge');
+        ageBadge.textContent = AGE_LABEL[m.age] || 'P';
+        ageBadge.className = `age-badge ${AGE_CLASS[m.age] || 'age-p'}`;
+        
+        document.getElementById('heroDuration').textContent = m.duration || '–';
+        document.getElementById('heroGenre').textContent = (m.genres || []).join(' • ') || 'Phim mới';
+        
+        document.getElementById('btnHeroBook').onclick = () => window.location.href = `movie-detail.html?id=${m.id}`;
+        
+        // Cập nhật sự kiện Xem Trailer
+        const btnTrailer = document.getElementById('btnHeroTrailer');
+        if (m.trailerUrl) {
+            btnTrailer.style.display = 'flex';
+            btnTrailer.onclick = () => openTrailerModal(m.trailerUrl);
+        } else {
+            btnTrailer.style.display = 'none';
+        }
+
+        // Cập nhật ảnh Poster
+        const img = document.getElementById('heroImg');
+        const placeholder = document.getElementById('heroPlaceholder');
+        if (m.posterUrl) {
+            img.src = m.posterUrl;
+            img.style.display = 'block';
+            placeholder.style.display = 'none';
+        } else {
+            img.style.display = 'none';
+            placeholder.style.display = 'flex';
+            placeholder.className = `poster-placeholder ${m.poster}`;
+        }
+    }
+
 
     let currentStatus = 'showing';
     let currentGenre = 'all';
@@ -517,22 +632,25 @@
     function renderCard(m, isComing) {
       return `
       <div class="col-6 col-md-4 col-lg-3 movie-item" data-genres='${JSON.stringify(m.genre_keys)}' data-title="${m.title.toLowerCase()}">
-        <div class="movie-card" onclick="window.location.href='movie-detail.html'">
+        <div class="movie-card" onclick="window.location.href='movie-detail.html?id=${m.id}'">
           <div class="movie-poster">
-            <div class="poster-placeholder ${m.poster}" style="height:100%">
-              <span style="font-size:3rem">${m.emoji}</span>
-              <span style="font-size:0.7rem;opacity:0.4;text-align:center;padding:0 8px">${m.title}</span>
-            </div>
+            ${m.posterUrl 
+                ? `<img src="${m.posterUrl}" class="movie-poster-img" alt="${m.title}">`
+                : `<div class="poster-placeholder ${m.poster}" style="height:100%">
+                     <span style="font-size:3rem">${m.emoji}</span>
+                     <span style="font-size:0.7rem;opacity:0.4;text-align:center;padding:0 8px">${m.title}</span>
+                   </div>`
+            }
             <div class="poster-overlay"></div>
             <div class="poster-play"><i class="bi bi-play-fill"></i></div>
-            <div class="poster-age ${AGE_CLASS[m.age]}">${AGE_LABEL[m.age]}</div>
+            <div class="poster-age ${AGE_CLASS[m.age] || 'age-p'}">${AGE_LABEL[m.age] || 'P'}</div>
             ${m.label ? `<div class="poster-label ${LABEL_CLASS[m.label]}">${LABEL_TEXT[m.label]}</div>` : ''}
             ${isComing ? `<div class="poster-label label-soon">SOON</div>` : ''}
           </div>
           <div class="movie-info">
             <div class="movie-title">${m.title}</div>
             <div class="movie-meta-row">
-              <span class="movie-rating">${m.rating ? `⭐ ${m.rating}` : (isComing ? `📅 ${m.releaseDate}` : '')}</span>
+              <span class="movie-rating">${m.rating ? `⭐ ${m.rating}` : (isComing ? `📅 ${m.releaseDate || 'Sắp về'}` : '⭐ 9.0')}</span>
               <span class="movie-duration">⏱ ${m.duration}</span>
             </div>
             <div class="movie-genres">
@@ -540,7 +658,7 @@
             </div>
             ${isComing
               ? `<button class="btn-book-soon">🔔 Nhắc tôi</button>`
-              : `<button class="btn-book" onclick="event.stopPropagation();window.location.href='booking.html'">🎫 Đặt vé</button>`}
+              : `<button class="btn-book" onclick="event.stopPropagation();window.location.href='movie-detail.html?id=${m.id}'">🎫 Đặt vé</button>`}
           </div>
         </div>
       </div>`;
@@ -581,27 +699,146 @@
       setTimeout(() => el.innerHTML = 'WED30 <i class="bi bi-copy ms-1" style="font-size:0.75rem"></i>', 2000);
     }
 
-    // Hero dots
-    const HEROES = [
-      { title:'AVENGERS:<br>SECRET WARS', desc:'Trận chiến cuối cùng giữa các Avengers và kẻ phản diện mạnh nhất từ trước đến nay.' },
-      { title:'THE DARK KNIGHT<br>RETURNS', desc:'Batman quay trở lại Gotham trong cuộc chiến với mối đe dọa mới từ bóng tối.' },
-      { title:'JURASSIC<br>WORLD 4', desc:'Khủng long và con người – ai sẽ thống trị Trái Đất trong kỷ nguyên mới này?' },
-    ];
-    const dotsEl = document.getElementById('heroDots');
+    // Hero Slider Dynamic
     let heroIdx = 0;
-    HEROES.forEach((_, i) => {
-      const d = document.createElement('div'); d.className = 'hero-dot' + (i === 0 ? ' active' : '');
-      d.onclick = () => setHero(i); dotsEl.appendChild(d);
-    });
-    function setHero(i) {
-      heroIdx = i;
-      document.getElementById('heroTitle').innerHTML = HEROES[i].title;
-      document.getElementById('heroDesc').textContent = HEROES[i].desc;
-      document.querySelectorAll('.hero-dot').forEach((d,j) => d.classList.toggle('active', j === i));
-    }
-    setInterval(() => setHero((heroIdx + 1) % HEROES.length), 5000);
+    let heroInterval;
 
-    fetchMovies();
+    function initHeroSlider() {
+        if (heroInterval) clearInterval(heroInterval);
+        const dotsEl = document.getElementById('heroDots');
+        dotsEl.innerHTML = '';
+        
+        // Chỉ lấy tối đa 5 phim để làm slide cho đẹp
+        const sliderMovies = MOVIES_SHOWING.slice(0, 5);
+        if (sliderMovies.length === 0) return;
+
+        sliderMovies.forEach((_, i) => {
+            const d = document.createElement('div');
+            d.className = 'hero-dot' + (i === 0 ? ' active' : '');
+            d.onclick = () => { heroIdx = i; setHero(i); };
+            dotsEl.appendChild(d);
+        });
+
+        function setHero(i) {
+            const m = sliderMovies[i];
+            setHeroData(m);
+            document.querySelectorAll('.hero-dot').forEach((d, j) => d.classList.toggle('active', j === i));
+        }
+
+        setHero(0); // Hiển thị phim đầu tiên ngay lập tức
+
+        heroInterval = setInterval(() => {
+            heroIdx = (heroIdx + 1) % sliderMovies.length;
+            setHero(heroIdx);
+        }, 5000);
+    }
+
+    fetchMoviesData();
+
+    // Check auth status
+    const token = localStorage.getItem('cinemaToken');
+    const username = localStorage.getItem('cinemaUsername');
+    const notificationBtn = document.getElementById('notificationBtn');
+    const notificationBadge = document.getElementById('notificationBadge');
+    if (token && username) {
+        let displayLetter = username.charAt(0).toUpperCase();
+        document.getElementById('authSection').innerHTML = `
+            <div class="user-avatar" title="Nhấn để đăng xuất" onclick="logout()">
+                ${displayLetter}
+            </div>
+            <div class="d-none d-md-block" style="cursor:pointer" onclick="logout()" title="Nhấn để đăng xuất">
+                <div style="font-size:0.85rem;font-weight:600;line-height:1.2">${username}</div>
+                <span class="member-badge badge-silver">Khách hàng 🍿</span>
+            </div>
+        `;
+        loadUnreadNotificationCount();
+    } else {
+        notificationBtn.title = 'Đăng nhập để xem thông báo';
+    }
+
+    function logout() {
+        if(confirm('Bạn có chắc muốn đăng xuất?')) {
+            localStorage.removeItem('cinemaToken');
+            localStorage.removeItem('cinemaRole');
+            localStorage.removeItem('cinemaUsername');
+            window.location.reload();
+        }
+    }
+
+    async function loadUnreadNotificationCount() {
+        try {
+            const response = await fetch('/api/notifications/me/unread-count', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                notificationBadge.classList.remove('show');
+                notificationBtn.classList.remove('has-unread');
+                return;
+            }
+
+            const data = await response.json();
+            const unreadCount = Number(data?.count) || 0;
+            if (unreadCount > 0) {
+                notificationBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                notificationBadge.classList.add('show');
+                notificationBtn.classList.add('has-unread');
+            } else {
+                notificationBadge.classList.remove('show');
+                notificationBtn.classList.remove('has-unread');
+            }
+        } catch (err) {
+            console.error('Failed to load unread notifications', err);
+            notificationBadge.classList.remove('show');
+            notificationBtn.classList.remove('has-unread');
+        }
+    }
+
+    function openNotifications() {
+        if (!token) {
+            window.location.href = 'auth.html';
+            return;
+        }
+        window.location.href = 'history.html?tab=notifications';
+    }
+
+    // Trailer Modal Logic
+    function openTrailerModal(url) {
+        let videoId = '';
+        if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
+        else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+
+        if (videoId) {
+            const container = document.getElementById('trailerVideoContainer');
+            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+            const modal = new bootstrap.Modal(document.getElementById('trailerModal'));
+            modal.show();
+
+            // Clear video when modal closes
+            document.getElementById('trailerModal').addEventListener('hidden.bs.modal', function () {
+                container.innerHTML = '';
+            }, { once: true });
+        }
+    }
 </script>
+
+<!-- TRAILER MODAL -->
+<div class="modal fade modal-trailer" id="trailerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fs-6 fw-bold">🎬 Trailer chính thức</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="trailer-container" id="trailerVideoContainer">
+                    <!-- Video will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

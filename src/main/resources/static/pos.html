@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StarCinema POS – Bán vé tại quầy</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -301,71 +303,42 @@
 <!-- Toast -->
 <div class="toast-pos" id="toast"></div>
 
-<script src="/js/api.js"></script>
-<script src="/js/auth-guard.js"></script>
 <script>
-    // Bảo vệ trang: cho ADMIN, MANAGER, STAFF
-    AuthGuard.requireRole(['STAFF', 'MANAGER', 'ADMIN']);
-
-    // Hiển thị thông tin staff
-    const loggedUser = AuthGuard.getUsername() || 'Staff';
-    const loggedRole = AuthGuard.getRole() || 'STAFF';
-    document.querySelector('.staff-avatar').textContent = loggedUser.substring(0,2).toUpperCase();
-    document.querySelector('.staff-name').textContent = loggedUser;
-    document.querySelector('.staff-role').textContent = loggedRole;
-
-    document.querySelector('.staff-info button').addEventListener('click', (e) => {
-        e.preventDefault();
-        AuthGuard.logout();
-    });
     // ──── DATA ────
     const SEAT_PRICE = { S:95000, V:150000, C:180000 };
-    let COMBOS = [];
-    let SHOWTIMES_TODAY = {};
-    let BOOKED_SEATS = [];
-    const FAKE_BOOKINGS = {}; // Tạm thời giữ để kiểm thử nếu cần, backend nên cung cấp endpoint book/checkin.
-    let RECENT_CHECKINS = [];
-
-    async function initializePOSData() {
-      try {
-        const comboResp = await fetch('/api/combos');
-        const showtimeResp = await fetch('/api/showtimes');
-
-        if (comboResp.ok) {
-          const combosJson = await comboResp.json();
-          COMBOS = Array.isArray(combosJson?.data) ? combosJson.data : [];
-        }
-
-        if (showtimeResp.ok) {
-          const showtimeJson = await showtimeResp.json();
-          const shows = Array.isArray(showtimeJson?.data) ? showtimeJson.data : [];
-          SHOWTIMES_TODAY = shows.reduce((acc, s) => {
-            const dateKey = s.date || 'today';
-            if (!acc[dateKey]) acc[dateKey] = [];
-            acc[dateKey].push(s);
-            return acc;
-          }, {});
-          if (Object.keys(SHOWTIMES_TODAY).length === 0) {
-            SHOWTIMES_TODAY = {};
-          }
-        }
-
-        BOOKED_SEATS = [];
-        RECENT_CHECKINS = [];
-      selectedDates = Object.keys(SHOWTIMES_TODAY);
-      selDate = selectedDates.length > 0 ? selectedDates[0] : null;
-      selectedST = null;
-      posSeats = [];
-      comboQty = {};
-      payMethod = 'CASH';
-      custFound = null;
-    } catch (err) {
-      console.error('Lỗi tải dữ liệu POS:', err);
-    }
-    renderShowtimes();
-    renderComboPOS();
-    updateOrder();
-    }
+    const COMBOS = [
+      {id:1,name:'Combo 1 người',price:65000,emoji:'🍿'},
+      {id:2,name:'Combo đôi',price:115000,emoji:'💑'},
+      {id:3,name:'Mega Combo',price:145000,emoji:'🎉'},
+      {id:4,name:'Snack Pack',price:85000,emoji:'🌭'},
+    ];
+    const SHOWTIMES_TODAY = {
+      '28/01': [
+        {id:'s1',time:'10:30',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:35,total:80},
+        {id:'s2',time:'12:00',movie:'The Dark Knight',hall:'3D Hall 2',type:'3d',avail:12,total:60},
+        {id:'s3',time:'14:30',movie:'La La Land 2',hall:'2D Hall 1',type:'2d',avail:48,total:60},
+        {id:'s4',time:'16:00',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:5,total:80},
+        {id:'s5',time:'17:00',movie:'Robot Warriors',hall:'3D Hall 3',type:'3d',avail:30,total:60},
+        {id:'s6',time:'19:30',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:22,total:80},
+        {id:'s7',time:'20:00',movie:'Midnight Horror',hall:'3D Hall 2',type:'3d',avail:55,total:60},
+        {id:'s8',time:'22:00',movie:'The Dark Knight',hall:'3D Hall 3',type:'3d',avail:18,total:60},
+      ],
+      '29/01':[
+        {id:'s9',time:'11:00',movie:'Ocean Dreams',hall:'IMAX Hall 1',type:'imax',avail:62,total:80},
+        {id:'s10',time:'14:00',movie:'Jurassic World 4',hall:'3D Hall 2',type:'3d',avail:20,total:60},
+      ]
+    };
+    const BOOKED_SEATS = ['B3','B4','C2','C3','D5','D6','E1','F4','F5','G3','G4'];
+    const FAKE_BOOKINGS = {
+      'SC-A7B3C1': { code:'SC-A7B3C1', movie:'Avengers: Secret Wars', date:'28/01/2025', time:'19:30', hall:'IMAX Hall 1', seats:['F4','F5'], customer:'Nguyễn Văn A', total:300000, status:'CONFIRMED' },
+      'SC-9D2E4F': { code:'SC-9D2E4F', movie:'The Dark Knight Returns', date:'28/01/2025', time:'20:00', hall:'3D Hall 2', seats:['D3','D4'], customer:'Trần Thị B', total:190000, status:'CHECKED_IN' },
+      'SC-INVALID': null,
+    };
+    const RECENT_CHECKINS = [
+      { code:'SC-B1C2D3', name:'Lê Văn C', movie:'Avengers: Secret Wars', seats:'E3,E4', time:'19:28' },
+      { code:'SC-E4F5G6', name:'Phạm Thị D', movie:'Midnight Horror', seats:'B2', time:'19:25' },
+      { code:'SC-H7I8J9', name:'Hoàng Minh E', movie:'Avengers: Secret Wars', seats:'G5,G6', time:'19:20' },
+    ];
 
     // ──── STATE ────
     let selectedST = null;
@@ -532,42 +505,11 @@
       btn.classList.add('active'); payMethod=method;
     }
 
-    async function confirmSale() {
-      // Vì mockup chưa load schema id thật, tạm mock 1 list SeatIds tĩnh
-      const mockSeatIds = posSeats.map((id, index) => index + 1); 
-
-      // Data combo mapping
-      const comboReq = {};
-      for (const [id, qty] of Object.entries(comboQty)) {
-        if (qty > 0) comboReq[id] = qty;
-      }
-
-      const reqBody = {
-        showtimeId: selectedST ? selectedST.id : 1, // Fallback 1
-        seatIds: mockSeatIds,
-        combos: comboReq,
-        paymentMethod: payMethod,
-        customerPhone: document.getElementById('custPhone').value.trim()
-      };
-
-      document.getElementById('btnConfirm').disabled = true;
-      document.getElementById('btnConfirm').innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
-
-      try {
-        const result = await api.post('/staff/pos/checkout', reqBody);
-        if (result.success) {
-            const booking = result.data;
-            showToast(`✅ Đã bán vé! Mã: ${booking.bookingCode}`, 'ok');
-            document.getElementById('soldCount').textContent = parseInt(document.getElementById('soldCount').textContent) + posSeats.length;
-            clearOrder();
-        } else {
-            showToast(`❌ Lỗi: ${result.message}`, 'err');
-        }
-      } catch (err) {
-        showToast('❌ Lỗi kết nối máy chủ.', 'err');
-      } finally {
-        updateOrder(); // reset button text and state
-      }
+    function confirmSale() {
+      const code='SC-'+Date.now().toString(36).toUpperCase().slice(-8);
+      showToast(`✅ Đã bán vé! Mã: ${code}`, 'ok');
+      document.getElementById('soldCount').textContent = parseInt(document.getElementById('soldCount').textContent)+posSeats.length;
+      clearOrder();
     }
 
     // ──── CUSTOMER LOOKUP ────
@@ -587,97 +529,42 @@
     }
 
     // ──── CHECK-IN ────
-    let currentCheckinCode = null;
-
-    async function doCheckin() {
+    function doCheckin() {
       const code = document.getElementById('checkinCode').value.trim().toUpperCase();
       if(!code) return;
       const el = document.getElementById('checkinResult');
       const card = document.getElementById('checkinCard');
-      
-      const btn = document.querySelector('.btn-checkin');
-      const oldHtml = btn.innerHTML;
-      btn.innerHTML = '...';
-      btn.disabled = true;
-
-      try {
-        const result = await api.get(`/staff/ticket/lookup/${code}`);
-        el.classList.add('show');
-        
-        if (result.success) {
-            const b = result.data;
-            currentCheckinCode = b.bookingCode;
-            
-            if (b.status === 'CHECKED_IN') {
-                card.innerHTML = `<div class="checkin-status-badge cb-already">⚠️ Vé đã được check-in</div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movieTitle || ''}</span></div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.showtime || ''}</span></div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${(b.seats || []).join(', ')}</span></div>
-                  <p style="color:var(--accent-gold);font-size:.82rem;margin-top:12px">⚠️ Vé này đã được check-in trước đó.</p>`;
-            } else if (b.status === 'CANCELLED') {
-                card.innerHTML = `<div class="checkin-status-badge cb-invalid">❌ Vé đã hủy</div>
-                  <p style="color:var(--text-muted);font-size:.88rem">Mã "${b.bookingCode}" đã bị hủy, không thể check-in.</p>`;
-            } else if (b.status === 'PENDING') {
-                card.innerHTML = `<div class="checkin-status-badge cb-invalid">⚠️ Vé chưa thanh toán</div>
-                  <p style="color:var(--text-muted);font-size:.88rem">Vui lòng thanh toán vé "${b.bookingCode}" trước khi check-in.</p>`;
-            } else {
-                card.innerHTML = `
-                  <div class="checkin-status-badge cb-ok">✅ Vé hợp lệ – Cho phép vào</div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Mã booking</span><span class="ci-val" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--accent)">${b.bookingCode}</span></div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Khách hàng</span><span class="ci-val">${b.customerName || 'Khách vãng lai'}</span></div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movieTitle || ''}</span></div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.showtime || ''} – ${b.roomName || ''}</span></div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${(b.seats || []).join(', ')}</span></div>
-                  <div class="ci-row"><span style="color:var(--text-muted)">Tổng tiền</span><span class="ci-val" style="color:var(--accent-gold)">${fmt(b.totalPrice)}</span></div>
-                  <button class="btn-confirm-checkin" onclick="confirmCheckin()">✅ Xác nhận Check-in</button>
-                `;
-            }
-        } else {
-            card.innerHTML = `<div class="checkin-status-badge cb-invalid">❌ Không tìm thấy mã booking</div>
-              <p style="color:var(--text-muted);font-size:.88rem">${result.message}</p>`;
-        }
-      } catch (err) {
-        showToast('❌ Lỗi kết nối', 'err');
-      } finally {
-        btn.innerHTML = oldHtml;
-        btn.disabled = false;
+      el.classList.add('show');
+      const b = FAKE_BOOKINGS[code];
+      if(!b) {
+        card.innerHTML = `<div class="checkin-status-badge cb-invalid">❌ Không tìm thấy mã booking</div><p style="color:var(--text-muted);font-size:.88rem">Mã "<strong>${code}</strong>" không tồn tại trong hệ thống. Vui lòng kiểm tra lại.</p>`;
+        return;
       }
+      if(b.status==='CHECKED_IN') {
+        card.innerHTML = `<div class="checkin-status-badge cb-already">⚠️ Vé đã được check-in</div>
+          <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movie}</span></div>
+          <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.time} – ${b.date}</span></div>
+          <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${b.seats.join(', ')}</span></div>
+          <p style="color:var(--accent-gold);font-size:.82rem;margin-top:12px">⚠️ Vé này đã được check-in trước đó.</p>`;
+        return;
+      }
+      card.innerHTML = `
+        <div class="checkin-status-badge cb-ok">✅ Vé hợp lệ – Cho phép vào</div>
+        <div class="ci-row"><span style="color:var(--text-muted)">Mã booking</span><span class="ci-val" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--accent)">${b.code}</span></div>
+        <div class="ci-row"><span style="color:var(--text-muted)">Khách hàng</span><span class="ci-val">${b.customer}</span></div>
+        <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movie}</span></div>
+        <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.time} – ${b.hall}</span></div>
+        <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${b.seats.join(', ')}</span></div>
+        <div class="ci-row"><span style="color:var(--text-muted)">Tổng tiền</span><span class="ci-val" style="color:var(--accent-gold)">${fmt(b.total)}</span></div>
+        <button class="btn-confirm-checkin" onclick="confirmCheckin('${b.code}')">✅ Xác nhận Check-in</button>
+      `;
     }
-
-    async function confirmCheckin() {
-      if (!currentCheckinCode) return;
-      
-      const btn = document.querySelector('.btn-confirm-checkin');
-      btn.innerHTML = 'Đang xử lý...';
-      btn.disabled = true;
-
-      try {
-        const result = await api.post(`/staff/ticket/checkin/${currentCheckinCode}`);
-        if (result.success) {
-            document.getElementById('checkinResult').classList.remove('show');
-            document.getElementById('checkinCode').value='';
-            showToast('✅ Check-in thành công!', 'ok');
-            
-            const b = result.data;
-            RECENT_CHECKINS.unshift({
-                name: b.customerName || 'Khách vãng lai',
-                movie: b.movieTitle || 'Vé lẻ',
-                seats: (b.seats || []).join(', '),
-                time: b.showtime || '',
-                code: b.bookingCode
-            });
-            if (RECENT_CHECKINS.length > 10) RECENT_CHECKINS.pop();
-            renderRecentCheckins();
-        } else {
-            showToast(`❌ Lỗi: ${result.message}`, 'err');
-            btn.innerHTML = '✅ Xác nhận Check-in';
-            btn.disabled = false;
-        }
-      } catch (err) {
-        showToast('❌ Lỗi máy chủ', 'err');
-        btn.innerHTML = '✅ Xác nhận Check-in';
-        btn.disabled = false;
-      }
+    function confirmCheckin(code) {
+      if(FAKE_BOOKINGS[code]) FAKE_BOOKINGS[code].status='CHECKED_IN';
+      document.getElementById('checkinResult').classList.remove('show');
+      document.getElementById('checkinCode').value='';
+      showToast('✅ Check-in thành công!', 'ok');
+      renderRecentCheckins();
     }
 
     function renderRecentCheckins() {
@@ -749,7 +636,7 @@
     }
 
     // ──── INIT ────
-    initializePOSData();
+    renderShowtimes(); renderComboPOS(); updateOrder();
 </script>
 </body>
 </html>

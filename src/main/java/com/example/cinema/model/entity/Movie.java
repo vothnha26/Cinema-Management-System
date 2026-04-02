@@ -1,6 +1,7 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.MovieStatus;
+import com.example.cinema.model.enums.AgeRating;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.Set;
@@ -28,9 +29,11 @@ public class Movie {
     @Column(nullable = false)
     private MovieStatus status;
 
+    private String rating;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "age_rating")
-    private com.example.cinema.model.enums.AgeRating ageRating;
+    private AgeRating ageRating;
 
     @Column(name = "poster_url")
     private String posterUrl;
@@ -40,6 +43,9 @@ public class Movie {
 
     @Column(name = "priority_level")
     private Integer priorityLevel = 1;
+
+    @Column(name = "tmdb_id", unique = true)
+    private Long tmdbId;
 
     @ManyToMany
     @JoinTable(
@@ -75,8 +81,11 @@ public class Movie {
     public MovieStatus getStatus() { return status; }
     public void setStatus(MovieStatus status) { this.status = status; }
 
-    public com.example.cinema.model.enums.AgeRating getAgeRating() { return ageRating; }
-    public void setAgeRating(com.example.cinema.model.enums.AgeRating ageRating) { this.ageRating = ageRating; }
+    public String getRating() { return rating; }
+    public void setRating(String rating) { this.rating = rating; }
+
+    public AgeRating getAgeRating() { return ageRating; }
+    public void setAgeRating(AgeRating ageRating) { this.ageRating = ageRating; }
 
     public String getPosterUrl() { return posterUrl; }
     public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
@@ -86,6 +95,9 @@ public class Movie {
 
     public Integer getPriorityLevel() { return priorityLevel; }
     public void setPriorityLevel(Integer priorityLevel) { this.priorityLevel = priorityLevel; }
+
+    public Long getTmdbId() { return tmdbId; }
+    public void setTmdbId(Long tmdbId) { this.tmdbId = tmdbId; }
 
     public Set<Genre> getGenres() { return genres; }
     public void setGenres(Set<Genre> genres) { this.genres = genres; }

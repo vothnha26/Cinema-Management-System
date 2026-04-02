@@ -1,0 +1,28 @@
+@startuml Manager Audit Refund Activity
+title Kiểm toán & Hoàn vé (Member 2)
+skinparam theme cerulean
+
+start
+:Truy cập Danh sách giao dịch;
+:Tìm kiếm theo Mã Booking hoặc SĐT;
+:Xem chi tiết trạng thái thanh toán;
+
+if (Yêu cầu hoàn vé?) then (có)
+    :Xác minh lý do hoàn (Lỗi hệ thống/Khách yêu cầu);
+    :Kiểm tra quy định thời gian (Trước suất chiếu 30p);
+    
+    if (Hợp lệ?) then (có)
+        :Cập nhật trạng thái Booking sang "CANCELLED";
+        :Giải phóng ghế đã đặt về trạng thái "AVAILABLE";
+        :Gửi lệnh hoàn tiền qua cổng thanh toán (MoMo/VNPay);
+        :Thông báo hoàn vé thành công cho khách;
+    else (không)
+        :Từ chối hoàn vé;
+        :Thông báo lý do cho khách;
+    endif
+else (không)
+    :Đóng chi tiết giao dịch;
+endif
+
+stop
+@enduml

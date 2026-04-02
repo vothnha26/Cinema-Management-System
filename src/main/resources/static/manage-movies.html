@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
@@ -172,22 +174,6 @@
         .poster-preview-box:hover { border-color: var(--accent); color: var(--accent); }
         .poster-preview-img { width: 100%; height: 100%; object-fit: cover; display: none; }
 
-        .search-results-dropdown {
-          position: absolute; top: 100%; left: 0; right: 0; background: var(--card);
-          border: 1px solid var(--border); border-radius: 10px; z-index: 1000;
-          max-height: 200px; overflow-y: auto; display: none; margin-top: 4px;
-        }
-        .search-result-item {
-          padding: 10px 16px; cursor: pointer; transition: background 0.2s;
-        }
-        .search-result-item:hover { background: rgba(229,19,58,0.1); color: var(--accent); }
-        
-        .selected-badge {
-          background: rgba(229,19,58,0.1); color: var(--accent); border: 1px solid var(--accent);
-          padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; display: flex; align-items: center; gap: 8px;
-        }
-        .selected-badge i { cursor: pointer; }
-
         /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
@@ -201,13 +187,11 @@
     <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
     <ul class="nav-menu">
         <li class="nav-item"><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin active"><i class="bi bi-film"></i> Phim</a></li>
+        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin active"><i class="bi bi-film"></i> Quản lý phim</a></li>
         <li class="nav-item"><a href="manage-showtimes.html" class="nav-link-admin"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
-        <li class="nav-item"><a href="manage-rooms.html" class="nav-link-admin"><i class="bi bi-door-open"></i> Phòng chiếu</a></li>
-        <li class="nav-item"><a href="manage-combos.html" class="nav-link-admin"><i class="bi bi-cup-straw"></i> Combo & F&B</a></li>
-        <li class="nav-item"><a href="manage-pricing.html" class="nav-link-admin"><i class="bi bi-tags"></i> Bảng giá</a></li>
-        <li class="nav-item"><a href="manage-promotions.html" class="nav-link-admin"><i class="bi bi-percent"></i> Khuyến mãi</a></li>
+        <li class="nav-item"><a href="#" class="nav-link-admin"><i class="bi bi-ticket-perforated"></i> Quản lý vé</a></li>
         <li class="nav-item"><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
+        <li class="nav-item"><a href="#" class="nav-link-admin"><i class="bi bi-gear"></i> Cài đặt</a></li>
     </ul>
     <div class="user-panel">
         <div class="admin-profile">
@@ -216,7 +200,7 @@
                 <div style="font-size:0.9rem;font-weight:600">Admin User</div>
                 <div style="font-size:0.75rem;color:var(--text-muted)">Quản trị viên</div>
             </div>
-            <a href="auth.html" class="ms-auto text-muted"><i class="bi bi-box-arrow-right"></i></a>
+            <a href="#" class="ms-auto text-muted"><i class="bi bi-box-arrow-right"></i></a>
         </div>
     </div>
 </aside>
@@ -317,18 +301,32 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="modalTitle" style="font-family:'Outfit'">Thêm phim mới</h5>
+                <h5 class="modal-title fw-bold" style="font-family:'Outfit'">Thêm phim mới</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
+                <!-- TMDB Search Bar -->
+                <div class="mb-4 pb-3 border-bottom">
+                    <label class="form-label text-accent fw-bold"><i class="bi bi-search"></i> Tìm kiếm nhanh từ TMDB</label>
+                    <div class="input-group">
+                        <input type="text" id="tmdbSearchInput" class="form-control" placeholder="Nhập tên phim tiếng Việt hoặc tiếng Anh...">
+                        <button class="btn btn-outline-danger" type="button" onclick="searchTMDB()">Tìm kiếm</button>
+                    </div>
+                    <div id="tmdbResults" class="mt-2 list-group" style="max-height: 200px; overflow-y: auto; display: none; position: absolute; z-index: 1050; width: calc(100% - 48px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>
+                </div>
+
                 <form id="movieForm">
                     <input type="hidden" id="movieId">
+                    <input type="hidden" id="tmdbId">
+                    <input type="hidden" id="posterUrl">
+                    <input type="hidden" id="directorAvatarUrl">
+                    <input type="hidden" id="actorAvatarUrls">
                     <div class="row g-4">
                         <div class="col-md-4">
                             <label class="form-label">Poster phim</label>
                             <div class="poster-preview-box" onclick="document.getElementById('posterInput').click()">
-                                <i class="bi bi-cloud-arrow-up mb-2" id="posterIcon" style="font-size:2rem"></i>
-                                <span id="posterText" style="font-size:0.8rem">Tải ảnh lên (2:3)</span>
+                                <i class="bi bi-cloud-arrow-up mb-2" style="font-size:2rem"></i>
+                                <span style="font-size:0.8rem">Tải ảnh lên (2:3)</span>
                                 <img src="" class="poster-preview-img" id="posterPreview">
                             </div>
                             <input type="file" id="posterInput" hidden accept="image/*" onchange="previewImage(this)">
@@ -337,65 +335,35 @@
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label">Tên phim</label>
-                                    <input type="text" id="title" class="form-control" placeholder="Nhập tên phim..." required>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label d-block">Thể loại</label>
-                                    <div id="genreCheckboxList" class="d-flex flex-wrap gap-3 p-3 rounded" style="background: var(--bg); border: 1px solid var(--border);">
-                                        <!-- Checkboxes will be rendered here -->
-                                        <span class="text-muted" style="font-size: 0.85rem;">Đang tải thể loại...</span>
-                                    </div>
+                                    <input type="text" class="form-control" placeholder="Nhập tên phim...">
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label d-block">Đạo diễn</label>
-                                    <div class="position-relative">
-                                        <input type="text" id="directorSearch" class="form-control" placeholder="Tìm tên đạo diễn..." oninput="searchDirectors(this.value)">
-                                        <div id="directorResults" class="search-results-dropdown"></div>
-                                    </div>
-                                    <div id="selectedDirectors" class="mt-2 d-flex flex-wrap gap-2"></div>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label d-block">Diễn viên</label>
-                                    <div class="position-relative">
-                                        <input type="text" id="actorSearch" class="form-control" placeholder="Tìm tên diễn viên..." oninput="searchActors(this.value)">
-                                        <div id="actorResults" class="search-results-dropdown"></div>
-                                    </div>
-                                    <div id="selectedActors" class="mt-2 d-flex flex-wrap gap-2"></div>
+                                    <label class="form-label">Đạo diễn</label>
+                                    <input type="text" class="form-control" placeholder="Tên đạo diễn...">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Thời lượng (phút)</label>
-                                    <input type="number" id="duration" class="form-control" placeholder="Ví dụ: 120" required>
+                                    <input type="number" class="form-control" placeholder="Ví dụ: 120">
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Ngày phát hành</label>
-                                    <input type="date" id="releaseDate" class="form-control">
+                                <div class="col-12">
+                                    <label class="form-label">Diễn viên</label>
+                                    <input type="text" class="form-control" placeholder="Các diễn viên chính...">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Trạng thái</label>
-                                    <select id="status" class="form-select">
-                                        <option value="NOW_SHOWING">Đang chiếu</option>
-                                        <option value="COMING_SOON">Sắp chiếu</option>
-                                        <option value="STOPPED">Ngừng chiếu</option>
+                                    <select class="form-select">
+                                        <option value="SHOWING">Đang chiếu</option>
+                                        <option value="COMING">Sắp chiếu</option>
+                                        <option value="END">Ngừng chiếu</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Nhãn độ tuổi</label>
-                                    <select id="rating" class="form-select">
-                                        <option value="P">P - Mọi độ tuổi</option>
-                                        <option value="K">K - Dưới 13 (giám hộ)</option>
-                                        <option value="T13">T13 - Trên 13 tuổi</option>
-                                        <option value="T16">T16 - Trên 16 tuổi</option>
-                                        <option value="T18">T18 - Trên 18 tuổi</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label">Trailer URL</label>
-                                    <input type="text" id="trailerUrl" class="form-control" placeholder="https://youtube.com/...">
+                                    <label class="form-label">Trailer URL (YouTube)</label>
+                                    <input type="text" class="form-control" placeholder="https://youtube.com/...">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Mô tả phim</label>
-                                    <textarea id="description" class="form-control" rows="4" placeholder="Tóm tắt nội dung phim..."></textarea>
+                                    <textarea class="form-control" rows="4" placeholder="Tóm tắt nội dung phim..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -403,190 +371,17 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Hủy bỏ</button>
-                <button type="button" class="btn btn-add px-4" id="btnSaveMovie" onclick="saveMovie()">Lưu phim</button>
+                <button type="button" class="btn btn-link text-muted text-decoration-none fw-600" data-bs-dismiss="modal">Hủy bỏ</button>
+                <button type="button" id="saveMovieBtn" class="btn btn-add px-4" onclick="saveMovie()">Lưu thông tin</button>
             </div>
-
         </div>
     </div>
 </div>
 
-<script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-    let movies = [];
-    let genres = [];
-    let selectedActors = []; // {id, name}
-    let selectedDirectors = []; // {id, name}
-    const movieModal = new bootstrap.Modal(document.getElementById('movieModal'));
-
-    document.addEventListener('DOMContentLoaded', () => {
-        loadMovies();
-        loadGenres();
-    });
-
-    // --- Search Logic ---
-    async function searchActors(query) {
-        if (!query) { document.getElementById('actorResults').style.display = 'none'; return; }
-        const response = await api.get(`/actors/search?name=${query}`);
-        if (response.success) {
-            const dropdown = document.getElementById('actorResults');
-            dropdown.innerHTML = response.data.map(a => `
-                <div class="search-result-item" onclick="addActor(${a.id}, '${a.name}')">${a.name}</div>
-            `).join('');
-            dropdown.style.display = 'block';
-        }
-    }
-
-    async function searchDirectors(query) {
-        if (!query) { document.getElementById('directorResults').style.display = 'none'; return; }
-        const response = await api.get(`/directors/search?name=${query}`);
-        if (response.success) {
-            const dropdown = document.getElementById('directorResults');
-            dropdown.innerHTML = response.data.map(d => `
-                <div class="search-result-item" onclick="addDirector(${d.id}, '${d.name}')">${d.name}</div>
-            `).join('');
-            dropdown.style.display = 'block';
-        }
-    }
-
-    function addActor(id, name) {
-        if (!selectedActors.some(a => a.id === id)) {
-            selectedActors.push({id, name});
-            renderSelectedActors();
-        }
-        document.getElementById('actorSearch').value = '';
-        document.getElementById('actorResults').style.display = 'none';
-    }
-
-    function addDirector(id, name) {
-        if (!selectedDirectors.some(d => d.id === id)) {
-            selectedDirectors.push({id, name});
-            renderSelectedDirectors();
-        }
-        document.getElementById('directorSearch').value = '';
-        document.getElementById('directorResults').style.display = 'none';
-    }
-
-    function renderSelectedActors() {
-        const container = document.getElementById('selectedActors');
-        container.innerHTML = selectedActors.map(a => `
-            <div class="selected-badge">
-                ${a.name} <i class="bi bi-x-circle-fill" onclick="removeActor(${a.id})"></i>
-            </div>
-        `).join('');
-    }
-
-    function renderSelectedDirectors() {
-        const container = document.getElementById('selectedDirectors');
-        container.innerHTML = selectedDirectors.map(d => `
-            <div class="selected-badge">
-                ${d.name} <i class="bi bi-x-circle-fill" onclick="removeDirector(${d.id})"></i>
-            </div>
-        `).join('');
-    }
-
-    function removeActor(id) {
-        selectedActors = selectedActors.filter(a => a.id !== id);
-        renderSelectedActors();
-    }
-
-    function removeDirector(id) {
-        selectedDirectors = selectedDirectors.filter(d => d.id !== id);
-        renderSelectedDirectors();
-    }
-
-    // Đóng dropdown khi click ra ngoài
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.position-relative')) {
-            document.getElementById('actorResults').style.display = 'none';
-            document.getElementById('directorResults').style.display = 'none';
-        }
-    });
-
-    async function loadGenres() {
-        try {
-            const response = await api.get('/genres');
-            if (response.success) {
-                genres = response.data;
-                renderGenreCheckboxes();
-            }
-        } catch (error) {
-            console.error('Lỗi khi tải danh sách thể loại:', error);
-        }
-    }
-
-    function renderGenreCheckboxes() {
-        const container = document.getElementById('genreCheckboxList');
-        container.innerHTML = genres.map(genre => `
-            <div class="form-check">
-                <input class="form-check-input genre-cb" type="checkbox" value="${genre.id}" id="genre-${genre.id}">
-                <label class="form-check-label" for="genre-${genre.id}" style="font-size: 0.9rem;">
-                    ${genre.name}
-                </label>
-            </div>
-        `).join('');
-    }
-
-    async function loadMovies() {
-        try {
-            const response = await api.get('/movies');
-            if (response.success) {
-                movies = response.data;
-                renderMovies(movies);
-            }
-        } catch (error) {
-            console.error('Lỗi khi tải danh sách phim:', error);
-        }
-    }
-
-    function renderMovies(data) {
-        const tbody = document.querySelector('tbody');
-        tbody.innerHTML = data.map(movie => `
-            <tr>
-                <td>
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="${movie.posterUrl || ''}" class="movie-thumb" 
-                             onerror="this.src='https://via.placeholder.com/45x65?text=?'">
-                        <div>
-                            <div class="fw-bold text-white">${movie.title}</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted)">ID: ${movie.id}</div>
-                        </div>
-                    </div>
-                </td>
-                <td>${movie.genres ? movie.genres.map(g => g.name).join(', ') : '---'}</td>
-                <td>${movie.duration} phút</td>
-                <td><span class="text-warning">⭐ ${movie.rating || '---'}</span></td>
-                <td>
-                    <span class="status-badge ${getStatusClass(movie.status)}">
-                        ${getStatusLabel(movie.status)}
-                    </span>
-                </td>
-                <td class="text-end">
-                    <button class="action-btn btn-edit me-1" onclick="editMovie(${movie.id})" title="Sửa"><i class="bi bi-pencil-square"></i></button>
-                    <button class="action-btn btn-delete" onclick="deleteMovie(${movie.id})" title="Xóa"><i class="bi bi-trash"></i></button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    function getStatusClass(status) {
-        switch(status) {
-            case 'NOW_SHOWING': return 'badge-showing';
-            case 'COMING_SOON': return 'badge-coming';
-            default: return 'text-muted';
-        }
-    }
-
-    function getStatusLabel(status) {
-        switch(status) {
-            case 'NOW_SHOWING': return 'Đang chiếu';
-            case 'COMING_SOON': return 'Sắp chiếu';
-            case 'STOPPED': return 'Ngừng chiếu';
-            default: return status;
-        }
-    }
+    const API_BASE = '/api/movies';
+    const TMDB_BASE = '/api/tmdb';
 
     function previewImage(input) {
         if (input.files && input.files[0]) {
@@ -595,128 +390,566 @@
                 const preview = document.getElementById('posterPreview');
                 preview.src = e.target.result;
                 preview.style.display = 'block';
-                document.getElementById('posterIcon').style.display = 'none';
-                document.getElementById('posterText').style.display = 'none';
+                input.parentElement.querySelector('i').style.display = 'none';
+                input.parentElement.querySelector('span').style.display = 'none';
+                document.getElementById('posterUrl').value = ''; // Reset external URL if local file picked
             }
             reader.readAsDataURL(input.files[0]);
         }
     }
 
-    function openAddModal() {
-        document.getElementById('movieForm').reset();
-        document.getElementById('movieId').value = '';
-        document.getElementById('modalTitle').textContent = 'Thêm phim mới';
-        document.getElementById('posterPreview').style.display = 'none';
-        document.getElementById('posterIcon').style.display = 'block';
-        document.getElementById('posterText').style.display = 'block';
-        
-        selectedActors = [];
-        selectedDirectors = [];
-        renderSelectedActors();
-        renderSelectedDirectors();
-        
-        movieModal.show();
+    async function searchTMDB() {
+        const query = document.getElementById('tmdbSearchInput').value;
+        if (!query) return;
+
+        const resultsEl = document.getElementById('tmdbResults');
+        resultsEl.innerHTML = '<div class="list-group-item bg-dark text-white">Đang tìm...</div>';
+        resultsEl.style.display = 'block';
+
+        try {
+            const token = localStorage.getItem('token');
+            const resp = await fetch(`${TMDB_BASE}/search?query=${encodeURIComponent(query)}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (!resp.ok) {
+                const errorData = await resp.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Lỗi từ phía máy chủ');
+            }
+            const data = await resp.json();
+            
+            if (data.results && data.results.length > 0) {
+                resultsEl.innerHTML = data.results.map(m => `
+                    <button type="button" class="list-group-item list-group-item-action bg-dark text-white border-secondary" onclick="fillFromTMDB(${m.id})">
+                        <div class="d-flex align-items-center">
+                            <img src="${m.poster_path || ''}" style="width:40px; height:60px; object-fit:cover; margin-right:10px;" onerror="this.src='https://via.placeholder.com/40x60'">
+                            <div>
+                                <div class="fw-bold">${m.title}</div>
+                                <div class="small text-muted">${m.release_date ? m.release_date.split('-')[0] : 'N/A'}</div>
+                            </div>
+                        </div>
+                    </button>
+                `).join('');
+            } else {
+                resultsEl.innerHTML = '<div class="list-group-item bg-dark text-white">Không tìm thấy phim</div>';
+            }
+        } catch (err) {
+            console.error('TMDB Search Error:', err);
+            resultsEl.innerHTML = `<div class="list-group-item bg-dark text-danger">Lỗi: ${err.message === 'Failed to fetch' ? 'Không thể kết nối đến Server (Hãy bật Server)' : err.message}</div>`;
+        }
     }
 
-    async function editMovie(id) {
-        const movie = movies.find(m => m.id === id);
-        if (!movie) return;
+    async function fillFromTMDB(id) {
+        document.getElementById('tmdbResults').style.display = 'none';
+        try {
+            const token = localStorage.getItem('token');
+            const resp = await fetch(`${TMDB_BASE}/movie/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const m = await resp.json();
 
-        document.getElementById('movieId').value = movie.id;
-        document.getElementById('title').value = movie.title;
-        document.getElementById('duration').value = movie.duration;
-        document.getElementById('releaseDate').value = movie.releaseDate;
-        document.getElementById('status').value = movie.status;
-        document.getElementById('rating').value = movie.rating;
-        document.getElementById('trailerUrl').value = movie.trailerUrl;
-        document.getElementById('description').value = movie.description;
-        
-        // Load Selected Genres
-        document.querySelectorAll('.genre-cb').forEach(cb => {
-            cb.checked = movie.genres && movie.genres.some(g => g.id == cb.value);
-        });
+            document.getElementById('tmdbId').value = m.id;
+            document.getElementById('movieForm').querySelector('input[placeholder="Nhập tên phim..."]').value = m.title;
+            document.getElementById('movieForm').querySelector('textarea').value = m.overview;
+            document.getElementById('movieForm').querySelector('input[placeholder="Ví dụ: 120"]').value = m.runtime || 120;
+            
+            // Lấy thông tin Diễn viên (Top 5)
+            if (m.credits && m.credits.cast) {
+                const topCast = m.credits.cast.slice(0, 5);
+                const actors = topCast.map(c => c.name).join(', ');
+                const actorUrls = topCast.map(c => c.profile_path || '').join(',');
+                
+                console.log('>>> [DEBUG TMDB] Lấy được tên diễn viên:', actors);
+                console.log('>>> [DEBUG TMDB] Lấy được link ảnh diễn viên:', actorUrls);
 
-        // Load Selected Actors/Directors
-        selectedActors = movie.actors ? movie.actors.map(a => ({id: a.id, name: a.name})) : [];
-        selectedDirectors = movie.directors ? movie.directors.map(d => ({id: d.id, name: d.name})) : [];
-        renderSelectedActors();
-        renderSelectedDirectors();
+                document.getElementById('movieForm').querySelector('input[placeholder="Các diễn viên chính..."]').value = actors;
+                document.getElementById('actorAvatarUrls').value = actorUrls;
+            }
 
-        if (movie.posterUrl) {
-            const preview = document.getElementById('posterPreview');
-            preview.src = movie.posterUrl;
-            preview.style.display = 'block';
-            document.getElementById('posterIcon').style.display = 'none';
-            document.getElementById('posterText').style.display = 'none';
+            // Lấy thông tin Đạo diễn
+            if (m.credits && m.credits.crew) {
+                const director = m.credits.crew.find(c => c.job === 'Director');
+                if (director) {
+                    document.getElementById('movieForm').querySelector('input[placeholder="Tên đạo diễn..."]').value = director.name;
+                    document.getElementById('directorAvatarUrl').value = director.profile_path || '';
+                }
+            }
+
+            // Lấy Trailer Youtube
+            if (m.videos && m.videos.results) {
+                const trailer = m.videos.results.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+                if (trailer) {
+                    document.getElementById('movieForm').querySelector('input[placeholder="https://youtube.com/..."]').value = `https://www.youtube.com/watch?v=${trailer.key}`;
+                }
+            }
+
+            if (m.poster_path) {
+                document.getElementById('posterUrl').value = m.poster_path;
+                const preview = document.getElementById('posterPreview');
+                preview.src = m.poster_path;
+                preview.style.display = 'block';
+                document.querySelector('.poster-preview-box i').style.display = 'none';
+                document.querySelector('.poster-preview-box span').style.display = 'none';
+            }
+            alert('Đã tải ĐẦY ĐỦ thông tin (Đạo diễn, Diễn viên, Trailer) từ TMDB!');
+        } catch (err) {
+            console.error('Fill From TMDB Error:', err);
+            alert('Lỗi khi lấy chi tiết phim từ TMDB');
         }
-
-        document.getElementById('modalTitle').textContent = 'Chỉnh sửa phim';
-        movieModal.show();
     }
 
     async function saveMovie() {
-        const id = document.getElementById('movieId').value;
-        const formData = new FormData();
+        const token = localStorage.getItem('token');
+        const form = document.getElementById('movieForm');
         
-        const selectedGenreIds = Array.from(document.querySelectorAll('.genre-cb:checked')).map(cb => parseInt(cb.value));
-
-        const movieData = {
-            title: document.getElementById('title').value,
-            duration: document.getElementById('duration').value,
-            releaseDate: document.getElementById('releaseDate').value,
-            status: document.getElementById('status').value,
-            rating: document.getElementById('rating').value,
-            trailerUrl: document.getElementById('trailerUrl').value,
-            description: document.getElementById('description').value,
-            genreIds: selectedGenreIds,
-            actorIds: selectedActors.map(a => a.id),
-            directorIds: selectedDirectors.map(d => d.id)
-        };
-
-        formData.append('movie', new Blob([JSON.stringify(movieData)], { type: 'application/json' }));
-        
-        const posterFile = document.getElementById('posterInput').files[0];
-        if (posterFile) {
-            formData.append('poster', posterFile);
-        }
-
         try {
-            let response;
-            if (id) {
-                response = await api.put(`/movies/${id}`, formData, true);
-            } else {
-                response = await api.post('/movies', formData, true);
+            const movieData = {
+                title: form.querySelector('input[placeholder="Nhập tên phim..."]').value,
+                description: form.querySelector('textarea').value,
+                duration: parseInt(form.querySelector('input[placeholder="Ví dụ: 120"]').value) || 0,
+                status: form.querySelector('select').value,
+                trailerUrl: form.querySelector('input[placeholder="https://youtube.com/..."]').value,
+                director: form.querySelector('input[placeholder="Tên đạo diễn..."]').value,
+                actors: form.querySelector('input[placeholder="Các diễn viên chính..."]').value,
+                directorAvatarUrl: document.getElementById('directorAvatarUrl').value,
+                actorAvatarUrls: document.getElementById('actorAvatarUrls').value,
+                posterUrl: document.getElementById('posterUrl').value,
+                tmdbId: document.getElementById('tmdbId').value ? parseInt(document.getElementById('tmdbId').value) : null,
+                rating: 8.5
+            };
+
+            console.log('>>> [DEBUG JS] movieData chuẩn bị gửi:', movieData);
+            console.log('>>> [DEBUG JS] Director URL:', movieData.directorAvatarUrl);
+            console.log('>>> [DEBUG JS] Actor URLs:', movieData.actorAvatarUrls);
+
+            if (!movieData.title || movieData.duration <= 0) {
+                alert('Vui lòng nhập đầy đủ Tên phim và Thời lượng hợp lệ!');
+                return;
             }
 
-            if (response.success) {
-                movieModal.hide();
-                loadMovies();
-                alert(id ? 'Cập nhật thành công!' : 'Thêm phim mới thành công!');
-            } else {
-                alert('Lỗi: ' + response.message);
-            }
-        } catch (error) {
-            console.error('Lỗi khi lưu phim:', error);
-            alert('Đã xảy ra lỗi hệ thống.');
-        }
-    }
+            const saveBtn = document.getElementById('saveMovieBtn');
+            const originalText = saveBtn.innerText;
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Đang lưu...';
 
-    async function deleteMovie(id) {
-        if (confirm('Bạn có chắc chắn muốn xóa bộ phim này?')) {
-            try {
-                const response = await api.delete(`/movies/${id}`);
-                if (response.success) {
-                    loadMovies();
-                    alert('Xóa thành công!');
-                } else {
-                    alert('Lỗi: ' + response.message);
+            const resp = await fetch(API_BASE, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(movieData)
+            });
+
+            if (resp.ok) {
+                alert('Thành công: Phim mới đã được thêm vào hệ thống!');
+                location.reload();
+            } else {
+                let errorMsg = `Mã lỗi: ${resp.status} (${resp.statusText})`;
+                // Tạo một bản sao (clone) của phản hồi để có thể đọc nhiều lần
+                const respCloneForJson = resp.clone();
+                const respCloneForText = resp.clone();
+
+                try {
+                    const error = await respCloneForJson.json();
+                    if (error && error.message) errorMsg = error.message;
+                } catch (e) {
+                    try {
+                        const text = await respCloneForText.text();
+                        if (text) errorMsg += ' - ' + text.substring(0, 150);
+                    } catch (textErr) {
+                        console.error('Không thể đọc nội dung lỗi:', textErr);
+                    }
                 }
-            } catch (error) {
-                console.error('Lỗi khi xóa phim:', error);
+                alert('Lỗi từ Server: ' + errorMsg);
+            }
+        } catch (err) {
+            console.error('Save Movie Error Details:', err);
+            alert('Lỗi xử lý tại Giao diện: ' + err.message);
+        } finally {
+            const saveBtn = document.getElementById('saveMovieBtn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Lưu thông tin';
             }
         }
     }
 </script>
+<script>
+    (() => {
+        const AUTH_TOKEN_KEY = 'cinemaToken';
+        const movieTableBody = document.querySelector('.custom-table tbody');
+        const searchInput = document.querySelector('.search-box input');
+        const movieForm = document.getElementById('movieForm');
+        const movieModal = document.getElementById('movieModal');
+        const posterPreview = document.getElementById('posterPreview');
+        const posterBox = document.querySelector('.poster-preview-box');
+        const posterIcon = posterBox.querySelector('i');
+        const posterText = posterBox.querySelector('span');
+        const saveMovieBtn = document.getElementById('saveMovieBtn');
+        const tmdbResults = document.getElementById('tmdbResults');
+        const tmdbSearchInput = document.getElementById('tmdbSearchInput');
+        const titleInput = movieForm.querySelector('input[placeholder="Nháº­p tÃªn phim..."]');
+        const directorInput = movieForm.querySelector('input[placeholder="TÃªn Ä‘áº¡o diá»…n..."]');
+        const durationInput = movieForm.querySelector('input[placeholder="VÃ­ dá»¥: 120"]');
+        const actorsInput = movieForm.querySelector('input[placeholder="CÃ¡c diá»…n viÃªn chÃ­nh..."]');
+        const trailerInput = movieForm.querySelector('input[placeholder="https://youtube.com/..."]');
+        const descriptionInput = movieForm.querySelector('textarea');
+        const statusInput = movieForm.querySelector('select');
+        let allMovies = [];
+        let currentQuery = '';
 
+        function getToken() {
+            return localStorage.getItem(AUTH_TOKEN_KEY);
+        }
+
+        function requireAuth() {
+            if (getToken()) {
+                return true;
+            }
+            alert('Vui lÃ²ng Ä‘Äƒng nháº­p Ä‘á»ƒ sá»­ dá»¥ng trang quáº£n lÃ½ phim.');
+            window.location.href = 'auth.html';
+            return false;
+        }
+
+        function getHeaders(includeJson = false) {
+            const headers = {};
+            if (includeJson) {
+                headers['Content-Type'] = 'application/json';
+            }
+            const token = getToken();
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+            return headers;
+        }
+
+        async function readErrorMessage(resp) {
+            try {
+                const json = await resp.clone().json();
+                if (json && json.message) {
+                    return json.message;
+                }
+            } catch (err) {
+                console.debug('JSON error body unavailable', err);
+            }
+
+            try {
+                const text = await resp.text();
+                if (text) {
+                    return text.slice(0, 200);
+                }
+            } catch (err) {
+                console.debug('Text error body unavailable', err);
+            }
+
+            return `MÃ£ lá»—i: ${resp.status} (${resp.statusText})`;
+        }
+
+        function togglePosterPlaceholder(show) {
+            posterIcon.style.display = show ? '' : 'none';
+            posterText.style.display = show ? '' : 'none';
+        }
+
+        function resetMovieForm() {
+            movieForm.reset();
+            movieForm.dataset.rating = '8.5';
+            movieForm.dataset.releaseDate = '';
+            document.getElementById('movieId').value = '';
+            document.getElementById('tmdbId').value = '';
+            document.getElementById('posterUrl').value = '';
+            document.getElementById('directorAvatarUrl').value = '';
+            document.getElementById('actorAvatarUrls').value = '';
+            posterPreview.src = '';
+            posterPreview.style.display = 'none';
+            togglePosterPlaceholder(true);
+            tmdbResults.style.display = 'none';
+            tmdbSearchInput.value = '';
+            statusInput.value = 'SHOWING';
+        }
+
+        function normalizePosterUrl(url) {
+            if (!url) {
+                return '';
+            }
+            return url.startsWith('http') ? url : `https://image.tmdb.org/t/p/w300${url}`;
+        }
+
+        function getDirectorName(movie) {
+            return movie.directors && movie.directors.length > 0
+                ? movie.directors[0].name
+                : 'Äang cáº­p nháº­t';
+        }
+
+        function getStatusBadge(status) {
+            if (status === 'SHOWING') {
+                return '<span class="status-badge badge-showing">Äang chiáº¿u</span>';
+            }
+            if (status === 'COMING') {
+                return '<span class="status-badge badge-coming">Sáº¯p chiáº¿u</span>';
+            }
+            return '<span class="status-badge" style="background:rgba(255,255,255,0.08);color:var(--text-muted)">Ngá»«ng chiáº¿u</span>';
+        }
+
+        function renderMovies() {
+            const filtered = allMovies.filter(movie => {
+                if (!currentQuery) {
+                    return true;
+                }
+                const keyword = currentQuery.toLowerCase();
+                const directorName = getDirectorName(movie).toLowerCase();
+                return movie.title.toLowerCase().includes(keyword) || directorName.includes(keyword);
+            });
+
+            if (filtered.length === 0) {
+                movieTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">KhÃ´ng cÃ³ phim phÃ¹ há»£p.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            movieTableBody.innerHTML = filtered.map(movie => {
+                const posterUrl = normalizePosterUrl(movie.posterUrl);
+                const rating = movie.rating
+                    ? `<span class="text-warning">â­ ${Number(movie.rating).toFixed(1)}</span>`
+                    : '<span class="text-muted">ChÆ°a cÃ³</span>';
+                const genres = (movie.genres || []).join(', ') || 'Äang cáº­p nháº­t';
+                return `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                ${posterUrl
+                                    ? `<img src="${posterUrl}" class="movie-thumb" alt="${movie.title}" onerror="this.outerHTML='<div class=&quot;movie-thumb&quot; style=&quot;display:flex;align-items:center;justify-content:center;font-size:1.2rem&quot;>ðŸŽ¬</div>'">`
+                                    : '<div class="movie-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem">ðŸŽ¬</div>'}
+                                <div>
+                                    <div class="fw-bold text-white">${movie.title}</div>
+                                    <div style="font-size:0.8rem; color:var(--text-muted)">Äáº¡o diá»…n: ${getDirectorName(movie)}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${genres}</td>
+                        <td>${movie.duration ? `${movie.duration} phÃºt` : 'â€“'}</td>
+                        <td>${rating}</td>
+                        <td>${getStatusBadge(movie.status)}</td>
+                        <td class="text-end">
+                            <button class="action-btn btn-edit me-1" title="Batch nÃ y chÆ°a há»— trá»£ sá»­a" onclick="showMovieAdminMessage()"><i class="bi bi-pencil-square"></i></button>
+                            <button class="action-btn btn-delete" title="Batch nÃ y chÆ°a há»— trá»£ xÃ³a" onclick="showMovieAdminMessage()"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadMovies() {
+            movieTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">Äang táº£i danh sÃ¡ch phim...</td>
+                </tr>
+            `;
+
+            try {
+                const resp = await fetch('/api/movies', { headers: getHeaders() });
+                if (!resp.ok) {
+                    throw new Error(await readErrorMessage(resp));
+                }
+                allMovies = await resp.json();
+                renderMovies();
+            } catch (err) {
+                console.error('Load movies error:', err);
+                movieTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger py-4">KhÃ´ng táº£i Ä‘Æ°á»£c danh sÃ¡ch phim: ${err.message}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        window.filterMovies = function filterMovies(query) {
+            currentQuery = (query || '').trim();
+            renderMovies();
+        };
+
+        window.showMovieAdminMessage = function showMovieAdminMessage() {
+            alert('Batch nÃ y chÆ°a triá»ƒn khai chá»©c nÄƒng sá»­a/xÃ³a phim.');
+        };
+
+        window.previewImage = function previewImage(input) {
+            if (!input.files || !input.files[0]) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                posterPreview.src = event.target.result;
+                posterPreview.style.display = 'block';
+                togglePosterPlaceholder(false);
+                document.getElementById('posterUrl').value = '';
+            };
+            reader.readAsDataURL(input.files[0]);
+        };
+
+        window.searchTMDB = async function searchTMDB() {
+            const query = tmdbSearchInput.value.trim();
+            if (!query) {
+                return;
+            }
+
+            tmdbResults.innerHTML = '<div class="list-group-item bg-dark text-white">Äang tÃ¬m...</div>';
+            tmdbResults.style.display = 'block';
+
+            try {
+                const resp = await fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}`, {
+                    headers: getHeaders()
+                });
+                if (!resp.ok) {
+                    throw new Error(await readErrorMessage(resp));
+                }
+
+                const data = await resp.json();
+                const results = Array.isArray(data.results) ? data.results : [];
+                if (results.length === 0) {
+                    tmdbResults.innerHTML = '<div class="list-group-item bg-dark text-white">KhÃ´ng tÃ¬m tháº¥y phim</div>';
+                    return;
+                }
+
+                tmdbResults.innerHTML = results.map(movie => {
+                    const posterUrl = movie.poster_path || movie.posterPath || '';
+                    const releaseDate = movie.release_date || movie.releaseDate;
+                    return `
+                        <button type="button" class="list-group-item list-group-item-action bg-dark text-white border-secondary" onclick="fillFromTMDB(${movie.id})">
+                            <div class="d-flex align-items-center">
+                                <img src="${posterUrl}" style="width:40px; height:60px; object-fit:cover; margin-right:10px;" onerror="this.style.display='none'">
+                                <div>
+                                    <div class="fw-bold">${movie.title}</div>
+                                    <div class="small text-muted">${releaseDate ? releaseDate.split('-')[0] : 'N/A'}</div>
+                                </div>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('TMDB search error:', err);
+                tmdbResults.innerHTML = `<div class="list-group-item bg-dark text-danger">Lá»—i: ${err.message}</div>`;
+            }
+        };
+
+        window.fillFromTMDB = async function fillFromTMDB(id) {
+            tmdbResults.style.display = 'none';
+
+            try {
+                const resp = await fetch(`/api/tmdb/movie/${id}`, {
+                    headers: getHeaders()
+                });
+                if (!resp.ok) {
+                    throw new Error(await readErrorMessage(resp));
+                }
+
+                const movie = await resp.json();
+                const topCast = movie.credits && Array.isArray(movie.credits.cast)
+                    ? movie.credits.cast.slice(0, 5)
+                    : [];
+                const director = movie.credits && Array.isArray(movie.credits.crew)
+                    ? movie.credits.crew.find(person => person.job === 'Director')
+                    : null;
+                const trailer = movie.videos && Array.isArray(movie.videos.results)
+                    ? movie.videos.results.find(video => video.site === 'YouTube' && video.type === 'Trailer')
+                    : null;
+                const posterUrl = movie.poster_path || movie.posterPath || '';
+
+                document.getElementById('tmdbId').value = movie.id || '';
+                titleInput.value = movie.title || '';
+                descriptionInput.value = movie.overview || '';
+                durationInput.value = movie.runtime || '';
+                actorsInput.value = topCast.map(actor => actor.name).join(', ');
+                directorInput.value = director ? director.name : '';
+                trailerInput.value = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : '';
+                document.getElementById('actorAvatarUrls').value = topCast
+                    .map(actor => actor.profile_path || actor.profilePath || '')
+                    .join(',');
+                document.getElementById('directorAvatarUrl').value = director
+                    ? (director.profile_path || director.profilePath || '')
+                    : '';
+                document.getElementById('posterUrl').value = posterUrl;
+                movieForm.dataset.rating = String(movie.vote_average || movie.voteAverage || 8.5);
+                movieForm.dataset.releaseDate = movie.release_date || movie.releaseDate || '';
+
+                if (posterUrl) {
+                    posterPreview.src = posterUrl;
+                    posterPreview.style.display = 'block';
+                    togglePosterPlaceholder(false);
+                }
+
+                alert('ÄÃ£ náº¡p thÃ´ng tin phim tá»« TMDB.');
+            } catch (err) {
+                console.error('TMDB detail error:', err);
+                alert('Lá»—i khi láº¥y chi tiáº¿t phim tá»« TMDB: ' + err.message);
+            }
+        };
+
+        window.saveMovie = async function saveMovie() {
+            const rawStatus = statusInput.value;
+            const movieData = {
+                title: titleInput.value.trim(),
+                description: descriptionInput.value.trim(),
+                duration: parseInt(durationInput.value, 10) || 0,
+                status: rawStatus === 'END' ? 'STOPPED' : rawStatus,
+                trailerUrl: trailerInput.value.trim(),
+                director: directorInput.value.trim(),
+                actors: actorsInput.value.trim(),
+                directorAvatarUrl: document.getElementById('directorAvatarUrl').value,
+                actorAvatarUrls: document.getElementById('actorAvatarUrls').value,
+                posterUrl: document.getElementById('posterUrl').value,
+                tmdbId: document.getElementById('tmdbId').value ? parseInt(document.getElementById('tmdbId').value, 10) : null,
+                rating: Number(movieForm.dataset.rating || 8.5),
+                releaseDate: movieForm.dataset.releaseDate || null
+            };
+
+            if (!movieData.title || movieData.duration <= 0) {
+                alert('Vui lÃ²ng nháº­p Ä‘áº§y Ä‘á»§ TÃªn phim vÃ  Thá»i lÆ°á»£ng há»£p lá»‡.');
+                return;
+            }
+
+            try {
+                saveMovieBtn.disabled = true;
+                saveMovieBtn.innerText = 'Äang lÆ°u...';
+
+                const resp = await fetch('/api/movies', {
+                    method: 'POST',
+                    headers: getHeaders(true),
+                    body: JSON.stringify(movieData)
+                });
+                if (!resp.ok) {
+                    throw new Error(await readErrorMessage(resp));
+                }
+
+                await resp.json();
+                const modal = bootstrap.Modal.getInstance(movieModal);
+                if (modal) {
+                    modal.hide();
+                }
+                resetMovieForm();
+                await loadMovies();
+                alert('ThÃ nh cÃ´ng: Phim má»›i Ä‘Ã£ Ä‘Æ°á»£c thÃªm vÃ o há»‡ thá»‘ng.');
+            } catch (err) {
+                console.error('Save movie error:', err);
+                alert('Lá»—i tá»« Server: ' + err.message);
+            } finally {
+                saveMovieBtn.disabled = false;
+                saveMovieBtn.innerText = 'LÆ°u thÃ´ng tin';
+            }
+        };
+
+        if (requireAuth()) {
+            resetMovieForm();
+            searchInput.addEventListener('input', event => window.filterMovies(event.target.value));
+            movieModal.addEventListener('hidden.bs.modal', resetMovieForm);
+            loadMovies();
+        }
+    })();
+</script>
 </body>
 </html>

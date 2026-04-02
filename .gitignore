@@ -12,22 +12,12 @@ bin/
 # IDE - VS Code
 .vscode/
 
-# IDE - Eclipse
-.classpath
-.project
-.settings/
-.factorypath
-
 # Logs
 *.log
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Secrets
-.env
-.env.local
 
 # Cloudinary / Secrets (Should be handled via Env Variables in production)
 # application.properties (Nếu bạn muốn giữ bí mật API Key, hãy bỏ comment dòng dưới)

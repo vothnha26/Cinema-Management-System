@@ -38,13 +38,15 @@ public class JwtFilter extends OncePerRequestFilter {
             jwt = authorizationHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
+                System.out.println(">>> Filter: Nhận Token từ user: " + username);
             } catch (Exception e) {
-                // Log error
+                System.err.println(">>> Filter Error (Token): " + e.getMessage());
             }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            System.out.println(">>> Filter: Quyền trong Database của user: " + userDetails.getAuthorities());
 
             if (jwtUtil.validateToken(jwt, userDetails)) {
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
@@ -52,8 +54,12 @@ public class JwtFilter extends OncePerRequestFilter {
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                System.out.println(">>> Filter: Đã đăng nhập THÀNH CÔNG cho user: " + username);
+            } else {
+                System.out.println(">>> Filter: Token KHÔNG hợp lệ!");
             }
         }
+        
         chain.doFilter(request, response);
     }
 }

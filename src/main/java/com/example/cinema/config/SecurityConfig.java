@@ -3,6 +3,7 @@ package com.example.cinema.config;
 import com.example.cinema.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -17,12 +18,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.util.List;
 
-/**
- * Cấu hình Spring Security:
- * - Stateless (JWT), tắt CSRF (vì dùng token, không dùng cookie session).
- * - Phân quyền URL theo Role: ADMIN, STAFF, MANAGER, CUSTOMER.
- * - Public: trang tĩnh HTML/JS/CSS, API auth, API public (phim, suất chiếu).
- */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -37,36 +32,44 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(request -> {
-                var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
-                corsConfiguration.setAllowedOrigins(List.of("*"));
-                corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-                corsConfiguration.setAllowedHeaders(List.of("*"));
-                return corsConfiguration;
-            }))
             .csrf(AbstractHttpConfigurer::disable)
+            .cors(org.springframework.security.config.Customizer.withDefaults())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                // --- Public: Tài nguyên tĩnh và trang HTML ---
-                .requestMatchers("/", "/*.html", "/js/**", "/css/**", "/images/**", "/favicon.ico").permitAll()
-
-                // --- Public: API xác thực ---
+                // Public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/movies", "/api/movies/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/showtimes", "/api/showtimes/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/combos", "/api/combos/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/promotions", "/api/promotions/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+                .requestMatchers("/static/**", "/", "/*.html", "/favicon.ico", "/error", "/payment/**", "/js/**", "/css/**", "/images/**").permitAll()
 
-                // --- Public: API đọc dữ liệu phim, suất chiếu (cho customer xem) ---
-                .requestMatchers("/api/movies/**", "/api/showtimes/**", "/api/genres/**", "/api/public/**", "/api/combos/**").permitAll()
+                // Manager / admin features
+                .requestMatchers(HttpMethod.POST, "/api/movies").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+                .requestMatchers("/api/statistics", "/api/statistics/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+                .requestMatchers("/api/tmdb", "/api/tmdb/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+                .requestMatchers("/api/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
 
-                // --- Admin only ---
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // Staff / admin features
+                .requestMatchers("/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_ADMIN")
 
-                // --- Staff + Admin ---
-                .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN")
+                // Customer / staff booking flow
+                .requestMatchers(HttpMethod.POST, "/api/bookings").hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF")
+                .requestMatchers(HttpMethod.GET, "/api/bookings/{code}").hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF")
+                .requestMatchers(HttpMethod.GET, "/api/bookings/me").hasAuthority("ROLE_CUSTOMER")
+                .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").hasAuthority("ROLE_CUSTOMER")
+                .requestMatchers(HttpMethod.PUT, "/api/bookings/*/checkin").hasAuthority("ROLE_STAFF")
 
-                // --- Manager + Admin ---
-                .requestMatchers("/api/manager/**").hasAnyRole("MANAGER", "ADMIN")
+                // Customer membership / payment / notification flow
+                .requestMatchers("/api/customers/me", "/api/customers/me/**").hasAuthority("ROLE_CUSTOMER")
+                .requestMatchers("/api/notifications/**").hasAuthority("ROLE_CUSTOMER")
+                .requestMatchers("/api/payments/me", "/api/payments/*").hasAuthority("ROLE_CUSTOMER")
 
-                // --- Tất cả API khác cần đăng nhập ---
+                // Admin only
+                .requestMatchers("/api/users/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
+
                 .anyRequest().authenticated()
             );
         return http.build();
@@ -81,5 +84,15 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-}
 
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+        config.setAllowedOrigins(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+}
