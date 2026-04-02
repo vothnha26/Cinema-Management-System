@@ -14,6 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Tiện ích JWT (SRP: Chỉ chịu trách nhiệm sinh, parse, validate token).
+ * Không chứa logic xác thực user hay truy vấn DB.
+ */
 @Component
 public class JwtUtil {
 
@@ -25,6 +29,10 @@ public class JwtUtil {
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String extractRole(String token) {
+        return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
     public Date extractExpiration(String token) {
@@ -49,8 +57,13 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(UserDetails userDetails) {
+    /**
+     * Sinh JWT token bao gồm role trong payload.
+     * Frontend sẽ decode token để biết role và hiển thị giao diện phù hợp.
+     */
+    public String generateToken(UserDetails userDetails, String role) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role);
         return createToken(claims, userDetails.getUsername());
     }
 
@@ -70,3 +83,4 @@ public class JwtUtil {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }
+

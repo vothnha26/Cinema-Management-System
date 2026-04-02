@@ -299,20 +299,14 @@
             </div>
             <div class="modal-body">
                 <form id="addUserForm">
-                    <div class="mb-3 text-center">
-                        <div style="width:80px; height:80px; border-radius:50%; background:var(--surface); display:inline-flex; align-items:center; justify-content:center; border:2px dashed var(--border); color:var(--text-muted); cursor:pointer">
-                            <i class="bi bi-camera" style="font-size:1.5rem"></i>
-                        </div>
-                        <div class="mt-2" style="font-size:0.75rem; color:var(--text-muted)">Tải lên ảnh đại diện</div>
-                    </div>
                     <div class="mb-3">
-                        <label class="form-label">Họ và tên</label>
-                        <input type="text" class="form-control" placeholder="Nhập họ tên nhân viên">
+                        <label class="form-label">Tên đăng nhập</label>
+                        <input type="text" class="form-control" placeholder="Nhập tên đăng nhập" id="staffUsername">
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-control" placeholder="example@gmail.com">
+                            <input type="email" class="form-control" placeholder="example@gmail.com" id="staffEmail">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Số điện thoại</label>
@@ -321,62 +315,185 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Vai trò</label>
-                        <select class="form-select">
+                        <select class="form-select" id="staffRole">
                             <option value="STAFF">Nhân viên bán vé (Staff)</option>
                             <option value="MANAGER">Quản lý (Manager)</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Mật khẩu tạm thời</label>
-                        <input type="password" class="form-control" value="StarCinema@123">
+                        <input type="password" class="form-control" value="StarCinema@123" id="staffPassword">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius:10px">Hủy</button>
-                <button type="button" class="btn btn-danger px-4" style="border-radius:10px; background:var(--gradient); border:none">Xác nhận</button>
+                <button type="button" class="btn btn-danger px-4" style="border-radius:10px; background:var(--gradient); border:none" onclick="createStaff()">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit User -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--card);border:1px solid var(--border);border-radius:16px">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:20px 24px">
+                <h5 class="modal-title" style="font-weight:700">Chỉnh sửa Nhân viên</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <input type="hidden" id="editUserId">
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="editUserEmail">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Vai trò</label>
+                        <select class="form-select" id="editUserRole">
+                            <option value="STAFF">Nhân viên bán vé (Staff)</option>
+                            <option value="MANAGER">Quản lý (Manager)</option>
+                            <option value="CUSTOMER">Khách hàng (Customer)</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal" style="border-radius:10px">Hủy</button>
+                <button type="button" class="btn btn-primary px-4" style="border-radius:10px; border:none" onclick="submitEditUser()">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal View User Detail -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--card);border:1px solid var(--border);border-radius:16px; overflow:hidden;">
+            <div class="modal-header" style="background:var(--surface); border-bottom:1px solid var(--border);padding:24px; position:relative">
+                <div style="position:absolute; top:0; left:0; right:0; height:4px; background:var(--gradient)"></div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-avatar-round" id="viewUserAvatar" style="width:56px;height:56px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.5rem;border:3px solid var(--card);box-shadow:0 4px 12px rgba(229,19,58,0.3)">
+                        U
+                    </div>
+                    <div>
+                        <h4 class="modal-title" id="viewUserName" style="font-weight:700; margin-bottom:2px">Username</h4>
+                        <span class="role-badge role-staff" id="viewUserRoleBadge" style="font-size:0.75rem; padding:2px 8px">STAFF</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="align-self:flex-start"></button>
+            </div>
+            <div class="modal-body" style="padding:24px">
+                <div style="background:var(--surface); border-radius:12px; padding:20px; border:1px solid var(--border)">
+                    <div class="d-flex mb-3 align-items-center">
+                        <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:var(--text-muted);margin-right:16px">
+                            <i class="bi bi-envelope"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem;color:var(--text-muted)">Địa chỉ Email</div>
+                            <div style="font-weight:600;font-size:0.95rem" id="viewUserEmail">example@email.com</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:var(--text-muted);margin-right:16px">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:0.8rem;color:var(--text-muted)">Quyền hạn (Role)</div>
+                            <div style="font-weight:600;font-size:0.95rem" id="viewUserRoleText">Nhân viên</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:none; padding:0 24px 24px">
+                <button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal" style="border-radius:10px">Đóng</button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
 <script>
-    const USERS = []; // Dữ liệu thật sẽ được nạp từ API khi backend hỗ trợ endpoint quản lý users hiện thực.
+    // Bảo vệ trang: chỉ ADMIN được vào
+    AuthGuard.requireRole(['ADMIN']);
 
+    // Hiển thị username đã login
+    const loggedUser = AuthGuard.getUsername() || 'Admin';
+    document.querySelector('.admin-avatar').textContent = loggedUser.substring(0,2).toUpperCase();
+    document.querySelector('.admin-profile div div:first-child').textContent = loggedUser;
 
+    // Setup logout
+    document.querySelector('.admin-profile .ms-auto').addEventListener('click', (e) => {
+        e.preventDefault();
+        AuthGuard.logout();
+    });
+
+    let ALL_USERS = [];
     let currentTab = 'staff';
+
+    async function loadUsers() {
+        try {
+            const result = await api.get('/admin/users');
+            if (result.success) {
+                ALL_USERS = result.data;
+                renderUsers();
+            }
+        } catch (err) {
+            console.error('Lỗi tải danh sách user:', err);
+        }
+    }
 
     function renderUsers() {
         const tbody = document.getElementById('userTableBody');
-        const filteredUsers = USERS.filter(u => u.type === currentTab);
-        
-        tbody.innerHTML = filteredUsers.map(u => `
+        const filtered = ALL_USERS.filter(u => {
+            if (currentTab === 'staff') return u.role === 'STAFF' || u.role === 'MANAGER' || u.role === 'ADMIN';
+            return u.role === 'CUSTOMER';
+        });
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:40px">Chưa có dữ liệu</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(u => `
             <tr>
                 <td>
                     <div class="user-info">
-                        <img src="${u.avatar}" class="user-avatar-round" alt="Avatar">
+                        <div class="user-avatar-round" style="width:40px;height:40px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.85rem;border:2px solid var(--border)">
+                            ${(u.username||'U').substring(0,2).toUpperCase()}
+                        </div>
                         <div>
-                            <span class="user-name">${u.name}</span>
+                            <span class="user-name">${u.username}</span>
                             <span class="user-email">${u.email}</span>
                         </div>
                     </div>
                 </td>
-                <td>${u.phone}</td>
+                <td style="color:var(--text-muted)">—</td>
                 <td>
                     <span class="role-badge ${getRoleClass(u.role)}">${u.role}</span>
                 </td>
                 <td>
-                    <span class="status-pill ${u.status === 'ACTIVE' ? 'status-active' : 'status-locked'}">
-                        <i class="bi bi-circle-fill"></i> ${u.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
+                    <span class="status-pill ${u.status ? 'status-active' : 'status-locked'}">
+                        <i class="bi bi-circle-fill"></i> ${u.status ? 'Hoạt động' : 'Đã khóa'}
                     </span>
                 </td>
                 <td class="text-end">
                     <div class="d-flex justify-content-end gap-2">
-                        <button class="btn-action" title="Sửa thông tin"><i class="bi bi-pencil-square"></i></button>
-                        <button class="btn-action" title="Cấp quyền"><i class="bi bi-shield-lock"></i></button>
-                        <button class="btn-action" title="${u.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa'}">
-                            <i class="bi ${u.status === 'ACTIVE' ? 'bi-lock' : 'bi-unlock'}"></i>
+                        <button class="btn-action" title="Xem chi tiết" onclick="viewUser(\'${u.username}\', \'${u.email}\', \'${u.role}\')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn-action" style="color:var(--accent-gold);" title="Chỉnh sửa" onclick="openEditModal(${u.id}, \'${u.email}\', \'${u.role}\')">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn-action" title="${u.status ? 'Khóa tài khoản' : 'Mở khóa'}" onclick="toggleStatus(${u.id})">
+                            <i class="bi ${u.status ? 'bi-lock' : 'bi-unlock'}"></i>
+                        </button>
+                        <button class="btn-action" style="color:red;" title="Xóa" onclick="deleteUser(${u.id})">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </div>
                 </td>
@@ -397,8 +514,104 @@
         renderUsers();
     }
 
-    // Initial render
-    renderUsers();
+    async function toggleStatus(userId) {
+        try {
+            const result = await api.patch(`/admin/users/${userId}/toggle-status`, {});
+            if (result.success) {
+                await loadUsers();
+            }
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        }
+    }
+
+    // Tạo nhân viên mới
+    async function createStaff() {
+        const username = document.getElementById('staffUsername').value.trim();
+        const email = document.getElementById('staffEmail').value.trim();
+        const password = document.getElementById('staffPassword').value;
+        const role = document.getElementById('staffRole').value;
+
+        if (!username || !email || !password) {
+            alert('Vui lòng nhập đầy đủ thông tin.');
+            return;
+        }
+
+        try {
+            const result = await api.post('/admin/users', { username, email, password, role });
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+                document.getElementById('addUserForm').reset();
+                await loadUsers();
+            } else {
+                alert(result.message || 'Tạo tài khoản thất bại.');
+            }
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        }
+    }
+
+    // Khởi tạo
+    loadUsers();
+
+    // Hành động khác
+    function viewUser(username, email, role) {
+        document.getElementById('viewUserAvatar').textContent = (username || 'U').substring(0,2).toUpperCase();
+        document.getElementById('viewUserName').textContent = username;
+        document.getElementById('viewUserEmail').textContent = email;
+        
+        let roleText = 'Khách hàng';
+        let roleClass = 'role-customer';
+        if (role === 'STAFF') { roleText = 'Nhân viên bán vé'; roleClass = 'role-staff'; }
+        if (role === 'MANAGER') { roleText = 'Quản lý Rạp'; roleClass = 'role-admin'; }
+        if (role === 'ADMIN') { roleText = 'Quản trị viên'; roleClass = 'role-admin'; }
+        
+        const badge = document.getElementById('viewUserRoleBadge');
+        badge.textContent = role;
+        badge.className = 'role-badge ' + roleClass;
+        
+        document.getElementById('viewUserRoleText').textContent = roleText;
+        
+        new bootstrap.Modal(document.getElementById('viewUserModal')).show();
+    }
+    
+    function openEditModal(id, email, role) {
+        document.getElementById('editUserId').value = id;
+        document.getElementById('editUserEmail').value = email;
+        document.getElementById('editUserRole').value = role;
+        new bootstrap.Modal(document.getElementById('editUserModal')).show();
+    }
+    
+    async function submitEditUser() {
+        const id = document.getElementById('editUserId').value;
+        const email = document.getElementById('editUserEmail').value;
+        const role = document.getElementById('editUserRole').value;
+        try {
+            const result = await api.put(`/admin/users/${id}`, { email, role });
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                await loadUsers();
+            } else {
+                alert('Lỗi: ' + result.message);
+            }
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        }
+    }
+    
+    async function deleteUser(id) {
+        if (!confirm('Bạn có chắc chắn muốn xóa vĩnh viễn user này?')) return;
+        try {
+            const result = await api.delete(`/admin/users/${id}`);
+            if (result.success) {
+                await loadUsers();
+            } else {
+                alert('Lỗi: ' + result.message);
+            }
+        } catch (err) {
+            alert('Lỗi: ' + err.message);
+        }
+    }
 </script>
 </body>
 </html>

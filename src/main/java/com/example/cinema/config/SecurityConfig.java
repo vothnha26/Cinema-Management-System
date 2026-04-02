@@ -3,9 +3,9 @@ package com.example.cinema.config;
 import com.example.cinema.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,8 +17,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.util.List;
 
+/**
+ * Cấu hình Spring Security:
+ * - Stateless (JWT), tắt CSRF (vì dùng token, không dùng cookie session).
+ * - Phân quyền URL theo Role: ADMIN, STAFF, MANAGER, CUSTOMER.
+ * - Public: trang tĩnh HTML/JS/CSS, API auth, API public (phim, suất chiếu).
+ */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -41,8 +48,25 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**").permitAll()
-                .requestMatchers("/", "/*.html", "/js/**", "/css/**", "/favicon.ico").permitAll()
+                // --- Public: Tài nguyên tĩnh và trang HTML ---
+                .requestMatchers("/", "/*.html", "/js/**", "/css/**", "/images/**", "/favicon.ico").permitAll()
+
+                // --- Public: API xác thực ---
+                .requestMatchers("/api/auth/**").permitAll()
+
+                // --- Public: API đọc dữ liệu phim, suất chiếu (cho customer xem) ---
+                .requestMatchers("/api/movies/**", "/api/showtimes/**", "/api/genres/**", "/api/public/**", "/api/combos/**").permitAll()
+
+                // --- Admin only ---
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // --- Staff + Admin ---
+                .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN")
+
+                // --- Manager + Admin ---
+                .requestMatchers("/api/manager/**").hasAnyRole("MANAGER", "ADMIN")
+
+                // --- Tất cả API khác cần đăng nhập ---
                 .anyRequest().authenticated()
             );
         return http.build();
@@ -58,3 +82,4 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 }
+
