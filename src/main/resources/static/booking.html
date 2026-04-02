@@ -278,6 +278,25 @@
         <!-- STEP 4: Thanh toán -->
         <div class="step-panel" id="panel-4">
             <div class="panel">
+                <div class="panel-title"><i class="bi bi-person-lines-fill"></i> Thông tin liên hệ</div>
+                <div id="guestForm" style="display:none;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
+                    <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">Bạn đang đặt vé với tư cách khách. Vui lòng nhập thông tin để nhận vé (Hoặc <a href="auth.html" style="color:var(--accent);text-decoration:underline">Đăng nhập</a> để nhận ưu đãi).</div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" id="guestName" class="form-control" placeholder="Họ và tên" required style="background:var(--card);color:var(--text);border-color:var(--border)">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="tel" id="guestPhone" class="form-control" placeholder="Số điện thoại" required style="background:var(--card);color:var(--text);border-color:var(--border)">
+                        </div>
+                        <div class="col-md-4">
+                            <input type="email" id="guestEmail" class="form-control" placeholder="Email nhận vé" required style="background:var(--card);color:var(--text);border-color:var(--border)">
+                        </div>
+                    </div>
+                </div>
+                <div id="loggedInUserMsg" style="display:none;background:rgba(80,200,100,.1);border:1.5px solid rgba(80,200,100,.3);border-radius:12px;padding:16px;margin-bottom:20px;color:#50C864;font-size:0.9rem">
+                    ✅ Đang đặt vé với tư cách thành viên.
+                </div>
+
                 <div class="panel-title"><i class="bi bi-credit-card"></i> Phương thức thanh toán</div>
                 <div class="pay-method" id="payMethods">
                     <div class="pay-opt active" onclick="selectPay(this,'MOMO')"><span class="pay-icon">💳</span><span class="pay-label">MoMo</span></div>
@@ -352,7 +371,10 @@
     </div>
 </div>
 
+<script src="/js/api.js"></script>
 <script>
+    const userRole = localStorage.getItem('role');
+    const isLoggedIn = !!localStorage.getItem('token');
     // ──── DATA ────
     const SEAT_PRICE = { STANDARD: 95000, VIP: 150000, COUPLE: 180000 };
     let COMBOS = [];
@@ -633,10 +655,61 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function confirmBooking() {
-      const code = 'SC-' + Date.now().toString(36).toUpperCase().slice(-8);
-      document.getElementById('bookingCode').textContent = code;
-      document.getElementById('successOverlay').classList.add('show');
+    async function confirmBooking() {
+      // Validate nếu chưa đăng nhập
+      let gName = '', gPhone = '', gEmail = '';
+      if (!isLoggedIn) {
+          gName = document.getElementById('guestName').value.trim();
+          gPhone = document.getElementById('guestPhone').value.trim();
+          gEmail = document.getElementById('guestEmail').value.trim();
+          if (!gName || !gPhone || !gEmail) {
+              alert('Vui lòng nhập đầy đủ Tên, SĐT và Email để nhận vé!');
+              return;
+          }
+      }
+
+      const mockSeatIds = selectedSeats.map((id, index) => index + 1); 
+      const comboReq = {};
+      for (const [id, qty] of Object.entries(comboQty)) {
+        if (qty > 0) comboReq[id] = qty;
+      }
+
+      const reqBody = {
+        showtimeId: selectedShowtime ? selectedShowtime.id : 1, // Fallback 1
+        seatIds: mockSeatIds,
+        combos: comboReq,
+        paymentMethod: selectedPay,
+        guestName: gName,
+        guestPhone: gPhone,
+        guestEmail: gEmail
+      };
+
+      const btn = document.getElementById('btnNext');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+      try {
+        const result = await api.post('/public/booking/checkout', reqBody);
+        if (result.success) {
+            const booking = result.data;
+            document.getElementById('bookingCode').textContent = booking.bookingCode;
+            document.getElementById('successOverlay').classList.add('show');
+        } else {
+            alert('Lỗi: ' + result.message);
+        }
+      } catch (err) {
+        alert('Lỗi kết nối máy chủ!');
+      } finally {
+        btn.innerHTML = '🎟 Xác nhận & Thanh toán';
+        btn.disabled = false;
+      }
+    }
+
+    // Toggle forms on init
+    if (isLoggedIn) {
+        document.getElementById('loggedInUserMsg').style.display = 'block';
+    } else {
+        document.getElementById('guestForm').style.display = 'block';
     }
 
     // ──── INIT ────

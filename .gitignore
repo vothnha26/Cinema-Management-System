@@ -12,6 +12,12 @@ bin/
 # IDE - VS Code
 .vscode/
 
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+
 # Logs
 *.log
 

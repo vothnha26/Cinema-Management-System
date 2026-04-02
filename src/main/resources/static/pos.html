@@ -301,7 +301,23 @@
 <!-- Toast -->
 <div class="toast-pos" id="toast"></div>
 
+<script src="/js/api.js"></script>
+<script src="/js/auth-guard.js"></script>
 <script>
+    // Bảo vệ trang: cho ADMIN, MANAGER, STAFF
+    AuthGuard.requireRole(['STAFF', 'MANAGER', 'ADMIN']);
+
+    // Hiển thị thông tin staff
+    const loggedUser = AuthGuard.getUsername() || 'Staff';
+    const loggedRole = AuthGuard.getRole() || 'STAFF';
+    document.querySelector('.staff-avatar').textContent = loggedUser.substring(0,2).toUpperCase();
+    document.querySelector('.staff-name').textContent = loggedUser;
+    document.querySelector('.staff-role').textContent = loggedRole;
+
+    document.querySelector('.staff-info button').addEventListener('click', (e) => {
+        e.preventDefault();
+        AuthGuard.logout();
+    });
     // ──── DATA ────
     const SEAT_PRICE = { S:95000, V:150000, C:180000 };
     let COMBOS = [];
@@ -516,11 +532,42 @@
       btn.classList.add('active'); payMethod=method;
     }
 
-    function confirmSale() {
-      const code='SC-'+Date.now().toString(36).toUpperCase().slice(-8);
-      showToast(`✅ Đã bán vé! Mã: ${code}`, 'ok');
-      document.getElementById('soldCount').textContent = parseInt(document.getElementById('soldCount').textContent)+posSeats.length;
-      clearOrder();
+    async function confirmSale() {
+      // Vì mockup chưa load schema id thật, tạm mock 1 list SeatIds tĩnh
+      const mockSeatIds = posSeats.map((id, index) => index + 1); 
+
+      // Data combo mapping
+      const comboReq = {};
+      for (const [id, qty] of Object.entries(comboQty)) {
+        if (qty > 0) comboReq[id] = qty;
+      }
+
+      const reqBody = {
+        showtimeId: selectedST ? selectedST.id : 1, // Fallback 1
+        seatIds: mockSeatIds,
+        combos: comboReq,
+        paymentMethod: payMethod,
+        customerPhone: document.getElementById('custPhone').value.trim()
+      };
+
+      document.getElementById('btnConfirm').disabled = true;
+      document.getElementById('btnConfirm').innerHTML = '<i class="bi bi-hourglass-split"></i> Đang xử lý...';
+
+      try {
+        const result = await api.post('/staff/pos/checkout', reqBody);
+        if (result.success) {
+            const booking = result.data;
+            showToast(`✅ Đã bán vé! Mã: ${booking.bookingCode}`, 'ok');
+            document.getElementById('soldCount').textContent = parseInt(document.getElementById('soldCount').textContent) + posSeats.length;
+            clearOrder();
+        } else {
+            showToast(`❌ Lỗi: ${result.message}`, 'err');
+        }
+      } catch (err) {
+        showToast('❌ Lỗi kết nối máy chủ.', 'err');
+      } finally {
+        updateOrder(); // reset button text and state
+      }
     }
 
     // ──── CUSTOMER LOOKUP ────
@@ -540,42 +587,97 @@
     }
 
     // ──── CHECK-IN ────
-    function doCheckin() {
+    let currentCheckinCode = null;
+
+    async function doCheckin() {
       const code = document.getElementById('checkinCode').value.trim().toUpperCase();
       if(!code) return;
       const el = document.getElementById('checkinResult');
       const card = document.getElementById('checkinCard');
-      el.classList.add('show');
-      const b = FAKE_BOOKINGS[code];
-      if(!b) {
-        card.innerHTML = `<div class="checkin-status-badge cb-invalid">❌ Không tìm thấy mã booking</div><p style="color:var(--text-muted);font-size:.88rem">Mã "<strong>${code}</strong>" không tồn tại trong hệ thống. Vui lòng kiểm tra lại.</p>`;
-        return;
+      
+      const btn = document.querySelector('.btn-checkin');
+      const oldHtml = btn.innerHTML;
+      btn.innerHTML = '...';
+      btn.disabled = true;
+
+      try {
+        const result = await api.get(`/staff/ticket/lookup/${code}`);
+        el.classList.add('show');
+        
+        if (result.success) {
+            const b = result.data;
+            currentCheckinCode = b.bookingCode;
+            
+            if (b.status === 'CHECKED_IN') {
+                card.innerHTML = `<div class="checkin-status-badge cb-already">⚠️ Vé đã được check-in</div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movieTitle || ''}</span></div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.showtime || ''}</span></div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${(b.seats || []).join(', ')}</span></div>
+                  <p style="color:var(--accent-gold);font-size:.82rem;margin-top:12px">⚠️ Vé này đã được check-in trước đó.</p>`;
+            } else if (b.status === 'CANCELLED') {
+                card.innerHTML = `<div class="checkin-status-badge cb-invalid">❌ Vé đã hủy</div>
+                  <p style="color:var(--text-muted);font-size:.88rem">Mã "${b.bookingCode}" đã bị hủy, không thể check-in.</p>`;
+            } else if (b.status === 'PENDING') {
+                card.innerHTML = `<div class="checkin-status-badge cb-invalid">⚠️ Vé chưa thanh toán</div>
+                  <p style="color:var(--text-muted);font-size:.88rem">Vui lòng thanh toán vé "${b.bookingCode}" trước khi check-in.</p>`;
+            } else {
+                card.innerHTML = `
+                  <div class="checkin-status-badge cb-ok">✅ Vé hợp lệ – Cho phép vào</div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Mã booking</span><span class="ci-val" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--accent)">${b.bookingCode}</span></div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Khách hàng</span><span class="ci-val">${b.customerName || 'Khách vãng lai'}</span></div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movieTitle || ''}</span></div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.showtime || ''} – ${b.roomName || ''}</span></div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${(b.seats || []).join(', ')}</span></div>
+                  <div class="ci-row"><span style="color:var(--text-muted)">Tổng tiền</span><span class="ci-val" style="color:var(--accent-gold)">${fmt(b.totalPrice)}</span></div>
+                  <button class="btn-confirm-checkin" onclick="confirmCheckin()">✅ Xác nhận Check-in</button>
+                `;
+            }
+        } else {
+            card.innerHTML = `<div class="checkin-status-badge cb-invalid">❌ Không tìm thấy mã booking</div>
+              <p style="color:var(--text-muted);font-size:.88rem">${result.message}</p>`;
+        }
+      } catch (err) {
+        showToast('❌ Lỗi kết nối', 'err');
+      } finally {
+        btn.innerHTML = oldHtml;
+        btn.disabled = false;
       }
-      if(b.status==='CHECKED_IN') {
-        card.innerHTML = `<div class="checkin-status-badge cb-already">⚠️ Vé đã được check-in</div>
-          <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movie}</span></div>
-          <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.time} – ${b.date}</span></div>
-          <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${b.seats.join(', ')}</span></div>
-          <p style="color:var(--accent-gold);font-size:.82rem;margin-top:12px">⚠️ Vé này đã được check-in trước đó.</p>`;
-        return;
-      }
-      card.innerHTML = `
-        <div class="checkin-status-badge cb-ok">✅ Vé hợp lệ – Cho phép vào</div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Mã booking</span><span class="ci-val" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--accent)">${b.code}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Khách hàng</span><span class="ci-val">${b.customer}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movie}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.time} – ${b.hall}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${b.seats.join(', ')}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Tổng tiền</span><span class="ci-val" style="color:var(--accent-gold)">${fmt(b.total)}</span></div>
-        <button class="btn-confirm-checkin" onclick="confirmCheckin('${b.code}')">✅ Xác nhận Check-in</button>
-      `;
     }
-    function confirmCheckin(code) {
-      if(FAKE_BOOKINGS[code]) FAKE_BOOKINGS[code].status='CHECKED_IN';
-      document.getElementById('checkinResult').classList.remove('show');
-      document.getElementById('checkinCode').value='';
-      showToast('✅ Check-in thành công!', 'ok');
-      renderRecentCheckins();
+
+    async function confirmCheckin() {
+      if (!currentCheckinCode) return;
+      
+      const btn = document.querySelector('.btn-confirm-checkin');
+      btn.innerHTML = 'Đang xử lý...';
+      btn.disabled = true;
+
+      try {
+        const result = await api.post(`/staff/ticket/checkin/${currentCheckinCode}`);
+        if (result.success) {
+            document.getElementById('checkinResult').classList.remove('show');
+            document.getElementById('checkinCode').value='';
+            showToast('✅ Check-in thành công!', 'ok');
+            
+            const b = result.data;
+            RECENT_CHECKINS.unshift({
+                name: b.customerName || 'Khách vãng lai',
+                movie: b.movieTitle || 'Vé lẻ',
+                seats: (b.seats || []).join(', '),
+                time: b.showtime || '',
+                code: b.bookingCode
+            });
+            if (RECENT_CHECKINS.length > 10) RECENT_CHECKINS.pop();
+            renderRecentCheckins();
+        } else {
+            showToast(`❌ Lỗi: ${result.message}`, 'err');
+            btn.innerHTML = '✅ Xác nhận Check-in';
+            btn.disabled = false;
+        }
+      } catch (err) {
+        showToast('❌ Lỗi máy chủ', 'err');
+        btn.innerHTML = '✅ Xác nhận Check-in';
+        btn.disabled = false;
+      }
     }
 
     function renderRecentCheckins() {

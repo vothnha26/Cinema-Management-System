@@ -344,15 +344,13 @@
 
     <!-- REGISTER FORM -->
     <div id="registerPanel" class="form-panel" style="display:none">
-        <div class="row g-2 mb-form">
-            <div class="col-6">
-                <label class="form-label">Họ</label>
-                <input type="text" class="form-control" placeholder="Nguyễn">
-            </div>
-            <div class="col-6">
-                <label class="form-label">Tên</label>
-                <input type="text" class="form-control" placeholder="Văn A">
-            </div>
+        <div class="mb-form">
+            <label class="form-label">Tên đăng nhập</label>
+            <input type="text" class="form-control" placeholder="vd: nguyenvana" id="regUsername">
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Họ và tên</label>
+            <input type="text" class="form-control" placeholder="Nguyễn Văn A" id="regFullName">
         </div>
         <div class="mb-form">
             <label class="form-label">Email</label>
@@ -360,7 +358,7 @@
         </div>
         <div class="mb-form">
             <label class="form-label">Số điện thoại</label>
-            <input type="tel" class="form-control" placeholder="0901 234 567">
+            <input type="tel" class="form-control" placeholder="0901 234 567" id="regPhone">
         </div>
         <div class="mb-form">
             <label class="form-label">Mật khẩu</label>
@@ -416,35 +414,69 @@
       setTimeout(() => el.style.display = 'none', 3500);
     }
 
-    function handleLogin() {
+    // Route map theo role nhận từ JWT
+    const roleRedirectMap = {
+      'CUSTOMER': 'index.html',
+      'STAFF':    'pos.html',
+      'MANAGER':  'dashboard.html',
+      'ADMIN':    'manage-users.html'
+    };
+
+    async function handleLogin() {
       const u = document.getElementById('loginUser').value.trim();
       const p = document.getElementById('loginPass').value;
       if (!u || !p) { showAlert('Vui lòng nhập đầy đủ thông tin.'); return; }
-      // Mock: redirect based on demo accounts
-      const accounts = {
-        'customer': { pass: '123456', url: 'index.html' },
-        'staff': { pass: '123456', url: 'pos.html' },
-        'manager': { pass: '123456', url: 'dashboard.html' },
-        'admin': { pass: '123456', url: 'dashboard.html' },
-      };
-      const acc = accounts[u.toLowerCase()];
-      if (acc && acc.pass === p) {
-        window.location.href = acc.url;
-      } else {
-        showAlert('Tên đăng nhập hoặc mật khẩu không chính xác.');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const json = await res.json();
+        if (json.success) {
+          localStorage.setItem('token', json.data.token);
+          localStorage.setItem('role', json.data.role);
+          localStorage.setItem('username', json.data.username);
+          window.location.href = roleRedirectMap[json.data.role] || 'index.html';
+        } else {
+          showAlert(json.message || 'Đăng nhập thất bại.');
+        }
+      } catch (err) {
+        showAlert('Lỗi kết nối server. Vui lòng thử lại.');
       }
     }
 
-    function handleRegister() {
+    async function handleRegister() {
+      const username = document.getElementById('regUsername').value.trim();
+      const fullName = document.getElementById('regFullName').value.trim();
       const email = document.getElementById('regEmail').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
       const pass = document.getElementById('regPass').value;
       const pass2 = document.getElementById('regPass2').value;
-      if (!email || !pass) { showAlert('Vui lòng nhập đầy đủ thông tin.'); return; }
+
+      if (!username || !fullName || !email || !pass) { showAlert('Vui lòng nhập đầy đủ thông tin.'); return; }
       if (pass !== pass2) { showAlert('Mật khẩu xác nhận không khớp.'); return; }
       if (pass.length < 8) { showAlert('Mật khẩu phải có ít nhất 8 ký tự.'); return; }
-      showAlert = function(msg) {}; // prevent further alerts
-      alert('Đăng ký thành công! Vui lòng đăng nhập.');
-      switchTab('login');
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, fullName, email, phone, password: pass })
+        });
+        const json = await res.json();
+        if (json.success) {
+          localStorage.setItem('token', json.data.token);
+          localStorage.setItem('role', json.data.role);
+          localStorage.setItem('username', json.data.username);
+          window.location.href = 'index.html';
+        } else {
+          showAlert(json.message || 'Đăng ký thất bại.');
+        }
+      } catch (err) {
+        showAlert('Lỗi kết nối server. Vui lòng thử lại.');
+      }
     }
 
     // Build film grid with gradient placeholders
