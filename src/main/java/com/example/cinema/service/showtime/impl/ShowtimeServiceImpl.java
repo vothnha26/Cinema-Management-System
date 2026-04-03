@@ -1,21 +1,22 @@
 package com.example.cinema.service.showtime.impl;
 
-import com.example.cinema.config.LogAction;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.ShowtimeRequest;
+import com.example.cinema.model.dto.response.SeatResponse;
 import com.example.cinema.model.dto.response.ShowtimeResponse;
-import com.example.cinema.model.entity.Movie;
-import com.example.cinema.model.entity.Room;
-import com.example.cinema.model.entity.Showtime;
+import com.example.cinema.model.entity.*;
 import com.example.cinema.model.enums.ShowtimeStatus;
+import com.example.cinema.repository.booking.BookingDetailRepository;
 import com.example.cinema.repository.movie.MovieRepository;
 import com.example.cinema.repository.room.RoomRepository;
+import com.example.cinema.repository.room.SeatPriceRepository;
+import com.example.cinema.repository.room.SeatRepository;
 import com.example.cinema.repository.showtime.ShowtimeRepository;
 import com.example.cinema.service.showtime.ShowtimeService;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,112 +24,147 @@ import java.util.stream.Collectors;
 @Service
 public class ShowtimeServiceImpl implements ShowtimeService {
 
-    private static final int CLEANING_TIME_MINUTES = 15;
-
     private final ShowtimeRepository showtimeRepository;
+    private final SeatRepository seatRepository;
+    private final BookingDetailRepository bookingDetailRepository;
+    private final SeatPriceRepository seatPriceRepository;
     private final MovieRepository movieRepository;
     private final RoomRepository roomRepository;
-    private final ModelMapper modelMapper;
 
     public ShowtimeServiceImpl(ShowtimeRepository showtimeRepository, 
-                                MovieRepository movieRepository, 
-                                RoomRepository roomRepository, 
-                                ModelMapper modelMapper) {
+                                SeatRepository seatRepository,
+                                BookingDetailRepository bookingDetailRepository, 
+                                SeatPriceRepository seatPriceRepository,
+                                MovieRepository movieRepository,
+                                RoomRepository roomRepository) {
         this.showtimeRepository = showtimeRepository;
+        this.seatRepository = seatRepository;
+        this.bookingDetailRepository = bookingDetailRepository;
+        this.seatPriceRepository = seatPriceRepository;
         this.movieRepository = movieRepository;
         this.roomRepository = roomRepository;
-        this.modelMapper = modelMapper;
     }
 
     @Override
     public List<ShowtimeResponse> getAllShowtimes() {
         return showtimeRepository.findAll().stream()
-                .map(s -> modelMapper.map(s, ShowtimeResponse.class))
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
+    public List<ShowtimeResponse> getShowtimesByMovie(Long movieId) {
+        return showtimeRepository.findByMovieIdAndStatus(movieId, ShowtimeStatus.UPCOMING).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SeatResponse> getSeatStatusForShowtime(Long showtimeId) {
+        Showtime showtime = showtimeRepository.findById(showtimeId)
+                .orElseThrow(() -> new AppException("Showtime not found"));
+
+        Room room = showtime.getRoom();
+        List<Seat> seats = seatRepository.findByRoomIdAndStatusTrue(room.getId());
+
+        List<Long> bookedSeatIds = bookingDetailRepository.findBookedSeatIdsByShowtime(showtimeId);
+
+        return seats.stream().map(seat -> {
+            SeatResponse response = new SeatResponse();
+            response.setId(seat.getId());
+            response.setSeatCode(seat.getSeatCode());
+            response.setSeatType(seat.getType());
+            response.setRowChar(seat.getRowChar());
+            response.setColNum(seat.getColNum());
+            response.setAvailable(!bookedSeatIds.contains(seat.getId()));
+
+            SeatPrice seatPrice = seatPriceRepository.findLatestPrice(
+                    room.getType(), seat.getType(), java.time.LocalDate.now()).orElse(null);
+
+            BigDecimal price = BigDecimal.valueOf(seat.getType().name().equals("VIP") ? 80000 : 60000);
+            if (seatPrice != null) {
+                price = seatPrice.getPrice();
+            }
+            response.setPrice(price);
+
+            return response;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
-    @LogAction(action = "CREATE", target = "SHOWTIME")
     public ShowtimeResponse createShowtime(ShowtimeRequest request) {
         Movie movie = movieRepository.findById(request.getMovieId())
-                .orElseThrow(() -> new AppException("Không tìm thấy phim"));
+                .orElseThrow(() -> new AppException("Phim không tồn tại"));
         Room room = roomRepository.findById(request.getRoomId())
-                .orElseThrow(() -> new AppException("Không tìm thấy phòng"));
-
-        LocalDateTime startTime = request.getStartTime();
-        LocalDateTime endTime = startTime.plusMinutes(movie.getDuration() + CLEANING_TIME_MINUTES);
-
-        validateShowtimeConflict(null, room.getId(), startTime, endTime);
+                .orElseThrow(() -> new AppException("Phòng không tồn tại"));
 
         Showtime showtime = new Showtime();
         showtime.setMovie(movie);
         showtime.setRoom(room);
-        showtime.setStartTime(startTime);
-        showtime.setEndTime(endTime);
+        showtime.setStartTime(request.getStartTime());
+        
+        // Chặn trùng lịch (Bao gồm 15p dọn dẹp)
+        // Khoảng thời gian cần kiểm tra: [S - 15p, E + 15p]
+        LocalDateTime checkStart = request.getStartTime().minusMinutes(15);
+        LocalDateTime checkEnd = request.getStartTime().plusMinutes(movie.getDuration() + 15);
+        
+        List<Showtime> overlaps = showtimeRepository.findOverlappingShowtimes(
+                room.getId(), checkStart, checkEnd);
+        if (!overlaps.isEmpty()) {
+            throw new AppException("Xung đột thời gian: Suất chiếu này chồng lấn với suất chiếu khác hoặc khoảng hở dọn dẹp.");
+        }
+
+        showtime.setEndTime(request.getStartTime().plusMinutes(movie.getDuration()));
         showtime.setStatus(ShowtimeStatus.UPCOMING);
 
-        Showtime saved = showtimeRepository.save(showtime);
-        return modelMapper.map(saved, ShowtimeResponse.class);
+        return mapToResponse(showtimeRepository.save(showtime));
     }
 
     @Override
     @Transactional
-    @LogAction(action = "UPDATE", target = "SHOWTIME")
     public ShowtimeResponse updateShowtime(Long id, ShowtimeRequest request) {
         Showtime showtime = showtimeRepository.findById(id)
-                .orElseThrow(() -> new AppException("Không tìm thấy suất chiếu"));
+                .orElseThrow(() -> new AppException("Suất chiếu không tồn tại"));
         
         Movie movie = movieRepository.findById(request.getMovieId())
-                .orElseThrow(() -> new AppException("Không tìm thấy phim"));
+                .orElseThrow(() -> new AppException("Phim không tồn tại"));
         Room room = roomRepository.findById(request.getRoomId())
-                .orElseThrow(() -> new AppException("Không tìm thấy phòng"));
-
-        LocalDateTime startTime = request.getStartTime();
-        LocalDateTime endTime = startTime.plusMinutes(movie.getDuration() + CLEANING_TIME_MINUTES);
-
-        // Kiểm tra xung đột, loại trừ chính nó
-        validateShowtimeConflict(id, room.getId(), startTime, endTime);
+                .orElseThrow(() -> new AppException("Phòng không tồn tại"));
 
         showtime.setMovie(movie);
         showtime.setRoom(room);
-        showtime.setStartTime(startTime);
-        showtime.setEndTime(endTime);
-
-        Showtime updated = showtimeRepository.save(showtime);
-        return modelMapper.map(updated, ShowtimeResponse.class);
-    }
-
-    private void validateShowtimeConflict(Long excludeId, Long roomId, LocalDateTime startTime, LocalDateTime endTime) {
-        // Mở rộng phạm vi tìm kiếm sang cả ngày hôm trước và hôm sau để xử lý suất xuyên đêm
-        LocalDateTime searchStart = startTime.toLocalDate().minusDays(1).atStartOfDay();
-        LocalDateTime searchEnd = startTime.toLocalDate().plusDays(1).atTime(23, 59, 59);
+        showtime.setStartTime(request.getStartTime());
+        showtime.setEndTime(request.getStartTime().plusMinutes(movie.getDuration()));
         
-        List<Showtime> existingShowtimes = showtimeRepository.findByRoomAndDate(roomId, searchStart, searchEnd);
-
-        for (Showtime s : existingShowtimes) {
-            if (excludeId != null && s.getId().equals(excludeId)) continue;
-
-            // Logic Overlap: [Start1, End1] giao [Start2, End2] nếu Start1 < End2 và End1 > Start2
-            if (startTime.isBefore(s.getEndTime()) && endTime.isAfter(s.getStartTime())) {
-                String movieTitle = (s.getMovie() != null) ? s.getMovie().getTitle() : "Phim khác";
-                throw new AppException(String.format(
-                    "XUNG ĐỘT LỊCH CHIẾU: Phòng này đã có suất chiếu phim '%s' từ %s đến %s (đã bao gồm thời gian dọn dẹp).",
-                    movieTitle,
-                    s.getStartTime().toLocalTime(),
-                    s.getEndTime().toLocalTime()
-                ));
-            }
-        }
+        return mapToResponse(showtimeRepository.save(showtime));
     }
 
     @Override
     @Transactional
-    @LogAction(action = "DELETE", target = "SHOWTIME")
     public void deleteShowtime(Long id) {
         if (!showtimeRepository.existsById(id)) {
-            throw new AppException("Không tìm thấy suất chiếu");
+            throw new AppException("Suất chiếu không tồn tại");
         }
         showtimeRepository.deleteById(id);
+    }
+
+    private ShowtimeResponse mapToResponse(Showtime showtime) {
+        ShowtimeResponse response = new ShowtimeResponse();
+        response.setId(showtime.getId());
+        response.setMovieId(showtime.getMovie().getId());
+        response.setMovieTitle(showtime.getMovie().getTitle());
+        if (showtime.getRoom() != null) {
+            response.setRoomId(showtime.getRoom().getId());
+            response.setRoomName(showtime.getRoom().getName());
+            if (showtime.getRoom().getType() != null) {
+                response.setRoomType(showtime.getRoom().getType().name());
+            }
+        }
+        response.setStartTime(showtime.getStartTime());
+        response.setEndTime(showtime.getEndTime());
+        response.setBasePrice(BigDecimal.valueOf(60000));
+        response.setStatus(showtime.getStatus());
+        return response;
     }
 }

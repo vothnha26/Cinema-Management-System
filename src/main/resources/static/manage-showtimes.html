@@ -218,33 +218,28 @@
             <div class="modal-body p-4">
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Phim</label>
-                    <select class="form-select form-select-custom">
-                        <option>Chọn phim...</option>
-                        <option>Avengers: Secret Wars</option>
-                        <option>The Dark Knight Returns</option>
-                        <option>Jurassic World 4</option>
+                    <select id="movieSelect" class="form-select form-select-custom">
+                        <option selected disabled>Đang tải phim...</option>
                     </select>
                 </div>
                 <div class="row mb-3">
                     <div class="col-6">
                         <label class="form-label small fw-bold text-muted">Ngày chiếu</label>
-                        <input type="date" class="form-control form-control-custom" value="2024-05-20">
+                        <input type="date" id="showDate" class="form-control form-control-custom">
                     </div>
                     <div class="col-6">
                         <label class="form-label small fw-bold text-muted">Giờ bắt đầu</label>
-                        <input type="time" class="form-control form-control-custom">
+                        <input type="time" id="startTime" class="form-control form-control-custom">
                     </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Phòng chiếu</label>
-                    <select class="form-select form-select-custom">
-                        <option>Phòng 1 (Standard)</option>
-                        <option>Phòng 2 (IMAX)</option>
-                        <option>Phòng 3 (Gold Class)</option>
+                    <select id="roomSelect" class="form-select form-select-custom">
+                        <option selected disabled>Đang tải phòng...</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Định dạng</label>
+                    <label class="form-label small fw-bold text-muted">Định dạng (Tham khảo)</label>
                     <div class="d-flex gap-3 mt-2">
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="format" id="f1" checked>
@@ -259,12 +254,83 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-danger px-4 fw-bold">XÁC NHẬN</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="saveShowtime()">XÁC NHẬN</button>
             </div>
         </div>
     </div>
 </div>
 
+<script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const addShowtimeModal = new bootstrap.Modal(document.getElementById('addShowtimeModal'));
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadMovies();
+        loadRooms();
+        loadShowtimes();
+        document.getElementById('showDate').valueAsDate = new Date();
+    });
+
+    async function loadMovies() {
+        const res = await api.get('/movies');
+        if (res.success) {
+            const select = document.getElementById('movieSelect');
+            select.innerHTML = '<option selected disabled>Chọn phim...</option>' + 
+                res.data.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+        }
+    }
+
+    async function loadRooms() {
+        const res = await api.get('/rooms');
+        if (res.success) {
+            const select = document.getElementById('roomSelect');
+            select.innerHTML = '<option selected disabled>Chọn phòng...</option>' + 
+                res.data.map(r => `<option value="${r.id}">${r.name} (${r.type})</option>`).join('');
+        }
+    }
+
+    async function loadShowtimes() {
+        const res = await api.get('/showtimes');
+        if (res.success) {
+            renderShowtimes(res.data);
+        }
+    }
+
+    function renderShowtimes(showtimes) {
+        // Tạm thời log ra, sẽ render vào bảng theo Row của từng phòng (UI đã có mẫu tĩnh)
+        console.log('API Showtimes:', showtimes);
+    }
+
+    async function saveShowtime() {
+        const date = document.getElementById('showDate').value; // YYYY-MM-DD
+        const time = document.getElementById('startTime').value; // HH:mm
+        
+        if (!date || !time) {
+            alert('Vui lòng chọn đầy đủ ngày và giờ chiếu!');
+            return;
+        }
+
+        const data = {
+            movieId: parseInt(document.getElementById('movieSelect').value),
+            roomId: parseInt(document.getElementById('roomSelect').value),
+            startTime: `${date}T${time}:00` // ISO format for LocalDateTime
+        };
+
+        if (isNaN(data.movieId) || isNaN(data.roomId)) {
+            alert('Vui lòng chọn Phim và Phòng!');
+            return;
+        }
+
+        const res = await api.post('/showtimes', data);
+        if (res.success) {
+            addShowtimeModal.hide();
+            loadShowtimes();
+            alert('Tạo suất chiếu thành công!');
+        } else {
+            alert('Lỗi: ' + res.message);
+        }
+    }
+</script>
 </body>
 </html>

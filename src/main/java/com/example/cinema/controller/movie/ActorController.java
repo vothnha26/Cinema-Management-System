@@ -3,6 +3,7 @@ package com.example.cinema.controller.movie;
 import com.example.cinema.model.dto.response.ActorResponse;
 import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.repository.movie.ActorRepository;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

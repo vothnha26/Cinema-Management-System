@@ -3,15 +3,21 @@ package com.example.cinema.service.booking.impl;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.OnlineBookingRequest;
 import com.example.cinema.model.dto.response.BookingResponse;
-import com.example.cinema.model.entity.*;
+import com.example.cinema.model.entity.Booking;
+import com.example.cinema.model.entity.Combo;
+import com.example.cinema.model.entity.Customer;
+import com.example.cinema.model.entity.Payment;
+import com.example.cinema.model.entity.User;
 import com.example.cinema.model.enums.BookingStatus;
 import com.example.cinema.model.enums.PaymentMethod;
 import com.example.cinema.model.enums.PaymentStatus;
 import com.example.cinema.repository.booking.BookingRepository;
 import com.example.cinema.repository.booking.PaymentRepository;
 import com.example.cinema.repository.commerce.ComboRepository;
+import com.example.cinema.repository.showtime.ShowtimeRepository;
 import com.example.cinema.repository.user.CustomerRepository;
 import com.example.cinema.service.notification.TicketBookedEvent;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,17 +38,20 @@ public class CustomerBookingFacade {
     private final PaymentRepository paymentRepository;
     private final ComboRepository comboRepository;
     private final CustomerRepository customerRepository;
+    private final ShowtimeRepository showtimeRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public CustomerBookingFacade(BookingRepository bookingRepository,
-                                 PaymentRepository paymentRepository,
-                                 ComboRepository comboRepository,
-                                 CustomerRepository customerRepository,
-                                 ApplicationEventPublisher eventPublisher) {
+            PaymentRepository paymentRepository,
+            ComboRepository comboRepository,
+            CustomerRepository customerRepository,
+            ShowtimeRepository showtimeRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.comboRepository = comboRepository;
         this.customerRepository = customerRepository;
+        this.showtimeRepository = showtimeRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -69,7 +78,8 @@ public class CustomerBookingFacade {
         } else {
             // Guest validate
             if (request.getGuestName() == null || request.getGuestPhone() == null || request.getGuestEmail() == null ||
-                request.getGuestName().isBlank() || request.getGuestPhone().isBlank() || request.getGuestEmail().isBlank()) {
+                    request.getGuestName().isBlank() || request.getGuestPhone().isBlank()
+                    || request.getGuestEmail().isBlank()) {
                 throw new AppException("Vui lòng cung cấp đầy đủ thông tin khách vãng lai (Tên, Email, SĐT).");
             }
         }
@@ -77,7 +87,7 @@ public class CustomerBookingFacade {
         // 2. Tính tiền (Mockup Seat Price)
         BigDecimal totalPrice = BigDecimal.valueOf(request.getSeatIds().size() * 95000L);
         BigDecimal comboTotal = BigDecimal.ZERO;
-        
+
         if (request.getCombos() != null && !request.getCombos().isEmpty()) {
             for (Map.Entry<Long, Integer> entry : request.getCombos().entrySet()) {
                 Combo combo = comboRepository.findById(entry.getKey()).orElse(null);
@@ -96,13 +106,18 @@ public class CustomerBookingFacade {
         }
 
         // 3. Tạo Booking
-        String bookingCode = "SC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String bookingCode = "BKG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         Booking booking = new Booking();
         booking.setBookingCode(bookingCode);
         booking.setTotalPrice(totalPrice);
-        // GIẢ LẬP THANH TOÁN -> CONFIRMED LUÔN
-        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setStatus(BookingStatus.PENDING);
         
+        // Gán showtime từ request
+        if (request.getShowtimeId() != null) {
+            booking.setShowtime(showtimeRepository.findById(request.getShowtimeId())
+                .orElseThrow(() -> new AppException("Suất chiếu không tồn tại")));
+        }
+
         if (customer != null) {
             booking.setCustomer(customer);
         }
@@ -114,15 +129,12 @@ public class CustomerBookingFacade {
         payment.setAmount(totalPrice);
         payment.setPaymentMethod(PaymentMethod.valueOf(
                 request.getPaymentMethod() != null ? request.getPaymentMethod() : "MOMO"));
-        payment.setPaymentStatus(PaymentStatus.SUCCESS);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setTransactionId("ONL-" + bookingCode);
         payment.setPaidAt(LocalDateTime.now());
         paymentRepository.save(payment);
 
         // 5. Gửi Notification (Dù guest cũng gửi mail qua Observer Pattern)
-        // Vì TicketBookedEvent hiện đang nhận User object, ta sẽ tạo mockup 1 User giả nếu là Guest,
-        // hoặc nâng cấp NotificationStrategy để support direct email.
-        // Tạm thời truyền event có User ảo nếu là khách vãng lai.
         User targetUser = customer != null ? customer.getUser() : new User();
         if (customer == null) {
             targetUser.setEmail(emailToNotify);
@@ -136,16 +148,15 @@ public class CustomerBookingFacade {
                 "Phim Online", // Lấy từ showtime thật sau
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")),
                 request.getSeatIds().size() + " ghế",
-                totalPrice.toPlainString() + "đ"
-        ));
+                totalPrice.toPlainString() + "đ"));
 
         // 6. Response
         BookingResponse response = new BookingResponse();
         response.setId(booking.getId());
         response.setBookingCode(bookingCode);
         response.setTotalPrice(totalPrice);
-        response.setStatus(BookingStatus.CONFIRMED.name());
-        response.setPaymentMethod(payment.getPaymentMethod().name());
+        response.setStatus(BookingStatus.CONFIRMED);
+        response.setPaymentMethod(payment.getPaymentMethod());
         response.setCustomerName(nameToNotify);
         response.setCreatedAt(booking.getCreatedAt());
 

@@ -4,6 +4,7 @@ import com.example.cinema.model.dto.request.OnlineBookingRequest;
 import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.model.dto.response.BookingResponse;
 import com.example.cinema.service.booking.impl.CustomerBookingFacade;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,7 +27,8 @@ public class PublicBookingController {
     public ResponseEntity<ApiResponse<BookingResponse>> checkout(@RequestBody OnlineBookingRequest request) {
         String username = null;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
+        if (authentication != null && authentication.isAuthenticated()
+                && !authentication.getName().equals("anonymousUser")) {
             username = authentication.getName();
         }
 

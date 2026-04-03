@@ -1,8 +1,6 @@
 package com.example.cinema.controller;
 
-import com.example.cinema.model.dto.tmdb.TMDBSearchResponse;
-import com.example.cinema.model.dto.tmdb.TMDBMovieDto;
-import com.example.cinema.service.TMDBService;
+import com.example.cinema.service.movie.tmdb.TMDBService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

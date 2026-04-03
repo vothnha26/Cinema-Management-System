@@ -6,6 +6,7 @@ package com.example.cinema.service.notification;
  * Khi cần thêm kênh mới (SMS, Zalo, Push), chỉ cần tạo class mới implement
  * interface này mà KHÔNG sửa bất kỳ code nào đang có.
  */
+
 public interface INotificationStrategy {
 
     /**

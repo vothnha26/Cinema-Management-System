@@ -2,13 +2,14 @@ package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.RoomType;
 import com.example.cinema.model.enums.SeatType;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "seat_prices", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"room_type", "seat_type", "effective_date"})
+        @UniqueConstraint(columnNames = { "room_type", "seat_type", "effective_date" })
 })
 public class SeatPrice {
     @Id
@@ -32,23 +33,54 @@ public class SeatPrice {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
-    public SeatPrice() {}
+    public SeatPrice() {
+    }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public RoomType getRoomType() { return roomType; }
-    public void setRoomType(RoomType roomType) { this.roomType = roomType; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public SeatType getSeatType() { return seatType; }
-    public void setSeatType(SeatType seatType) { this.seatType = seatType; }
+    public RoomType getRoomType() {
+        return roomType;
+    }
 
-    public BigDecimal getPrice() { return price; }
-    public void setPrice(BigDecimal price) { this.price = price; }
+    public void setRoomType(RoomType roomType) {
+        this.roomType = roomType;
+    }
 
-    public LocalDate getEffectiveDate() { return effectiveDate; }
-    public void setEffectiveDate(LocalDate effectiveDate) { this.effectiveDate = effectiveDate; }
+    public SeatType getSeatType() {
+        return seatType;
+    }
 
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    public void setSeatType(SeatType seatType) {
+        this.seatType = seatType;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public LocalDate getEffectiveDate() {
+        return effectiveDate;
+    }
+
+    public void setEffectiveDate(LocalDate effectiveDate) {
+        this.effectiveDate = effectiveDate;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
 }

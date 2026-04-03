@@ -1,6 +1,7 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.BookingStatus;
+
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -16,7 +17,7 @@ public class Booking {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(name = "customer_id", nullable = true)
     private Customer customer;
 
     @ManyToOne
@@ -50,9 +51,12 @@ public class Booking {
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     private Payment payment;
 
-    public Booking() {}
+    public Booking() {
+    }
 
-    public Booking(Long id, Customer customer, Showtime showtime, Promotion promotion, String bookingCode, BigDecimal totalPrice, BookingStatus status, LocalDateTime createdAt, List<BookingDetail> details, List<BookingCombo> combos, Payment payment) {
+    public Booking(Long id, Customer customer, Showtime showtime, Promotion promotion, String bookingCode,
+            BigDecimal totalPrice, BookingStatus status, LocalDateTime createdAt, List<BookingDetail> details,
+            List<BookingCombo> combos, Payment payment) {
         this.id = id;
         this.customer = customer;
         this.showtime = showtime;

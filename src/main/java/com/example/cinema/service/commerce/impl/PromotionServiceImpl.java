@@ -3,14 +3,14 @@ package com.example.cinema.service.commerce.impl;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.PromotionRequest;
 import com.example.cinema.model.dto.response.PromotionResponse;
-import com.example.cinema.model.entity.Promotion;
 import com.example.cinema.model.entity.Customer;
-import com.example.cinema.model.enums.MembershipTier;
+import com.example.cinema.model.entity.Promotion;
 import com.example.cinema.repository.commerce.PromotionRepository;
 import com.example.cinema.repository.user.CustomerRepository;
-import com.example.cinema.service.commerce.PromotionService;
 import com.example.cinema.service.commerce.pricing.DiscountStrategy;
 import com.example.cinema.service.commerce.pricing.DiscountStrategyFactory;
+import com.example.cinema.service.commerce.PromotionService;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,10 +30,10 @@ public class PromotionServiceImpl implements PromotionService {
     private final DiscountStrategyFactory strategyFactory;
     private final ModelMapper modelMapper;
 
-    public PromotionServiceImpl(PromotionRepository promotionRepository, 
-                                CustomerRepository customerRepository,
-                                DiscountStrategyFactory strategyFactory,
-                                ModelMapper modelMapper) {
+    public PromotionServiceImpl(PromotionRepository promotionRepository,
+            CustomerRepository customerRepository,
+            DiscountStrategyFactory strategyFactory,
+            ModelMapper modelMapper) {
         this.promotionRepository = promotionRepository;
         this.customerRepository = customerRepository;
         this.strategyFactory = strategyFactory;
@@ -59,14 +59,13 @@ public class PromotionServiceImpl implements PromotionService {
                 request.getCode(),
                 request.getName(),
                 request.getDiscountType(),
-                request.getDiscountValue()
-        )
-        .validity(request.getStartDate(), request.getEndDate())
-        .minOrder(request.getMinOrderAmount())
-        .maxDiscount(request.getMaxDiscountAmount())
-        .limit(request.getUsageLimit())
-        .minTier(request.getMinTier())
-        .build();
+                request.getDiscountValue())
+                .validity(request.getStartDate(), request.getEndDate())
+                .minOrder(request.getMinOrderAmount())
+                .maxDiscount(request.getMaxDiscountAmount())
+                .limit(request.getUsageLimit())
+                .minTier(request.getMinTier())
+                .build();
 
         Promotion saved = promotionRepository.save(promotion);
         return modelMapper.map(saved, PromotionResponse.class);
@@ -85,7 +84,7 @@ public class PromotionServiceImpl implements PromotionService {
 
         PromotionResponse response = modelMapper.map(promotion, PromotionResponse.class);
         response.setAppliedDiscountAmount(discountAmount);
-        
+
         return response;
     }
 
@@ -113,10 +112,10 @@ public class PromotionServiceImpl implements PromotionService {
             String username = ((UserDetails) principal).getUsername();
             Customer customer = customerRepository.findByUserUsername(username)
                     .orElse(null); // Manager/Admin might not be in Customer table
-            
+
             if (customer != null && promotion.getMinTier() != null) {
                 if (customer.getMembershipTier().ordinal() < promotion.getMinTier().ordinal()) {
-                    throw new AppException("Hạng thành viên của bạn (" + customer.getMembershipTier() + 
+                    throw new AppException("Hạng thành viên của bạn (" + customer.getMembershipTier() +
                             ") chưa đủ điều kiện áp dụng mã này (Yêu cầu tối thiểu: " + promotion.getMinTier() + ")");
                 }
             }

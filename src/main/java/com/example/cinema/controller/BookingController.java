@@ -2,7 +2,7 @@ package com.example.cinema.controller;
 
 import com.example.cinema.model.dto.request.BookingRequest;
 import com.example.cinema.model.dto.response.BookingResponse;
-import com.example.cinema.service.BookingService;
+import com.example.cinema.service.booking.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

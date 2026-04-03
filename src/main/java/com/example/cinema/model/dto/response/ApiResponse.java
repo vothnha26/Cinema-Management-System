@@ -55,7 +55,6 @@ public class ApiResponse<T> {
         return response;
     }
 
-<<<<<<< HEAD
     public static <T> ApiResponse<T> created(T data) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setSuccess(true);
@@ -64,8 +63,6 @@ public class ApiResponse<T> {
         return response;
     }
 
-=======
->>>>>>> feature/Customer
     public static <T> ApiResponse<T> error(String message, int code) {
         ApiResponse<T> response = new ApiResponse<>();
         response.setSuccess(false);

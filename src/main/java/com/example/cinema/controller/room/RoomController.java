@@ -5,6 +5,7 @@ import com.example.cinema.model.dto.request.SeatBulkRequest;
 import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.model.dto.response.RoomResponse;
 import com.example.cinema.service.room.RoomService;
+
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,14 +40,14 @@ public class RoomController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<RoomResponse>> updateRoom(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestBody @Valid RoomRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(roomService.updateRoom(id, request)));
     }
 
     @PutMapping("/{id}/layout")
     public ResponseEntity<ApiResponse<RoomResponse>> updateLayout(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestBody SeatBulkRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(roomService.updateSeats(id, request)));
     }

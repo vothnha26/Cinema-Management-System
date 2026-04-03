@@ -1,23 +1,25 @@
 package com.example.cinema.service.movie.impl;
 
+import com.example.cinema.config.LogAction;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.MovieRequest;
 import com.example.cinema.model.dto.response.MovieResponse;
-import com.example.cinema.model.entity.Genre;
-import com.example.cinema.model.entity.Movie;
-import com.example.cinema.repository.movie.GenreRepository;
-import com.example.cinema.repository.movie.MovieRepository;
-import com.example.cinema.service.infrastructure.CloudinaryService;
+import com.example.cinema.model.dto.response.PersonResponse;
+import com.example.cinema.model.entity.*;
+import com.example.cinema.model.enums.AgeRating;
+import com.example.cinema.model.enums.DirectorRole;
+import com.example.cinema.model.enums.MovieStatus;
+import com.example.cinema.repository.movie.*;
+import com.example.cinema.service.movie.MovieMediaService;
 import com.example.cinema.service.movie.MovieService;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
-import java.util.HashSet;
+
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,23 +28,21 @@ public class MovieServiceImpl implements MovieService {
 
     private final MovieRepository movieRepository;
     private final GenreRepository genreRepository;
-    private final com.example.cinema.repository.movie.ActorRepository actorRepository;
-    private final com.example.cinema.repository.movie.DirectorRepository directorRepository;
-    private final com.example.cinema.repository.movie.MovieActorRepository movieActorRepository;
-    private final com.example.cinema.repository.movie.MovieDirectorRepository movieDirectorRepository;
-    private final com.example.cinema.service.movie.MovieMediaService movieMediaService;
+    private final ActorRepository actorRepository;
+    private final DirectorRepository directorRepository;
+    private final MovieActorRepository movieActorRepository;
+    private final MovieDirectorRepository movieDirectorRepository;
+    private final MovieMediaService movieMediaService;
     private final ModelMapper modelMapper;
-    private final jakarta.persistence.EntityManager entityManager;
 
     public MovieServiceImpl(MovieRepository movieRepository, 
                             GenreRepository genreRepository,
-                            com.example.cinema.repository.movie.ActorRepository actorRepository,
-                            com.example.cinema.repository.movie.DirectorRepository directorRepository,
-                            com.example.cinema.repository.movie.MovieActorRepository movieActorRepository,
-                            com.example.cinema.repository.movie.MovieDirectorRepository movieDirectorRepository,
-                            com.example.cinema.service.movie.MovieMediaService movieMediaService, 
-                            ModelMapper modelMapper,
-                            jakarta.persistence.EntityManager entityManager) {
+                            ActorRepository actorRepository,
+                            DirectorRepository directorRepository,
+                            MovieActorRepository movieActorRepository,
+                            MovieDirectorRepository movieDirectorRepository,
+                            MovieMediaService movieMediaService,
+                            ModelMapper modelMapper) {
         this.movieRepository = movieRepository;
         this.genreRepository = genreRepository;
         this.actorRepository = actorRepository;
@@ -51,123 +51,181 @@ public class MovieServiceImpl implements MovieService {
         this.movieDirectorRepository = movieDirectorRepository;
         this.movieMediaService = movieMediaService;
         this.modelMapper = modelMapper;
-        this.entityManager = entityManager;
     }
 
     @Override
     public List<MovieResponse> getAllMovies() {
-        return movieRepository.findAll().stream()
-                .map(movie -> modelMapper.map(movie, MovieResponse.class))
+        return movieRepository.findAll(Sort.by(Sort.Direction.DESC, "id")).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    @LogAction(action = "CREATE", target = "MOVIE")
+    public MovieResponse createMovie(MovieRequest request, MultipartFile poster) {
+        Movie movie = new Movie();
+        movie.setTitle(request.getTitle());
+        movie.setDescription(request.getDescription());
+        movie.setDuration(request.getDuration());
+        movie.setReleaseDate(request.getReleaseDate());
+        movie.setStatus(request.getStatus() != null ? request.getStatus() : MovieStatus.COMING);
+        movie.setRating(request.getRating() != null ? request.getRating() : 0.0);
+        
+        try {
+            movie.setAgeRating(AgeRating.valueOf(request.getAgeRating()));
+        } catch (Exception e) {
+            movie.setAgeRating(AgeRating.P);
+        }
+        
+        if (poster != null && !poster.isEmpty()) {
+            try {
+                movie.setPosterUrl(movieMediaService.uploadPoster(poster));
+            } catch (IOException e) {
+                movie.setPosterUrl(request.getPosterUrl());
+            }
+        } else {
+            movie.setPosterUrl(request.getPosterUrl());
+        }
+        movie.setTrailerUrl(request.getTrailerUrl());
+        movie.setTmdbId(request.getTmdbId());
+
+        if (request.getGenres() != null) {
+            Set<Genre> genres = request.getGenres().stream()
+                .map(name -> genreRepository.findByName(name)
+                    .orElseGet(() -> genreRepository.save(new Genre(null, name))))
+                .collect(Collectors.toSet());
+            movie.setGenres(genres);
+        }
+
+        Movie savedMovie = movieRepository.save(movie);
+
+        if (request.getDirector() != null && !request.getDirector().isEmpty()) {
+            String[] directors = request.getDirector().split(",");
+            String dirAvatar = request.getDirectorAvatarUrl();
+            if (dirAvatar != null && !dirAvatar.startsWith("http")) dirAvatar = "https://image.tmdb.org/t/p/w200" + dirAvatar;
+
+            for (String dName : directors) {
+                String name = dName.trim();
+                final String finalAvatar = dirAvatar;
+                Director director = directorRepository.findByName(name)
+                    .map(d -> {
+                        if (d.getAvatarUrl() == null) d.setAvatarUrl(finalAvatar);
+                        return directorRepository.save(d);
+                    })
+                    .orElseGet(() -> directorRepository.save(new Director(null, name, finalAvatar)));
+                
+                MovieDirector.MovieDirectorId mdId = new MovieDirector.MovieDirectorId(savedMovie.getId(), director.getId());
+                movieDirectorRepository.save(new MovieDirector(mdId, savedMovie, director, DirectorRole.MAIN));
+            }
+        }
+
+        if (request.getActors() != null && !request.getActors().isEmpty()) {
+            String[] cast = request.getActors().split(",");
+            String[] actorAvatars = request.getActorAvatarUrls() != null ? request.getActorAvatarUrls().split(",") : new String[0];
+            
+            for (int i = 0; i < cast.length; i++) {
+                String name = cast[i].trim();
+                String avatar = (i < actorAvatars.length && !actorAvatars[i].isEmpty()) ? actorAvatars[i].trim() : null;
+                if (avatar != null && !avatar.startsWith("http")) avatar = "https://image.tmdb.org/t/p/w200" + avatar;
+                
+                final String finalAvatar = avatar;
+                Actor actor = actorRepository.findByName(name)
+                    .map(a -> {
+                        if (a.getAvatarUrl() == null) a.setAvatarUrl(finalAvatar);
+                        return actorRepository.save(a);
+                    })
+                    .orElseGet(() -> actorRepository.save(new Actor(null, name, finalAvatar)));
+                
+                MovieActor.MovieActorId maId = new MovieActor.MovieActorId(savedMovie.getId(), actor.getId());
+                movieActorRepository.save(new MovieActor(maId, savedMovie, actor, "N/A", i));
+            }
+        }
+        
+        return mapToResponse(savedMovie);
+    }
+
+    @Override
+    @Transactional
+    @LogAction(action = "UPDATE", target = "MOVIE")
+    public MovieResponse updateMovie(Long id, MovieRequest request, MultipartFile poster) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new AppException("Movie not found"));
+        
+        movie.setTitle(request.getTitle());
+        movie.setDescription(request.getDescription());
+        movie.setDuration(request.getDuration());
+        movie.setReleaseDate(request.getReleaseDate());
+        movie.setRating(request.getRating() != null ? request.getRating() : 0.0);
+        
+        if (poster != null && !poster.isEmpty()) {
+            try {
+                movie.setPosterUrl(movieMediaService.uploadPoster(poster));
+            } catch (IOException e) {
+                // Keep old one or use new URL
+            }
+        } else {
+            movie.setPosterUrl(request.getPosterUrl());
+        }
+        
+        movie.setTrailerUrl(request.getTrailerUrl());
+        
+        return mapToResponse(movieRepository.save(movie));
+    }
+
+    @Override
+    @Transactional
+    @LogAction(action = "DELETE", target = "MOVIE")
+    public void deleteMovie(Long id) {
+        if (!movieRepository.existsById(id)) {
+            throw new AppException("Movie not found");
+        }
+        movieActorRepository.deleteByMovieId(id);
+        movieDirectorRepository.deleteByMovieId(id);
+        movieRepository.deleteById(id);
+    }
+
+    @Override
+    public List<MovieResponse> getShowingMovies() {
+        return movieRepository.findByStatus(MovieStatus.SHOWING).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<MovieResponse> getComingSoonMovies() {
+        return movieRepository.findByStatus(MovieStatus.COMING).stream()
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public MovieResponse getMovieById(Long id) {
-        // Clear cache để đảm bảo load đầy đủ quan hệ mới nhất
-        entityManager.flush();
-        entityManager.clear();
-        
         Movie movie = movieRepository.findById(id)
-                .orElseThrow(() -> new AppException("Không tìm thấy phim với ID: " + id));
-        return modelMapper.map(movie, MovieResponse.class);
+                .orElseThrow(() -> new AppException("Movie not found"));
+        return mapToResponse(movie);
     }
 
-    @Override
-    @Transactional
-    @com.example.cinema.config.LogAction(action = "CREATE", target = "MOVIE")
-    public MovieResponse createMovie(MovieRequest request, MultipartFile poster) {
-        Movie movie = modelMapper.map(request, Movie.class);
-        
-        updateMovieGenres(movie, request);
-        uploadAndSetPoster(movie, poster);
-
-        Movie savedMovie = movieRepository.save(movie);
-        
-        // Lưu Actor & Director sau khi có movie ID
-        updateMovieActorsAndDirectors(savedMovie, request);
-        
-        // Refresh movie object to include new relations for mapping
-        return getMovieById(savedMovie.getId());
-    }
-
-    @Override
-    @Transactional
-    @com.example.cinema.config.LogAction(action = "UPDATE", target = "MOVIE")
-    public MovieResponse updateMovie(Long id, MovieRequest request, MultipartFile poster) {
-        Movie movie = movieRepository.findById(id)
-                .orElseThrow(() -> new AppException("Không tìm thấy phim với ID: " + id));
-
-        modelMapper.map(request, movie);
-        
-        updateMovieGenres(movie, request);
-        uploadAndSetPoster(movie, poster);
-
-        Movie updatedMovie = movieRepository.save(movie);
-        
-        // Cập nhật lại danh sách Actor/Director
-        movieActorRepository.deleteByMovieId(id);
-        movieDirectorRepository.deleteByMovieId(id);
-        updateMovieActorsAndDirectors(updatedMovie, request);
-
-        return getMovieById(id);
-    }
-
-    private void updateMovieGenres(Movie movie, MovieRequest request) {
-        if (request.getGenreIds() != null) {
-            List<com.example.cinema.model.entity.Genre> genres = genreRepository.findAllById(request.getGenreIds());
-            movie.setGenres(new HashSet<>(genres));
+    private MovieResponse mapToResponse(Movie movie) {
+        MovieResponse response = modelMapper.map(movie, MovieResponse.class);
+        if (movie.getGenres() != null) {
+            response.setGenres(movie.getGenres().stream()
+                    .map(Genre::getName)
+                    .collect(Collectors.toList()));
         }
-    }
+        List<MovieActor> movieActors = movieActorRepository.findByMovieId(movie.getId());
+        response.setActors(movieActors.stream()
+                .map(ma -> new PersonResponse(ma.getActor().getName(), ma.getActor().getAvatarUrl()))
+                .collect(Collectors.toList()));
+        List<MovieDirector> movieDirectors = movieDirectorRepository.findByMovieId(movie.getId());
+        response.setDirectors(movieDirectors.stream()
+                .map(md -> new PersonResponse(md.getDirector().getName(), md.getDirector().getAvatarUrl()))
+                .collect(Collectors.toList()));
 
-    private void updateMovieActorsAndDirectors(Movie movie, MovieRequest request) {
-        if (request.getActorIds() != null) {
-            List<com.example.cinema.model.entity.MovieActor> movieActors = request.getActorIds().stream().map(actorId -> {
-                com.example.cinema.model.entity.Actor actor = actorRepository.findById(actorId)
-                        .orElseThrow(() -> new AppException("Không tìm thấy diễn viên ID: " + actorId));
-                com.example.cinema.model.entity.MovieActor movieActor = new com.example.cinema.model.entity.MovieActor();
-                movieActor.setId(new com.example.cinema.model.entity.MovieActor.MovieActorId(movie.getId(), actorId));
-                movieActor.setMovie(movie);
-                movieActor.setActor(actor);
-                return movieActor;
-            }).collect(Collectors.toList());
-            movieActorRepository.saveAll(movieActors);
-        }
-
-        if (request.getDirectorIds() != null) {
-            List<com.example.cinema.model.entity.MovieDirector> movieDirectors = request.getDirectorIds().stream().map(directorId -> {
-                com.example.cinema.model.entity.Director director = directorRepository.findById(directorId)
-                        .orElseThrow(() -> new AppException("Không tìm thấy đạo diễn ID: " + directorId));
-                com.example.cinema.model.entity.MovieDirector movieDirector = new com.example.cinema.model.entity.MovieDirector();
-                movieDirector.setId(new com.example.cinema.model.entity.MovieDirector.MovieDirectorId(movie.getId(), directorId));
-                movieDirector.setMovie(movie);
-                movieDirector.setDirector(director);
-                movieDirector.setRole(com.example.cinema.model.enums.DirectorRole.MAIN);
-                return movieDirector;
-            }).collect(Collectors.toList());
-            movieDirectorRepository.saveAll(movieDirectors);
-        }
-    }
-
-    private void uploadAndSetPoster(Movie movie, MultipartFile poster) {
-        if (poster != null && !poster.isEmpty()) {
-            try {
-                String posterUrl = movieMediaService.uploadPoster(poster);
-                movie.setPosterUrl(posterUrl);
-            } catch (IOException e) {
-                throw new AppException("Lỗi khi tải ảnh lên Cloudinary");
-            }
-        }
-    }
-
-    @Override
-    @Transactional
-    @com.example.cinema.config.LogAction(action = "DELETE", target = "MOVIE")
-    public void deleteMovie(Long id) {
-        if (!movieRepository.existsById(id)) {
-            throw new AppException("Không tìm thấy phim với ID: " + id);
-        }
-        movieActorRepository.deleteByMovieId(id);
-        movieDirectorRepository.deleteByMovieId(id);
-        movieRepository.deleteById(id);
+        response.setRating(movie.getRating() != null ? movie.getRating() : 0.0);
+        
+        response.setAgeRating(movie.getAgeRating() != null ? movie.getAgeRating().name() : "P");
+        response.setReleaseDate(movie.getReleaseDate());
+        return response;
     }
 }

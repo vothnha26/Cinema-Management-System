@@ -5,7 +5,8 @@ import com.example.cinema.model.dto.request.RegisterRequest;
 import com.example.cinema.model.dto.response.AuthResponse;
 
 /**
- * Interface xác thực (DIP: Controller phụ thuộc vào abstraction, không phụ thuộc vào implementation).
+ * Interface xác thực (DIP: Controller phụ thuộc vào abstraction, không phụ
+ * thuộc vào implementation).
  */
 public interface IAuthService {
 

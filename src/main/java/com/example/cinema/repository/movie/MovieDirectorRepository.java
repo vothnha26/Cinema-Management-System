@@ -2,9 +2,9 @@ package com.example.cinema.repository.movie;
 
 import com.example.cinema.model.entity.MovieDirector;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import java.util.List;
 
-@Repository
 public interface MovieDirectorRepository extends JpaRepository<MovieDirector, MovieDirector.MovieDirectorId> {
+    List<MovieDirector> findByMovieId(Long movieId);
     void deleteByMovieId(Long movieId);
 }

@@ -3,6 +3,7 @@ package com.example.cinema.service.room.strategy;
 import com.example.cinema.model.entity.Room;
 import com.example.cinema.model.entity.Seat;
 import com.example.cinema.model.enums.SeatType;
+
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class StandardLayoutStrategy implements SeatLayoutStrategy {
                 seat.setRoom(room);
                 seat.setRowChar(rowChar);
                 seat.setColNum(j);
-                
+
                 // Mặc định VIP ở hàng 5-6, Couple ở cuối
                 if (i >= 5 && i <= 6) {
                     seat.setType(SeatType.VIP);
@@ -29,7 +30,7 @@ public class StandardLayoutStrategy implements SeatLayoutStrategy {
                 } else {
                     seat.setType(SeatType.STANDARD);
                 }
-                
+
                 seat.setStatus(true);
                 seats.add(seat);
             }

@@ -11,6 +11,7 @@ import com.example.cinema.repository.room.RoomRepository;
 import com.example.cinema.repository.showtime.ShowtimeRepository;
 import com.example.cinema.service.movie.BuzzAnalysisService;
 import com.example.cinema.service.showtime.SchedulingService;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,10 +30,10 @@ public class SchedulingServiceImpl implements SchedulingService {
     private final ShowtimeRepository showtimeRepository;
     private final BuzzAnalysisService buzzAnalysisService;
 
-    public SchedulingServiceImpl(MovieRepository movieRepository, 
-                                 RoomRepository roomRepository,
-                                 ShowtimeRepository showtimeRepository,
-                                 BuzzAnalysisService buzzAnalysisService) {
+    public SchedulingServiceImpl(MovieRepository movieRepository,
+            RoomRepository roomRepository,
+            ShowtimeRepository showtimeRepository,
+            BuzzAnalysisService buzzAnalysisService) {
         this.movieRepository = movieRepository;
         this.roomRepository = roomRepository;
         this.showtimeRepository = showtimeRepository;
@@ -44,14 +45,14 @@ public class SchedulingServiceImpl implements SchedulingService {
         List<Movie> activeMovies = movieRepository.findAll().stream()
                 .filter(m -> m.getStatus() == MovieStatus.NOW_SHOWING || m.getStatus() == MovieStatus.PRE_RELEASE)
                 .collect(Collectors.toList());
-        
+
         List<Room> rooms = roomRepository.findAll();
         Map<Long, Double> buzzScores = buzzAnalysisService.getExternalBuzzScores();
 
         // 1. Lấy suất chiếu hiện có nếu là chế độ lấp chỗ trống
-        List<Showtime> existingShowtimes = (mode != null && mode.equalsIgnoreCase("FILL")) 
+        List<Showtime> existingShowtimes = (mode != null && mode.equalsIgnoreCase("FILL"))
                 ? showtimeRepository.findAllByStartTimeBetween(
-                    targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX))
+                        targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX))
                 : new ArrayList<>();
 
         // Sort movies by Priority + Buzz
@@ -64,7 +65,8 @@ public class SchedulingServiceImpl implements SchedulingService {
         });
 
         DayOfWeek dow = targetDate.getDayOfWeek();
-        LocalTime primeStart = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) ? LocalTime.of(10, 0) : LocalTime.of(17, 0);
+        LocalTime primeStart = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY) ? LocalTime.of(10, 0)
+                : LocalTime.of(17, 0);
         LocalTime primeEnd = LocalTime.of(23, 0);
 
         List<ShowtimeResponse> suggestions = new ArrayList<>();
@@ -84,15 +86,15 @@ public class SchedulingServiceImpl implements SchedulingService {
 
             while (currentTime.isBefore(LocalTime.of(23, 30))) {
                 final LocalTime startTimeFinal = currentTime;
-                
+
                 // 1. Kiểm tra xem thời điểm currentTime có đang nằm TRONG suất chiếu nào không
                 Optional<Showtime> overlappingShowtime = roomExisting.stream()
-                    .filter(s -> {
-                        LocalTime sStart = s.getStartTime().toLocalTime();
-                        LocalTime sEnd = s.getEndTime().toLocalTime().plusMinutes(15);
-                        return !startTimeFinal.isBefore(sStart) && startTimeFinal.isBefore(sEnd);
-                    })
-                    .findFirst();
+                        .filter(s -> {
+                            LocalTime sStart = s.getStartTime().toLocalTime();
+                            LocalTime sEnd = s.getEndTime().toLocalTime().plusMinutes(15);
+                            return !startTimeFinal.isBefore(sStart) && startTimeFinal.isBefore(sEnd);
+                        })
+                        .findFirst();
 
                 if (overlappingShowtime.isPresent()) {
                     currentTime = overlappingShowtime.get().getEndTime().toLocalTime().plusMinutes(15);
@@ -105,21 +107,22 @@ public class SchedulingServiceImpl implements SchedulingService {
                 for (Movie m : activeMovies) {
                     int durationPlusClean = m.getDuration() + 15;
                     LocalTime expectedEndTime = currentTime.plusMinutes(durationPlusClean);
-                    
-                    // Kiểm tra xem phim có bị tràn qua ngày hôm sau không (nếu currentTime + duration < currentTime nghĩa là đã qua nửa đêm)
+
+                    // Kiểm tra xem phim có bị tràn qua ngày hôm sau không (nếu currentTime +
+                    // duration < currentTime nghĩa là đã qua nửa đêm)
                     boolean wrapsToNextDay = expectedEndTime.isBefore(currentTime);
                     if (wrapsToNextDay || expectedEndTime.isAfter(LocalTime.of(23, 55))) {
-                        continue; 
+                        continue;
                     }
 
                     final LocalTime startTimeRef = currentTime;
                     final LocalTime endTimeRef = expectedEndTime;
-                    
+
                     boolean willOverlapNext = roomExisting.stream()
-                        .anyMatch(s -> {
-                            LocalTime sStart = s.getStartTime().toLocalTime();
-                            return endTimeRef.isAfter(sStart) && startTimeRef.isBefore(sStart);
-                        });
+                            .anyMatch(s -> {
+                                LocalTime sStart = s.getStartTime().toLocalTime();
+                                return endTimeRef.isAfter(sStart) && startTimeRef.isBefore(sStart);
+                            });
 
                     if (!willOverlapNext) {
                         movieToSchedule = m;
@@ -141,16 +144,16 @@ public class SchedulingServiceImpl implements SchedulingService {
                 res.setMovieDuration(movieToSchedule.getDuration());
                 res.setRoomId(room.getId());
                 res.setRoomName(room.getName());
-                
+
                 LocalDateTime start = LocalDateTime.of(targetDate, currentTime);
                 res.setStartTime(start);
                 res.setEndTime(start.plusMinutes(movieToSchedule.getDuration()));
-                
+
                 suggestions.add(res);
                 currentTime = currentTime.plusMinutes(movieToSchedule.getDuration() + 15);
             }
         }
-        
+
         // Nếu là FILL, gộp suất chiếu cũ vào (với ID dương) để UI hiển thị
         if (mode != null && mode.equalsIgnoreCase("FILL")) {
             for (Showtime es : existingShowtimes) {
@@ -178,19 +181,19 @@ public class SchedulingServiceImpl implements SchedulingService {
         if (overwrite && !suggestions.isEmpty()) {
             LocalDate targetDate = suggestions.get(0).getStartTime().toLocalDate();
             showtimeRepository.deleteByStartTimeBetween(
-                targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX));
+                    targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX));
         }
 
         for (ShowtimeResponse res : suggestions) {
             // CHỈ LƯU NHỮNG SUẤT CHIẾU MỚI (ID âm hoặc null)
             if (res.getId() != null && res.getId() > 0) {
-                continue; 
+                continue;
             }
-            
+
             Showtime s = new Showtime();
             Long movieId = res.getMovieId();
             Long roomId = res.getRoomId();
-            
+
             if (movieId != null && roomId != null) {
                 s.setMovie(movieRepository.getReferenceById(movieId));
                 Room room = roomRepository.getReferenceById(roomId);

@@ -7,7 +7,6 @@ import com.example.cinema.model.dto.request.SeatUpdateRequest;
 import com.example.cinema.model.dto.response.RoomResponse;
 import com.example.cinema.model.entity.Room;
 import com.example.cinema.model.entity.Seat;
-import com.example.cinema.model.enums.SeatType;
 import com.example.cinema.repository.room.RoomRepository;
 import com.example.cinema.repository.room.SeatRepository;
 import com.example.cinema.service.room.RoomService;
@@ -27,7 +26,8 @@ public class RoomServiceImpl implements RoomService {
     private final ModelMapper modelMapper;
     private final com.example.cinema.service.room.strategy.SeatLayoutFactory seatLayoutFactory;
 
-    public RoomServiceImpl(RoomRepository roomRepository, SeatRepository seatRepository, ModelMapper modelMapper, com.example.cinema.service.room.strategy.SeatLayoutFactory seatLayoutFactory) {
+    public RoomServiceImpl(RoomRepository roomRepository, SeatRepository seatRepository, ModelMapper modelMapper,
+            com.example.cinema.service.room.strategy.SeatLayoutFactory seatLayoutFactory) {
         this.roomRepository = roomRepository;
         this.seatRepository = seatRepository;
         this.modelMapper = modelMapper;
@@ -45,13 +45,13 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse getRoomById(Long id) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + id));
-        
+
         List<Seat> seats = seatRepository.findByRoomId(id);
         RoomResponse response = modelMapper.map(room, RoomResponse.class);
         response.setSeats(seats.stream()
                 .map(seat -> modelMapper.map(seat, RoomResponse.SeatResponse.class))
                 .collect(Collectors.toList()));
-        
+
         return response;
     }
 
@@ -69,7 +69,7 @@ public class RoomServiceImpl implements RoomService {
 
         List<Seat> seats = seatLayoutFactory.getStrategy(request.getType())
                 .generateSeats(savedRoom, request.getRows(), request.getCols());
-        
+
         seatRepository.saveAll(seats);
 
         RoomResponse response = modelMapper.map(savedRoom, RoomResponse.class);
@@ -86,11 +86,11 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse updateRoom(Long id, RoomRequest request) {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + id));
-        
+
         room.setName(request.getName());
         room.setType(request.getType());
         // Không cập nhật capacity/rows/cols ở đây để bảo toàn sơ đồ ghế
-        
+
         Room updatedRoom = roomRepository.save(room);
         return getRoomById(updatedRoom.getId());
     }
@@ -104,13 +104,14 @@ public class RoomServiceImpl implements RoomService {
         List<Seat> updatedSeats = new ArrayList<>();
         for (SeatUpdateRequest req : request.getSeats()) {
             Seat seat = seatRepository.findByRoomIdAndRowCharAndColNum(roomId, req.getRowChar(), req.getColNum())
-                    .orElseThrow(() -> new AppException("Không tìm thấy ghế " + req.getRowChar() + req.getColNum() + " trong phòng này"));
-            
+                    .orElseThrow(() -> new AppException(
+                            "Không tìm thấy ghế " + req.getRowChar() + req.getColNum() + " trong phòng này"));
+
             seat.setType(req.getType());
             seat.setStatus(req.getStatus());
             updatedSeats.add(seat);
         }
-        
+
         seatRepository.saveAll(updatedSeats);
         return getRoomById(roomId);
     }

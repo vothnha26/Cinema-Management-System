@@ -2,7 +2,8 @@ package com.example.cinema.controller;
 
 import com.example.cinema.model.dto.request.UpdateProfileRequest;
 import com.example.cinema.model.dto.response.CustomerResponse;
-import com.example.cinema.service.CustomerService;
+import com.example.cinema.service.user.CustomerService;
+
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

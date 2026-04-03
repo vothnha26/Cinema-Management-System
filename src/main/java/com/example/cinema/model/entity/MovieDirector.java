@@ -1,6 +1,7 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.DirectorRole;
+
 import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
@@ -26,7 +27,8 @@ public class MovieDirector {
     @Column(nullable = false)
     private DirectorRole role;
 
-    public MovieDirector() {}
+    public MovieDirector() {
+    }
 
     public MovieDirector(MovieDirectorId id, Movie movie, Director director, DirectorRole role) {
         this.id = id;
@@ -35,17 +37,37 @@ public class MovieDirector {
         this.role = role;
     }
 
-    public MovieDirectorId getId() { return id; }
-    public void setId(MovieDirectorId id) { this.id = id; }
+    public MovieDirectorId getId() {
+        return id;
+    }
 
-    public Movie getMovie() { return movie; }
-    public void setMovie(Movie movie) { this.movie = movie; }
+    public void setId(MovieDirectorId id) {
+        this.id = id;
+    }
 
-    public Director getDirector() { return director; }
-    public void setDirector(Director director) { this.director = director; }
+    public Movie getMovie() {
+        return movie;
+    }
 
-    public DirectorRole getRole() { return role; }
-    public void setRole(DirectorRole role) { this.role = role; }
+    public void setMovie(Movie movie) {
+        this.movie = movie;
+    }
+
+    public Director getDirector() {
+        return director;
+    }
+
+    public void setDirector(Director director) {
+        this.director = director;
+    }
+
+    public DirectorRole getRole() {
+        return role;
+    }
+
+    public void setRole(DirectorRole role) {
+        this.role = role;
+    }
 
     @Embeddable
     public static class MovieDirectorId implements Serializable {
@@ -55,23 +77,36 @@ public class MovieDirector {
         @Column(name = "director_id")
         private Long directorId;
 
-        public MovieDirectorId() {}
+        public MovieDirectorId() {
+        }
 
         public MovieDirectorId(Long movieId, Long directorId) {
             this.movieId = movieId;
             this.directorId = directorId;
         }
 
-        public Long getMovieId() { return movieId; }
-        public void setMovieId(Long movieId) { this.movieId = movieId; }
+        public Long getMovieId() {
+            return movieId;
+        }
 
-        public Long getDirectorId() { return directorId; }
-        public void setDirectorId(Long directorId) { this.directorId = directorId; }
+        public void setMovieId(Long movieId) {
+            this.movieId = movieId;
+        }
+
+        public Long getDirectorId() {
+            return directorId;
+        }
+
+        public void setDirectorId(Long directorId) {
+            this.directorId = directorId;
+        }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             MovieDirectorId that = (MovieDirectorId) o;
             return Objects.equals(movieId, that.movieId) && Objects.equals(directorId, that.directorId);
         }

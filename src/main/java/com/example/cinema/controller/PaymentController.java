@@ -2,7 +2,7 @@ package com.example.cinema.controller;
 
 import com.example.cinema.model.dto.response.PaymentCheckoutResponse;
 import com.example.cinema.model.dto.response.PaymentResponse;
-import com.example.cinema.service.PaymentService;
+import com.example.cinema.service.booking.PaymentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

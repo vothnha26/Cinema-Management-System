@@ -1,6 +1,7 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.MembershipTier;
+
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -31,9 +32,11 @@ public class Customer {
     @Column(nullable = false)
     private Integer points = 0;
 
-    public Customer() {}
+    public Customer() {
+    }
 
-    public Customer(Long id, User user, String fullName, String phone, MembershipTier membershipTier, BigDecimal totalSpending, Integer points) {
+    public Customer(Long id, User user, String fullName, String phone, MembershipTier membershipTier,
+            BigDecimal totalSpending, Integer points) {
         this.id = id;
         this.user = user;
         this.fullName = fullName;

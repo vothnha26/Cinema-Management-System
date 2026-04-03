@@ -15,10 +15,10 @@ public class SeatLayoutFactory {
             ImaxLayoutStrategy imaxStrategy) {
         this.standardStrategy = standardStrategy;
         this.strategies = Map.of(
-            RoomType.HALL_2D, standardStrategy,
-            RoomType.HALL_3D, standardStrategy,
-            RoomType.IMAX, imaxStrategy
-            // Có thể thêm 4DX, LUXURY vào đây sau này
+                RoomType.HALL_2D, standardStrategy,
+                RoomType.HALL_3D, standardStrategy,
+                RoomType.IMAX, imaxStrategy
+        // Có thể thêm 4DX, LUXURY vào đây sau này
         );
     }
 

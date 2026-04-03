@@ -1,8 +1,8 @@
 package com.example.cinema.service.infrastructure.impl;
 
+import com.example.cinema.service.infrastructure.CloudinaryService;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.example.cinema.service.infrastructure.CloudinaryService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

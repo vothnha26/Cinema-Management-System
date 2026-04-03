@@ -1,6 +1,7 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.ShowtimeStatus;
+
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -35,29 +36,70 @@ public class Showtime {
     @Column(name = "total_seats", nullable = false)
     private int totalSeats = 0;
 
-    public Showtime() {}
+    public Showtime() {
+    }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Movie getMovie() { return movie; }
-    public void setMovie(Movie movie) { this.movie = movie; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Room getRoom() { return room; }
-    public void setRoom(Room room) { this.room = room; }
+    public Movie getMovie() {
+        return movie;
+    }
 
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+    public void setMovie(Movie movie) {
+        this.movie = movie;
+    }
 
-    public LocalDateTime getEndTime() { return endTime; }
-    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+    public Room getRoom() {
+        return room;
+    }
 
-    public ShowtimeStatus getStatus() { return status; }
-    public void setStatus(ShowtimeStatus status) { this.status = status; }
+    public void setRoom(Room room) {
+        this.room = room;
+    }
 
-    public int getSoldSeats() { return soldSeats; }
-    public void setSoldSeats(int soldSeats) { this.soldSeats = soldSeats; }
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
 
-    public int getTotalSeats() { return totalSeats; }
-    public void setTotalSeats(int totalSeats) { this.totalSeats = totalSeats; }
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalDateTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalDateTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public ShowtimeStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ShowtimeStatus status) {
+        this.status = status;
+    }
+
+    public int getSoldSeats() {
+        return soldSeats;
+    }
+
+    public void setSoldSeats(int soldSeats) {
+        this.soldSeats = soldSeats;
+    }
+
+    public int getTotalSeats() {
+        return totalSeats;
+    }
+
+    public void setTotalSeats(int totalSeats) {
+        this.totalSeats = totalSeats;
+    }
 }

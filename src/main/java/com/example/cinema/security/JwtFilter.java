@@ -59,7 +59,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 System.out.println(">>> Filter: Token KHÔNG hợp lệ!");
             }
         }
-        
+
         chain.doFilter(request, response);
     }
 }

@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface MovieService {
     List<MovieResponse> getAllMovies();
+    List<MovieResponse> getShowingMovies();
+    List<MovieResponse> getComingSoonMovies();
     MovieResponse getMovieById(Long id);
     MovieResponse createMovie(MovieRequest request, MultipartFile poster);
     MovieResponse updateMovie(Long id, MovieRequest request, MultipartFile poster);

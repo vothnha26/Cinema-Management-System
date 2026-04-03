@@ -1,9 +1,10 @@
 package com.example.cinema;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import com.example.cinema.model.entity.User;
 import com.example.cinema.model.enums.Role;
-import com.example.cinema.repository.UserRepository;
+import com.example.cinema.repository.user.UserRepository;
+
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

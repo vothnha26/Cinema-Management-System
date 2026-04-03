@@ -7,6 +7,7 @@ import com.example.cinema.model.entity.User;
 import com.example.cinema.model.enums.Role;
 import com.example.cinema.repository.user.UserRepository;
 import com.example.cinema.service.user.IUserService;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,8 @@ public class UserServiceImpl implements IUserService {
     private final ModelMapper modelMapper;
 
     public UserServiceImpl(UserRepository userRepository,
-                           PasswordEncoder passwordEncoder,
-                           ModelMapper modelMapper) {
+            PasswordEncoder passwordEncoder,
+            ModelMapper modelMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
@@ -94,11 +95,11 @@ public class UserServiceImpl implements IUserService {
     public UserResponse updateUser(Long id, String email, Role role) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng", id));
-        
+
         if (user.getRole() == Role.ADMIN) {
             throw new RuntimeException("Không thể sửa tài khoản ADMIN.");
         }
-        
+
         if (role == Role.ADMIN) {
             throw new RuntimeException("Không thể nâng cấp lên ADMIN.");
         }
@@ -113,7 +114,7 @@ public class UserServiceImpl implements IUserService {
     public void deleteUser(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng", id));
-                
+
         if (user.getRole() == Role.ADMIN) {
             throw new RuntimeException("Không thể xóa tài khoản ADMIN.");
         }

@@ -1,6 +1,8 @@
 package com.example.cinema.service.commerce.pricing;
 
 import com.example.cinema.model.enums.SeatType;
+
+import com.example.cinema.model.enums.SeatType;
 import java.math.BigDecimal;
 
 public class SeatTypeDecorator extends PriceDecorator {

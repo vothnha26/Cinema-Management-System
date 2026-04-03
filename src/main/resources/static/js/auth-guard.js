@@ -12,15 +12,15 @@
  */
 const AuthGuard = {
     getToken() {
-        return localStorage.getItem('token');
+        return localStorage.getItem('cinemaToken');
     },
 
     getRole() {
-        return localStorage.getItem('role');
+        return localStorage.getItem('cinemaRole');
     },
 
     getUsername() {
-        return localStorage.getItem('username');
+        return localStorage.getItem('cinemaUsername');
     },
 
     isLoggedIn() {
@@ -58,9 +58,9 @@ const AuthGuard = {
      * Đăng xuất: xóa token và redirect về trang đăng nhập.
      */
     logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('username');
+        localStorage.removeItem('cinemaToken');
+        localStorage.removeItem('cinemaRole');
+        localStorage.removeItem('cinemaUsername');
         window.location.href = '/auth.html';
     }
 };

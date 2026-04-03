@@ -7,6 +7,7 @@ import com.example.cinema.model.dto.response.ComboResponse;
 import com.example.cinema.model.entity.Combo;
 import com.example.cinema.repository.commerce.ComboRepository;
 import com.example.cinema.service.commerce.ComboService;
+
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +50,7 @@ public class ComboServiceImpl implements ComboService {
     public ComboResponse updateCombo(Long id, ComboRequest request, String imageUrl) {
         Combo combo = comboRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
-        
+
         modelMapper.map(request, combo);
         if (imageUrl != null) {
             combo.setImageUrl(imageUrl);
@@ -64,12 +65,12 @@ public class ComboServiceImpl implements ComboService {
     public ComboResponse updateStock(Long id, Integer quantity) {
         Combo combo = comboRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
-        
+
         combo.setStockQuantity(combo.getStockQuantity() + quantity);
         if (combo.getStockQuantity() < 0) {
             throw new AppException("Số lượng tồn kho không thể âm");
         }
-        
+
         Combo updated = comboRepository.save(combo);
         return modelMapper.map(updated, ComboResponse.class);
     }

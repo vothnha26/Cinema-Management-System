@@ -3,6 +3,7 @@ package com.example.cinema.service.movie.impl;
 import com.example.cinema.model.entity.Movie;
 import com.example.cinema.repository.movie.MovieRepository;
 import com.example.cinema.service.movie.BuzzAnalysisService;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -49,14 +50,14 @@ public class BuzzAnalysisServiceImpl implements BuzzAnalysisService {
                     .toUriString();
 
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-            
+
             if (response != null && response.containsKey("results")) {
                 List<Map<String, Object>> results = (List<Map<String, Object>>) response.get("results");
                 if (!results.isEmpty()) {
                     // Lấy kết quả đầu tiên (thường là phim khớp nhất)
                     Map<String, Object> firstResult = results.get(0);
                     Object popularity = firstResult.get("popularity");
-                    
+
                     if (popularity instanceof Number) {
                         double popValue = ((Number) popularity).doubleValue();
                         // TMDB Popularity có thể rất cao (hàng ngàn), chúng ta chuẩn hóa về 0-100
@@ -69,7 +70,7 @@ public class BuzzAnalysisServiceImpl implements BuzzAnalysisService {
         } catch (Exception e) {
             System.err.println("Lỗi gọi TMDB API cho phim " + title + ": " + e.getMessage());
         }
-        
+
         // Fallback: Nếu lỗi API, trả về điểm mặc định
         return 50.0 + (Math.random() * 10);
     }

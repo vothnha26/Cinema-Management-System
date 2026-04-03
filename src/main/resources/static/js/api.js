@@ -4,7 +4,7 @@ const api = {
     async get(endpoint) {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}`
             }
         });
         return await response.json();
@@ -16,7 +16,7 @@ const api = {
             headers['Content-Type'] = 'application/json';
         }
         
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('cinemaToken');
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
@@ -35,7 +35,7 @@ const api = {
             headers['Content-Type'] = 'application/json';
         }
         
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('cinemaToken');
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
@@ -52,7 +52,7 @@ const api = {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'DELETE',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}`
             }
         });
         return await response.json();
@@ -63,7 +63,7 @@ const api = {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}`
             },
             body: JSON.stringify(data)
         });

@@ -1,6 +1,7 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.SeatType;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -26,25 +27,56 @@ public class Seat {
 
     private Boolean status = true;
 
-    public Seat() {}
+    public Seat() {
+    }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Room getRoom() { return room; }
-    public void setRoom(Room room) { this.room = room; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getRowChar() { return rowChar; }
-    public void setRowChar(String rowChar) { this.rowChar = rowChar; }
+    public Room getRoom() {
+        return room;
+    }
 
-    public Integer getColNum() { return colNum; }
-    public void setColNum(Integer colNum) { this.colNum = colNum; }
+    public void setRoom(Room room) {
+        this.room = room;
+    }
 
-    public SeatType getType() { return type; }
-    public void setType(SeatType type) { this.type = type; }
+    public String getRowChar() {
+        return rowChar;
+    }
 
-    public Boolean getStatus() { return status; }
-    public void setStatus(Boolean status) { this.status = status; }
+    public void setRowChar(String rowChar) {
+        this.rowChar = rowChar;
+    }
+
+    public Integer getColNum() {
+        return colNum;
+    }
+
+    public void setColNum(Integer colNum) {
+        this.colNum = colNum;
+    }
+
+    public SeatType getType() {
+        return type;
+    }
+
+    public void setType(SeatType type) {
+        this.type = type;
+    }
+
+    public Boolean getStatus() {
+        return status;
+    }
+
+    public void setStatus(Boolean status) {
+        this.status = status;
+    }
 
     public String getSeatCode() {
         return rowChar + colNum;

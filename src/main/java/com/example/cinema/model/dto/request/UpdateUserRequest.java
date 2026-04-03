@@ -1,6 +1,7 @@
 package com.example.cinema.model.dto.request;
 
 import com.example.cinema.model.enums.Role;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,11 +15,22 @@ public class UpdateUserRequest {
     @NotNull(message = "Quyền hạn không được để trống")
     private Role role;
 
-    public UpdateUserRequest() {}
+    public UpdateUserRequest() {
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getEmail() {
+        return email;
+    }
 
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
 }

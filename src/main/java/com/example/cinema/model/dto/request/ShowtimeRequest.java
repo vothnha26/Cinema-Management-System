@@ -13,14 +13,30 @@ public class ShowtimeRequest {
     @NotNull(message = "Thời gian bắt đầu không được để trống")
     private LocalDateTime startTime;
 
-    public ShowtimeRequest() {}
+    public ShowtimeRequest() {
+    }
 
-    public Long getMovieId() { return movieId; }
-    public void setMovieId(Long movieId) { this.movieId = movieId; }
+    public Long getMovieId() {
+        return movieId;
+    }
 
-    public Long getRoomId() { return roomId; }
-    public void setRoomId(Long roomId) { this.roomId = roomId; }
+    public void setMovieId(Long movieId) {
+        this.movieId = movieId;
+    }
 
-    public LocalDateTime getStartTime() { return startTime; }
-    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+    public Long getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(Long roomId) {
+        this.roomId = roomId;
+    }
+
+    public LocalDateTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+    }
 }

@@ -136,7 +136,6 @@
           border: 1px solid var(--border);
           border-radius: 16px;
           padding: 24px;
-          height: 100%;
         }
         .chart-title {
           font-weight: 600;
@@ -279,7 +278,9 @@
         <div class="col-lg-8">
             <div class="chart-container">
                 <div class="chart-title"><i class="bi bi-graph-up text-accent"></i> Doanh thu 7 ngày qua</div>
-                <canvas id="revenueChart" height="300"></canvas>
+                <div style="height: 300px;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
             </div>
         </div>
         <!-- GENRE CHART -->

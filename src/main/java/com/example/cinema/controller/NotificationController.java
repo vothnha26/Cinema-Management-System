@@ -1,7 +1,7 @@
 package com.example.cinema.controller;
 
 import com.example.cinema.model.dto.response.NotificationResponse;
-import com.example.cinema.service.NotificationService;
+import com.example.cinema.service.notification.INotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,9 +16,9 @@ import java.util.Map;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
-    private final NotificationService notificationService;
+    private final INotificationService notificationService;
 
-    public NotificationController(NotificationService notificationService) {
+    public NotificationController(INotificationService notificationService) {
         this.notificationService = notificationService;
     }
 

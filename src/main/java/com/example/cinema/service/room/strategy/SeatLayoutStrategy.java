@@ -2,6 +2,7 @@ package com.example.cinema.service.room.strategy;
 
 import com.example.cinema.model.entity.Room;
 import com.example.cinema.model.entity.Seat;
+
 import java.util.List;
 
 public interface SeatLayoutStrategy {

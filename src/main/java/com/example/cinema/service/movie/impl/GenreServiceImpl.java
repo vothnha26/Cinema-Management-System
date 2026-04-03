@@ -3,6 +3,7 @@ package com.example.cinema.service.movie.impl;
 import com.example.cinema.model.entity.Genre;
 import com.example.cinema.repository.movie.GenreRepository;
 import com.example.cinema.service.movie.GenreService;
+
 import org.springframework.stereotype.Service;
 import java.util.List;
 

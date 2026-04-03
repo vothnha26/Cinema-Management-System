@@ -1,6 +1,7 @@
 package com.example.cinema.service.notification.impl;
 
 import com.example.cinema.service.notification.INotificationStrategy;
+
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;

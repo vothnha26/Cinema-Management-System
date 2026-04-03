@@ -217,22 +217,17 @@
             formData.append('image', imageFile);
         }
 
-        const url = id ? `/api/combos/${id}` : '/api/combos';
-        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/${id}` : '';
+        const action = id ? 'put' : 'post';
 
         try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                body: formData
-            });
-            const result = await response.json();
-            if (result.success) {
+            const response = await api[action](`/combos${url}`, formData, true);
+            if (response.success) {
                 comboModal.hide();
                 loadCombos();
                 showToast('Lưu combo thành công!');
             } else {
-                showToast('Lỗi: ' + result.message, false);
+                showToast('Lỗi: ' + response.message, false);
             }
         } catch (error) {
             showToast('Lỗi kết nối máy chủ', false);

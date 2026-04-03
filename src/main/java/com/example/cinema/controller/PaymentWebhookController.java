@@ -1,6 +1,6 @@
 package com.example.cinema.controller;
 
-import com.example.cinema.service.PaymentService;
+import com.example.cinema.service.booking.PaymentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;

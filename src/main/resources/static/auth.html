@@ -431,11 +431,17 @@
         });
         
         if (response.ok) {
-          const data = await response.json();
+          const apiResponse = await response.json();
+          const data = apiResponse.data;
           localStorage.setItem('cinemaToken', data.token);
           localStorage.setItem('cinemaRole', data.role);
           localStorage.setItem('cinemaUsername', data.username);
-          window.location.href = 'index.html'; // Assuming index is main page
+          
+          if (data.role === 'ADMIN' || data.role === 'STAFF') {
+            window.location.href = 'dashboard.html';
+          } else {
+            window.location.href = 'index.html';
+          }
         } else {
           showAlert('Tên đăng nhập hoặc mật khẩu không chính xác.');
         }
@@ -477,8 +483,8 @@
           alert('Đăng ký thành công! Vui lòng đăng nhập.');
           switchTab('login');
         } else {
-          const txt = await response.text();
-          showAlert(txt || 'Đăng ký thất bại. Có thể email đã được sử dụng.');
+          const apiResponse = await response.json();
+          showAlert(apiResponse.message || 'Đăng ký thất bại. Có thể email đã được sử dụng.');
         }
       } catch (err) {
         console.error(err);

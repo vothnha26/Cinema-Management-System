@@ -2,6 +2,7 @@ package com.example.cinema.service.movie.impl;
 
 import com.example.cinema.service.infrastructure.CloudinaryService;
 import com.example.cinema.service.movie.MovieMediaService;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -18,7 +19,8 @@ public class MovieMediaServiceImpl implements MovieMediaService {
 
     @Override
     public String uploadPoster(MultipartFile poster) throws IOException {
-        if (poster == null || poster.isEmpty()) return null;
+        if (poster == null || poster.isEmpty())
+            return null;
         Map uploadResult = cloudinaryService.upload(poster, "movies");
         return (String) uploadResult.get("secure_url");
     }
