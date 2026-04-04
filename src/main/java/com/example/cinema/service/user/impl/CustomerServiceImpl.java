@@ -88,6 +88,13 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public CustomerResponse getCustomerByPhone(String phone) {
+        return customerRepository.findByPhone(phone)
+                .map(c -> modelMapper.map(c, CustomerResponse.class))
+                .orElse(null);
+    }
+
+    @Override
     public BigDecimal getDiscountPercentage(MembershipTier tier) {
         if (tier == null)
             return BigDecimal.ZERO;

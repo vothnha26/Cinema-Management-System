@@ -3,640 +3,383 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarCinema POS – Bán vé tại quầy</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-    <link rel="icon" type="image/png" href="/favicon.png?v=2">
+    <title>StarCinema POS – Bán vé & Soát vé</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        :root{
-          --bg:#060810;--surface:#0B0E18;--card:#121622;--border:#1E2336;
-          --accent:#E5133A;--accent-gold:#F5A623;--text:#E8EAF0;--text-muted:#6B7290;
-          --gradient:linear-gradient(135deg,#E5133A,#8B0020);
-          --green:#22C55E;--blue:#3B82F6;
+        :root {
+          --bg: #0A0F1A; --surface: #141B2D; --card: #1F2940; --border: #2D3748;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #E2E8F0; --text-muted: #94A3B8;
+          --success: #10B981; --info: #3B82F6;
         }
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* ── TOPBAR ── */
+        .pos-topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .pos-tabs { display: flex; background: var(--bg); padding: 4px; border-radius: 10px; gap: 4px; }
+        .pos-tab { padding: 6px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); transition: 0.2s; }
+        .pos-tab.active { background: var(--accent); color: #fff; }
 
-        /* TOP BAR */
-        .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-        .topbar-brand{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px}
-        .topbar-brand span{color:var(--accent)}
-        .topbar-center{display:flex;align-items:center;gap:20px}
-        .topbar-clock{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;color:var(--accent-gold)}
-        .topbar-date{font-size:.78rem;color:var(--text-muted)}
-        .staff-info{display:flex;align-items:center;gap:8px}
-        .staff-avatar{width:32px;height:32px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700}
-        .staff-name{font-size:.85rem;font-weight:600}
-        .staff-role{font-size:.72rem;color:var(--accent);font-weight:600}
+        /* ── LAYOUT ── */
+        .pos-container { display: grid; grid-template-columns: 280px 1fr 380px; flex: 1; overflow: hidden; }
+        .pos-sidebar-left { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 15px; }
+        .pos-main { padding: 20px; overflow-y: auto; background: var(--bg); }
+        .pos-sidebar-right { background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
 
-        /* TAB NAV */
-        .pos-tabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;padding:0 16px;flex-shrink:0}
-        .pos-tab{padding:12px 20px;border:none;background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:7px}
-        .pos-tab:hover{color:var(--text)}
-        .pos-tab.active{color:var(--text);border-bottom-color:var(--accent)}
-        .pos-tab .tab-badge{background:var(--accent);color:#fff;width:18px;height:18px;border-radius:9px;font-size:.68rem;display:flex;align-items:center;justify-content:center;font-weight:700}
+        /* ── MOVIE & SHOWTIME ── */
+        .movie-item { display: flex; gap: 12px; padding: 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; margin-bottom: 8px; }
+        .movie-item:hover { background: rgba(255,255,255,0.05); }
+        .movie-item.active { background: rgba(229,19,58,0.1); border-color: var(--accent); }
+        .movie-poster { width: 50px; height: 75px; border-radius: 6px; object-fit: cover; background: var(--card); }
+        .movie-name { font-weight: 700; font-size: 0.85rem; color: #fff; margin-bottom: 2px; }
+        
+        .st-btn { background: var(--card); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .st-btn:hover { border-color: var(--accent); }
+        .st-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-        /* MAIN */
-        .pos-main{flex:1;overflow:hidden;display:flex;min-height:0}
+        /* ── SEAT MAP ── */
+        .seat-grid-pos { display: grid; gap: 4px; margin: 0 auto; width: fit-content; padding: 20px; }
+        .seat-pos { width: 30px; height: 28px; border-radius: 5px; background: #2D3748; border: 1.5px solid #4A5568; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 700; color: #cbd5e0; }
+        .seat-pos.selected { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; }
+        .seat-pos.booked { background: #1A202C !important; border-color: #1A202C !important; color: transparent !important; cursor: not-allowed; }
+        .seat-pos.vip { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .seat-pos.couple { width: 64px; border-color: #9B59B6; color: #9B59B6; }
 
-        /* LEFT: SELECTOR */
-        .pos-left{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
-        .pos-left-title{padding:14px 16px;font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);border-bottom:1px solid var(--border)}
-        .pos-left-scroll{flex:1;overflow-y:auto;padding:10px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-        .date-item{padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .2s;margin-bottom:2px}
-        .date-item:hover{background:rgba(255,255,255,.04)}
-        .date-item.active{background:rgba(229,19,58,.1);border:1px solid rgba(229,19,58,.2)}
-        .date-label{font-size:.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;padding:8px 4px 2px}
+        /* ── BILLING ── */
+        .bill-footer { padding: 20px; background: var(--surface); border-top: 1px solid var(--border); }
+        .total-row { display: flex; justify-content: space-between; font-size: 1.5rem; font-weight: 800; color: var(--accent); margin-top: 10px; }
+        .btn-pay { width: 100%; height: 50px; border-radius: 12px; background: var(--gradient); color: #fff; border: none; font-weight: 700; margin-top: 15px; }
+        .order-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #fff; }
 
-        .showtime-item{padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .2s;border:1.5px solid transparent;margin-bottom:5px;background:var(--card)}
-        .showtime-item:hover{border-color:rgba(229,19,58,.3)}
-        .showtime-item.active{border-color:var(--accent);background:rgba(229,19,58,.08)}
-        .showtime-time{font-weight:700;font-size:.95rem;margin-bottom:2px}
-        .showtime-movie{font-size:.78rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .showtime-hall{font-size:.72rem;font-weight:600;padding:1px 6px;border-radius:3px;display:inline-block;margin-top:3px}
-        .hall-imax{background:rgba(100,200,255,.15);color:#64C8FF}
-        .hall-3d{background:rgba(80,200,100,.15);color:#50C864}
-        .hall-2d{background:rgba(200,200,200,.08);color:#aaa}
-        .seats-left{font-size:.72rem;margin-top:3px}
-        .seats-ok{color:#50C864}.seats-warn{color:var(--accent-gold)}.seats-full{color:var(--accent)}
+        /* ── TOAST ── */
+        .toast-container { position: fixed; top: 30px; right: 30px; z-index: 9999; }
+        .toast-elite {
+            min-width: 320px; background: rgba(31, 41, 64, 0.98); border: 1px solid var(--border); border-radius: 16px; padding: 16px 20px;
+            display: flex; align-items: center; gap: 15px; margin-bottom: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            animation: toastIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes toastIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .ts-icon { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .ts-success { background: rgba(16,185,129,0.15); color: var(--success); }
+        .ts-error { background: rgba(229,19,58,0.15); color: var(--accent); }
+        .ts-info { background: rgba(59,130,246,0.15); color: var(--info); }
+        .ts-content { flex: 1; }
+        .ts-title { font-weight: 700; font-size: 0.9rem; color: #fff; margin-bottom: 2px; }
+        .ts-msg { font-size: 0.8rem; color: var(--text-muted); }
 
-        /* CENTER: SEAT MAP */
-        .pos-center{flex:1;display:flex;flex-direction:column;overflow:hidden}
-        .center-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-        .center-title{font-weight:700;font-size:.95rem}
-        .center-sub{font-size:.78rem;color:var(--text-muted)}
-        .seat-area{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;align-items:center;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-
-        .screen{background:linear-gradient(to bottom,rgba(229,19,58,.25),transparent);border-top:2px solid rgba(229,19,58,.6);padding:5px 60px 14px;border-radius:0 0 50% 50%;display:inline-block;margin-bottom:16px}
-        .screen-txt{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(229,19,58,.7)}
-        .seat-legend-sm{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
-        .leg-sm{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--text-muted)}
-        .ls{width:14px;height:14px;border-radius:3px}
-        .ls-av{background:#1E2336;border:1px solid #2e3450}
-        .ls-sel{background:var(--accent)}
-        .ls-book{background:#0d0f18}
-        .ls-vip{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3)}
-        .ls-couple{background:rgba(155,89,182,.15);border:1px solid rgba(155,89,182,.3)}
-
-        .sg{display:grid;gap:4px;width:fit-content;margin:0 auto}
-        .seat{width:26px;height:24px;border-radius:4px 4px 2px 2px;background:#1E2336;border:1px solid #2e3450;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:600;color:var(--text-muted);transition:all .15s;user-select:none;position:relative}
-        .seat:hover:not(.b){transform:scale(1.2);z-index:2}
-        .seat.v{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.35);color:rgba(245,166,35,.6)}
-        .seat.c{background:rgba(155,89,182,.1);border-color:rgba(155,89,182,.35);width:56px}
-        .seat.s{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 6px rgba(229,19,58,.4)}
-        .seat.v.s{background:var(--accent-gold);border-color:var(--accent-gold);color:#000}
-        .seat.c.s{background:rgba(155,89,182,.5);border-color:#9B59B6;color:#fff}
-        .seat.b{background:#0d0f18;border-color:#161820;cursor:not-allowed;pointer-events:none}
-        .seat.b::after{content:'';position:absolute;inset:3px;background:rgba(229,19,58,.08);border-radius:2px}
-        .row-l{width:18px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--text-muted);flex-shrink:0}
-
-        /* RIGHT: ORDER */
-        .pos-right{width:300px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
-        .order-header{padding:14px 16px;border-bottom:1px solid var(--border);font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:1px;display:flex;align-items:center;justify-content:space-between}
-        .order-scroll{flex:1;overflow-y:auto;padding:12px 16px;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-        .order-section{margin-bottom:16px}
-        .order-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:8px}
-        .selected-seat-row{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:6px;background:rgba(229,19,58,.07);border:1px solid rgba(229,19,58,.15);margin-bottom:4px;font-size:.82rem}
-        .seat-code{font-weight:700;color:var(--accent)}
-        .seat-remove{cursor:pointer;color:var(--text-muted);font-size:.75rem;padding:2px 4px;border-radius:3px;transition:color .2s}
-        .seat-remove:hover{color:var(--accent)}
-        .combo-sm{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem}
-        .combo-sm:last-child{border-bottom:none}
-        .qty-c{display:flex;align-items:center;gap:5px}
-        .qb{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
-        .qb:hover{border-color:var(--accent)}
-        .qn{min-width:16px;text-align:center;font-weight:700;font-size:.82rem}
-
-        .order-divider{border-top:1px dashed var(--border);margin:4px 0}
-        .order-total-row{display:flex;justify-content:space-between;align-items:center;font-size:.88rem;padding:3px 0}
-        .order-total-row.grand{font-weight:700;font-size:1rem;color:var(--accent-gold);padding-top:8px;border-top:1px solid var(--border);margin-top:4px}
-
-        .pay-btns{padding:12px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
-        .pay-select-row{display:flex;gap:6px}
-        .pay-b{flex:1;padding:8px;border-radius:7px;border:1.5px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Outfit',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
-        .pay-b.active,.pay-b:hover{border-color:var(--accent);color:var(--text);background:rgba(229,19,58,.08)}
-        .btn-confirm{background:var(--gradient);color:#fff;border:none;padding:13px;border-radius:9px;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;cursor:pointer;width:100%;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
-        .btn-confirm:hover{opacity:.9}
-        .btn-confirm:disabled{opacity:.35;cursor:not-allowed}
-        .btn-clear{background:transparent;border:1.5px solid var(--border);color:var(--text-muted);padding:8px;border-radius:9px;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;width:100%;transition:all .2s}
-        .btn-clear:hover{border-color:var(--accent);color:var(--accent)}
-
-        /* CHECK-IN PANEL */
-        .checkin-panel{padding:24px;flex:1;overflow-y:auto}
-        .checkin-input-wrap{display:flex;gap:10px;margin-bottom:24px}
-        .checkin-input{flex:1;background:var(--card);border:2px solid var(--border);color:var(--text);padding:14px 16px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:1rem;letter-spacing:2px;text-transform:uppercase;transition:border-color .2s}
-        .checkin-input:focus{border-color:var(--accent);outline:none}
-        .btn-checkin{background:var(--gradient);color:#fff;border:none;padding:14px 24px;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s}
-        .btn-checkin:hover{opacity:.9}
-        .checkin-result{display:none}
-        .checkin-result.show{display:block}
-        .checkin-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px}
-        .checkin-status-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:20px;font-size:.88rem;font-weight:700;margin-bottom:16px}
-        .cb-ok{background:rgba(34,197,94,.1);border:1.5px solid #22C55E;color:#22C55E}
-        .cb-already{background:rgba(59,130,246,.1);border:1.5px solid #3B82F6;color:#3B82F6}
-        .cb-invalid{background:rgba(229,19,58,.1);border:1.5px solid var(--accent);color:var(--accent)}
-        .ci-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.88rem}
-        .ci-row:last-child{border:none}
-        .ci-val{font-weight:600;text-align:right;max-width:180px}
-        .btn-confirm-checkin{background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff;border:none;padding:12px 28px;border-radius:9px;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:16px;width:100%}
-        .btn-confirm-checkin:hover{opacity:.9}
-
-        .tab-panel{display:none}
-        .tab-panel.active{display:flex;flex:1;min-height:0;overflow:hidden}
-
-        /* Toast */
-        .toast-pos{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 20px;font-size:.88rem;font-weight:500;z-index:999;display:none;align-items:center;gap:10px;animation:slideUp .3s ease}
-        @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        .toast-pos.show{display:flex}
-        .toast-pos.ok{border-color:rgba(34,197,94,.4);color:#22C55E}
-        .toast-pos.err{border-color:rgba(229,19,58,.4);color:var(--accent)}
+        .d-none { display: none !important; }
+        .row-label { width: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: var(--text-muted); font-weight: 800; }
+        .alert { border-radius: 12px; border: none; }
+        .alert-success { background: rgba(16,185,129,0.1); color: var(--success); }
+        .alert-danger { background: rgba(229,19,58,0.1); color: var(--accent); }
     </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-    <div class="d-flex align-items-center gap-2">
-        <span class="topbar-brand">STAR<span>CINEMA</span></span>
-        <span style="background:rgba(229,19,58,.15);border:1px solid rgba(229,19,58,.3);color:var(--accent);font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.8px">POS</span>
+<header class="pos-topbar">
+    <div class="fw-bold fs-5">STAR<span class="text-danger">CINEMA</span> POS</div>
+    <div class="pos-tabs">
+        <div class="pos-tab active" onclick="switchTab('sales')">BÁN VÉ</div>
+        <div class="pos-tab" onclick="switchTab('checkin')">SOÁT VÉ</div>
     </div>
-    <div class="topbar-center">
-        <div>
-            <div class="topbar-clock" id="clock">19:30:00</div>
-            <div class="topbar-date" id="clockDate">Thứ 3, 28/01/2025</div>
-        </div>
-        <div style="width:1px;height:30px;background:var(--border)"></div>
-        <div style="font-size:.8rem;color:var(--text-muted)">Ca làm việc: <span style="color:var(--green)">Chiều tối</span></div>
-        <div style="font-size:.8rem;color:var(--text-muted)">Vé đã bán: <span style="color:var(--accent-gold);font-weight:700" id="soldCount">47</span></div>
+    <div class="staff-info d-flex align-items-center gap-3">
+        <span class="small text-muted" id="staffNameDisplay">Nhân viên</span>
+        <button class="btn btn-sm btn-outline-danger" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
     </div>
-    <div class="staff-info">
-        <div class="staff-avatar">T</div>
-        <div>
-            <div class="staff-name">Trần Thị B</div>
-            <div class="staff-role">STAFF</div>
+</header>
+
+<div class="pos-container" id="salesContainer">
+    <aside class="pos-sidebar-left">
+        <div class="section-title mb-3 small fw-bold text-muted text-uppercase">Danh sách phim</div>
+        <div id="movieList"></div>
+    </aside>
+
+    <main class="pos-main">
+        <div id="showtimeArea" class="mb-4">
+            <div class="section-title small fw-bold text-muted mb-3">CHỌN SUẤT CHIẾU <span id="activeMovieName" class="text-white ms-2"></span></div>
+            <div id="showtimeGroups"><div class="text-center py-4 text-muted small">Vui lòng chọn phim ở cột bên trái</div></div>
         </div>
-        <button style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:6px;font-family:'Outfit',sans-serif;font-size:.78rem;cursor:pointer;margin-left:8px" onclick="window.location.href='auth.html'">Đăng xuất</button>
-    </div>
-</div>
-
-<!-- TAB NAV -->
-<div class="pos-tabs">
-    <button class="pos-tab active" onclick="switchPosTab('sell',this)" id="tab-sell">
-        <i class="bi bi-ticket-perforated"></i> Bán vé
-    </button>
-    <button class="pos-tab" onclick="switchPosTab('checkin',this)" id="tab-checkin">
-        <i class="bi bi-qr-code-scan"></i> Check-in
-    </button>
-    <button class="pos-tab" onclick="switchPosTab('schedule',this)" id="tab-schedule">
-        <i class="bi bi-calendar3"></i> Lịch chiếu hôm nay
-    </button>
-</div>
-
-<!-- MAIN -->
-<div class="pos-main">
-
-    <!-- SELL PANEL -->
-    <div class="tab-panel active" id="panel-sell">
-        <!-- LEFT -->
-        <div class="pos-left">
-            <div class="pos-left-title">📅 Chọn suất chiếu</div>
-            <div class="pos-left-scroll" id="showtimeList"></div>
+        <div id="seatArea" class="d-none mb-5">
+            <div class="section-title small fw-bold text-muted mb-3">SƠ ĐỒ GHẾ: <span id="activeRoomName" class="text-white ms-2"></span></div>
+            <div class="seat-grid-pos" id="posSeatGrid"></div>
         </div>
-
-        <!-- CENTER: SEAT MAP -->
-        <div class="pos-center">
-            <div class="center-header">
-                <div>
-                    <div class="center-title" id="centerTitle">Chọn suất chiếu từ menu bên trái</div>
-                    <div class="center-sub" id="centerSub">—</div>
-                </div>
-                <div style="font-size:.8rem;color:var(--text-muted)" id="seatCountInfo"></div>
-            </div>
-            <div class="seat-area" id="seatArea">
-                <div style="color:var(--text-muted);text-align:center;margin-top:60px;font-size:.95rem">
-                    <div style="font-size:3rem;margin-bottom:12px">🎬</div>
-                    Chọn suất chiếu để xem sơ đồ ghế
-                </div>
-            </div>
+        <div id="comboArea" class="mt-4">
+            <div class="section-title small fw-bold text-muted mb-3">BẮP NƯỚC & ĐỒ UỐNG</div>
+            <div class="row g-3" id="posComboGrid"></div>
         </div>
+    </main>
 
-        <!-- RIGHT: ORDER -->
-        <div class="pos-right">
-            <div class="order-header">
-                <span>🧾 Đơn hàng</span>
-                <span style="font-size:.75rem;color:var(--text-muted);font-family:'Outfit',sans-serif" id="orderSeatCount">0 ghế</span>
-            </div>
-            <div class="order-scroll">
-                <!-- Seats -->
-                <div class="order-section">
-                    <div class="order-section-title">Ghế đã chọn</div>
-                    <div id="orderSeats"><div style="font-size:.82rem;color:var(--text-muted);font-style:italic">Chưa chọn ghế nào</div></div>
+    <aside class="pos-sidebar-right">
+        <div class="order-content">
+            <div class="member-box p-3 rounded-4" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border);">
+                <div class="small fw-bold text-muted mb-2 text-uppercase" style="font-size: 0.65rem;">Ưu đãi & Hội viên</div>
+                <div class="input-group input-group-sm mb-2">
+                    <input type="text" id="memberPhone" class="form-control bg-dark border-secondary text-white" placeholder="SĐT khách hàng...">
+                    <button class="btn btn-info text-white" onclick="lookupMember()"><i class="bi bi-search"></i></button>
                 </div>
-                <!-- Combos -->
-                <div class="order-section">
-                    <div class="order-section-title">Combo bắp nước</div>
-                    <div id="comboPOS"></div>
+                <div class="input-group input-group-sm mb-2">
+                    <input type="text" id="voucherCode" class="form-control bg-dark border-secondary text-white" placeholder="Mã giảm giá...">
+                    <button class="btn btn-danger" onclick="applyVoucher()">ÁP DỤNG</button>
                 </div>
-                <!-- Price -->
-                <div class="order-divider"></div>
-                <div class="order-total-row"><span style="color:var(--text-muted)">Vé</span><span id="ot-ticket">0đ</span></div>
-                <div class="order-total-row"><span style="color:var(--text-muted)">Combo</span><span id="ot-combo">0đ</span></div>
-                <div class="order-total-row" id="ot-disc-row" style="display:none"><span style="color:#50C864">Giảm giá</span><span id="ot-disc" style="color:#50C864"></span></div>
-                <div class="order-total-row grand"><span>TỔNG CỘNG</span><span id="ot-total">0đ</span></div>
-                <!-- Customer lookup -->
-                <div class="order-section mt-3">
-                    <div class="order-section-title">Khách hàng (tùy chọn)</div>
-                    <div style="display:flex;gap:6px">
-                        <input id="custPhone" type="text" placeholder="SĐT khách hàng" style="flex:1;background:var(--card);border:1.5px solid var(--border);color:var(--text);padding:7px 10px;border-radius:7px;font-family:'Outfit',sans-serif;font-size:.82rem">
-                        <button style="background:transparent;border:1.5px solid var(--accent);color:var(--accent);padding:7px 10px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap" onclick="lookupCustomer()">Tra cứu</button>
+                <div id="memberInfo" class="d-none mt-2 pt-2 border-top border-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold" style="color:#fff" id="memberName">...</span>
+                        <i class="bi bi-x-circle text-danger cursor-pointer" onclick="clearMember()" style="cursor:pointer"></i>
                     </div>
-                    <div id="custInfo" style="margin-top:6px;font-size:.78rem;color:var(--text-muted)"></div>
+                    <div class="small text-warning"><span id="memberTier">GOLD</span> Member</div>
+                </div>
+                <div id="appliedVoucherBadge" class="d-none mt-2 p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25 d-flex justify-content-between align-items-center">
+                    <span class="small fw-bold text-success"><i class="bi bi-tag-fill me-1"></i><span id="appliedVoucherName">VOUCHER</span></span>
+                    <i class="bi bi-x text-success cursor-pointer" onclick="removeVoucher()" style="cursor:pointer"></i>
                 </div>
             </div>
-            <div class="pay-btns">
-                <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:4px">Phương thức</div>
-                <div class="pay-select-row">
-                    <button class="pay-b active" onclick="setPay(this,'CASH')">💵 Tiền mặt</button>
-                    <button class="pay-b" onclick="setPay(this,'CARD')">💳 Thẻ</button>
-                    <button class="pay-b" onclick="setPay(this,'MOMO')">📱 MoMo</button>
-                </div>
-                <button class="btn-confirm" id="btnConfirm" onclick="confirmSale()" disabled>
-                    <i class="bi bi-check-circle"></i> Xác nhận – <span id="btnTotal">0đ</span>
-                </button>
-                <button class="btn-clear" onclick="clearOrder()">↺ Xóa đơn hàng</button>
-            </div>
+            <div class="section-title small fw-bold text-muted mt-4 mb-3 text-uppercase">Chi tiết đơn hàng</div>
+            <div id="orderItems"></div>
         </div>
-    </div>
+        <div class="bill-footer">
+            <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Tạm tính:</span><span id="billSubtotal" style="color:#fff">0đ</span></div>
+            <div class="d-flex justify-content-between mb-1 small text-success"><span>Hạng thẻ:</span><span id="billDiscount">-0đ</span></div>
+            <div class="d-flex justify-content-between mb-1 small text-success"><span>Voucher:</span><span id="billVoucher">-0đ</span></div>
+            <div class="total-row"><span>TỔNG</span><span id="billTotal">0đ</span></div>
+            <button class="btn-pay" id="btnFinalize" disabled onclick="finalizeSale()">XÁC NHẬN & IN VÉ</button>
+        </div>
+    </aside>
+</div>
 
-    <!-- CHECK-IN PANEL -->
-    <div class="tab-panel" id="panel-checkin" style="display:none">
-        <div class="checkin-panel" style="max-width:640px;margin:0 auto;width:100%">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:6px">Check-in Vé</div>
-            <p style="color:var(--text-muted);font-size:.9rem;margin-bottom:24px">Nhập mã booking hoặc quét QR code trên vé của khách.</p>
-            <div class="checkin-input-wrap">
-                <input class="checkin-input" type="text" id="checkinCode" placeholder="SC-XXXXXXXX" oninput="this.value=this.value.toUpperCase()">
-                <button class="btn-checkin" onclick="doCheckin()"><i class="bi bi-qr-code-scan me-1"></i>Check-in</button>
-            </div>
-            <div id="checkinResult" class="checkin-result">
-                <div class="checkin-card" id="checkinCard"></div>
-            </div>
-            <!-- Recent checkins -->
-            <div style="margin-top:32px">
-                <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:12px">Check-in gần đây (hôm nay)</div>
-                <div id="recentCheckins"></div>
-            </div>
+<div class="pos-main d-none" id="checkinContainer" style="width: 100%;">
+    <div style="max-width: 500px; margin: 60px auto; text-align: center;">
+        <div class="p-5 rounded-4" style="border: 2px dashed var(--border); background: var(--surface);">
+            <i class="bi bi-qr-code-scan fs-1 text-danger mb-3"></i>
+            <h4 class="fw-bold text-white">SOÁT VÉ VÀO PHÒNG</h4>
+            <input type="text" id="checkinCode" class="form-control form-control-lg bg-dark text-white text-center mt-4 mb-3" placeholder="BKG-XXXXXXXX" style="letter-spacing: 2px; font-family: monospace;">
+            <button class="btn btn-danger w-100 py-3 fw-bold" id="btnCheckin" onclick="validateCheckin()">XÁC NHẬN VÀO CỔNG</button>
         </div>
-    </div>
-
-    <!-- SCHEDULE PANEL -->
-    <div class="tab-panel" id="panel-schedule" style="display:none">
-        <div style="padding:24px;flex:1;overflow-y:auto;width:100%">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;margin-bottom:20px">Lịch chiếu hôm nay – 28/01/2025</div>
-            <div id="scheduleGrid"></div>
-        </div>
+        <div id="checkinStatus" class="mt-4"></div>
     </div>
 </div>
 
-<!-- Toast -->
-<div class="toast-pos" id="toast"></div>
+<div class="toast-container" id="toastContainer"></div>
 
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ──── DATA ────
-    const SEAT_PRICE = { S:95000, V:150000, C:180000 };
-    const COMBOS = [
-      {id:1,name:'Combo 1 người',price:65000,emoji:'🍿'},
-      {id:2,name:'Combo đôi',price:115000,emoji:'💑'},
-      {id:3,name:'Mega Combo',price:145000,emoji:'🎉'},
-      {id:4,name:'Snack Pack',price:85000,emoji:'🌭'},
-    ];
-    const SHOWTIMES_TODAY = {
-      '28/01': [
-        {id:'s1',time:'10:30',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:35,total:80},
-        {id:'s2',time:'12:00',movie:'The Dark Knight',hall:'3D Hall 2',type:'3d',avail:12,total:60},
-        {id:'s3',time:'14:30',movie:'La La Land 2',hall:'2D Hall 1',type:'2d',avail:48,total:60},
-        {id:'s4',time:'16:00',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:5,total:80},
-        {id:'s5',time:'17:00',movie:'Robot Warriors',hall:'3D Hall 3',type:'3d',avail:30,total:60},
-        {id:'s6',time:'19:30',movie:'Avengers: Secret Wars',hall:'IMAX Hall 1',type:'imax',avail:22,total:80},
-        {id:'s7',time:'20:00',movie:'Midnight Horror',hall:'3D Hall 2',type:'3d',avail:55,total:60},
-        {id:'s8',time:'22:00',movie:'The Dark Knight',hall:'3D Hall 3',type:'3d',avail:18,total:60},
-      ],
-      '29/01':[
-        {id:'s9',time:'11:00',movie:'Ocean Dreams',hall:'IMAX Hall 1',type:'imax',avail:62,total:80},
-        {id:'s10',time:'14:00',movie:'Jurassic World 4',hall:'3D Hall 2',type:'3d',avail:20,total:60},
-      ]
-    };
-    const BOOKED_SEATS = ['B3','B4','C2','C3','D5','D6','E1','F4','F5','G3','G4'];
-    const FAKE_BOOKINGS = {
-      'SC-A7B3C1': { code:'SC-A7B3C1', movie:'Avengers: Secret Wars', date:'28/01/2025', time:'19:30', hall:'IMAX Hall 1', seats:['F4','F5'], customer:'Nguyễn Văn A', total:300000, status:'CONFIRMED' },
-      'SC-9D2E4F': { code:'SC-9D2E4F', movie:'The Dark Knight Returns', date:'28/01/2025', time:'20:00', hall:'3D Hall 2', seats:['D3','D4'], customer:'Trần Thị B', total:190000, status:'CHECKED_IN' },
-      'SC-INVALID': null,
-    };
-    const RECENT_CHECKINS = [
-      { code:'SC-B1C2D3', name:'Lê Văn C', movie:'Avengers: Secret Wars', seats:'E3,E4', time:'19:28' },
-      { code:'SC-E4F5G6', name:'Phạm Thị D', movie:'Midnight Horror', seats:'B2', time:'19:25' },
-      { code:'SC-H7I8J9', name:'Hoàng Minh E', movie:'Avengers: Secret Wars', seats:'G5,G6', time:'19:20' },
-    ];
+    let allMovies = [], allShowtimes = [], allCombos = [];
+    let selectedMovieId = null, selectedShowtime = null, selectedSeats = [], selectedCombos = {}, currentMember = null, appliedVoucher = null;
 
-    // ──── STATE ────
-    let selectedST = null;
-    let selectedDates = Object.keys(SHOWTIMES_TODAY);
-    let selDate = selectedDates[0];
-    let posSeats = [];
-    let comboQty = {};
-    let payMethod = 'CASH';
-    let custFound = null;
-    const fmt = n => n.toLocaleString('vi-VN') + 'đ';
-    const ROWS = ['A','B','C','D','E','F','G','H'];
-
-    // ──── CLOCK ────
-    function updateClock() {
-      const now = new Date();
-      document.getElementById('clock').textContent = now.toLocaleTimeString('vi-VN',{hour12:false});
-      const days = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
-      document.getElementById('clockDate').textContent = `${days[now.getDay()]}, ${now.toLocaleDateString('vi-VN')}`;
-    }
-    setInterval(updateClock, 1000); updateClock();
-
-    // ──── SHOWTIMES ────
-    function renderShowtimes() {
-      const el = document.getElementById('showtimeList');
-      const HALL_CLASS = {imax:'hall-imax','3d':'hall-3d','2d':'hall-2d'};
-      const HALL_LABEL = {imax:'IMAX','3d':'3D','2d':'2D'};
-      let html = '';
-      selectedDates.forEach(date => {
-        html += `<div class="date-label">📅 ${date}</div>`;
-        (SHOWTIMES_TODAY[date]||[]).forEach(st => {
-          const seatsPct = st.avail / st.total;
-          const seatsClass = seatsPct < 0.1 ? 'seats-full' : seatsPct < 0.3 ? 'seats-warn' : 'seats-ok';
-          html += `
-            <div class="showtime-item ${selectedST&&selectedST.id===st.id?'active':''}" onclick="selectST(${JSON.stringify(st).replace(/"/g,"'").replace(/'/g,'"')})">
-              <div class="showtime-time">${st.time}</div>
-              <div class="showtime-movie">${st.movie}</div>
-              <div><span class="showtime-hall ${HALL_CLASS[st.type]}">${HALL_LABEL[st.type]} – ${st.hall}</span></div>
-              <div class="seats-left ${seatsClass}">${st.avail} ghế trống / ${st.total}</div>
-            </div>
-          `;
-        });
-      });
-      el.innerHTML = html;
+    function showNotify(title, msg, type='success') {
+        const container = document.getElementById('toastContainer');
+        const icons = { success: 'bi-check-circle-fill', error: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
+        const toast = document.createElement('div');
+        toast.className = 'toast-elite';
+        toast.innerHTML = `
+            <div class="ts-icon ts-${type}"><i class="bi ${icons[type]}"></i></div>
+            <div class="ts-content">
+                <div class="ts-title">${title}</div>
+                <div class="ts-msg">${msg}</div>
+            </div>`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(50px)'; setTimeout(() => toast.remove(), 400); }, 4000);
     }
 
-    function selectST(st) {
-      selectedST = st; posSeats = [];
-      document.getElementById('centerTitle').textContent = `${st.movie}`;
-      document.getElementById('centerSub').textContent = `${st.time} – ${st.hall}`;
-      renderShowtimes(); renderSeatMap(); updateOrder();
+    function getFullImageUrl(path) {
+        if (!path) return 'https://placehold.co/300x450?text=No+Img';
+        if (path.startsWith('http')) return path;
+        const cleanPath = path.startsWith('/') ? path : '/' + path;
+        return `https://image.tmdb.org/t/p/w500${cleanPath}`;
     }
 
-    // ──── SEAT MAP ────
-    function renderSeatMap() {
-      const area = document.getElementById('seatArea');
-      if(!selectedST) return;
-      let html = `<div class="screen"><div class="screen-txt">Màn hình chiếu</div></div>`;
-      html += `<div class="seat-legend-sm">
-        <div class="leg-sm"><div class="ls ls-av"></div>Trống</div>
-        <div class="leg-sm"><div class="ls ls-sel"></div>Chọn</div>
-        <div class="leg-sm"><div class="ls ls-book"></div>Đã đặt</div>
-        <div class="leg-sm"><div class="ls ls-vip"></div>VIP</div>
-        <div class="leg-sm"><div class="ls ls-couple"></div>Couple</div>
-      </div>`;
-      html += `<div class="sg" id="sg" style="grid-template-columns:18px repeat(10,26px)">`;
-      ROWS.forEach(row => {
-        html += `<div class="row-l">${row}</div>`;
-        for(let c=1;c<=10;c++) {
-          const id = `${row}${c}`;
-          const isVip = ['F','G'].includes(row);
-          const isCouple = row === 'H';
-          const isBooked = BOOKED_SEATS.includes(id);
-          const isSel = posSeats.includes(id);
-          if(isCouple && c%2===0) continue;
-          const cls = [
-            'seat',
-            isVip?'v':'',
-            isCouple?'c':'',
-            isBooked?'b':'',
-            isSel?'s':''
-          ].filter(Boolean).join(' ');
-          const span = isCouple?'grid-column:span 2;':'';
-          const title = isBooked?'Đã đặt':isVip?`VIP – ${fmt(SEAT_PRICE.V)}`:isCouple?`Couple – ${fmt(SEAT_PRICE.C)}`:`Standard – ${fmt(SEAT_PRICE.S)}`;
-          html += `<div class="${cls}" style="${span}" title="${title}" ${!isBooked?`onclick="togglePOSSeat('${id}','${isVip?'V':isCouple?'C':'S'}')"`:''}>
-            ${!isBooked?`<span style="pointer-events:none">${id}</span>`:''}
-          </div>`;
-        }
-      });
-      html += '</div>';
-      const avail = ROWS.reduce((sum,r) => {
-        let cnt = 0; for(let c=1;c<=10;c++) { const id=`${r}${c}`; if(!BOOKED_SEATS.includes(id)) cnt++; } return sum+cnt;
-      },0);
-      document.getElementById('seatCountInfo').textContent = `${avail} ghế trống`;
-      area.innerHTML = html;
+    async function init() {
+        const token = localStorage.getItem('cinemaToken');
+        if(!token) window.location.href = 'auth.html';
+        document.getElementById('staffNameDisplay').textContent = localStorage.getItem('cinemaUsername') || 'Nhân viên';
+        try {
+            const [mRes, stRes, cRes] = await Promise.all([api.get('/movies/showing'), api.get('/showtimes?date=' + new Date().toISOString().split('T')[0]), api.get('/combos')]);
+            allMovies = mRes.data || []; allShowtimes = stRes.data || []; allCombos = cRes.data || [];
+            renderMovies(); renderCombos();
+        } catch(e) { showNotify('Lỗi hệ thống', 'Không thể kết nối đến máy chủ.', 'error'); }
     }
 
-    function togglePOSSeat(id, type) {
-      if(posSeats.includes(id)) posSeats = posSeats.filter(s=>s!==id);
-      else { if(posSeats.length>=8){showToast('Tối đa 8 ghế mỗi lần!','err');return;} posSeats.push(id); }
-      renderSeatMap(); updateOrder();
+    function logout() {
+        localStorage.removeItem('cinemaToken');
+        localStorage.removeItem('cinemaUsername');
+        localStorage.removeItem('cinemaRole');
+        window.location.href = 'auth.html';
     }
 
-    // ──── COMBOS ────
-    function renderComboPOS() {
-      document.getElementById('comboPOS').innerHTML = COMBOS.map(c=>`
-        <div class="combo-sm">
-          <span>${c.emoji} ${c.name}</span>
-          <div class="qty-c">
-            <span style="font-size:.78rem;color:var(--text-muted)">${fmt(c.price)}</span>
-            <button class="qb" onclick="changeCQty(${c.id},-1)">−</button>
-            <span class="qn" id="cq-${c.id}">${comboQty[c.id]||0}</span>
-            <button class="qb" onclick="changeCQty(${c.id},1)">+</button>
-          </div>
-        </div>
-      `).join('');
-    }
-    function changeCQty(id,d) {
-      comboQty[id]=Math.max(0,(comboQty[id]||0)+d);
-      document.getElementById(`cq-${id}`).textContent=comboQty[id];
-      updateOrder();
+    function renderMovies() {
+        document.getElementById('movieList').innerHTML = allMovies.map(m => `
+            <div class="movie-item ${selectedMovieId === m.id ? 'active' : ''}" onclick="selectMovie(${m.id})">
+                <img src="${getFullImageUrl(m.posterUrl)}" class="movie-poster" onerror="this.src='https://placehold.co/50x75'">
+                <div class="movie-info"><div class="movie-name">${m.title}</div><div class="movie-meta text-uppercase">${m.ageRating} • ${m.duration}p</div></div>
+            </div>`).join('');
     }
 
-    // ──── ORDER ────
-    function updateOrder() {
-      const os = document.getElementById('orderSeats');
-      const cnt = posSeats.length;
-      document.getElementById('orderSeatCount').textContent = `${cnt} ghế`;
-      if(cnt===0) os.innerHTML='<div style="font-size:.82rem;color:var(--text-muted);font-style:italic">Chưa chọn ghế nào</div>';
-      else os.innerHTML = posSeats.map(id=>{
-        const row=id[0]; const isVip=['F','G'].includes(row); const isCouple=row==='H';
-        const type=isVip?'VIP':isCouple?'Couple':'Standard';
-        const price=isVip?SEAT_PRICE.V:isCouple?SEAT_PRICE.C:SEAT_PRICE.S;
-        return `<div class="selected-seat-row"><span class="seat-code">${id}</span><span style="color:var(--text-muted);font-size:.75rem">${type}</span><span style="font-size:.78rem">${fmt(price)}</span><span class="seat-remove" onclick="removeSeat('${id}')">✕</span></div>`;
-      }).join('');
-
-      let ticketT = posSeats.reduce((sum,id)=>{
-        const row=id[0]; if(['F','G'].includes(row)) return sum+SEAT_PRICE.V; if(row==='H') return sum+SEAT_PRICE.C; return sum+SEAT_PRICE.S;
-      },0);
-      let comboT = COMBOS.reduce((sum,c)=>sum+(comboQty[c.id]||0)*c.price,0);
-      let discT = 0;
-      if(custFound && custFound.tier==='GOLD') discT=Math.round((ticketT+comboT)*0.10);
-
-      document.getElementById('ot-ticket').textContent = fmt(ticketT);
-      document.getElementById('ot-combo').textContent = fmt(comboT);
-      const total = ticketT+comboT-discT;
-      document.getElementById('ot-total').textContent = fmt(total);
-      document.getElementById('btnTotal').textContent = fmt(total);
-      if(discT>0){document.getElementById('ot-disc-row').style.display='';document.getElementById('ot-disc').textContent=`-${fmt(discT)} (Gold -10%)`;}
-      else{document.getElementById('ot-disc-row').style.display='none';}
-      document.getElementById('btnConfirm').disabled = (cnt===0 || !selectedST);
-    }
-
-    function removeSeat(id) { posSeats=posSeats.filter(s=>s!==id); renderSeatMap(); updateOrder(); }
-
-    function clearOrder() {
-      posSeats=[]; comboQty={}; custFound=null;
-      document.getElementById('custInfo').textContent='';
-      document.getElementById('custPhone').value='';
-      if(selectedST) { renderSeatMap(); } updateOrder(); renderComboPOS();
-    }
-
-    function setPay(btn,method) {
-      document.querySelectorAll('.pay-b').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active'); payMethod=method;
-    }
-
-    function confirmSale() {
-      const code='SC-'+Date.now().toString(36).toUpperCase().slice(-8);
-      showToast(`✅ Đã bán vé! Mã: ${code}`, 'ok');
-      document.getElementById('soldCount').textContent = parseInt(document.getElementById('soldCount').textContent)+posSeats.length;
-      clearOrder();
-    }
-
-    // ──── CUSTOMER LOOKUP ────
-    const CUSTOMERS = { '0901234567': {name:'Nguyễn Văn A',tier:'GOLD',points:1240}, '0987654321': {name:'Lê Thị C',tier:'SILVER',points:320} };
-    function lookupCustomer() {
-      const phone = document.getElementById('custPhone').value.replace(/\s/g,'');
-      const c = CUSTOMERS[phone];
-      const el = document.getElementById('custInfo');
-      if(c) {
-        custFound = c;
-        const tColor = c.tier==='GOLD'?'var(--accent-gold)':c.tier==='SILVER'?'#C0C0C0':'var(--text-muted)';
-        el.innerHTML = `✅ <b style="color:${tColor}">${c.name}</b> – ${c.tier} – ${c.points} điểm`;
-      } else {
-        custFound=null; el.innerHTML = '<span style="color:var(--accent)">❌ Không tìm thấy khách hàng</span>';
-      }
-      updateOrder();
-    }
-
-    // ──── CHECK-IN ────
-    function doCheckin() {
-      const code = document.getElementById('checkinCode').value.trim().toUpperCase();
-      if(!code) return;
-      const el = document.getElementById('checkinResult');
-      const card = document.getElementById('checkinCard');
-      el.classList.add('show');
-      const b = FAKE_BOOKINGS[code];
-      if(!b) {
-        card.innerHTML = `<div class="checkin-status-badge cb-invalid">❌ Không tìm thấy mã booking</div><p style="color:var(--text-muted);font-size:.88rem">Mã "<strong>${code}</strong>" không tồn tại trong hệ thống. Vui lòng kiểm tra lại.</p>`;
-        return;
-      }
-      if(b.status==='CHECKED_IN') {
-        card.innerHTML = `<div class="checkin-status-badge cb-already">⚠️ Vé đã được check-in</div>
-          <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movie}</span></div>
-          <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.time} – ${b.date}</span></div>
-          <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${b.seats.join(', ')}</span></div>
-          <p style="color:var(--accent-gold);font-size:.82rem;margin-top:12px">⚠️ Vé này đã được check-in trước đó.</p>`;
-        return;
-      }
-      card.innerHTML = `
-        <div class="checkin-status-badge cb-ok">✅ Vé hợp lệ – Cho phép vào</div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Mã booking</span><span class="ci-val" style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--accent)">${b.code}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Khách hàng</span><span class="ci-val">${b.customer}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Phim</span><span class="ci-val">${b.movie}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Giờ chiếu</span><span class="ci-val">${b.time} – ${b.hall}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Ghế</span><span class="ci-val">${b.seats.join(', ')}</span></div>
-        <div class="ci-row"><span style="color:var(--text-muted)">Tổng tiền</span><span class="ci-val" style="color:var(--accent-gold)">${fmt(b.total)}</span></div>
-        <button class="btn-confirm-checkin" onclick="confirmCheckin('${b.code}')">✅ Xác nhận Check-in</button>
-      `;
-    }
-    function confirmCheckin(code) {
-      if(FAKE_BOOKINGS[code]) FAKE_BOOKINGS[code].status='CHECKED_IN';
-      document.getElementById('checkinResult').classList.remove('show');
-      document.getElementById('checkinCode').value='';
-      showToast('✅ Check-in thành công!', 'ok');
-      renderRecentCheckins();
-    }
-
-    function renderRecentCheckins() {
-      document.getElementById('recentCheckins').innerHTML = RECENT_CHECKINS.map(c=>`
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
-          <div style="width:34px;height:34px;border-radius:8px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);display:flex;align-items:center;justify-content:center;font-size:.9rem">✅</div>
-          <div style="flex:1">
-            <div style="font-size:.88rem;font-weight:600">${c.name} – ${c.movie}</div>
-            <div style="font-size:.75rem;color:var(--text-muted)">Ghế: ${c.seats} · ${c.time}</div>
-          </div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:.9rem;letter-spacing:1px;color:var(--text-muted)">${c.code}</div>
-        </div>
-      `).join('');
-    }
-
-    // ──── SCHEDULE ────
-    function renderSchedule() {
-      const HALL_C = {imax:'rgba(100,200,255,.12)',  '3d':'rgba(80,200,100,.12)', '2d':'rgba(200,200,200,.06)'};
-      const HALL_B = {imax:'rgba(100,200,255,.4)', '3d':'rgba(80,200,100,.4)', '2d':'rgba(200,200,200,.2)'};
-      let html = '';
-      Object.entries(SHOWTIMES_TODAY).forEach(([date,sts])=>{
-        html += `<div style="font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:12px;margin-top:${html?'28px':'0'}">📅 ${date}</div>`;
-        html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">`;
-        sts.forEach(st=>{
-          const pct = ((st.total-st.avail)/st.total*100).toFixed(0);
-          html += `
-            <div style="background:${HALL_C[st.type]};border:1px solid ${HALL_B[st.type]};border-radius:12px;padding:16px">
-              <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
-                <div>
-                  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px">${st.time}</div>
-                  <div style="font-size:.85rem;font-weight:600">${st.movie}</div>
+    function renderCombos() {
+        document.getElementById('posComboGrid').innerHTML = allCombos.map(c => `
+            <div class="col-md-6">
+                <div class="p-3 rounded-3" style="background: var(--card); border: 1px solid var(--border);">
+                    <div class="fw-bold small text-truncate text-white">${c.name}</div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="text-warning fw-bold small">${c.price.toLocaleString()}đ</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="btn btn-sm btn-dark p-0" style="width:24px;height:24px;color:#fff" onclick="changeCombo(${c.id}, -1)">-</div>
+                            <span class="fw-bold small text-white">${selectedCombos[c.id] || 0}</span>
+                            <div class="btn btn-sm btn-dark p-0" style="width:24px;height:24px;color:#fff" onclick="changeCombo(${c.id}, 1)">+</div>
+                        </div>
+                    </div>
                 </div>
-                <span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:4px;border:1px solid ${HALL_B[st.type]};color:#fff">${st.type.toUpperCase()}</span>
-              </div>
-              <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:10px">${st.hall}</div>
-              <div style="display:flex;justify-content:space-between;align-items:center">
-                <div style="font-size:.78rem;color:var(--text-muted)">${st.total-st.avail}/${st.total} ghế đã bán</div>
-                <div style="font-size:.82rem;font-weight:700;color:${pct>90?'var(--accent)':pct>70?'var(--accent-gold)':'#50C864'}">${pct}%</div>
-              </div>
-              <div style="height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:6px;overflow:hidden">
-                <div style="height:100%;width:${pct}%;background:${pct>90?'var(--accent)':pct>70?'var(--accent-gold)':'#50C864'};border-radius:2px"></div>
-              </div>
-            </div>
-          `;
+            </div>`).join('');
+    }
+
+    function changeCombo(id, delta) {
+        selectedCombos[id] = (selectedCombos[id] || 0) + delta;
+        if(selectedCombos[id] <= 0) delete selectedCombos[id];
+        renderCombos(); updateOrder();
+    }
+
+    function selectMovie(id) {
+        selectedMovieId = id;
+        const movie = allMovies.find(x => x.id === id);
+        document.getElementById('activeMovieName').textContent = `— ${movie.title}`;
+        selectedShowtime = null; selectedSeats = [];
+        renderMovies(); renderShowtimeGroups(id);
+        document.getElementById('seatArea').classList.add('d-none');
+        updateOrder();
+    }
+
+    function renderShowtimeGroups(movieId) {
+        const movieST = allShowtimes.filter(s => s.movieId === movieId);
+        const futureST = movieST.filter(s => new Date(s.startTime) > new Date());
+        if(!futureST.length) { document.getElementById('showtimeGroups').innerHTML = '<div class="text-center py-4 text-muted small">Không còn suất chiếu khả dụng</div>'; return; }
+        const grouped = futureST.reduce((acc, s) => { const k = s.formatName || '2D'; if(!acc[k]) acc[k] = []; acc[k].push(s); return acc; }, {});
+        document.getElementById('showtimeGroups').innerHTML = Object.entries(grouped).map(([fmt, list]) => `
+            <div class="st-group">
+                <div class="st-group-title">${fmt.replace('HALL_','')}</div>
+                <div class="st-grid">${list.map(s => `
+                    <div class="st-btn ${selectedShowtime?.id === s.id ? 'active' : ''}" onclick="selectShowtime(${s.id})">
+                        <div class="st-time">${new Date(s.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                        <div class="st-room">${s.roomName}</div>
+                    </div>`).join('')}</div>
+            </div>`).join('');
+    }
+
+    async function selectShowtime(id) {
+        selectedShowtime = allShowtimes.find(x => x.id === id);
+        selectedSeats = [];
+        renderShowtimeGroups(selectedMovieId);
+        document.getElementById('activeRoomName').textContent = selectedShowtime.roomName;
+        document.getElementById('seatArea').classList.remove('d-none');
+        const res = await api.get(`/showtimes/${id}/seats`);
+        if(res.success) renderSeats(res.data);
+        updateOrder();
+    }
+
+    function renderSeats(seats) {
+        const grid = document.getElementById('posSeatGrid');
+        const rows = [...new Set(seats.map(s => s.rowChar))].sort();
+        const maxCol = Math.max(...seats.map(s => s.colNum));
+        grid.style.gridTemplateColumns = `20px repeat(${maxCol}, 30px)`;
+        grid.innerHTML = '';
+        rows.forEach(r => {
+            grid.insertAdjacentHTML('beforeend', `<div class="row-label">${r}</div>`);
+            for(let c=1; c<=maxCol; c++) {
+                const s = seats.find(x => x.rowChar === r && x.colNum === c);
+                if(!s) { grid.insertAdjacentHTML('beforeend', '<div></div>'); continue; }
+                const isSel = selectedSeats.find(x => x.id === s.id);
+                const cls = `seat-pos ${s.seatType.toLowerCase()} ${!s.available?'booked':''} ${isSel?'selected':''}`;
+                const el = document.createElement('div'); el.className = cls; el.textContent = s.available ? s.seatCode : '';
+                if(s.available) el.onclick = () => toggleSeat(s);
+                grid.appendChild(el);
+            }
         });
-        html += '</div>';
-      });
-      document.getElementById('scheduleGrid').innerHTML = html;
     }
 
-    // ──── TABS ────
-    function switchPosTab(tab, btn) {
-      document.querySelectorAll('.pos-tab').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('panel-sell').style.display = 'none';
-      document.getElementById('panel-checkin').style.display = 'none';
-      document.getElementById('panel-schedule').style.display = 'none';
-      // Fix display mode for sell panel
-      if(tab==='sell') { const p=document.getElementById('panel-sell'); p.style.display='flex'; p.classList.add('active'); }
-      else { document.getElementById(`panel-${tab}`).style.display='block'; }
-      if(tab==='schedule') renderSchedule();
-      if(tab==='checkin') renderRecentCheckins();
+    function toggleSeat(s) {
+        const idx = selectedSeats.findIndex(x => x.id === s.id);
+        if(idx > -1) selectedSeats.splice(idx, 1); else selectedSeats.push(s);
+        updateOrder();
+        document.querySelectorAll('.seat-pos').forEach(el => { if(el.textContent === s.seatCode) el.classList.toggle('selected'); });
     }
 
-    // ──── TOAST ────
-    function showToast(msg, type='ok') {
-      const t=document.getElementById('toast'); t.textContent=msg; t.className=`toast-pos show ${type}`;
-      setTimeout(()=>t.classList.remove('show'),3500);
+    async function applyVoucher() {
+        const code = document.getElementById('voucherCode').value.trim();
+        if(!code) return;
+        try {
+            const res = await api.get(`/promotions/validate?code=${code}&amount=${calculateSubtotal()}`);
+            if(res.success) { appliedVoucher = res.data; document.getElementById('appliedVoucherBadge').classList.remove('d-none'); document.getElementById('appliedVoucherName').textContent = code; showNotify('Thành công', 'Đã áp dụng mã giảm giá.'); updateOrder(); }
+            else showNotify('Lỗi mã', res.message, 'error');
+        } catch(e) { showNotify('Lỗi', 'Mã không hợp lệ hoặc đã hết hạn.', 'error'); }
     }
 
-    // ──── INIT ────
-    renderShowtimes(); renderComboPOS(); updateOrder();
+    function removeVoucher() { appliedVoucher = null; document.getElementById('appliedVoucherBadge').classList.add('d-none'); document.getElementById('voucherCode').value = ''; updateOrder(); showNotify('Đã gỡ', 'Đã xóa mã giảm giá.', 'info'); }
+
+    function calculateSubtotal() {
+        let sub = selectedSeats.reduce((sum, s) => sum + s.price, 0);
+        Object.entries(selectedCombos).forEach(([id, q]) => { const c = allCombos.find(x => x.id == id); if(c) sub += c.price * q; });
+        return sub;
+    }
+
+    function updateOrder() {
+        const container = document.getElementById('orderItems');
+        const sub = calculateSubtotal();
+        const tiers = { STANDARD: 0, SILVER: 5, GOLD: 10, PLATINUM: 15 };
+        const mDisc = sub * ((tiers[currentMember?.membershipTier] || 0) / 100);
+        const vDisc = appliedVoucher ? appliedVoucher.appliedDiscountAmount : 0;
+        const total = Math.max(0, sub - mDisc - vDisc);
+
+        let html = selectedSeats.map(s => `<div class="order-item"><span>Ghế ${s.seatCode}</span><span>${s.price.toLocaleString()}đ</span></div>`).join('');
+        Object.entries(selectedCombos).forEach(([id, q]) => { const c = allCombos.find(x => x.id == id); if(c) html += `<div class="order-item"><span>${c.name} x${q}</span><span>${(c.price * q).toLocaleString()}đ</span></div>`; });
+
+        container.innerHTML = html || '<div class="text-center py-4 text-muted small italic">Giỏ hàng đang trống</div>';
+        document.getElementById('billSubtotal').textContent = sub.toLocaleString() + 'đ';
+        document.getElementById('billDiscount').textContent = `-${mDisc.toLocaleString()}đ`;
+        document.getElementById('billVoucher').textContent = `-${vDisc.toLocaleString()}đ`;
+        document.getElementById('billTotal').textContent = total.toLocaleString() + 'đ';
+        document.getElementById('btnFinalize').disabled = (selectedSeats.length === 0 && Object.keys(selectedCombos).length === 0);
+    }
+
+    async function lookupMember() {
+        const phone = document.getElementById('memberPhone').value; if(!phone) return;
+        try {
+            const res = await api.get(`/admin/customers/lookup?phone=${phone}`);
+            if(res.success && res.data) { currentMember = res.data; document.getElementById('memberInfo').classList.remove('d-none'); document.getElementById('memberName').textContent = currentMember.fullName; document.getElementById('memberTier').textContent = currentMember.membershipTier; showNotify('Hội viên', 'Đã nhận diện: ' + currentMember.fullName); updateOrder(); }
+            else showNotify('Không tìm thấy', 'Số điện thoại chưa đăng ký hội viên.', 'error');
+        } catch(e) { showNotify('Lỗi tra cứu', 'Vui lòng kiểm tra lại kết nối.', 'error'); }
+    }
+
+    function clearMember() { currentMember = null; document.getElementById('memberInfo').classList.add('d-none'); updateOrder(); showNotify('Đã gỡ', 'Đã xóa thông tin hội viên.', 'info'); }
+
+    async function finalizeSale() {
+        const body = { showtimeId: selectedShowtime ? Number(selectedShowtime.id) : null, seatIds: selectedSeats.map(s => Number(s.id)), combos: Object.keys(selectedCombos).length ? selectedCombos : null, promotionCode: appliedVoucher?.code, paymentMethod: 'CASH', customerPhone: currentMember?.phone };
+        const btn = document.getElementById('btnFinalize'); btn.disabled = true; btn.textContent = 'ĐANG XỬ LÝ...';
+        try {
+            const res = await api.post('/bookings', body);
+            if(res.bookingCode) { await api.post(`/payments/${res.bookingCode}/confirm`); showNotify('Thành công', 'Đã đặt vé và in hóa đơn!', 'success'); setTimeout(() => location.reload(), 1500); }
+        } catch(e) { showNotify('Lỗi đặt vé', e.message, 'error'); btn.disabled = false; btn.textContent = 'XÁC NHẬN & IN VÉ'; }
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.pos-tab').forEach(t => t.classList.remove('active')); event.currentTarget.classList.add('active');
+        document.getElementById('salesContainer').classList.toggle('d-none', tab !== 'sales');
+        document.getElementById('checkinContainer').classList.toggle('d-none', tab !== 'checkin');
+    }
+
+    async function validateCheckin() {
+        const code = document.getElementById('checkinCode').value.trim(); if(!code) return;
+        const btn = document.getElementById('btnCheckin'); btn.disabled = true;
+        try {
+            const res = await api.put(`/bookings/${code}/checkin`);
+            const statusDiv = document.getElementById('checkinStatus');
+            if(res.success) { statusDiv.innerHTML = `<div class="alert alert-success fw-bold p-4 rounded-4">✅ VÉ HỢP LỆ!<br>Chào mừng khách vào phòng chiếu.</div>`; showNotify('Soát vé', 'Khách hàng đã vào phòng.', 'success'); }
+            else { statusDiv.innerHTML = `<div class="alert alert-danger fw-bold p-4 rounded-4">❌ VÉ KHÔNG HỢP LỆ<br>${res.message}</div>`; showNotify('Thất bại', 'Vé không được phép vào cổng.', 'error'); }
+        } catch(e) { showNotify('Lỗi', 'Không thể thực hiện soát vé.', 'error'); } finally { btn.disabled = false; document.getElementById('checkinCode').value = ''; }
+    }
+
+    init();
 </script>
 </body>
 </html>

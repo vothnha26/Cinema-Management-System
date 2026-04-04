@@ -13,10 +13,14 @@ public class BookingRequest {
     @NotEmpty(message = "At least one seat must be selected")
     private List<Long> seatIds;
 
-    // Đổi sang String key để Jackson map từ JSON mượt mà hơn
     private Map<String, Integer> combos;
     
     private String promotionCode;
+
+    // Thông tin khách hàng (Dành cho cả khách vãng lai và hội viên)
+    private String fullName;
+    private String email;
+    private String phone;
 
     @NotNull(message = "Payment method is required")
     private PaymentMethod paymentMethod;
@@ -24,43 +28,27 @@ public class BookingRequest {
     public BookingRequest() {
     }
 
-    public Long getShowtimeId() {
-        return showtimeId;
-    }
+    public Long getShowtimeId() { return showtimeId; }
+    public void setShowtimeId(Long showtimeId) { this.showtimeId = showtimeId; }
 
-    public void setShowtimeId(Long showtimeId) {
-        this.showtimeId = showtimeId;
-    }
+    public List<Long> getSeatIds() { return seatIds; }
+    public void setSeatIds(List<Long> seatIds) { this.seatIds = seatIds; }
 
-    public List<Long> getSeatIds() {
-        return seatIds;
-    }
+    public Map<String, Integer> getCombos() { return combos; }
+    public void setCombos(Map<String, Integer> combos) { this.combos = combos; }
 
-    public void setSeatIds(List<Long> seatIds) {
-        this.seatIds = seatIds;
-    }
+    public String getPromotionCode() { return promotionCode; }
+    public void setPromotionCode(String promotionCode) { this.promotionCode = promotionCode; }
 
-    public Map<String, Integer> getCombos() {
-        return combos;
-    }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public void setCombos(Map<String, Integer> combos) {
-        this.combos = combos;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getPromotionCode() {
-        return promotionCode;
-    }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public void setPromotionCode(String promotionCode) {
-        this.promotionCode = promotionCode;
-    }
-
-    public PaymentMethod getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(PaymentMethod paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
+    public PaymentMethod getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(PaymentMethod paymentMethod) { this.paymentMethod = paymentMethod; }
 }

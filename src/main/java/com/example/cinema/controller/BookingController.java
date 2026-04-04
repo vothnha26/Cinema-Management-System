@@ -1,6 +1,7 @@
 package com.example.cinema.controller;
 
 import com.example.cinema.model.dto.request.BookingRequest;
+import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.model.dto.response.BookingResponse;
 import com.example.cinema.service.booking.BookingService;
 import jakarta.validation.Valid;
@@ -41,8 +42,8 @@ public class BookingController {
     }
 
     @PutMapping("/{code}/checkin")
-    public ResponseEntity<String> checkInBooking(@PathVariable String code) {
+    public ResponseEntity<ApiResponse<String>> checkInBooking(@PathVariable String code) {
         bookingService.checkInBooking(code);
-        return ResponseEntity.ok("Booking checked in successfully");
+        return ResponseEntity.ok(ApiResponse.ok("Booking checked in successfully"));
     }
 }

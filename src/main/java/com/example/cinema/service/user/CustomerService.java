@@ -14,7 +14,7 @@ public interface CustomerService {
     CustomerResponse updateMyProfile(UpdateProfileRequest request);
 
     List<CustomerResponse> getAllCustomers();
-
+    CustomerResponse getCustomerByPhone(String phone);
     BigDecimal getDiscountPercentage(MembershipTier tier);
 
     /**

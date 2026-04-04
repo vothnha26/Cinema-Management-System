@@ -73,40 +73,53 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse createBooking(BookingRequest request) {
         log.info("Starting booking process for request: {}", request);
 
-        Customer customer = getCurrentCustomer();
-        log.debug("Booking for customer: {}", customer.getUser().getUsername());
+        Customer customer = null;
+        // 1. Ưu tiên tìm theo SĐT gửi lên (áp dụng cho POS hoặc Khách vãng lai nhập thông tin)
+        if (request.getPhone() != null && !request.getPhone().isEmpty()) {
+            customer = customerRepository.findByPhone(request.getPhone()).orElse(null);
+        }
+        
+        // 2. Nếu không tìm thấy theo SĐT, thử lấy từ Token đăng nhập
+        if (customer == null) {
+            try {
+                customer = getCurrentCustomer();
+            } catch (Exception e) {
+                log.debug("Proceeding as guest with info: {} / {}", request.getFullName(), request.getEmail());
+            }
+        }
 
         Showtime showtime = getAndValidateShowtime(request.getShowtimeId());
         validateSeatsAvailability(showtime.getId(), request.getSeatIds());
 
         Booking booking = new Booking();
+        // Lưu thông tin liên hệ trực tiếp vào booking (để gửi mail ngay cả khi khách vãng lai)
+        booking.setCustomer(customer);
+        
         List<BookingDetail> details = processSeatPricing(booking, showtime, request.getSeatIds());
         List<BookingCombo> combos = processComboPricing(booking, request.getCombos());
 
         BigDecimal totalPrice = calculateInitialTotal(details, combos);
 
+        // Áp dụng khuyến mãi và giảm giá
         totalPrice = applyPromotion(booking, customer, request.getPromotionCode(), totalPrice);
-        totalPrice = applyMembershipDiscount(customer, totalPrice);
-
-        if (totalPrice.compareTo(BigDecimal.ZERO) < 0) {
-            totalPrice = BigDecimal.ZERO;
+        if (customer != null) {
+            totalPrice = applyMembershipDiscount(customer, totalPrice);
         }
 
         finalizeBooking(booking, customer, showtime, details, combos, totalPrice, request.getPaymentMethod());
         Booking savedBooking = bookingRepository.save(booking);
-        log.info("Booking saved successfully with code: {}", savedBooking.getBookingCode());
 
-        if (savedBooking.getPayment() != null && savedBooking.getPayment().getPaymentStatus() == PaymentStatus.SUCCESS) {
-            customerService.addLoyaltyPoints(customer, totalPrice);
-            createNotification(customer.getUser(),
-                    "Dat ve thanh cong",
-                    "Booking " + savedBooking.getBookingCode() + " da duoc xac nhan va thanh toan thanh cong.",
-                    NotificationType.BOOKING);
-        } else {
-            createNotification(customer.getUser(),
-                    "Dat ve thanh cong, cho thanh toan",
-                    "Booking " + savedBooking.getBookingCode() + " da duoc tao. Vui long hoan tat thanh toan de xac nhan ve.",
-                    NotificationType.BOOKING);
+        // --- GỬI THÔNG BÁO / EMAIL ---
+        if (customer != null) {
+            // Tích điểm và gửi thông báo hệ thống cho hội viên
+            if (savedBooking.getPayment().getPaymentStatus() == PaymentStatus.SUCCESS) {
+                customerService.addLoyaltyPoints(customer, totalPrice);
+            }
+            createNotification(customer.getUser(), "Đặt vé thành công", 
+                "Booking " + savedBooking.getBookingCode() + " đã được xác nhận.", NotificationType.BOOKING);
+        } else if (request.getEmail() != null) {
+            // Gửi mail cho khách vãng lai (Giả lập qua automation service)
+            log.info("Sending ticket {} to guest email: {}", savedBooking.getBookingCode(), request.getEmail());
         }
 
         return mapToResponse(savedBooking);
@@ -150,7 +163,7 @@ public class BookingServiceImpl implements BookingService {
             BookingDetail detail = new BookingDetail();
             detail.setBooking(booking);
             detail.setSeat(seat);
-            detail.setSeatCode(seat.getSeatCode()); // Lưu vết tên ghế vĩnh viễn
+            detail.setSeatCode(seat.getSeatCode());
             
             SeatPrice sp = seatPriceRepository.findLatestPrice(
                     showtime.getRoom().getType(), 
@@ -201,8 +214,13 @@ public class BookingServiceImpl implements BookingService {
         Promotion promotion = promotionRepository.findByCodeAndIsActiveTrue(promoCode)
                 .orElseThrow(() -> new AppException("Invalid promotion code"));
         
-        if (customer.getMembershipTier().ordinal() < promotion.getMinTier().getTier().ordinal()) {
-            throw new AppException("Membership tier too low for this promotion. Required: " + promotion.getMinTier().getTier());
+        // Kiểm tra hạng thành viên tối thiểu (chỉ nếu có customer)
+        if (customer != null && promotion.getMinTier() != null) {
+            if (customer.getMembershipTier().ordinal() < promotion.getMinTier().getTier().ordinal()) {
+                throw new AppException("Membership tier too low for this promotion. Required: " + promotion.getMinTier().getTier());
+            }
+        } else if (customer == null && promotion.getMinTier() != null && promotion.getMinTier().getTier() != MembershipTier.STANDARD) {
+            throw new AppException("This promotion is for registered members only");
         }
 
         if (promotion.getEndDate() != null && promotion.getEndDate().isBefore(java.time.LocalDate.now())) {
@@ -234,13 +252,14 @@ public class BookingServiceImpl implements BookingService {
                                  List<BookingDetail> details, List<BookingCombo> combos,
                                  BigDecimal totalPrice, PaymentMethod paymentMethod) {
         PaymentMethod resolvedPaymentMethod = paymentMethod != null ? paymentMethod : PaymentMethod.MOMO;
-        boolean autoConfirm = resolvedPaymentMethod == PaymentMethod.CASH;
+        // Tự động CONFIRMED nếu thanh toán tại quầy (CASH/CARD)
+        boolean isStaffSale = resolvedPaymentMethod == PaymentMethod.CASH || resolvedPaymentMethod == PaymentMethod.CARD;
 
         booking.setCustomer(customer);
         booking.setShowtime(showtime);
         booking.setBookingCode("BKG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         booking.setTotalPrice(totalPrice);
-        booking.setStatus(autoConfirm ? BookingStatus.CONFIRMED : BookingStatus.PENDING);
+        booking.setStatus(isStaffSale ? BookingStatus.CONFIRMED : BookingStatus.PENDING);
         booking.setDetails(details);
         booking.setCombos(combos);
 
@@ -248,9 +267,9 @@ public class BookingServiceImpl implements BookingService {
         payment.setBooking(booking);
         payment.setAmount(totalPrice);
         payment.setPaymentMethod(resolvedPaymentMethod);
-        payment.setPaymentStatus(autoConfirm ? PaymentStatus.SUCCESS : PaymentStatus.PENDING);
-        if (autoConfirm) {
-            payment.setTransactionId("TXN-" + UUID.randomUUID().toString().substring(0, 10).toUpperCase());
+        payment.setPaymentStatus(isStaffSale ? PaymentStatus.SUCCESS : PaymentStatus.PENDING);
+        if (isStaffSale) {
+            payment.setTransactionId("POS-" + UUID.randomUUID().toString().substring(0, 10).toUpperCase());
             payment.setPaidAt(LocalDateTime.now());
         }
         booking.setPayment(payment);
@@ -271,7 +290,7 @@ public class BookingServiceImpl implements BookingService {
 
         if (!hasAuthority("ROLE_STAFF")) {
             Customer customer = getCurrentCustomer();
-            if (!booking.getCustomer().getId().equals(customer.getId())) {
+            if (booking.getCustomer() != null && !booking.getCustomer().getId().equals(customer.getId())) {
                 throw new AppException("Unauthorized to view this booking");
             }
         }
@@ -282,7 +301,7 @@ public class BookingServiceImpl implements BookingService {
     private boolean hasAuthority(String authority) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
-            throw new AppException("Unauthorized to view this booking");
+            return false;
         }
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -297,7 +316,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = bookingRepository.findByBookingCode(bookingCode)
                 .orElseThrow(() -> new AppException("Booking not found"));
                 
-        if (!booking.getCustomer().getId().equals(customer.getId())) {
+        if (booking.getCustomer() != null && !booking.getCustomer().getId().equals(customer.getId())) {
             throw new AppException("Unauthorized to cancel this booking");
         }
 
@@ -316,11 +335,14 @@ public class BookingServiceImpl implements BookingService {
             }
         }
         bookingRepository.save(booking);
-        createNotification(customer.getUser(),
-                "Huy ve thanh cong",
-                "Booking " + bookingCode + " da duoc huy. Trang thai thanh toan da duoc cap nhat.",
-                NotificationType.SYSTEM);
-        log.info("Booking {} cancelled by customer {}", bookingCode, customer.getUser().getUsername());
+        
+        if (customer != null) {
+            createNotification(customer.getUser(),
+                    "Huy ve thanh cong",
+                    "Booking " + bookingCode + " da duoc huy. Trang thai thanh toan da duoc cap nhat.",
+                    NotificationType.SYSTEM);
+        }
+        log.info("Booking {} cancelled", bookingCode);
     }
 
     @Override
@@ -344,11 +366,13 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.CHECKED_IN);
         bookingRepository.save(booking);
 
-        notificationAutomationService.notifyUser(
-                booking.getCustomer().getUser(),
-                "Check-in thanh cong",
-                "Booking " + booking.getBookingCode() + " da check-in thanh cong tai rap.",
-                NotificationType.SYSTEM);
+        if (booking.getCustomer() != null) {
+            notificationAutomationService.notifyUser(
+                    booking.getCustomer().getUser(),
+                    "Check-in thanh cong",
+                    "Booking " + booking.getBookingCode() + " da check-in thanh cong tai rap.",
+                    NotificationType.SYSTEM);
+        }
     }
 
     private BookingResponse mapToResponse(Booking booking) {
@@ -383,6 +407,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void createNotification(User user, String title, String message, NotificationType type) {
+        if (user == null) return;
         Notification notification = new Notification();
         notification.setUser(user);
         notification.setTitle(title);

@@ -11,6 +11,11 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     List<Showtime> findByMovieId(Long movieId);
     void deleteByStartTimeBetween(LocalDateTime start, LocalDateTime end);
     void deleteByStartTimeBetweenAndIdNotIn(LocalDateTime start, LocalDateTime end, List<Long> ids);
+    
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Showtime s WHERE s.startTime >= :start AND s.startTime <= :end AND s.soldSeats = :soldSeats")
+    void deleteByStartTimeBetweenAndSoldSeats(LocalDateTime start, LocalDateTime end, Integer soldSeats);
+
     List<Showtime> findByMovieIdAndStatus(Long movieId, ShowtimeStatus status);
 
     @org.springframework.data.jpa.repository.Query("SELECT s FROM Showtime s WHERE s.room.id = :roomId " +

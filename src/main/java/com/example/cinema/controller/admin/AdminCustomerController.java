@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/customers")
-@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER', 'STAFF')")
 public class AdminCustomerController {
 
     private final CustomerService customerService;
@@ -23,5 +23,10 @@ public class AdminCustomerController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<CustomerResponse>>> getAllCustomers() {
         return ResponseEntity.ok(ApiResponse.ok(customerService.getAllCustomers()));
+    }
+
+    @GetMapping("/lookup")
+    public ResponseEntity<ApiResponse<CustomerResponse>> lookupCustomer(@RequestParam String phone) {
+        return ResponseEntity.ok(ApiResponse.ok(customerService.getCustomerByPhone(phone)));
     }
 }

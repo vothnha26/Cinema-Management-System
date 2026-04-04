@@ -69,7 +69,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/*/checkin").hasAuthority("ROLE_STAFF")
 
-                        // Admin & Manager (Management features)
+                        // Admin, Manager & Staff (Lookup customers at POS)
+                        .requestMatchers("/api/admin/customers/lookup").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER", "ROLE_STAFF")
                         .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
                         .requestMatchers("/api/users/**").hasAuthority("ROLE_ADMIN")
 

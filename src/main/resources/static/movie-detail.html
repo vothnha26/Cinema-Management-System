@@ -9,7 +9,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
@@ -21,65 +20,42 @@
         a { text-decoration: none; color: inherit; }
 
         /* ── NAVBAR ── */
-        .navbar-star {
-          background: rgba(8,11,20,0.8);
-          backdrop-filter: blur(16px);
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          padding: 14px 0;
-          position: fixed; top: 0; width: 100%; z-index: 1000;
-          transition: background 0.3s;
-        }
-        .navbar-star.scrolled { background: var(--bg); border-bottom-color: var(--border); }
+        .navbar-star { background: rgba(8,11,20,0.8); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 14px 0; position: fixed; top: 0; width: 100%; z-index: 1000; }
         .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); }
         .brand span { color: var(--accent); }
-        .nav-link-star { color: var(--text-muted); font-size: 0.9rem; font-weight: 500; padding: 6px 16px; border-radius: 6px; transition: all 0.2s; }
-        .nav-link-star:hover, .nav-link-star.active { color: var(--text); background: rgba(255,255,255,0.05); }
 
         /* ── MOVIE HEADER ── */
-        .movie-header {
-          position: relative; height: 650px; overflow: hidden; display: flex; align-items: flex-end;
-          padding-bottom: 60px;
-        }
+        .movie-header { position: relative; height: 600px; overflow: hidden; display: flex; align-items: flex-end; padding-bottom: 60px; }
         .backdrop-wrap { position: absolute; inset: 0; z-index: -1; }
         .backdrop-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.4) blur(2px); }
-        .backdrop-overlay {
-          position: absolute; inset: 0;
-          background: linear-gradient(to top, var(--bg) 0%, rgba(8,11,20,0.4) 50%, transparent 100%),
-                      linear-gradient(to right, var(--bg) 0%, transparent 60%);
-        }
-        
-        .header-content { display: flex; gap: 40px; align-items: flex-end; }
-        .header-poster {
-          width: 280px; aspect-ratio: 2/3; border-radius: 16px; overflow: hidden;
-          box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1);
-          flex-shrink: 0;
-        }
+        .backdrop-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--bg) 0%, rgba(8,11,20,0.4) 50%, transparent 100%), linear-gradient(to right, var(--bg) 0%, transparent 60%); }
+        .header-content { display: flex; gap: 40px; align-items: flex-end; width: 100%; }
+        .header-poster { width: 260px; aspect-ratio: 2/3; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
         .header-poster img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .movie-title { font-family: 'Bebas Neue', sans-serif; font-size: 5rem; line-height: 0.9; margin-bottom: 20px; letter-spacing: 2px; }
-        .header-meta { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
+        .movie-title { font-family: 'Bebas Neue', sans-serif; font-size: 4.2rem; line-height: 0.9; margin-bottom: 15px; letter-spacing: 2px; }
+        .header-meta { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 25px; }
         .rating-box { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent-gold); font-size: 1.2rem; }
         .age-badge { padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 0.9rem; }
         .age-c18 { background: rgba(229,19,58,0.2); color: var(--accent); border: 1px solid var(--accent); }
         .age-c13 { background: rgba(100,180,255,0.2); color: #64B4FF; border: 1px solid #64B4FF; }
 
         /* ── INFO SECTION ── */
-        .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px; height: 100%; }
+        .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px; margin-bottom: 30px; }
         .section-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; color: var(--accent); margin-bottom: 20px; display: block; }
-        .movie-desc { line-height: 1.8; color: var(--text-muted); margin-bottom: 30px; font-size: 1.05rem; }
+        .movie-desc { line-height: 1.8; color: var(--text-muted); margin-bottom: 35px; font-size: 1.05rem; }
         
-        .cast-list { display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; }
-        .cast-item { text-align: center; flex-shrink: 0; width: 80px; }
-        .cast-avatar { width: 70px; height: 70px; border-radius: 50%; background: var(--card); margin: 0 auto 10px; border: 2px solid var(--border); overflow: hidden; }
-        .cast-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .cast-name { font-size: 0.8rem; font-weight: 500; color: var(--text); display: block; line-height: 1.2; }
-        .cast-role { font-size: 0.72rem; color: var(--text-muted); }
+        /* ── CAST & CREW ROW (FIXED) ── */
+        .people-container { display: flex; flex-direction: column; gap: 30px; border-top: 1px solid var(--border); padding-top: 30px; }
+        .people-group { display: flex; flex-direction: column; gap: 15px; }
+        .people-group-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 1.5px; margin-bottom: 5px; }
+        .people-list { display: flex; flex-wrap: wrap; gap: 20px; }
+        .person-item { text-align: center; width: 90px; }
+        .person-avatar { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--border); margin: 0 auto 10px; overflow: hidden; background: var(--card); transition: 0.2s; }
+        .person-avatar:hover { border-color: var(--accent); transform: scale(1.05); }
+        .person-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .person-name { font-size: 0.75rem; font-weight: 600; color: #fff; line-height: 1.2; display: block; }
 
-        /* ── TRAILER ── */
-        .trailer-wrap { position: relative; border-radius: 20px; overflow: hidden; background: #000; aspect-ratio: 16/9; border: 1px solid var(--border); }
-        .trailer-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); }
-
-        /* ── QUICK BOOKING ── */
+        /* ── BOOKING ── */
         .booking-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; position: sticky; top: 100px; }
         .date-selector { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 24px; scrollbar-width: none; }
         .date-item {
@@ -88,600 +64,176 @@
           cursor: pointer; transition: all 0.2s; background: var(--surface);
         }
         .date-item:hover { border-color: var(--accent); }
-        .date-item.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-        .date-item .day { font-size: 0.75rem; font-weight: 500; opacity: 0.8; margin-bottom: 4px; }
-        .date-item .num { font-size: 1.2rem; font-weight: 700; }
-
+        .date-item.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(229,19,58,0.3); }
+        
         .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .time-btn {
-          background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text);
-          padding: 10px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; text-align: center;
-          transition: all 0.2s;
-        }
+        .time-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; text-align: center; transition: all 0.2s; }
         .time-btn:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
 
-        /* ── SUGGESTED ── */
-        .suggested-card {
-          background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border);
-          transition: transform 0.3s; cursor: pointer;
-        }
-        .suggested-card:hover { transform: translateY(-8px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
-        .suggested-poster { 
-            aspect-ratio: 2/3; background: var(--surface); display: flex; align-items: center; justify-content: center; 
-            font-size: 2.5rem; color: rgba(255,255,255,0.1); border-bottom: 1px solid var(--border);
-            position: relative; overflow: hidden;
-        }
-        .suggested-poster i { position: relative; z-index: 2; transition: all 0.3s; }
-        .suggested-card:hover .suggested-poster i { color: var(--accent); transform: scale(1.2); }
-        .suggested-poster::after {
-            content: ''; position: absolute; inset: 0; 
-            background: linear-gradient(to top, rgba(8,11,20,0.8), transparent);
-        }
-
-        /* FOOTER */
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .modal-content { background: #000; border: 1px solid var(--border); }
         .footer { background: var(--surface); border-top: 1px solid var(--border); padding: 40px 0 20px; margin-top: 80px; }
-        .footer-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 3px; margin-bottom: 8px; }
-        .footer-brand span { color: var(--accent); }
-        .footer-link { color: var(--text-muted); font-size: 0.88rem; transition: color 0.2s; display: block; margin-bottom: 8px; }
-        .footer-link:hover { color: var(--accent); }
-
-        .pg-1 { background: linear-gradient(135deg, #1a0a0f, #8b1030); }
-        .pg-2 { background: linear-gradient(135deg, #0a0f1a, #1a3060); }
-        .pg-3 { background: linear-gradient(135deg, #0d1a0d, #2a5a2a); }
-        
-        ::-webkit-scrollbar { height: 4px; width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar-star" id="navbar">
-    <div class="container-xxl">
-        <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-4">
-                <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-                <div class="d-none d-lg-flex gap-1">
-                    <a href="index.html" class="nav-link-star">Phim</a>
-                    <a href="#" class="nav-link-star">Rạp &amp; Giá</a>
-                    <a href="history.html" class="nav-link-star">Vé của tôi</a>
-                    <a href="#" class="nav-link-star">Ưu đãi</a>
-                </div>
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <button class="btn btn-nav-login d-none d-md-block" style="background:var(--gradient); color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:600">Đăng nhập</button>
-                <div class="d-flex d-md-none align-items-center justify-content-center" style="width:36px; height:36px; border-radius:50%; background:var(--card); border:1px solid var(--border)">
-                    <i class="bi bi-person"></i>
-                </div>
-            </div>
-        </div>
-    </div>
+<nav class="navbar-star">
+    <div class="container-xxl"><div class="d-flex align-items-center justify-content-between"><a href="index.html" class="brand">STAR<span>CINEMA</span></a><div id="navUser"><button class="btn btn-danger btn-sm px-4" onclick="window.location.href='auth.html'">Đăng nhập</button></div></div></div>
 </nav>
 
-<!-- MOVIE HEADER -->
 <section class="movie-header">
-    <div class="backdrop-wrap">
-        <div class="pg-1 backdrop-img"></div>
-        <div class="backdrop-overlay"></div>
-    </div>
+    <div class="backdrop-wrap" id="backdropContainer"></div>
     <div class="container-xxl">
         <div class="header-content">
-            <div class="header-poster d-none d-md-block">
-                <div class="pg-1 w-100 h-100 d-flex align-items-center justify-content-center" style="font-size:5rem">🎬</div>
-            </div>
+            <div class="header-poster d-none d-md-block" id="posterContainer"></div>
             <div class="flex-grow-1">
                 <div class="header-meta">
-                    <span class="rating-box">⭐ 9.2 <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400">/10 (12.4k votes)</span></span>
-                    <span class="age-badge age-c13">C13 - Dưới 13 tuổi</span>
-                    <span style="color:var(--text-muted)">⏱ 168 phút</span>
+                    <span class="rating-box" id="ratingBox">⭐ 0.0</span>
+                    <span class="age-badge" id="ageBadge">P</span>
+                    <span id="duration">⏱ 0 phút</span>
                 </div>
-                <h1 class="movie-title">AVENGERS:<br>SECRET WARS</h1>
-                <div class="d-flex gap-2 mb-4">
-                    <span class="badge bg-dark border border-secondary px-3 py-2">Action</span>
-                    <span class="badge bg-dark border border-secondary px-3 py-2">Sci-Fi</span>
-                    <span class="badge bg-dark border border-secondary px-3 py-2">Adventure</span>
-                </div>
+                <h1 class="movie-title" id="movieTitle">Đang tải...</h1>
+                <div class="d-flex gap-2 mb-4" id="genreList"></div>
                 <div class="d-flex gap-3">
-                    <button class="btn btn-danger px-4 py-2 fw-bold" onclick="document.getElementById('bookingSection').scrollIntoView({behavior:'smooth'})">
-                        <i class="bi bi-ticket-perforated me-2"></i> ĐẶT VÉ NGAY
-                    </button>
-                    <button class="btn btn-outline-light px-4 py-2 fw-bold" id="btnTrailer">
-                        <i class="bi bi-play-fill me-2"></i> XEM TRAILER
-                    </button>
+                    <button class="btn btn-danger px-4 py-2 fw-bold" onclick="document.getElementById('bookingSection').scrollIntoView({behavior:'smooth'})"><i class="bi bi-ticket-perforated me-2"></i> ĐẶT VÉ NGAY</button>
+                    <button class="btn btn-outline-light px-4 py-2 fw-bold" id="btnTrailer" style="display:none"><i class="bi bi-play-circle me-2"></i> XEM TRAILER</button>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- MAIN CONTENT -->
 <main class="container-xxl py-5">
     <div class="row g-5">
-        <!-- LEFT: INFO -->
         <div class="col-lg-8">
-            <div class="info-card mb-4">
+            <div class="info-card">
                 <span class="section-label">Câu chuyện</span>
-                <p class="movie-desc">
-                    Trận chiến cuối cùng giữa các Avengers và kẻ phản diện mạnh nhất từ trước đến nay. Số phận của đa vũ trụ được quyết định trong cuộc chiến này. Các anh hùng từ khắp các thực tại phải hợp sức để ngăn chặn sự sụp đổ của mọi thứ đang tồn tại.
-                </p>
-
-                <div class="row mb-5">
-                    <div class="col-md-6">
-                        <span class="section-label">Đạo diễn</span>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="cast-avatar m-0"><div class="pg-2 w-100 h-100"></div></div>
-                            <div>
-                                <span class="fw-bold">Russo Brothers</span>
-                                <div class="cast-role">Anthony & Joe</div>
-                            </div>
-                        </div>
+                <p class="movie-desc" id="description">...</p>
+                
+                <div class="people-container">
+                    <div class="people-group">
+                        <span class="people-group-label">Đạo diễn</span>
+                        <div class="people-list" id="directorList"></div>
                     </div>
-                    <div class="col-md-6 mt-4 mt-md-0">
-                        <span class="section-label">Diễn viên</span>
-                        <div class="cast-list">
-                            <div class="cast-item">
-                                <div class="cast-avatar"><div class="pg-3 w-100 h-100"></div></div>
-                                <span class="cast-name">Robert Downey Jr.</span>
-                                <span class="cast-role">Iron Man</span>
-                            </div>
-                            <div class="cast-item">
-                                <div class="cast-avatar"><div class="pg-1 w-100 h-100"></div></div>
-                                <span class="cast-name">Chris Evans</span>
-                                <span class="cast-role">Captain America</span>
-                            </div>
-                            <div class="cast-item">
-                                <div class="cast-avatar"><div class="pg-2 w-100 h-100"></div></div>
-                                <span class="cast-name">Scarlett J.</span>
-                                <span class="cast-role">Black Widow</span>
-                            </div>
-                            <div class="cast-item">
-                                <div class="cast-avatar"><div class="pg-3 w-100 h-100"></div></div>
-                                <span class="cast-name">Chris H.</span>
-                                <span class="cast-role">Thor</span>
-                            </div>
-                            <div class="cast-item">
-                                <div class="cast-avatar"><div class="pg-1 w-100 h-100"></div></div>
-                                <span class="cast-name">Tom Holland</span>
-                                <span class="cast-role">Spider-Man</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <span class="section-label" id="trailerSection">Trailer</span>
-                <div class="trailer-wrap">
-                    <div class="trailer-placeholder">
-                        <i class="bi bi-play-circle-fill" style="font-size:4rem;color:var(--accent);cursor:pointer"></i>
-                        <span class="mt-2 fw-500">Xem Trailer chính thức</span>
-                    </div>
-                    <!-- Virtual Embed -->
-                    <div class="w-100 h-100 bg-black d-none"></div>
-                </div>
-
-                <!-- SUGGESTED MOVIES (Moved Inside) -->
-                <div class="mt-5 pt-4 border-top border-secondary border-opacity-25">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <span class="section-label m-0">Phim gợi ý cho bạn</span>
-                        <a href="index.html" class="text-accent" style="font-size:0.9rem">Xem tất cả <i class="bi bi-arrow-right"></i></a>
-                    </div>
-                    <div class="row g-4" id="suggestedMovieContainer">
-                        <!-- Phim gợi ý sẽ được nạp động tại đây -->
-                        <div class="text-center py-4 text-muted small">Đang tải phim gợi ý...</div>
+                    <div class="people-group">
+                        <span class="people-group-label">Diễn viên chính</span>
+                        <div class="people-list" id="castList"></div>
                     </div>
                 </div>
             </div>
-
         </div>
-
-        <!-- RIGHT: BOOKING -->
         <div class="col-lg-4" id="bookingSection">
-            <div class="booking-card">
-                <span class="section-label">Đặt vé nhanh</span>
-                
-                <div style="font-size:0.85rem;font-weight:600;margin-bottom:12px">Chọn ngày</div>
-                <div class="date-selector" id="dateSelector">
-                    <!-- Dates will be generated -->
-                </div>
-
-                <div style="font-size:0.85rem;font-weight:600;margin-bottom:12px">StarCinema Quận 1</div>
-                <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:15px">Lịch chiếu hôm nay</div>
-                
-                <div class="mb-4">
-                    <div style="font-size:0.8rem;font-weight:700;margin-bottom:8px;color:var(--text-muted)">2D PHỤ ĐỀ</div>
-                    <div class="time-grid">
-                        <a href="booking.html" class="time-btn">10:30</a>
-                        <a href="booking.html" class="time-btn">13:15</a>
-                        <a href="booking.html" class="time-btn">16:00</a>
-                        <a href="booking.html" class="time-btn">18:45</a>
-                        <a href="booking.html" class="time-btn">21:30</a>
-                        <a href="booking.html" class="time-btn">23:55</a>
-                    </div>
-                </div>
-
-                <div class="mb-4">
-                    <div style="font-size:0.8rem;font-weight:700;margin-bottom:8px;color:var(--accent-gold)">IMAX LASER</div>
-                    <div class="time-grid">
-                        <a href="booking.html" class="time-btn" style="border-color:var(--accent-gold);color:var(--accent-gold)">19:30</a>
-                        <a href="booking.html" class="time-btn" style="border-color:var(--accent-gold);color:var(--accent-gold)">22:15</a>
-                    </div>
-                </div>
-
-                <div class="p-3 rounded-3" style="background:rgba(255,255,255,0.05);border:1px dashed var(--border)">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="bi bi-info-circle text-accent"></i>
-                        <span style="font-size:0.8rem;font-weight:600">Lưu ý về độ tuổi</span>
-                    </div>
-                    <p style="font-size:0.75rem;color:var(--text-muted);margin:0">Phim này dành cho khán giả từ 13 tuổi trở lên. Vui lòng mang theo giấy tờ tùy thân có ảnh khi nhận vé.</p>
-                </div>
-            </div>
+            <div class="booking-card"><span class="section-label">Lịch chiếu</span><div class="date-selector" id="dateSelector"></div><div id="showtimeContainer"><div class="text-center py-4 text-muted small">Đang tải lịch chiếu...</div></div></div>
         </div>
     </div>
 </main>
 
-<!-- FOOTER -->
-<footer class="footer">
-    <div class="container-xxl">
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="footer-brand">STAR<span>CINEMA</span></div>
-                <p style="color:var(--text-muted);font-size:0.88rem;line-height:1.7">Hệ thống rạp phim hiện đại với công nghệ chiếu phim tiên tiến nhất. Trải nghiệm điện ảnh đỉnh cao.</p>
-            </div>
-            <div class="col-6 col-md-2">
-                <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem">Khám phá</div>
-                <a class="footer-link" href="#">Phim đang chiếu</a>
-                <a class="footer-link" href="#">Sắp chiếu</a>
-                <a class="footer-link" href="#">Combo ưu đãi</a>
-            </div>
-            <div class="col-6 col-md-2">
-                <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem">Hỗ trợ</div>
-                <a class="footer-link" href="#">Chính sách hoàn vé</a>
-                <a class="footer-link" href="#">Liên hệ</a>
-            </div>
-            <div class="col-md-4">
-                <div style="font-weight:600;margin-bottom:12px;font-size:0.9rem">Hotline</div>
-                <div style="color:var(--accent);font-size:1.5rem;font-weight:700">1900 1234</div>
-                <div style="font-size:0.85rem;color:var(--text-muted)">9:00 - 22:00 (Tất cả các ngày)</div>
-            </div>
-        </div>
-        <div style="color:var(--text-muted);font-size:0.82rem;text-align:center;padding-top:20px;border-top:1px solid var(--border);margin-top:32px;">© 2024 StarCinema. All Rights Reserved.</div>
-    </div>
-</footer>
+<div class="modal fade" id="trailerModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0 pb-0"><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div class="video-container" id="videoContainer"></div></div></div></div></div>
 
+<footer class="footer"><div class="container-xxl text-center text-muted small">© 2024 StarCinema. Toàn bộ bản quyền được bảo lưu.</div></footer>
+
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Utility for URL params
-    const getParam = (p) => new URLSearchParams(window.location.search).get(p);
-    const movieId = getParam('id');
-    const AGE_CLASS = { p:'age-p', c13:'age-c13', c16:'age-c16', c18:'age-c18' };
-    const AGE_LABEL = { p:'P', c13:'C13', c16:'C16', c18:'C18' };
+    const movieId = new URLSearchParams(window.location.search).get('id');
+    let selectedDate = new Date().toISOString().split('T')[0];
+    const trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
 
-    if (!movieId) {
-        alert('Không tìm thấy ID phim!');
-        window.location.href = 'index.html';
+    function getFullImageUrl(path) {
+        if (!path) return 'https://placehold.co/300x450?text=No+Img';
+        if (path.startsWith('http')) return path;
+        const cleanPath = path.startsWith('/') ? path : '/' + path;
+        return `https://image.tmdb.org/t/p/w500${cleanPath}`;
     }
 
-    // Navbar scroll effect
-    window.addEventListener('scroll', () => {
-        const nav = document.getElementById('navbar');
-        if (window.scrollY > 50) nav.classList.add('scrolled');
-        else nav.classList.remove('scrolled');
-    });
-
-    async function loadMovieDetail() {
-        try {
-            const resp = await fetch(`/api/movies/${movieId}`);
-            if (!resp.ok) throw new Error('Movie not found');
-            const res = await resp.json();
-            
-            if (!res.success || !res.data) throw new Error('Failed to load movie');
-            const m = res.data;
-            
-            document.title = `${m.title} – StarCinema`;
-            document.querySelector('.movie-title').textContent = m.title;
-            document.querySelector('.movie-desc').textContent = m.description || 'Chưa có mô tả cho phim này.';
-            
-            // Xếp hạng (Rating)
-            const ratingVal = m.rating || 0;
-            document.querySelector('.rating-box').innerHTML = `⭐ ${ratingVal.toFixed(1)} <span style="font-size:0.8rem;color:var(--text-muted);font-weight:400">/10</span>`;
-            
-            document.querySelector('.age-badge').textContent = (m.ageRating || 'P').toUpperCase();
-            document.querySelector('.age-badge').className = `age-badge ${AGE_CLASS[m.ageRating?.toLowerCase()] || 'age-p'}`;
-            document.querySelector('.movie-header .header-meta span:last-child').textContent = `⏱ ${m.duration} phút`;
-            
-            // 1. Genres (Thể loại)
-            const genreContainer = document.querySelector('.movie-header .d-flex.gap-2.mb-4');
-            genreContainer.innerHTML = (m.genres || []).map(g => `<span class="badge bg-dark border border-secondary px-3 py-2">${g}</span>`).join('');
-            
-            // 2. Poster & Backdrop (Ảnh nền & Ảnh bìa)
-            if (m.posterUrl) {
-                const fullPosterUrl = m.posterUrl.startsWith('http') ? m.posterUrl : `https://image.tmdb.org/t/p/w500${m.posterUrl}`;
-                const fullBackdropUrl = m.posterUrl.startsWith('http') ? m.posterUrl : `https://image.tmdb.org/t/p/original${m.posterUrl}`;
-                
-                document.querySelector('.header-poster').innerHTML = `<img src="${fullPosterUrl}" alt="${m.title}" style="width:100%; height:100%; object-fit:cover">`;
-                document.querySelector('.backdrop-wrap').innerHTML = `
-                    <img src="${fullBackdropUrl}" class="backdrop-img" alt="Backdrop">
-                    <div class="backdrop-overlay"></div>
-                `;
-            }
-
-            // 3 & 4. Render Đạo diễn & Diễn viên (Ưu tiên TMDB nếu có tmdbId)
-            if (m.tmdbId) {
-                fetchTMDBExtraInfo(m.tmdbId, m.directors, m.actors);
-            } else {
-                renderPeople(m.directors, m.actors);
-            }
-
-            // 5. Xử lý Trailer YouTube
-            if (m.trailerUrl) {
-                let videoId = '';
-                if (m.trailerUrl.includes('v=')) {
-                    videoId = m.trailerUrl.split('v=')[1].split('&')[0];
-                } else if (m.trailerUrl.includes('youtu.be/')) {
-                    videoId = m.trailerUrl.split('youtu.be/')[1].split('?')[0];
-                }
-
-                if (videoId) {
-                    const trailerWrap = document.querySelector('.trailer-wrap');
-                    const playFn = () => {
-                        trailerWrap.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-                    };
-                    trailerWrap.onclick = playFn;
-
-                    // Gắn sự kiện cho nút Xem Trailer ở Header
-                    document.getElementById('btnTrailer').onclick = () => {
-                        document.getElementById('trailerSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        setTimeout(playFn, 800); // Đợi cuộn xong rồi phát
-                    };
-                }
-            }
-
-            loadShowtimes();
-            loadSuggestedMovies();
-        } catch (err) {
-            console.error(err);
-            alert('Lỗi tải thông tin phim.');
-        }
+    async function init() {
+        if(!movieId) return window.location.href = 'index.html';
+        const res = await api.get(`/movies/${movieId}`);
+        if(res.success) renderMovie(res.data);
+        renderDates(); loadShowtimes();
+        const user = localStorage.getItem('cinemaUsername');
+        if(user) document.getElementById('navUser').innerHTML = `<span class="fw-bold">${user}</span>`;
     }
 
-    async function fetchTMDBExtraInfo(tmdbId, dbDirectors, dbActors) {
-        try {
-            const resp = await fetch(`/api/tmdb/movie/${tmdbId}`);
-            const data = await resp.json();
-            
-            // TMDB trả về credits.cast và credits.crew
-            const cast = data.credits?.cast || [];
-            const crew = data.credits?.crew || [];
-            
-            const directors = crew.filter(c => c.job === 'Director').map(d => ({
-                name: d.name,
-                avatarUrl: d.profile_path ? `https://image.tmdb.org/t/p/w185${d.profile_path}` : null
-            }));
-            
-            const actors = cast.slice(0, 10).map(a => ({
-                name: a.name,
-                avatarUrl: a.profile_path ? `https://image.tmdb.org/t/p/w185${a.profile_path}` : null,
-                role: a.character
-            }));
-
-            // Nếu TMDB có dữ liệu xịn, dùng nó. Không thì fallback về DB
-            renderPeople(directors.length ? directors : dbDirectors, actors.length ? actors : dbActors);
-        } catch (e) {
-            console.warn('TMDB Extra Info failed, fallback to DB', e);
-            renderPeople(dbDirectors, dbActors);
-        }
-    }
-
-    function renderPeople(directors, actors) {
-        const placeholder = 'https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8257e0e6720368ad56d53a3ecb90146f503b3a9d77b583b095160833e713706.svg';
+    function renderMovie(m) {
+        document.getElementById('movieTitle').textContent = m.title;
+        document.getElementById('description').textContent = m.description || 'Chưa có mô tả.';
+        document.getElementById('duration').textContent = `⏱ ${m.duration} phút`;
+        document.getElementById('ratingBox').innerHTML = `⭐ ${m.rating || 0}`;
+        document.getElementById('ageBadge').textContent = m.ageRating;
+        document.getElementById('ageBadge').className = `age-badge age-${m.ageRating.toLowerCase()}`;
         
-        // Render Đạo diễn
-        const directorContainer = document.querySelector('.info-card .row.mb-5 .col-md-6:first-child');
-        if (directors && directors.length > 0) {
-            const d = directors[0];
-            const dAvatar = d.avatarUrl 
-                ? (d.avatarUrl.startsWith('http') ? d.avatarUrl : `https://image.tmdb.org/t/p/w185${d.avatarUrl}`)
-                : placeholder;
-            
-            directorContainer.innerHTML = `
-                <span class="section-label">Đạo diễn</span>
-                <div class="d-flex align-items-center gap-3">
-                    <div class="cast-avatar m-0 shadow-sm" style="background: #1a1d29; display: flex; align-items: center; justify-content: center;">
-                        <img src="${dAvatar}" alt="${d.name}" style="width: 100%; height: 100%; object-fit: ${d.avatarUrl ? 'cover' : 'contain'}; padding: ${d.avatarUrl ? '0' : '15px'}">
-                    </div>
-                    <div>
-                        <span class="fw-bold">${d.name}</span>
-                        <div class="cast-role">Đạo diễn</div>
-                    </div>
-                </div>
-            `;
-        } else {
-            directorContainer.innerHTML = '<span class="section-label">Đạo diễn</span><div class="text-muted small">Đang cập nhật...</div>';
-        }
+        const posterUrl = getFullImageUrl(m.posterUrl);
+        document.getElementById('posterContainer').innerHTML = `<img src="${posterUrl}" class="w-100 h-100">`;
+        document.getElementById('backdropContainer').innerHTML = `<img src="${posterUrl}" class="backdrop-img"><div class="backdrop-overlay"></div>`;
+        document.getElementById('genreList').innerHTML = (m.genres || []).map(g => `<span class="badge bg-dark border border-secondary px-3 py-2">${g}</span>`).join('');
+        
+        document.getElementById('directorList').innerHTML = (m.directors || []).map(d => `
+            <div class="person-item">
+                <div class="person-avatar"><img src="${getFullImageUrl(d.avatarUrl)}" onerror="this.src='https://placehold.co/100?text=Dir'"></div>
+                <span class="person-name">${d.name}</span>
+            </div>`).join('') || '<span class="text-muted small">Đang cập nhật</span>';
 
-        // Render Diễn viên
-        const actorList = document.querySelector('.cast-list');
-        if (actors && actors.length > 0) {
-            actorList.innerHTML = actors.map(a => {
-                const aAvatar = a.avatarUrl 
-                    ? (a.avatarUrl.startsWith('http') ? a.avatarUrl : `https://image.tmdb.org/t/p/w185${a.avatarUrl}`)
-                    : placeholder;
-                
-                return `
-                    <div class="cast-item">
-                        <div class="cast-avatar shadow-sm" style="background: #1a1d29; display: flex; align-items: center; justify-content: center;">
-                            <img src="${aAvatar}" alt="${a.name}" style="width: 100%; height: 100%; object-fit: ${a.avatarUrl ? 'cover' : 'contain'}; padding: ${a.avatarUrl ? '0' : '10px'}">
-                        </div>
-                        <span class="cast-name text-truncate" title="${a.name}">${a.name}</span>
-                        ${a.role ? `<div class="cast-role text-truncate" style="font-size:0.65rem" title="${a.role}">${a.role}</div>` : ''}
-                    </div>
-                `;
-            }).join('');
-        } else {
-            actorList.innerHTML = '<div class="text-muted small">Đang cập nhật...</div>';
+        document.getElementById('castList').innerHTML = (m.actors || []).map(a => `
+            <div class="person-item">
+                <div class="person-avatar"><img src="${getFullImageUrl(a.avatarUrl)}" onerror="this.src='https://placehold.co/100?text=Actor'"></div>
+                <span class="person-name">${a.name}</span>
+            </div>`).join('') || '<span class="text-muted small">Đang cập nhật</span>';
+
+        if (m.trailerUrl) {
+            const btnT = document.getElementById('btnTrailer');
+            btnT.style.display = 'inline-flex';
+            btnT.onclick = () => openTrailer(m.trailerUrl);
         }
     }
+
+    function openTrailer(url) {
+        let id = '';
+        if (url.includes('v=')) id = url.split('v=')[1].split('&')[0];
+        else if (url.includes('youtu.be/')) id = url.split('youtu.be/')[1].split('?')[0];
+        if (id) {
+            document.getElementById('videoContainer').innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allowfullscreen allow="autoplay"></iframe>`;
+            trailerModal.show();
+            document.getElementById('trailerModal').addEventListener('hidden.bs.modal', () => { document.getElementById('videoContainer').innerHTML = ''; }, {once: true});
+        }
+    }
+
+    function renderDates() {
+        const container = document.getElementById('dateSelector');
+        const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        const now = new Date();
+        let html = '';
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(); d.setDate(now.getDate() + i);
+            const dateStr = d.toISOString().split('T')[0];
+            const active = dateStr === selectedDate ? 'active' : '';
+            html += `<div class="date-item ${active}" onclick="selectDate('${dateStr}')"><span class="day">${i===0?'Hôm nay':days[d.getDay()]}</span><span class="num">${d.getDate()}</span></div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function selectDate(date) { selectedDate = date; renderDates(); loadShowtimes(); }
 
     async function loadShowtimes() {
+        const container = document.getElementById('showtimeContainer');
+        container.innerHTML = '<div class="text-center py-4 text-muted small"><div class="spinner-border spinner-border-sm mb-2"></div><br>Tìm suất chiếu...</div>';
         try {
-            const resp = await fetch(`/api/showtimes?movieId=${movieId}`);
-            const res = await resp.json();
-            
-            if (!res.success || !res.data) return;
-            let showtimes = res.data;
-
-            // --- NEW: Lọc suất chiếu cách hiện tại ít nhất 1 tiếng ---
-            const nowPlusOneHour = new Date();
-            nowPlusOneHour.setHours(nowPlusOneHour.getHours() + 1);
-            showtimes = showtimes.filter(s => new Date(s.startTime) > nowPlusOneHour);
-            // --------------------------------------------------------
-
-            const bookingCard = document.querySelector('.booking-card');
-            const noteCard = bookingCard?.querySelector('.p-3.rounded-3');
-            const oldScheduleBlocks = bookingCard ? Array.from(bookingCard.querySelectorAll('.mb-4')) : [];
-            oldScheduleBlocks.forEach((block) => block.remove());
-
-            if (!bookingCard || !noteCard) return;
-
-            if (showtimes.length === 0) {
-                noteCard.insertAdjacentHTML(
-                    'beforebegin',
-                    '<div class="text-center py-3" style="color:var(--text-muted)">Hiện chưa có lịch chiếu cho phim này.</div>'
-                );
-                return;
-            }
-
-            const groupedShowtimes = showtimes.reduce((groups, showtime) => {
-                const key = `${showtime.roomType || 'ROOM'}|${showtime.roomName || 'Phong chieu'}`;
-                if (!groups[key]) {
-                    groups[key] = {
-                        roomType: showtime.roomType || 'ROOM',
-                        roomName: showtime.roomName || 'Phong chieu',
-                        items: []
-                    };
-                }
-                groups[key].items.push(showtime);
-                return groups;
-            }, {});
-
-            const scheduleHtml = Object.values(groupedShowtimes).map((group) => {
-                const isPremium = (group.roomType || '').includes('IMAX');
-                const titleColor = isPremium ? 'var(--accent-gold)' : 'var(--text-muted)';
-
-                const buttons = group.items
-                    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
-                    .map((showtime) => {
-                        const time = new Date(showtime.startTime).toLocaleTimeString('vi-VN', {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        const premiumStyle = isPremium ? ' style="border-color:var(--accent-gold);color:var(--accent-gold)"' : '';
-                        return `<a href="booking.html?showtimeId=${showtime.id}" class="time-btn"${premiumStyle}>${time}</a>`;
-                    })
-                    .join('');
-
-                return `
+            const res = await api.get(`/showtimes?movieId=${movieId}&date=${selectedDate}`);
+            if(res.success && res.data.length > 0) {
+                const nowPlus1H = new Date(); nowPlus1H.setHours(nowPlus1H.getHours() + 1);
+                const filtered = res.data.filter(s => new Date(s.startTime) > nowPlus1H);
+                if(!filtered.length) { container.innerHTML = '<div class="text-center py-4 text-muted small">Không còn suất chiếu khả dụng hôm nay.</div>'; return; }
+                const grouped = filtered.reduce((acc, s) => { const k = s.formatName || '2D'; if(!acc[k]) acc[k] = []; acc[k].push(s); return acc; }, {});
+                container.innerHTML = Object.entries(grouped).map(([fmt, list]) => `
                     <div class="mb-4">
-                        <div style="font-size:0.8rem;font-weight:700;margin-bottom:8px;color:${titleColor}">
-                            ${group.roomType} - ${group.roomName}
-                        </div>
-                        <div class="time-grid">${buttons}</div>
-                    </div>
-                `;
-            }).join('');
-
-            noteCard.insertAdjacentHTML('beforebegin', scheduleHtml);
-            return;
-             
-            const container = document.getElementById('bookingSection');
-            // Basic grouping by date could be added here, for now just list them
-            const timeGrid = document.querySelector('.time-grid');
-            if (showtimes.length === 0) {
-                timeGrid.parentElement.innerHTML = '<div class="text-center py-3" style="color:var(--text-muted)">Hiện chưa có lịch chiếu cho phim này.</div>';
-                return;
-            }
-
-            timeGrid.innerHTML = showtimes.map(s => {
-                const time = new Date(s.startTime).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
-                return `<a href="booking.html?showtimeId=${s.id}" class="time-btn">${time}</a>`;
-            }).join('');
-
-        } catch (err) {
-            console.error(err);
-        }
+                        <div class="small fw-bold text-muted mb-2 text-uppercase">${fmt.replace('HALL_','')}</div>
+                        <div class="time-grid">${list.map(s => `<a href="booking.html?showtimeId=${s.id}" class="time-btn">${new Date(s.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</a>`).join('')}</div>
+                    </div>`).join('');
+            } else container.innerHTML = '<div class="text-center py-4 text-muted small">Chưa có lịch chiếu cho ngày này.</div>';
+        } catch(e) { container.innerHTML = '<div class="text-center py-4 text-danger small">Lỗi tải lịch chiếu.</div>'; }
     }
-
-    async function loadSuggestedMovies() {
-        try {
-            const resp = await fetch('/api/movies/showing');
-            if (!resp.ok) return;
-            const res = await resp.json();
-            
-            if (!res.success || !res.data) return;
-            const allMovies = res.data;
-            
-            // Lọc bỏ phim hiện tại và chỉ lấy tối đa 4 phim
-            const suggestions = allMovies
-                .filter(m => m.id != movieId)
-                .slice(0, 4);
-
-            const container = document.getElementById('suggestedMovieContainer');
-            if (suggestions.length === 0) {
-                container.innerHTML = '<div class="text-center py-3 text-muted small">Chưa có phim gợi ý khác.</div>';
-                return;
-            }
-
-            container.innerHTML = suggestions.map(m => {
-                const posterUrl = m.posterUrl 
-                    ? (m.posterUrl.startsWith('http') ? m.posterUrl : `https://image.tmdb.org/t/p/w300${m.posterUrl}`)
-                    : null;
-                const genres = (m.genres || []).join(' • ');
-                
-                return `
-                    <div class="col-6 col-md-3">
-                        <div class="suggested-card" onclick="window.location.href='movie-detail.html?id=${m.id}'">
-                            <div class="suggested-poster ${posterUrl ? '' : 'pg-1'}">
-                                ${posterUrl ? `<img src="${posterUrl}" alt="${m.title}" style="width:100%; height:100%; object-fit:cover">` : '<i class="bi bi-film"></i>'}
-                            </div>
-                            <div class="p-3">
-                                <div class="fw-bold text-truncate" style="font-size:0.9rem">${m.title}</div>
-                                <div style="font-size:0.75rem;color:var(--text-muted)">${genres || 'Phim mới'}</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-        } catch (err) {
-            console.error('Failed to load suggestions', err);
-        }
-    }
-
-    // Generate Dates (Visual only for now)
-    const dateSelector = document.getElementById('dateSelector');
-    const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-    const now = new Date();
-    for (let i = 0; i < 7; i++) {
-        const d = new Date(); d.setDate(now.getDate() + i);
-        const item = document.createElement('div');
-        item.className = `date-item ${i === 0 ? 'active' : ''}`;
-        item.innerHTML = `<span class="day">${i === 0 ? 'Hôm nay' : days[d.getDay()]}</span><span class="num">${d.getDate()}</span>`;
-        dateSelector.appendChild(item);
-    }
-
-    loadMovieDetail();
-
-    // Check auth for navbar
-    const token = localStorage.getItem('cinemaToken');
-    const username = localStorage.getItem('cinemaUsername');
-    if (token && username) {
-        document.querySelector('.btn-nav-login').outerHTML = `
-            <div class="d-flex align-items-center gap-2" onclick="window.location.href='history.html'" style="cursor:pointer">
-                <div style="width:36px; height:36px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700">
-                    ${username.charAt(0).toUpperCase()}
-                </div>
-                <span class="d-none d-md-block">${username}</span>
-            </div>
-        `;
-    }
+    init();
 </script>
 </body>
 </html>
