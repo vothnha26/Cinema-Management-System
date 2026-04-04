@@ -1,9 +1,9 @@
 package com.example.cinema.service.showtime.impl;
 
+import com.example.cinema.model.dto.request.SchedulingRequest;
+import com.example.cinema.model.dto.request.SchedulingRule;
 import com.example.cinema.model.dto.response.ShowtimeResponse;
-import com.example.cinema.model.entity.Movie;
-import com.example.cinema.model.entity.Room;
-import com.example.cinema.model.entity.Showtime;
+import com.example.cinema.model.entity.*;
 import com.example.cinema.model.enums.MovieStatus;
 import com.example.cinema.model.enums.ShowtimeStatus;
 import com.example.cinema.repository.movie.MovieRepository;
@@ -40,185 +40,207 @@ public class SchedulingServiceImpl implements SchedulingService {
     }
 
     @Override
-    public List<ShowtimeResponse> generateAISuggestions(LocalDate targetDate, String mode, double topRatio, LocalTime startTime, LocalTime endTime) {
-        LocalTime workingStartTime = (startTime == null) ? LocalTime.of(9, 0) : startTime;
-        LocalTime workingEndTime = (endTime == null) ? LocalTime.of(23, 59) : endTime;
-
-        // Tạo bản sao final để dùng trong lambda
-        final LocalTime fStartTime = workingStartTime;
-        final LocalTime fEndTime = workingEndTime;
+    public List<ShowtimeResponse> generateAISuggestions(SchedulingRequest request) {
+        LocalDate targetDate = request.getDate();
+        LocalTime workingStartTime = (request.getStartTime() == null) ? LocalTime.of(9, 0) : request.getStartTime();
+        LocalTime workingEndTime = (request.getEndTime() == null) ? LocalTime.of(23, 59) : request.getEndTime();
+        double topRatio = (request.getRatio() != null) ? request.getRatio() : 0.7;
 
         List<Movie> activeMovies = movieRepository.findAll().stream()
-                .filter(m -> m.getStatus() == MovieStatus.SHOWING || m.getStatus() == MovieStatus.NOW_SHOWING || m.getStatus() == MovieStatus.PRE_RELEASE)
+                .filter(m -> m.getStatus() == MovieStatus.SHOWING || m.getStatus() == MovieStatus.NOW_SHOWING 
+                        || m.getStatus() == MovieStatus.PRE_RELEASE || m.getStatus() == MovieStatus.COMING)
                 .collect(Collectors.toList());
 
         if (activeMovies.isEmpty()) return new ArrayList<>();
 
         List<Room> rooms = roomRepository.findAll();
         Map<Long, Double> buzzScores = buzzAnalysisService.getExternalBuzzScores();
+        
+        // Theo dõi số lần mỗi phim được xếp để đảm bảo tính công bằng (Fairness)
+        Map<Long, Integer> movieUsageCount = new HashMap<>();
+        activeMovies.forEach(m -> movieUsageCount.put(m.getId(), 0));
 
-        // Lấy tất cả suất chiếu trong ngày
         List<Showtime> existingInDay = showtimeRepository.findAllByStartTimeBetween(
                 targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX));
-
-        // Sắp xếp phim theo Buzz
-        activeMovies.sort((m1, m2) -> {
-            double s1 = (m1.getPriorityLevel() != null ? m1.getPriorityLevel() : 1) * 20 + buzzScores.getOrDefault(m1.getId(), 0.0);
-            double s2 = (m2.getPriorityLevel() != null ? m2.getPriorityLevel() : 1) * 20 + buzzScores.getOrDefault(m2.getId(), 0.0);
-            return Double.compare(s2, s1);
-        });
-
-        int topCount = Math.max(1, (int) Math.ceil(activeMovies.size() * 0.3));
-        List<Movie> topMovies = activeMovies.subList(0, Math.min(topCount, activeMovies.size()));
-        List<Movie> otherMovies = activeMovies.subList(Math.min(topCount, activeMovies.size()), activeMovies.size());
 
         List<ShowtimeResponse> suggestions = new ArrayList<>();
         int staggeredOffset = 0;
 
         for (Room room : rooms) {
-            LocalTime currentTime = fStartTime;
-            // Tạo độ trễ giữa các phòng để khách không ùa vào cùng lúc
-            currentTime = currentTime.plusMinutes(staggeredOffset);
+            LocalTime currentTime = workingStartTime.plusMinutes(staggeredOffset);
             staggeredOffset = (staggeredOffset + 15) % 45;
 
             final Long currentRoomId = room.getId();
-            // Lấy các suất chiếu cũ của phòng này mà chúng ta chọn GIỮ LẠI
+            final String rType = room.getType().name();
+
             List<Showtime> keptShowtimes = existingInDay.stream()
                     .filter(s -> s.getRoom().getId().equals(currentRoomId))
                     .filter(s -> {
-                        if ("OVERWRITE".equalsIgnoreCase(mode)) {
+                        if ("OVERWRITE".equalsIgnoreCase(request.getMode())) {
                             LocalTime sStart = s.getStartTime().toLocalTime();
-                            // Nếu ở chế độ ghi đè, chỉ giữ lại những suất nằm NGOÀI khung giờ yêu cầu
-                            return sStart.isBefore(fStartTime) || sStart.isAfter(fEndTime);
+                            return sStart.isBefore(workingStartTime) || sStart.isAfter(workingEndTime);
                         }
-                        return true; // Chế độ FILL giữ lại tất cả
+                        return true; 
                     })
                     .sorted(Comparator.comparing(Showtime::getStartTime))
                     .collect(Collectors.toList());
 
-            while (currentTime.isBefore(fEndTime)) {
-                // 1. Kiểm tra xem thời điểm currentTime có đang nằm trong một suất chiếu cũ (được giữ lại) không
+            while (currentTime.isBefore(workingEndTime)) {
                 final LocalTime checkTime = currentTime;
                 Optional<Showtime> conflict = keptShowtimes.stream()
                         .filter(s -> {
                             LocalTime sStart = s.getStartTime().toLocalTime();
-                            LocalTime sEnd = s.getEndTime().toLocalTime().plusMinutes(15); // +15p dọn dẹp
+                            LocalTime sEnd = s.getEndTime().toLocalTime().plusMinutes(15);
                             return !checkTime.isBefore(sStart) && checkTime.isBefore(sEnd);
-                        })
-                        .findFirst();
+                        }).findFirst();
 
                 if (conflict.isPresent()) {
-                    // Nếu trùng, nhảy đến sau khi suất đó kết thúc + 15p dọn dẹp
                     currentTime = conflict.get().getEndTime().toLocalTime().plusMinutes(15);
                     continue;
                 }
 
-                // 2. Chọn phim để xếp lịch
-                Movie movieToSchedule = null;
-                boolean shouldPickTop = Math.random() < topRatio || otherMovies.isEmpty();
-                List<Movie> pool = shouldPickTop ? topMovies : otherMovies;
-                if (pool.isEmpty()) pool = activeMovies;
+                // --- HỆ THỐNG TÍNH TRỌNG SỐ (WEIGHTING ENGINE) ---
+                final LocalTime evalTime = currentTime;
+                List<Movie> candidates = activeMovies.stream()
+                    .filter(m -> m.getFormats().stream().anyMatch(f -> f.getName().equals(rType)))
+                    .sorted((m1, m2) -> {
+                        double w1 = calculateAdvancedWeight(m1, evalTime, buzzScores, request, movieUsageCount);
+                        double w2 = calculateAdvancedWeight(m2, evalTime, buzzScores, request, movieUsageCount);
+                        return Double.compare(w2, w1);
+                    })
+                    .collect(Collectors.toList());
 
-                for (Movie m : pool) {
-                    int duration = m.getDuration();
-                    LocalTime expectedEndTime = currentTime.plusMinutes(duration);
-                    LocalTime nextStartTimeLimit = expectedEndTime.plusMinutes(15); // Suất tiếp theo phải sau mốc này
+                if (candidates.isEmpty()) { currentTime = currentTime.plusMinutes(30); continue; }
 
-                    // Kiểm tra không vượt quá giờ đóng cửa
-                    if (expectedEndTime.isAfter(fEndTime) || (expectedEndTime.isBefore(currentTime) && !fEndTime.isBefore(fStartTime))) {
-                        continue;
-                    }
+                // Chọn phim trong nhóm tinh hoa (Top Tier) dựa trên ratio
+                int topSize = Math.max(1, (int) Math.ceil(candidates.size() * topRatio));
+                Movie selectedMovie = candidates.get(new Random().nextInt(topSize));
 
-                    // Kiểm tra xem suất dự kiến này có đè lên bất kỳ suất "đã giữ lại" nào phía sau không
-                    final LocalTime startRef = currentTime;
-                    final LocalTime endRef = nextStartTimeLimit;
-                    boolean willOverlapKept = keptShowtimes.stream()
-                            .anyMatch(s -> {
-                                LocalTime sStart = s.getStartTime().toLocalTime();
-                                return sStart.isAfter(startRef) && sStart.isBefore(endRef);
-                            });
+                int duration = (selectedMovie.getDuration() > 0) ? selectedMovie.getDuration() : 120;
+                LocalTime expectedEndTime = currentTime.plusMinutes(duration);
+                if (expectedEndTime.isAfter(workingEndTime)) break;
 
-                    if (!willOverlapKept) {
-                        movieToSchedule = m;
-                        break;
-                    }
+                final LocalTime startRef = currentTime;
+                final LocalTime endRef = expectedEndTime.plusMinutes(15);
+                boolean willOverlap = keptShowtimes.stream().anyMatch(s -> {
+                    LocalTime sStart = s.getStartTime().toLocalTime();
+                    return sStart.isAfter(startRef) && sStart.isBefore(endRef);
+                });
+
+                if (!willOverlap) {
+                    ShowtimeResponse res = new ShowtimeResponse();
+                    res.setId(-1L);
+                    res.setMovieId(selectedMovie.getId());
+                    res.setMovieTitle(selectedMovie.getTitle());
+                    res.setMovieDuration(selectedMovie.getDuration());
+                    res.setRoomId(room.getId());
+                    res.setRoomName(room.getName());
+                    res.setRoomType(rType);
+                    selectedMovie.getFormats().stream().filter(f -> f.getName().equals(rType)).findFirst().ifPresent(f -> res.setFormatName(f.getName()));
+                    res.setStartTime(LocalDateTime.of(targetDate, currentTime));
+                    res.setEndTime(LocalDateTime.of(targetDate, expectedEndTime));
+                    suggestions.add(res);
+
+                    movieUsageCount.put(selectedMovie.getId(), movieUsageCount.get(selectedMovie.getId()) + 1);
+                    currentTime = expectedEndTime.plusMinutes(15);
+                } else {
+                    currentTime = currentTime.plusMinutes(30);
                 }
-
-                if (movieToSchedule == null) {
-                    currentTime = currentTime.plusMinutes(15); // Không tìm được phim phù hợp, nhích thời gian lên
-                    continue;
-                }
-
-                // 3. Thêm vào danh sách gợi ý
-                ShowtimeResponse res = new ShowtimeResponse();
-                res.setId(-1L);
-                res.setMovieId(movieToSchedule.getId());
-                res.setMovieTitle(movieToSchedule.getTitle());
-                res.setMovieDuration(movieToSchedule.getDuration());
-                res.setRoomId(room.getId());
-                res.setRoomName(room.getName());
-                LocalDateTime startDT = LocalDateTime.of(targetDate, currentTime);
-                res.setStartTime(startDT);
-                res.setEndTime(startDT.plusMinutes(movieToSchedule.getDuration()));
-
-                suggestions.add(res);
-
-                // 4. Tiến thời gian lên: Thời lượng phim + 15 phút dọn dẹp
-                currentTime = currentTime.plusMinutes(movieToSchedule.getDuration() + 15);
-                
-                // Chống lặp vô hạn nếu nhảy qua ngày mới
-                if (currentTime.isBefore(fStartTime) && !fEndTime.isBefore(fStartTime)) break;
+                if (currentTime.isBefore(workingStartTime)) break;
             }
 
-            // Gộp các suất chiếu cũ đã giữ lại vào danh sách trả về để hiển thị trên UI
+            // Add kept ones
             for (Showtime ks : keptShowtimes) {
                 ShowtimeResponse kr = new ShowtimeResponse();
                 kr.setId(ks.getId());
                 kr.setMovieId(ks.getMovie().getId());
                 kr.setMovieTitle(ks.getMovie().getTitle());
-                kr.setMovieDuration(ks.getMovie().getDuration());
                 kr.setRoomId(ks.getRoom().getId());
                 kr.setRoomName(ks.getRoom().getName());
                 kr.setStartTime(ks.getStartTime());
                 kr.setEndTime(ks.getEndTime());
-                kr.setTotalSeats(ks.getTotalSeats());
-                kr.setSoldSeats(ks.getSoldSeats());
                 suggestions.add(kr);
             }
         }
-
         return suggestions;
+    }
+
+    private double calculateAdvancedWeight(Movie m, LocalTime time, Map<Long, Double> buzz, SchedulingRequest req, Map<Long, Integer> usage) {
+        // 1. Trọng số cơ bản: Buzz + Rating + Priority (Phim nào priority cao hơn sẽ có lợi thế)
+        double weight = buzz.getOrDefault(m.getId(), 0.0) + (m.getRating() * 2) + (m.getPriorityLevel() * 10.0);
+
+        // 2. Phạt trọng số dựa trên số lần sử dụng (Fairness)
+        // Cứ mỗi suất đã xếp, phim bị giảm 20 điểm trọng số để nhường cho phim khác
+        weight -= (usage.getOrDefault(m.getId(), 0) * 20.0);
+
+        // 3. Áp dụng các quy tắc tùy chỉnh (Custom Rules)
+        if (req.getRules() != null) {
+            for (SchedulingRule rule : req.getRules()) {
+                if (!time.isBefore(rule.getStartTime()) && time.isBefore(rule.getEndTime())) {
+                    boolean match = false;
+                    switch (rule.getPriorityType().toUpperCase()) {
+                        case "GENRE":
+                            match = m.getGenres().stream().anyMatch(g -> g.getName().equalsIgnoreCase(rule.getTargetValue()));
+                            break;
+                        case "PRIORITY":
+                            match = m.getPriorityLevel() >= Integer.parseInt(rule.getTargetValue());
+                            break;
+                        case "RATING":
+                            match = m.getRating() >= Double.parseDouble(rule.getTargetValue());
+                            break;
+                        case "MOVIE":
+                            match = m.getId().toString().equals(rule.getTargetValue());
+                            break;
+                    }
+                    if (match) weight *= (rule.getWeightBoost() != null ? rule.getWeightBoost() : 2.0);
+                }
+            }
+        }
+
+        // 4. Áp dụng Chiến lược Preset (REVENUE, FAMILY, LATE_NIGHT)
+        if ("REVENUE".equalsIgnoreCase(req.getStrategy())) {
+            // Tối ưu doanh thu: Phim priority cao và buzz cao được nhân hệ số trong khung giờ vàng
+            if (time.isAfter(LocalTime.of(18, 0)) && time.isBefore(LocalTime.of(22, 30))) {
+                weight *= 1.5;
+            }
+        } else if ("FAMILY".equalsIgnoreCase(req.getStrategy())) {
+            if (time.isBefore(LocalTime.of(14, 0))) {
+                boolean isFamily = m.getGenres().stream().anyMatch(g -> g.getName().contains("Hoạt hình") || g.getName().contains("Gia đình"));
+                if (isFamily) weight += 100.0;
+            }
+        } else if ("LATE_NIGHT".equalsIgnoreCase(req.getStrategy())) {
+            if (time.isAfter(LocalTime.of(21, 0))) {
+                boolean isAction = m.getGenres().stream().anyMatch(g -> g.getName().contains("Hành động") || g.getName().contains("Kinh dị"));
+                if (isAction) weight += 100.0;
+            }
+        }
+
+        return weight;
     }
 
     @Override
     @Transactional
     public void applySuggestions(List<ShowtimeResponse> suggestions, boolean overwrite) {
         if (suggestions.isEmpty()) return;
-        
         LocalDate targetDate = suggestions.get(0).getStartTime().toLocalDate();
-        
         if (overwrite) {
-            // Chỉ xóa các suất chiếu nằm trong Database mà KHÔNG có trong danh sách suggestions hiện tại (đã bao gồm các suất cũ được giữ lại)
-            List<Long> idsToKeep = suggestions.stream()
-                    .filter(s -> s.getId() != null && s.getId() > 0)
-                    .map(ShowtimeResponse::getId)
-                    .collect(Collectors.toList());
-            
+            List<Long> idsToKeep = suggestions.stream().filter(s -> s.getId() != null && s.getId() > 0).map(ShowtimeResponse::getId).collect(Collectors.toList());
             if (idsToKeep.isEmpty()) {
-                showtimeRepository.deleteByStartTimeBetween(
-                    targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX));
+                showtimeRepository.deleteByStartTimeBetween(targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX));
             } else {
-                showtimeRepository.deleteByStartTimeBetweenAndIdNotIn(
-                    targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX), idsToKeep);
+                showtimeRepository.deleteByStartTimeBetweenAndIdNotIn(targetDate.atStartOfDay(), targetDate.atTime(LocalTime.MAX), idsToKeep);
             }
         }
-
         for (ShowtimeResponse res : suggestions) {
             if (res.getId() != null && res.getId() > 0) continue;
-
             Showtime s = new Showtime();
             s.setMovie(movieRepository.getReferenceById(res.getMovieId()));
             s.setRoom(roomRepository.getReferenceById(res.getRoomId()));
+            if (res.getFormatName() != null) {
+                movieRepository.findById(res.getMovieId()).ifPresent(m -> {
+                    m.getFormats().stream().filter(f -> f.getName().equals(res.getFormatName())).findFirst().ifPresent(s::setFormat);
+                });
+            }
             s.setStartTime(res.getStartTime());
             s.setEndTime(res.getEndTime());
             s.setStatus(ShowtimeStatus.UPCOMING);

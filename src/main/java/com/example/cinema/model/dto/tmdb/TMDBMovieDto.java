@@ -47,7 +47,30 @@ public class TMDBMovieDto {
     @JsonProperty("release_dates")
     private ReleaseDatesWrapper releaseDates;
 
+    @JsonProperty("keywords")
+    private KeywordsWrapper keywords;
+
     private String certification;
+    private List<String> suggestedFormats;
+
+    public List<String> getSuggestedFormats() { return suggestedFormats; }
+    public void setSuggestedFormats(List<String> suggestedFormats) { this.suggestedFormats = suggestedFormats; }
+
+    public static class KeywordsWrapper {
+        @JsonProperty("keywords")
+        private List<Keyword> keywords;
+        public List<Keyword> getKeywords() { return keywords; }
+        public void setKeywords(List<Keyword> keywords) { this.keywords = keywords; }
+    }
+
+    public static class Keyword {
+        private Integer id;
+        private String name;
+        public Integer getId() { return id; }
+        public void setId(Integer id) { this.id = id; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+    }
 
     public static class Credits {
         private List<Cast> cast;
@@ -124,10 +147,17 @@ public class TMDBMovieDto {
         @JsonProperty("release_date")
         private String releaseDate;
         private String certification;
+        private String note;
+        private Integer type;
+
         public String getReleaseDate() { return releaseDate; }
         public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
         public String getCertification() { return certification; }
         public void setCertification(String certification) { this.certification = certification; }
+        public String getNote() { return note; }
+        public void setNote(String note) { this.note = note; }
+        public Integer getType() { return type; }
+        public void setType(Integer type) { this.type = type; }
     }
 
     // Getters and Setters
@@ -159,4 +189,7 @@ public class TMDBMovieDto {
     public void setCertification(String certification) { this.certification = certification; }
     public ReleaseDatesWrapper getReleaseDates() { return releaseDates; }
     public void setReleaseDates(ReleaseDatesWrapper releaseDates) { this.releaseDates = releaseDates; }
+
+    public KeywordsWrapper getKeywords() { return keywords; }
+    public void setKeywords(KeywordsWrapper keywords) { this.keywords = keywords; }
 }

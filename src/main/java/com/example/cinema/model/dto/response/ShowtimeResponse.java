@@ -4,14 +4,20 @@ import com.example.cinema.model.enums.ShowtimeStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ShowtimeResponse {
     private Long id;
     private Long movieId;
     private String movieTitle;
+    private String posterUrl;
+    private Double movieRating;
+    private String ageRating;
+    private List<String> genres;
     private Long roomId;
     private String roomName;
     private String roomType;
+    private String formatName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private BigDecimal basePrice;
@@ -44,6 +50,38 @@ public class ShowtimeResponse {
         this.movieTitle = movieTitle;
     }
 
+    public String getPosterUrl() {
+        return posterUrl;
+    }
+
+    public void setPosterUrl(String posterUrl) {
+        this.posterUrl = posterUrl;
+    }
+
+    public Double getMovieRating() {
+        return movieRating;
+    }
+
+    public void setMovieRating(Double movieRating) {
+        this.movieRating = movieRating;
+    }
+
+    public String getAgeRating() {
+        return ageRating;
+    }
+
+    public void setAgeRating(String ageRating) {
+        this.ageRating = ageRating;
+    }
+
+    public List<String> getGenres() {
+        return genres;
+    }
+
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
+    }
+
     public Long getRoomId() {
         return roomId;
     }
@@ -66,6 +104,14 @@ public class ShowtimeResponse {
 
     public void setRoomType(String roomType) {
         this.roomType = roomType;
+    }
+
+    public String getFormatName() {
+        return formatName;
+    }
+
+    public void setFormatName(String formatName) {
+        this.formatName = formatName;
     }
 
     public LocalDateTime getStartTime() {

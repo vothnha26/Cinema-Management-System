@@ -17,7 +17,9 @@ public class MovieRequest {
     private String actors;
     private LocalDate releaseDate;
     private Double rating;
+    private Integer priorityLevel;
     private Long tmdbId;
+    private List<String> formats;
     private List<String> genres;
     private String directorAvatarUrl;
     private String actorAvatarUrls;
@@ -116,12 +118,28 @@ public class MovieRequest {
         this.rating = rating;
     }
 
+    public Integer getPriorityLevel() {
+        return priorityLevel;
+    }
+
+    public void setPriorityLevel(Integer priorityLevel) {
+        this.priorityLevel = priorityLevel;
+    }
+
     public Long getTmdbId() {
         return tmdbId;
     }
 
     public void setTmdbId(Long tmdbId) {
         this.tmdbId = tmdbId;
+    }
+
+    public List<String> getFormats() {
+        return formats;
+    }
+
+    public void setFormats(List<String> formats) {
+        this.formats = formats;
     }
 
     public List<String> getGenres() {

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class TMDBServiceImpl implements TMDBService {
@@ -93,7 +94,7 @@ public class TMDBServiceImpl implements TMDBService {
             String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/movie/" + tmdbId)
                     .queryParam("api_key", apiKey)
                     .queryParam("language", "vi")
-                    .queryParam("append_to_response", "credits,videos,release_dates")
+                    .queryParam("append_to_response", "credits,videos,release_dates,keywords")
                     .queryParam("include_video_language", "vi,en,null")
                     .build()
                     .encode()
@@ -104,6 +105,7 @@ public class TMDBServiceImpl implements TMDBService {
                 processPosters(movie);
                 translateGenres(movie);
                 processVNReleaseDate(movie);
+                detectTechnicalFormats(movie);
             }
             return movie;
         } catch (Exception e) {
@@ -111,6 +113,51 @@ public class TMDBServiceImpl implements TMDBService {
             throw new org.springframework.web.server.ResponseStatusException(
                     org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi lấy chi tiết TMDB: " + e.getMessage());
         }
+    }
+
+    private void detectTechnicalFormats(TMDBMovieDto movie) {
+        System.out.println(">>> DETECTING FORMATS FOR: " + movie.getTitle());
+        List<String> formats = new ArrayList<>();
+        formats.add("HALL_2D"); 
+
+        // 1. Quét từ Keywords
+        List<TMDBMovieDto.Keyword> keywords = (movie.getKeywords() != null) ? movie.getKeywords().getKeywords() : new ArrayList<>();
+        if (keywords != null && !keywords.isEmpty()) {
+            System.out.println("  [+] Keywords found: " + keywords.stream().map(TMDBMovieDto.Keyword::getName).collect(Collectors.joining(", ")));
+            for (TMDBMovieDto.Keyword k : keywords) {
+                String name = k.getName().toLowerCase();
+                if (name.contains("imax")) formats.add("IMAX");
+                if (name.contains("3d")) formats.add("HALL_3D");
+                if (name.contains("4dx")) formats.add("HALL_4DX");
+            }
+        }
+
+        // 2. Quét từ Release Notes (Ghi chú phát hành)
+        if (movie.getReleaseDates() != null && movie.getReleaseDates().getResults() != null) {
+            for (TMDBMovieDto.ReleaseDateResult res : movie.getReleaseDates().getResults()) {
+                if (res.getReleaseDates() != null) {
+                    for (TMDBMovieDto.ReleaseDateDetail det : res.getReleaseDates()) {
+                        String note = (det.getNote() != null) ? det.getNote().toLowerCase() : "";
+                        if (!note.isEmpty()) {
+                            System.out.println("  [+] Release Note found (" + res.getIso() + "): " + note);
+                            if (note.contains("imax")) formats.add("IMAX");
+                            if (note.contains("3d")) formats.add("HALL_3D");
+                            if (note.contains("4dx")) formats.add("HALL_4DX");
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Quét từ Tiêu đề
+        String title = movie.getTitle() != null ? movie.getTitle().toLowerCase() : "";
+        if (title.contains("imax")) formats.add("IMAX");
+        if (title.contains(" 3d")) formats.add("HALL_3D");
+
+        // Loại bỏ trùng lặp và lưu lại
+        List<String> finalFormats = formats.stream().distinct().collect(Collectors.toList());
+        System.out.println(">>> FINAL DETECTED FORMATS: " + finalFormats);
+        movie.setSuggestedFormats(finalFormats);
     }
 
     private void processVNReleaseDate(TMDBMovieDto movie) {
@@ -163,9 +210,9 @@ public class TMDBServiceImpl implements TMDBService {
         if (usCert == null) return "P";
         switch (usCert.toUpperCase()) {
             case "G": return "P";
-            case "PG": return "K";
-            case "PG-13": return "T13";
-            case "R": return "T18";
+            case "PG": return "P";
+            case "PG-13": return "C13";
+            case "R": return "C18";
             case "NC-17": return "C18";
             default: return "P";
         }

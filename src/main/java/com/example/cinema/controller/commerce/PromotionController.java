@@ -27,6 +27,11 @@ public class PromotionController {
         return ResponseEntity.ok(ApiResponse.ok(promotionService.getAllPromotions()));
     }
 
+    @GetMapping("/active")
+    public ResponseEntity<ApiResponse<List<PromotionResponse>>> getActivePromotions() {
+        return ResponseEntity.ok(ApiResponse.ok(promotionService.getActivePromotions()));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<PromotionResponse>> createPromotion(@RequestBody @Valid PromotionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(promotionService.createPromotion(request)));

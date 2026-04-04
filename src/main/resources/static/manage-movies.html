@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarCinema – Quản Lý Phim</title>
+    <title>Quản lý Phim – StarCinema</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -19,115 +19,80 @@
         }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
-        
-        .sidebar {
-          width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border);
-          height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px;
-          display: flex; flex-direction: column;
-        }
-        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; display: block; }
+        .sidebar { width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border); height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px; display: flex; flex-direction: column; }
+        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; }
         .brand span { color: var(--accent); }
-        .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
-        .nav-item { margin-bottom: 8px; }
-        .nav-link-admin {
-          display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted);
-          text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500;
-        }
+        .nav-link-admin { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted); text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500; margin-bottom: 8px; }
         .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
         .nav-link-admin.active { background: var(--gradient); color: #fff; }
+        .user-panel { border-top: 1px solid var(--border); padding-top: 20px; margin-top: auto; }
 
         .main-content { margin-left: var(--sidebar-width); padding: 40px; min-height: 100vh; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; }
-        .search-box { position: relative; flex: 1; max-width: 400px; }
-        .search-box i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-        .search-box input {
-          width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text);
-          padding: 10px 16px 10px 44px; border-radius: 12px; outline: none; transition: border-color 0.2s;
-        }
+        .tool-bar { display: flex; gap: 16px; margin-bottom: 24px; }
+        .search-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 8px 16px; display: flex; align-items: center; gap: 10px; flex: 1; }
+        .search-box input { background: transparent; border: none; color: var(--text); outline: none; width: 100%; font-size: 0.9rem; }
+        .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; transition: opacity 0.2s; }
         
-        .btn-add { background: var(--gradient); color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .table-container { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .table { margin: 0; color: var(--text); border-collapse: separate; border-spacing: 0; }
+        .table thead th { background: var(--surface); border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; padding: 16px 24px; font-weight: 600; }
+        .table tbody td { padding: 16px 24px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 0.9rem; }
+        .movie-poster-sm { width: 45px; height: 65px; border-radius: 6px; object-fit: cover; background: var(--surface); }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-showing { background: rgba(80,200,100,0.15); color: #50C864; }
+        .badge-coming { background: rgba(100,180,255,0.15); color: #64B4FF; }
+        .badge-stopped { background: rgba(229,19,58,0.15); color: var(--accent); }
+        .action-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
+        .action-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        .custom-table { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-        .table { margin: 0; color: var(--text); border-color: var(--border); }
-        .table thead { background: var(--surface); }
-        .table th { border: none; padding: 16px 24px; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
-        .table td { border-top: 1px solid var(--border); padding: 16px 24px; vertical-align: middle; }
-        
-        .movie-thumb { width: 45px; height: 65px; border-radius: 6px; object-fit: cover; background: var(--border); }
-        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
-        .badge-showing { background: rgba(80,200,100,0.1); color: #50C864; }
-        .badge-coming { background: rgba(245,166,35,0.1); color: var(--accent-gold); }
-        .badge-stopped { background: rgba(255,255,255,0.05); color: var(--text-muted); }
-        
-        .action-btn {
-          width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center;
-          justify-content: center; border: 1px solid var(--border); color: var(--text-muted);
-          transition: all 0.2s; cursor: pointer; background: transparent;
-        }
-        .btn-edit:hover { background: rgba(100,180,255,0.1); color: #64B4FF; border-color: #64B4FF; }
-        .btn-delete:hover { background: rgba(229,19,58,0.1); color: var(--accent); border-color: var(--accent); }
-
-        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
-        .modal-header, .modal-footer { border-color: var(--border); padding: 20px 24px; }
-        .form-control, .form-select { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; }
-        
-        .poster-preview-box {
-          width: 100%; aspect-ratio: 2/3; border: 2px dashed var(--border);
-          border-radius: 12px; display: flex; flex-direction: column;
-          align-items: center; justify-content: center; color: var(--text-muted);
-          cursor: pointer; overflow: hidden; position: relative;
-        }
-        .poster-preview-img { width: 100%; height: 100%; object-fit: cover; display: none; }
-
-        .genre-checkbox-item {
-            background: var(--surface); border: 1px solid var(--border);
-            padding: 6px 12px; border-radius: 8px; cursor: pointer;
-            transition: all 0.2s; font-size: 0.85rem; user-select: none;
-        }
-        .genre-checkbox-item.active { background: rgba(229,19,58,0.1); border-color: var(--accent); color: var(--accent); }
-
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
+        .form-label { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+        .form-control, .form-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 10px; }
+        .poster-preview-box { width: 100%; aspect-ratio: 2/3; border: 2px dashed var(--border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; }
+        .poster-preview-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+        .checkbox-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .checkbox-item { cursor: pointer; }
+        .checkbox-item input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .checkbox-item span { display: inline-block; padding: 6px 16px; border-radius: 20px; border: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); transition: 0.2s; }
+        #tmdbResults { position: absolute; top: 100%; left: 0; right: 0; z-index: 1050; max-height: 300px; overflow-y: auto; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
 
-<aside class="sidebar">
-    <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-    <ul class="nav-menu">
-        <li class="nav-item"><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin active"><i class="bi bi-film"></i> Quản lý phim</a></li>
-        <li class="nav-item"><a href="manage-showtimes.html" class="nav-link-admin"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
-        <li class="nav-item"><a href="manage-rooms.html" class="nav-link-admin"><i class="bi bi-door-open"></i> Phòng chiếu</a></li>
-        <li class="nav-item"><a href="#" class="nav-link-admin"><i class="bi bi-ticket-perforated"></i> Quản lý vé</a></li>
-        <li class="nav-item"><a href="manage-combos.html" class="nav-link-admin"><i class="bi bi-cup-straw"></i> Combo đồ ăn</a></li>
-        <li class="nav-item"><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
-    </ul>
-</aside>
+<aside class="sidebar"></aside>
 
 <main class="main-content">
     <div class="header-section">
-        <h1 class="page-title">Quản lý phim</h1>
-    </div>
-
-    <div class="toolbar">
-        <div class="search-box">
-            <i class="bi bi-search"></i>
-            <input type="text" placeholder="Tìm kiếm phim theo tên, đạo diễn..." oninput="filterMovies(this.value)">
+        <div>
+            <h1 class="page-title">Quản lý phim</h1>
+            <p class="text-muted m-0">Danh sách phim trong hệ thống</p>
         </div>
-        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#movieModal">
-            <i class="bi bi-plus-lg"></i> Thêm phim mới
+        <button class="btn-add" onclick="openAddModal()">
+            <i class="bi bi-plus-lg me-2"></i> THÊM PHIM MỚI
         </button>
     </div>
 
-    <div class="custom-table">
+    <div class="tool-bar">
+        <div class="search-box">
+            <i class="bi bi-search text-muted"></i>
+            <input type="text" id="searchTitle" placeholder="Tìm kiếm phim theo tiêu đề..." onkeyup="applyFilters()">
+        </div>
+        <select id="filterStatus" class="form-select w-auto" style="min-width: 150px; background-color: var(--card);" onchange="applyFilters()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="SHOWING">Đang chiếu</option>
+            <option value="COMING">Sắp chiếu</option>
+            <option value="STOPPED">Ngưng chiếu</option>
+        </select>
+    </div>
+
+    <div class="table-container">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Phim</th>
+                    <th>Thông tin phim</th>
                     <th>Thể loại</th>
                     <th>Thời lượng</th>
                     <th>Đánh giá</th>
@@ -135,145 +100,112 @@
                     <th class="text-end">Thao tác</th>
                 </tr>
             </thead>
-            <tbody id="movieListBody">
-                <tr><td colspan="6" class="text-center py-5 text-muted">Đang tải dữ liệu...</td></tr>
+            <tbody id="movieTableBody">
+                <tr><td colspan="6" class="text-center py-5 text-muted">Đang tải dữ liệu phim...</td></tr>
             </tbody>
         </table>
     </div>
 </main>
 
+<!-- MODAL -->
 <div class="modal fade" id="movieModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold">Thêm phim mới</h5>
+                <h5 class="modal-title" id="modalTitle">THÊM PHIM MỚI</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="mb-4 pb-3 border-bottom">
-                    <label class="form-label text-accent fw-bold"><i class="bi bi-search"></i> Tìm nhanh từ TMDB</label>
-                    <div class="input-group">
-                        <input type="text" id="tmdbSearchInput" class="form-control" placeholder="Nhập tên phim...">
-                        <button class="btn btn-outline-danger" type="button" onclick="searchTMDB()">Tìm kiếm</button>
-                    </div>
-                    <div id="tmdbResults" class="mt-2 list-group" style="max-height: 200px; overflow-y: auto; display: none; position: absolute; z-index: 1050; width: calc(100% - 48px); box-shadow: 0 10px 30px rgba(0,0,0,0.5);"></div>
-                </div>
-
-                <form id="movieForm">
-                    <input type="hidden" id="movieId">
-                    <input type="hidden" id="tmdbId">
-                    <input type="hidden" id="posterUrl">
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <label class="form-label">Poster phim</label>
-                            <div class="poster-preview-box" onclick="document.getElementById('posterInput').click()">
-                                <i class="bi bi-cloud-arrow-up mb-2" style="font-size:2rem"></i>
-                                <span style="font-size:0.8rem">Tải ảnh lên (2:3)</span>
-                                <img src="" class="poster-preview-img" id="posterPreview">
-                            </div>
-                            <input type="file" id="posterInput" hidden accept="image/*" onchange="previewImage(this)">
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <label class="form-label">Ảnh Poster</label>
+                        <div class="poster-preview-box" onclick="document.getElementById('posterInput').click()">
+                            <i class="bi bi-cloud-arrow-up fs-1 text-muted"></i>
+                            <span class="text-muted mt-2">Chọn ảnh từ máy tính</span>
+                            <img id="posterPreview" style="display: none;">
                         </div>
-                        <div class="col-md-8">
+                        <input type="file" id="posterInput" class="d-none" accept="image/*" onchange="previewImage(this)">
+                        <input type="hidden" id="posterUrl">
+                        <input type="hidden" id="tmdbId">
+                        <input type="hidden" id="movieId">
+                        <input type="hidden" id="directorAvatarUrl">
+                        <input type="hidden" id="actorAvatarUrls">
+                        
+                        <div class="mt-4">
+                            <label class="form-label text-info"><i class="bi bi-search"></i> Tích hợp TMDB</label>
+                            <div class="input-group">
+                                <input type="text" id="tmdbSearchInput" class="form-control" placeholder="Tìm tên phim...">
+                                <button class="btn btn-secondary" onclick="searchTMDB()"><i class="bi bi-search"></i></button>
+                            </div>
+                            <div id="tmdbResults" class="list-group"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <form id="movieForm">
                             <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Tên phim</label>
-                                    <input type="text" name="title" class="form-control" placeholder="Nhập tên phim..." required>
+                                <div class="col-md-12"><label class="form-label">Tiêu đề phim</label><input type="text" name="title" class="form-control" required></div>
+                                <div class="col-md-12"><label class="form-label">Mô tả nội dung</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+                                <div class="col-md-4"><label class="form-label">Thời lượng (phút)</label><input type="number" name="duration" class="form-control" required></div>
+                                <div class="col-md-4"><label class="form-label">Ngày phát hành</label><input type="date" id="releaseDate" class="form-control" required></div>
+                                <div class="col-md-4"><label class="form-label">Độ tuổi</label><select name="ageRating" class="form-select"><option value="P">P - Mọi độ tuổi</option><option value="C13">C13</option><option value="C16">C16</option><option value="C18">C18</option></select></div>
+                                <div class="col-md-4"><label class="form-label">Đánh giá</label><input type="number" name="rating" class="form-control" step="0.1" value="0"></div>
+                                <div class="col-md-4"><label class="form-label text-info">Ưu tiên (1-10)</label><input type="number" name="priorityLevel" class="form-control border-info" value="1"></div>
+                                <div class="col-md-4"><label class="form-label">Trạng thái</label><select name="status" class="form-select"><option value="COMING">Sắp chiếu</option><option value="SHOWING">Đang chiếu</option><option value="STOPPED">Ngưng chiếu</option></select></div>
+                                <div class="col-md-6"><label class="form-label">Đạo diễn</label><input type="text" name="director" class="form-control"></div>
+                                <div class="col-md-12"><label class="form-label">Diễn viên chính (cách nhau bởi dấu phẩy)</label><input type="text" name="actors" class="form-control"></div>
+                                <div class="col-md-12"><label class="form-label">Trailer URL (YouTube)</label><input type="text" name="trailerUrl" class="form-control"></div>
+                                
+                                <div class="col-md-12">
+                                    <label class="form-label">Định dạng hỗ trợ</label>
+                                    <div class="checkbox-container" id="formatsContainer">
+                                        <label class="checkbox-item"><input type="checkbox" name="formats" value="HALL_2D" class="d-none"><span>2D</span></label>
+                                        <label class="checkbox-item"><input type="checkbox" name="formats" value="HALL_3D" class="d-none"><span>3D</span></label>
+                                        <label class="checkbox-item"><input type="checkbox" name="formats" value="IMAX" class="d-none"><span>IMAX</span></label>
+                                        <label class="checkbox-item"><input type="checkbox" name="formats" value="HALL_4DX" class="d-none"><span>4DX</span></label>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Đạo diễn</label>
-                                    <input type="text" name="director" class="form-control" placeholder="Tên đạo diễn...">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Ngày phát hành</label>
-                                    <input type="date" name="releaseDate" id="releaseDate" class="form-control">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Thời lượng (phút)</label>
-                                    <input type="number" name="duration" class="form-control" placeholder="Ví dụ: 120">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Độ tuổi</label>
-                                    <select name="ageRating" class="form-select">
-                                        <option value="P">P - Mọi lứa tuổi</option>
-                                        <option value="K">K - Dưới 13 (Giám hộ)</option>
-                                        <option value="T13">T13 (13+)</option>
-                                        <option value="T16">T16 (16+)</option>
-                                        <option value="T18">T18 (18+)</option>
-                                        <option value="C18">C18 (Cấm <18)</option>
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label d-block">Thể loại</label>
-                                    <div id="genresContainer" class="d-flex flex-wrap gap-2 p-2 rounded-3" style="background: var(--card); border: 1px solid var(--border); max-height: 120px; overflow-y: auto;"></div>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Diễn viên</label>
-                                    <input type="text" name="actors" class="form-control" placeholder="Các diễn viên chính...">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Trạng thái</label>
-                                    <select name="status" class="form-select">
-                                        <option value="SHOWING">Đang chiếu</option>
-                                        <option value="COMING">Sắp chiếu</option>
-                                        <option value="STOPPED">Ngừng chiếu</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label">Trailer URL</label>
-                                    <input type="text" name="trailerUrl" class="form-control" placeholder="https://youtube.com/...">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Mô tả phim</label>
-                                    <textarea name="description" class="form-control" rows="3" placeholder="Tóm tắt nội dung..."></textarea>
+
+                                <div class="col-md-12">
+                                    <label class="form-label">Thể loại phim</label>
+                                    <div class="checkbox-container" id="genresContainer">
+                                        <!-- Loaded via JS -->
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Hủy bỏ</button>
-                <button type="button" class="btn btn-add px-4" onclick="saveMovie()">Lưu thông tin</button>
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">HỦY</button>
+                <button type="button" class="btn btn-danger px-5 fw-bold" onclick="saveMovie()">LƯU PHIM</button>
             </div>
         </div>
     </div>
 </div>
 
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const movieModal = new bootstrap.Modal(document.getElementById('movieModal'));
-    let allMovies = [];
-    let availableGenres = [];
+    let allMovies = [], allGenres = [];
 
     document.addEventListener('DOMContentLoaded', init);
 
     async function init() {
-        await loadGenres();
-        await loadMovies();
-    }
-
-    async function loadGenres() {
-        const res = await api.get('/genres');
-        if (res.success) {
-            availableGenres = res.data;
-            renderGenreCheckboxes(availableGenres.map(g => g.name));
+        const resG = await api.get('/genres');
+        if (resG.success) {
+            allGenres = resG.data;
+            document.getElementById('genresContainer').innerHTML = allGenres.map(g => `
+                <label class="checkbox-item">
+                    <input type="checkbox" name="genreNames" value="${g.name}" class="d-none">
+                    <span>${g.name}</span>
+                </label>
+            `).join('');
         }
-    }
-
-    function renderGenreCheckboxes(genreNames) {
-        const container = document.getElementById('genresContainer');
-        container.innerHTML = genreNames.map(name => `
-            <label class="genre-checkbox-item">
-                <input type="checkbox" name="genreNames" value="${name}" class="d-none" onchange="toggleGenreUI(this)">
-                <span>${name}</span>
-            </label>
-        `).join('');
-    }
-
-    function toggleGenreUI(cb) {
-        if (cb.checked) cb.parentElement.classList.add('active');
-        else cb.parentElement.classList.remove('active');
+        loadMovies();
     }
 
     async function loadMovies() {
@@ -284,53 +216,42 @@
         }
     }
 
-    function renderMovies(movies) {
-        const tbody = document.getElementById('movieListBody');
-        tbody.innerHTML = movies.map(m => {
-            const directors = (m.directors || []).map(d => d.fullName || d.name).join(', ') || 'N/A';
-            let genreText = (m.genres || []).slice(0, 2).join(', ');
-            if ((m.genres || []).length > 2) genreText += '...';
-
-            return `
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-3">
-                            <img src="${m.posterUrl || 'https://placehold.co/100x150'}" class="movie-thumb">
-                            <div>
-                                <div class="fw-bold">${m.title}</div>
-                                <div class="small text-muted">Đạo diễn: ${directors}</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><small title="${(m.genres || []).join(', ')}">${genreText}</small></td>
-                    <td>${m.duration}p</td>
-                    <td><span class="text-warning">★ ${m.rating || 0}</span></td>
-                    <td><span class="status-badge ${getStatusClass(m.status)}">${m.status}</span></td>
-                    <td class="text-end">
-                        <button class="action-btn btn-edit me-1" onclick="editMovie(${m.id})"><i class="bi bi-pencil-square"></i></button>
-                        <button class="action-btn btn-delete" onclick="deleteMovie(${m.id})"><i class="bi bi-trash"></i></button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    function getStatusClass(s) {
-        if (s === 'SHOWING') return 'badge-showing';
-        if (s === 'COMING') return 'badge-coming';
-        return 'badge-stopped';
-    }
-
-    function filterMovies(q) {
-        const filtered = allMovies.filter(m => m.title.toLowerCase().includes(q.toLowerCase()));
+    function applyFilters() {
+        const q = document.getElementById('searchTitle').value.toLowerCase();
+        const s = document.getElementById('filterStatus').value;
+        const filtered = allMovies.filter(m => m.title.toLowerCase().includes(q) && (s === '' || m.status === s));
         renderMovies(filtered);
+    }
+
+    function renderMovies(movies) {
+        document.getElementById('movieTableBody').innerHTML = movies.map(m => `
+            <tr>
+                <td>
+                    <div class="movie-info-cell">
+                        <img src="${m.posterUrl || 'https://placehold.co/45x65'}" class="movie-poster-sm" onerror="this.src='https://placehold.co/45x65'">
+                        <div>
+                            <div class="fw-bold">${m.title}</div>
+                            <div class="mt-1">${(m.formats || []).map(f => `<span class="badge bg-secondary me-1" style="font-size:0.6rem">${f.replace('HALL_','')}</span>`).join('')}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><small>${(m.genres || []).slice(0, 2).join(', ')}</small></td>
+                <td>${m.duration}p</td>
+                <td><span class="text-warning">★ ${m.rating || 0}</span></td>
+                <td><span class="status-badge ${m.status === 'SHOWING' ? 'badge-showing' : (m.status === 'COMING' ? 'badge-coming' : 'badge-stopped')}">${m.status}</span></td>
+                <td class="text-end">
+                    <button class="action-btn me-1" onclick="editMovie(${m.id})"><i class="bi bi-pencil-square"></i></button>
+                    <button class="action-btn" onclick="deleteMovie(${m.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
     }
 
     async function searchTMDB() {
         const q = document.getElementById('tmdbSearchInput').value;
         if (!q) return;
         const resEl = document.getElementById('tmdbResults');
-        resEl.innerHTML = '<div class="list-group-item bg-dark text-white">Đang tìm...</div>';
+        resEl.innerHTML = '<div class="list-group-item bg-dark text-white">Đang tìm kiếm...</div>';
         resEl.style.display = 'block';
         const res = await api.get(`/tmdb/search?query=${encodeURIComponent(q)}`);
         if (res && res.results) {
@@ -349,113 +270,86 @@
         document.getElementById('tmdbResults').style.display = 'none';
         const m = await api.get(`/tmdb/movie/${id}`);
         if (m) {
-            const form = document.getElementById('movieForm');
-            form.querySelector('[name="title"]').value = m.title || '';
-            form.querySelector('[name="description"]').value = m.overview || '';
-            form.querySelector('[name="duration"]').value = m.runtime || 120;
-            form.querySelector('[name="director"]').value = (m.credits?.crew?.find(c => c.job === 'Director'))?.name || '';
-            form.querySelector('[name="actors"]').value = m.credits?.cast?.slice(0, 5).map(c => c.name).join(', ') || '';
+            const f = document.getElementById('movieForm');
+            f.querySelector('[name="title"]').value = m.title || '';
+            f.querySelector('[name="description"]').value = m.overview || '';
+            f.querySelector('[name="duration"]').value = m.runtime || 120;
+            f.querySelector('[name="rating"]').value = m.vote_average || 0;
+            f.querySelector('[name="priorityLevel"]').value = 5;
+            
+            const directorObj = m.credits?.crew?.find(c => c.job === 'Director');
+            f.querySelector('[name="director"]').value = directorObj?.name || '';
+            document.getElementById('directorAvatarUrl').value = directorObj?.profile_path || '';
+
+            const topActors = m.credits?.cast?.slice(0, 10) || [];
+            f.querySelector('[name="actors"]').value = topActors.map(c => c.name).join(', ') || '';
+            document.getElementById('actorAvatarUrls').value = topActors.map(c => c.profile_path || '').join(',');
+
             document.getElementById('tmdbId').value = m.id;
             
-            // Age Rating - Backend populate this field now
-            const ageRating = m.certification || m.ageRating;
-            if (ageRating) {
-                form.querySelector('[name="ageRating"]').value = ageRating;
-            }
-
-            // Trailer
-            if (m.videos?.results) {
-                const trailer = m.videos.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
-                if (trailer) form.querySelector('[name="trailerUrl"]').value = `https://www.youtube.com/watch?v=${trailer.key}`;
-            }
-
-            // Release Date & Status
-            const rDate = m.releaseDate || m.release_date;
-            if (rDate) {
-                const cleanDate = rDate.split('T')[0];
-                document.getElementById('releaseDate').value = cleanDate;
-                const relDate = new Date(cleanDate + 'T00:00:00');
+            // Logic Ngày phát hành & Trạng thái (FIXED)
+            if (m.release_date) {
+                const dateStr = m.release_date.split('T')[0];
+                document.getElementById('releaseDate').value = dateStr;
+                const relDate = new Date(dateStr); relDate.setHours(0,0,0,0);
                 const today = new Date(); today.setHours(0,0,0,0);
-                const threeMonthsAgo = new Date(); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+                const threeMo = new Date(); threeMo.setMonth(today.getMonth() - 3); threeMo.setHours(0,0,0,0);
                 
-                if (relDate > today) form.querySelector('[name="status"]').value = 'COMING';
-                else if (relDate < threeMonthsAgo) form.querySelector('[name="status"]').value = 'STOPPED';
-                else form.querySelector('[name="status"]').value = 'SHOWING';
+                if (relDate > today) f.querySelector('[name="status"]').value = 'COMING';
+                else if (relDate < threeMo) f.querySelector('[name="status"]').value = 'STOPPED';
+                else f.querySelector('[name="status"]').value = 'SHOWING';
             }
 
-            // Genres (Auto-add if missing)
-            if (m.genres) {
-                const container = document.getElementById('genresContainer');
-                for (const g of m.genres) {
-                    let cb = container.querySelector(`input[value="${g.name}"]`);
-                    if (!cb) {
-                        const label = document.createElement('label');
-                        label.className = 'genre-checkbox-item';
-                        label.innerHTML = `<input type="checkbox" name="genreNames" value="${g.name}" class="d-none" onchange="toggleGenreUI(this)"><span>${g.name}</span>`;
-                        container.appendChild(label);
-                        cb = label.querySelector('input');
-                    }
-                    cb.checked = true; toggleGenreUI(cb);
+            // Logic Định dạng (Tự động tick checkbox)
+            const technicalFormats = m.suggestedFormats || ['HALL_2D'];
+            document.querySelectorAll('input[name="formats"]').forEach(cb => {
+                cb.checked = technicalFormats.includes(cb.value);
+            });
+
+            // Logic Trailer
+            if (m.videos && m.videos.results) {
+                const trailer = m.videos.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
+                if (trailer) {
+                    f.querySelector('[name="trailerUrl"]').value = `https://www.youtube.com/watch?v=${trailer.key}`;
                 }
             }
 
-            const poster = m.poster_path || m.posterPath;
-            const preview = document.getElementById('posterPreview');
-            if (poster && poster !== 'null' && poster !== 'undefined') {
-                document.getElementById('posterUrl').value = poster;
-                preview.src = poster; 
-                preview.style.display = 'block';
+            // Logic Thể loại (Elite Sync)
+            if (m.genres && m.genres.length > 0) {
+                const container = document.getElementById('genresContainer');
+                const existingGenres = Array.from(container.querySelectorAll('input')).map(i => i.value);
+                
+                m.genres.forEach(g => {
+                    // Nếu thể loại từ TMDB chưa có trong danh sách checkbox hiện tại
+                    if (!existingGenres.includes(g.name)) {
+                        const newId = `tmdb-genre-${Date.now()}-${Math.random()}`;
+                        const label = document.createElement('label');
+                        label.className = 'checkbox-item';
+                        label.innerHTML = `<input type="checkbox" name="genreNames" value="${g.name}" class="d-none" checked><span>${g.name}</span>`;
+                        container.appendChild(label);
+                    } else {
+                        // Nếu đã có thì chỉ việc tick vào
+                        const cb = container.querySelector(`input[value="${g.name}"]`);
+                        if (cb) cb.checked = true;
+                    }
+                });
+            }
+
+            // Logic Ảnh Poster
+            if (m.poster_path) {
+                document.getElementById('posterUrl').value = m.poster_path;
+                const prev = document.getElementById('posterPreview');
+                prev.src = m.poster_path; prev.style.display = 'block';
                 document.querySelector('.poster-preview-box i').style.display = 'none';
                 document.querySelector('.poster-preview-box span').style.display = 'none';
-            } else {
-                document.getElementById('posterUrl').value = '';
-                preview.src = '';
-                preview.style.display = 'none';
-                document.querySelector('.poster-preview-box i').style.display = 'block';
-                document.querySelector('.poster-preview-box span').style.display = 'block';
             }
-            alert('Đồng bộ TMDB thành công!');
+            alert('Đồng bộ dữ liệu TMDB thành công!');
         }
-    }
-
-    function editMovie(id) {
-        const m = allMovies.find(mv => mv.id === id);
-        if (!m) return;
-        document.querySelector('#movieModal .modal-title').innerText = 'Sửa thông tin phim';
-        document.getElementById('movieId').value = m.id;
-        document.getElementById('tmdbId').value = m.tmdbId || '';
-        document.getElementById('posterUrl').value = m.posterUrl || '';
-        
-        const f = document.getElementById('movieForm');
-        f.querySelector('[name="title"]').value = m.title || '';
-        f.querySelector('[name="description"]').value = m.description || '';
-        f.querySelector('[name="duration"]').value = m.duration || 0;
-        f.querySelector('[name="director"]').value = (m.directors || []).map(d => d.fullName || d.name).join(', ') || '';
-        f.querySelector('[name="actors"]').value = (m.actors || []).map(a => a.fullName || a.name).join(', ') || '';
-        f.querySelector('[name="status"]').value = m.status;
-        f.querySelector('[name="ageRating"]').value = m.ageRating || 'P';
-        f.querySelector('[name="trailerUrl"]').value = m.trailerUrl || '';
-        if (m.releaseDate) document.getElementById('releaseDate').value = m.releaseDate;
-
-        document.querySelectorAll('input[name="genreNames"]').forEach(cb => {
-            cb.checked = (m.genres || []).includes(cb.value);
-            toggleGenreUI(cb);
-        });
-
-        const preview = document.getElementById('posterPreview');
-        if (m.posterUrl) {
-            preview.src = m.posterUrl; preview.style.display = 'block';
-            document.querySelector('.poster-preview-box i').style.display = 'none';
-            document.querySelector('.poster-preview-box span').style.display = 'none';
-        }
-        movieModal.show();
     }
 
     async function saveMovie() {
         const id = document.getElementById('movieId').value;
         const f = document.getElementById('movieForm');
-        const selectedGenres = Array.from(document.querySelectorAll('input[name="genreNames"]:checked')).map(cb => cb.value);
-
         const data = {
             title: f.querySelector('[name="title"]').value.trim(),
             description: f.querySelector('[name="description"]').value.trim(),
@@ -465,14 +359,16 @@
             actors: f.querySelector('[name="actors"]').value.trim(),
             releaseDate: document.getElementById('releaseDate').value,
             ageRating: f.querySelector('[name="ageRating"]').value,
-            genres: selectedGenres,
+            rating: parseFloat(f.querySelector('[name="rating"]').value) || 0,
+            priorityLevel: parseInt(f.querySelector('[name="priorityLevel"]').value) || 1,
+            genres: Array.from(document.querySelectorAll('input[name="genreNames"]:checked')).map(cb => cb.value),
+            formats: Array.from(document.querySelectorAll('input[name="formats"]:checked')).map(cb => cb.value),
             posterUrl: document.getElementById('posterUrl').value.trim(),
             trailerUrl: f.querySelector('[name="trailerUrl"]').value.trim(),
             tmdbId: parseInt(document.getElementById('tmdbId').value) || null,
-            rating: 8.5
+            directorAvatarUrl: document.getElementById('directorAvatarUrl').value,
+            actorAvatarUrls: document.getElementById('actorAvatarUrls').value
         };
-
-        if (!data.title || data.duration <= 0) return alert('Vui lòng điền đủ thông tin!');
 
         const fd = new FormData();
         fd.append('movie', new Blob([JSON.stringify(data)], { type: 'application/json' }));
@@ -480,8 +376,48 @@
         if (posterFile) fd.append('poster', posterFile);
 
         const res = await (id ? api.put(`/movies/${id}`, fd, true) : api.post('/movies', fd, true));
-        if (res.success) { movieModal.hide(); loadMovies(); alert('Thành công!'); resetForm(); }
+        if (res.success) { movieModal.hide(); loadMovies(); alert('Lưu phim thành công!'); resetForm(); }
         else alert('Lỗi: ' + res.message);
+    }
+
+    function editMovie(id) {
+        const m = allMovies.find(mv => mv.id === id);
+        if (!m) return;
+        resetForm();
+        document.getElementById('modalTitle').innerText = 'Sửa thông tin phim';
+        document.getElementById('movieId').value = m.id;
+        document.getElementById('tmdbId').value = m.tmdbId || '';
+        document.getElementById('posterUrl').value = m.posterUrl || '';
+        
+        const f = document.getElementById('movieForm');
+        f.querySelector('[name="title"]').value = m.title || '';
+        f.querySelector('[name="description"]').value = m.description || '';
+        f.querySelector('[name="duration"]').value = m.duration || 0;
+        f.querySelector('[name="rating"]').value = m.rating || 0;
+        f.querySelector('[name="priorityLevel"]').value = m.priorityLevel || 1;
+        f.querySelector('[name="director"]').value = (m.directors || []).map(d => d.name).join(', ') || '';
+        f.querySelector('[name="actors"]').value = (m.actors || []).map(a => a.name).join(', ') || '';
+        f.querySelector('[name="status"]').value = m.status;
+        f.querySelector('[name="ageRating"]').value = m.ageRating || 'P';
+        f.querySelector('[name="trailerUrl"]').value = m.trailerUrl || '';
+        if (m.releaseDate) document.getElementById('releaseDate').value = m.releaseDate;
+
+        document.querySelectorAll('input[name="genreNames"]').forEach(cb => cb.checked = (m.genres || []).includes(cb.value));
+        document.querySelectorAll('input[name="formats"]').forEach(cb => cb.checked = (m.formats || []).includes(cb.value));
+
+        if (m.posterUrl) {
+            const prev = document.getElementById('posterPreview');
+            prev.src = m.posterUrl; prev.style.display = 'block';
+            document.querySelector('.poster-preview-box i').style.display = 'none';
+            document.querySelector('.poster-preview-box span').style.display = 'none';
+        }
+        movieModal.show();
+    }
+
+    function openAddModal() {
+        resetForm();
+        document.getElementById('modalTitle').innerText = 'THÊM PHIM MỚI';
+        movieModal.show();
     }
 
     function resetForm() {
@@ -489,35 +425,22 @@
         document.getElementById('movieId').value = '';
         document.getElementById('tmdbId').value = '';
         document.getElementById('posterUrl').value = '';
-        document.querySelectorAll('input[name="genreNames"]').forEach(cb => { cb.checked = false; toggleGenreUI(cb); });
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
         document.getElementById('posterPreview').style.display = 'none';
         document.querySelector('.poster-preview-box i').style.display = 'block';
         document.querySelector('.poster-preview-box span').style.display = 'block';
-        document.querySelector('#movieModal .modal-title').innerText = 'Thêm phim mới';
-    }
-
-    document.getElementById('movieModal').addEventListener('hidden.bs.modal', resetForm);
-
-    async function deleteMovie(id) {
-        if (confirm('Xóa phim này?')) {
-            const res = await api.delete(`/movies/${id}`);
-            if (res.success) loadMovies();
-        }
     }
 
     function previewImage(input) {
         if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const preview = document.getElementById('posterPreview');
-                preview.src = e.target.result; preview.style.display = 'block';
-                document.querySelector('.poster-preview-box i').style.display = 'none';
-                document.querySelector('.poster-preview-box span').style.display = 'none';
+            const r = new FileReader(); r.onload = (e) => {
+                const p = document.getElementById('posterPreview'); p.src = e.target.result; p.style.display = 'block';
+                document.querySelector('.poster-preview-box i').style.display = 'none'; document.querySelector('.poster-preview-box span').style.display = 'none';
                 document.getElementById('posterUrl').value = '';
-            }
-            reader.readAsDataURL(input.files[0]);
+            }; r.readAsDataURL(input.files[0]);
         }
     }
+    async function deleteMovie(id) { if (confirm('Xóa phim này?')) { const res = await api.delete(`/movies/${id}`); if (res.success) loadMovies(); } }
 </script>
 </body>
 </html>

@@ -9,18 +9,21 @@ public class MovieResponse {
     private String title;
     private String description;
     private Integer duration;
-    private String language;
-    private String ageRating;
-    private MovieStatus status;
     private String posterUrl;
     private String trailerUrl;
+    private String ageRating;
+    private MovieStatus status;
     private Double rating;
+    private Integer priorityLevel;
+    private Long tmdbId;
     private java.time.LocalDate releaseDate;
-
-    // We will extract genres as list of strings
+    private List<String> formats;
     private List<String> genres;
     private List<PersonResponse> actors;
     private List<PersonResponse> directors;
+
+    public MovieResponse() {
+    }
 
     public Long getId() {
         return id;
@@ -54,12 +57,20 @@ public class MovieResponse {
         this.duration = duration;
     }
 
-    public String getLanguage() {
-        return language;
+    public String getPosterUrl() {
+        return posterUrl;
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
+    public void setPosterUrl(String posterUrl) {
+        this.posterUrl = posterUrl;
+    }
+
+    public String getTrailerUrl() {
+        return trailerUrl;
+    }
+
+    public void setTrailerUrl(String trailerUrl) {
+        this.trailerUrl = trailerUrl;
     }
 
     public String getAgeRating() {
@@ -78,30 +89,6 @@ public class MovieResponse {
         this.status = status;
     }
 
-    public String getPosterUrl() {
-        return posterUrl;
-    }
-
-    public void setPosterUrl(String posterUrl) {
-        this.posterUrl = posterUrl;
-    }
-
-    public String getTrailerUrl() {
-        return trailerUrl;
-    }
-
-    public void setTrailerUrl(String trailerUrl) {
-        this.trailerUrl = trailerUrl;
-    }
-
-    public List<String> getGenres() {
-        return genres;
-    }
-
-    public void setGenres(List<String> genres) {
-        this.genres = genres;
-    }
-
     public Double getRating() {
         return rating;
     }
@@ -110,12 +97,44 @@ public class MovieResponse {
         this.rating = rating;
     }
 
+    public Integer getPriorityLevel() {
+        return priorityLevel;
+    }
+
+    public void setPriorityLevel(Integer priorityLevel) {
+        this.priorityLevel = priorityLevel;
+    }
+
+    public Long getTmdbId() {
+        return tmdbId;
+    }
+
+    public void setTmdbId(Long tmdbId) {
+        this.tmdbId = tmdbId;
+    }
+
     public java.time.LocalDate getReleaseDate() {
         return releaseDate;
     }
 
-    public void setReleaseDate(java.time.LocalDate date) {
-        this.releaseDate = date;
+    public void setReleaseDate(java.time.LocalDate releaseDate) {
+        this.releaseDate = releaseDate;
+    }
+
+    public List<String> getFormats() {
+        return formats;
+    }
+
+    public void setFormats(List<String> formats) {
+        this.formats = formats;
+    }
+
+    public List<String> getGenres() {
+        return genres;
+    }
+
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
     }
 
     public List<PersonResponse> getActors() {

@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarCinema – Quản Lý Phòng Chiếu</title>
+    <title>Quản lý Phòng chiếu – StarCinema</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
           --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
           --gradient: linear-gradient(135deg, #E5133A, #8B0020);
           --sidebar-width: 260px;
-          --seat-available: #252A3D; --seat-vip: #F5A623; --seat-couple: #9B59B6;
         }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
@@ -25,261 +26,237 @@
           height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px;
           display: flex; flex-direction: column;
         }
-        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; display: block; }
+        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; }
         .brand span { color: var(--accent); }
         .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
         .nav-item { margin-bottom: 8px; }
         .nav-link-admin {
-          display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-          color: var(--text-muted); text-decoration: none; border-radius: 10px;
-          transition: all 0.2s; font-weight: 500;
+          display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted);
+          text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500;
         }
-        .nav-link-admin i { font-size: 1.2rem; }
         .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
         .nav-link-admin.active { background: var(--gradient); color: #fff; }
+        .user-panel { border-top: 1px solid var(--border); padding-top: 20px; margin-top: auto; }
 
         /* ── MAIN CONTENT ── */
         .main-content { margin-left: var(--sidebar-width); padding: 40px; min-height: 100vh; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
-        .btn-add {
-          background: var(--gradient); color: #fff; border: none; padding: 10px 24px;
-          border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px;
-        }
+        .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; transition: opacity 0.2s; }
+        .btn-add:hover { opacity: 0.9; color: #fff; }
 
-        /* ── ROOM CARDS ── */
-        .room-card {
-          background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-          padding: 24px; transition: transform 0.2s; cursor: pointer; height: 100%;
-        }
-        .room-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-        .room-name { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; margin-bottom: 8px; }
-        .room-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 12px; margin-bottom: 16px; }
-        .room-badge { padding: 4px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .badge-imax { background: rgba(100,200,255,0.1); color: #64C8FF; border: 1px solid #64C8FF; }
-        .badge-3d { background: rgba(80,200,100,0.1); color: #50C864; border: 1px solid #50C864; }
-        .badge-2d { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--border); }
+        /* ── ROOM GRID ── */
+        .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        .room-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; transition: all 0.3s; position: relative; overflow: hidden; }
+        .room-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        
+        .room-type-tag { position: absolute; top: 20px; right: 20px; padding: 4px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+        .tag-imax { background: rgba(245,166,35,0.15); color: var(--accent-gold); border: 1px solid rgba(245,166,35,0.3); }
+        .tag-4dx { background: rgba(229,19,58,0.15); color: var(--accent); border: 1px solid rgba(229,19,58,0.3); }
+        .tag-std { background: rgba(100,180,255,0.15); color: #64B4FF; border: 1px solid rgba(100,180,255,0.3); }
 
-        /* ── SEAT PREVIEW ── */
-        .seat-grid { display: grid; gap: 4px; margin-top: 20px; justify-content: center; }
-        .seat-min { width: 12px; height: 12px; border-radius: 2px; background: var(--seat-available); }
-        .seat-min.vip { background: var(--seat-vip); }
-        .seat-min.couple { background: var(--seat-couple); width: 26px; }
+        .room-icon-box { width: 56px; height: 56px; border-radius: 14px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: var(--text-muted); margin-bottom: 20px; transition: 0.3s; }
+        .room-card:hover .room-icon-box { background: var(--accent); color: #fff; }
+
+        .room-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+        .room-stats { display: flex; gap: 16px; margin-bottom: 24px; }
+        .stat-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); }
+        .stat-item i { color: var(--accent); }
+
+        .room-actions { display: flex; gap: 10px; border-top: 1px solid var(--border); pt: 20px; margin-top: 20px; padding-top: 20px; }
+        .action-btn-outline { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text); font-size: 0.85rem; font-weight: 600; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+        .action-btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(229,19,58,0.05); }
+        .action-btn-danger { width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text-muted); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .action-btn-danger:hover { border-color: var(--accent); color: var(--accent); background: rgba(229,19,58,0.1); }
 
         /* ── MODAL ── */
-        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
-        .modal-header, .modal-footer { border-color: var(--border); padding: 20px 24px; }
-        .form-control, .form-select { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; }
-        .form-control:focus { background: var(--card); border-color: var(--accent); color: var(--text); box-shadow: none; }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
+        .modal-header, .modal-footer { border-color: var(--border); padding: 24px; }
+        .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; }
+        .form-control, .form-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 14px 16px; border-radius: 12px; font-size: 0.95rem; }
+        .form-control:focus, .form-select:focus { border-color: var(--accent); background: var(--surface); color: var(--text); box-shadow: none; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-    <ul class="nav-menu">
-        <li class="nav-item"><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin"><i class="bi bi-film"></i> Quản lý phim</a></li>
-        <li class="nav-item"><a href="manage-showtimes.html" class="nav-link-admin"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
-        <li class="nav-item"><a href="manage-rooms.html" class="nav-link-admin active"><i class="bi bi-door-open"></i> Phòng chiếu</a></li>
-        <li class="nav-item"><a href="#" class="nav-link-admin"><i class="bi bi-ticket-perforated"></i> Quản lý vé</a></li>
-        <li class="nav-item"><a href="manage-combos.html" class="nav-link-admin"><i class="bi bi-cup-straw"></i> Combo đồ ăn</a></li>
-        <li class="nav-item"><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
-    </ul>
+    <!-- Rendered by sidebar.js -->
 </aside>
 
 <main class="main-content">
     <div class="header-section">
-        <h1 class="page-title">Quản lý phòng chiếu</h1>
-        <button class="btn-add" onclick="openAddModal()">
-            <i class="bi bi-plus-lg"></i> Thêm phòng mới
+        <div>
+            <h1 class="page-title">Hệ thống phòng chiếu</h1>
+            <p class="text-muted m-0">Quản lý không gian, sơ đồ ghế và công nghệ trình chiếu.</p>
+        </div>
+        <button class="btn-add" onclick="openRoomModal()">
+            <i class="bi bi-plus-lg me-2"></i> THÊM PHÒNG MỚI
         </button>
     </div>
 
-    <div class="row g-4" id="roomList">
+    <div class="room-grid" id="roomGrid">
         <!-- Room cards will be rendered here -->
+        <div class="col-12 text-center py-5">
+            <div class="spinner-border text-danger" role="status"></div>
+            <p class="mt-3 text-muted">Đang đồng bộ dữ liệu phòng chiếu...</p>
+        </div>
     </div>
 </main>
 
-<!-- MODAL: ADD ROOM -->
+<!-- ROOM MODAL -->
 <div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="modalTitle" style="font-family:'Outfit'">Thiết lập phòng chiếu mới</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="modalTitle">THÔNG TIN PHÒNG CHIẾU</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <form id="roomForm">
-                    <div class="mb-3">
-                        <label class="form-label">Tên phòng</label>
-                        <input type="text" id="roomName" class="form-control" placeholder="Ví dụ: Phòng 01, IMAX Hall..." required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Loại phòng</label>
-                        <select id="roomType" class="form-select">
-                            <option value="HALL_2D" selected>Standard 2D</option>
-                            <option value="HALL_3D">Premium 3D</option>
-                            <option value="IMAX">IMAX</option>
-                            <option value="FOUR_DX">4DX Hall</option>
-                            <option value="LUXURY">Luxury Suite</option>
-                        </select>
-                    </div>
                     <input type="hidden" id="roomId">
-                    <div class="row" id="roomDimensions">
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Số hàng ghế</label>
-                            <input type="number" id="roomRows" class="form-control" value="8" min="1" max="20">
-                        </div>
-                        <div class="col-6 mb-3">
-                            <label class="form-label">Số cột (ghế/hàng)</label>
-                            <input type="number" id="roomCols" class="form-control" value="10" min="1" max="20">
-                        </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Tên phòng chiếu</label>
+                        <input type="text" name="name" class="form-control" placeholder="VD: Cinema 01 - IMAX" required>
                     </div>
-                    <div id="editInfo" class="p-3 rounded bg-dark-subtle mt-2" style="font-size: 0.8rem; color: var(--accent-gold); display: none;">
-                        <i class="bi bi-exclamation-triangle me-1"></i> Lưu ý: Không thể thay đổi số hàng/cột khi đang chỉnh sửa. Hãy xóa và tạo mới nếu muốn thay đổi kích thước.
-                    </div>
-                    <div class="p-3 rounded bg-dark-subtle mt-2" style="font-size: 0.8rem; color: var(--text-muted)">
-                        <i class="bi bi-info-circle me-1"></i> Hệ thống sẽ tự động sinh sơ đồ ghế. Bạn có thể tùy chỉnh loại ghế (VIP/Couple) sau khi tạo.
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Loại phòng</label>
+                            <select name="type" class="form-select">
+                                <option value="HALL_2D">HALL 2D</option>
+                                <option value="HALL_3D">HALL 3D</option>
+                                <option value="IMAX">IMAX LASER</option>
+                                <option value="HALL_4DX">PREMIUM 4DX</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Số hàng</label>
+                            <input type="number" name="rows" class="form-control" value="10" min="1" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Số cột</label>
+                            <input type="number" name="cols" class="form-control" value="10" min="1" required>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Hủy bỏ</button>
-                <button type="button" class="btn btn-add px-4" id="btnSubmitRoom" onclick="saveRoom()">Khởi tạo phòng</button>
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">HỦY BỎ</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="saveRoom()">LƯU THÔNG TIN</button>
             </div>
         </div>
     </div>
 </div>
 
+<script src="/js/auth-guard.js"></script>
+<script>AuthGuard.requireRole(['MANAGER']);</script>
+<script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    const roomModal = new bootstrap.Modal(document.getElementById('roomModal'));
+    let allRooms = [];
+
     document.addEventListener('DOMContentLoaded', loadRooms);
 
-    const roomModal = new bootstrap.Modal(document.getElementById('roomModal'));
-
     async function loadRooms() {
-        const response = await api.get('/rooms');
-        if (response.success) {
-            renderRooms(response.data);
-        }
+        try {
+            const res = await api.get('/rooms');
+            if (res.success) {
+                allRooms = res.data;
+                renderRooms(allRooms);
+            }
+        } catch (e) { console.error(e); }
     }
 
-    function openAddModal() {
+    function renderRooms(rooms) {
+        const grid = document.getElementById('roomGrid');
+        if (!rooms.length) {
+            grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Chưa có phòng chiếu nào được tạo.</div>';
+            return;
+        }
+
+        grid.innerHTML = rooms.map(r => {
+            const typeClass = r.type === 'IMAX' ? 'tag-imax' : (r.type === 'HALL_4DX' ? 'tag-4dx' : 'tag-std');
+            const typeLabel = r.type.replace('HALL_', '');
+            
+            return `
+                <div class="room-card">
+                    <span class="room-type-tag ${typeClass}">${typeLabel}</span>
+                    <div class="room-icon-box">
+                        <i class="bi bi-display"></i>
+                    </div>
+                    <div class="room-name">${r.name}</div>
+                    <div class="room-stats">
+                        <div class="stat-item"><i class="bi bi-person-workspace"></i> ${r.capacity} ghế</div>
+                        <div class="stat-item"><i class="bi bi-grid-3x3"></i> ${r.rows}x${r.cols}</div>
+                    </div>
+                    <div class="room-actions">
+                        <a href="design-room.html?id=${r.id}" class="action-btn-outline">
+                            <i class="bi bi-grid-3x3-gap"></i> THIẾT KẾ GHẾ
+                        </a>
+                        <button class="action-btn-outline" style="flex:0 0 44px" onclick="editRoom(${r.id})">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="action-btn-danger" onclick="deleteRoom(${r.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function openRoomModal() {
         document.getElementById('roomForm').reset();
         document.getElementById('roomId').value = '';
-        document.getElementById('roomDimensions').style.display = 'flex';
-        document.getElementById('editInfo').style.display = 'none';
-        document.getElementById('modalTitle').textContent = 'Thiết lập phòng chiếu mới';
-        document.getElementById('btnSubmitRoom').textContent = 'Khởi tạo phòng';
+        document.getElementById('modalTitle').innerText = 'THÊM PHÒNG CHIẾU MỚI';
         roomModal.show();
     }
 
-    async function editRoom(id) {
-        const response = await api.get(`/rooms/${id}`);
-        if (response.success) {
-            const room = response.data;
-            document.getElementById('roomId').value = room.id;
-            document.getElementById('roomName').value = room.name;
-            document.getElementById('roomType').value = room.type;
-            
-            document.getElementById('roomDimensions').style.display = 'none';
-            document.getElementById('editInfo').style.display = 'block';
-            document.getElementById('modalTitle').textContent = 'Chỉnh sửa thông tin phòng';
-            document.getElementById('btnSubmitRoom').textContent = 'Lưu thay đổi';
-            roomModal.show();
-        }
+    function editRoom(id) {
+        const r = allRooms.find(x => x.id === id);
+        if (!r) return;
+        
+        const f = document.getElementById('roomForm');
+        document.getElementById('roomId').value = r.id;
+        f.querySelector('[name="name"]').value = r.name;
+        f.querySelector('[name="type"]').value = r.type;
+        f.querySelector('[name="rows"]').value = r.rows || 10;
+        f.querySelector('[name="cols"]').value = r.cols || 10;
+        
+        document.getElementById('modalTitle').innerText = 'CẬP NHẬT PHÒNG CHIẾU';
+        roomModal.show();
     }
 
     async function saveRoom() {
         const id = document.getElementById('roomId').value;
+        const f = document.getElementById('roomForm');
         const data = {
-            name: document.getElementById('roomName').value,
-            type: document.getElementById('roomType').value
+            name: f.querySelector('[name="name"]').value,
+            type: f.querySelector('[name="type"]').value,
+            rows: parseInt(f.querySelector('[name="rows"]').value),
+            cols: parseInt(f.querySelector('[name="cols"]').value)
         };
 
-        let response;
-        if (id) {
-            response = await api.put(`/rooms/${id}`, data);
-        } else {
-            data.rows = parseInt(document.getElementById('roomRows').value);
-            data.cols = parseInt(document.getElementById('roomCols').value);
-            response = await api.post('/rooms', data);
-        }
+        if (!data.name || isNaN(data.rows) || isNaN(data.cols)) return alert('Vui lòng nhập đủ thông tin!');
 
-        if (response.success) {
+        const res = await (id ? api.put(`/rooms/${id}`, data) : api.post('/rooms', data));
+        if (res.success) {
             roomModal.hide();
             loadRooms();
-            alert(id ? 'Cập nhật thành công!' : 'Khởi tạo phòng thành công!');
-        } else {
-            alert('Lỗi: ' + response.message);
-        }
-    }
-
-    function renderRooms(rooms) {
-        const container = document.getElementById('roomList');
-        container.innerHTML = rooms.map(room => `
-            <div class="col-md-4 col-lg-3">
-                <div class="room-card" onclick="viewRoomDetail(${room.id})">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <span class="room-badge ${getBadgeClass(room.type)}">${room.type.replace('HALL_', '')}</span>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-link text-muted p-0" onclick="event.stopPropagation(); editRoom(${room.id})">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
-                            <button class="btn btn-sm btn-link text-danger p-0" onclick="event.stopPropagation(); deleteRoom(${room.id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="room-name mt-2">${room.name}</div>
-                    <div class="room-meta">
-                        <span><i class="bi bi-grid-3x3"></i> ${room.capacity} ghế</span>
-                        <span><i class="bi bi-circle-fill ${room.status ? 'text-success' : 'text-danger'}" style="font-size:0.5rem"></i> ${room.status ? 'Hoạt động' : 'Bảo trì'}</span>
-                    </div>
-                    <div class="seat-grid-preview mt-3">
-                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px;">SƠ ĐỒ MÔ PHỎNG</div>
-                        <div class="d-flex flex-wrap gap-1">
-                            ${Array(12).fill('<div class="seat-min"></div>').join('')}
-                            ${Array(4).fill('<div class="seat-min vip"></div>').join('')}
-                            ${Array(1).fill('<div class="seat-min couple"></div>').join('')}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function getBadgeClass(type) {
-        if (type.includes('IMAX')) return 'badge-imax';
-        if (type.includes('3D')) return 'badge-3d';
-        if (type.includes('4DX')) return 'badge-imax';
-        if (type.includes('LUXURY')) return 'badge-3d';
-        return 'badge-2d';
+            alert('Lưu phòng thành công!');
+        } else alert('Lỗi: ' + res.message);
     }
 
     async function deleteRoom(id) {
-        if (confirm('Xóa phòng sẽ xóa toàn bộ sơ đồ ghế liên quan. Tiếp tục?')) {
-            const response = await api.delete(`/rooms/${id}`);
-            if (response.success) loadRooms();
-        }
-    }
-
-    function viewRoomDetail(id) {
-        window.location.href = `design-room.html?id=${id}`;
-    }
-
-    async function deleteRoom(id) {
-        if (confirm('Xóa phòng sẽ xóa toàn bộ sơ đồ ghế liên quan. Tiếp tục?')) {
-            const response = await api.delete(`/rooms/${id}`);
-            if (response.success) loadRooms();
-        }
-    }
-
-    function viewRoomDetail(id) {
-        window.location.href = `design-room.html?id=${id}`;
+        if (!confirm('Xóa phòng này sẽ xóa toàn bộ dữ liệu liên quan (Suất chiếu, vé...). Bạn chắc chắn chứ?')) return;
+        const res = await api.delete(`/rooms/${id}`);
+        if (res.success) loadRooms();
+        else alert('Lỗi: ' + res.message);
     }
 </script>
 </body>

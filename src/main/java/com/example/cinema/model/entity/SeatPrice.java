@@ -36,6 +36,15 @@ public class SeatPrice {
     public SeatPrice() {
     }
 
+    public SeatPrice(Long id, RoomType roomType, SeatType seatType, BigDecimal price, LocalDate effectiveDate) {
+        this.id = id;
+        this.roomType = roomType;
+        this.seatType = seatType;
+        this.price = price;
+        this.effectiveDate = effectiveDate;
+        this.isActive = true;
+    }
+
     public Long getId() {
         return id;
     }

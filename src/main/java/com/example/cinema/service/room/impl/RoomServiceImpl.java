@@ -62,6 +62,8 @@ public class RoomServiceImpl implements RoomService {
         Room room = new Room();
         room.setName(request.getName());
         room.setType(request.getType());
+        room.setRows(request.getRows());
+        room.setCols(request.getCols());
         room.setCapacity(request.getRows() * request.getCols());
         room.setStatus(true);
 

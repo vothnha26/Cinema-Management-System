@@ -6,11 +6,14 @@ import com.example.cinema.model.entity.Customer;
 import com.example.cinema.model.enums.MembershipTier;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public interface CustomerService {
-    CustomerResponse getMyProfile() throws Exception;
+    CustomerResponse getMyProfile();
 
     CustomerResponse updateMyProfile(UpdateProfileRequest request);
+
+    List<CustomerResponse> getAllCustomers();
 
     BigDecimal getDiscountPercentage(MembershipTier tier);
 

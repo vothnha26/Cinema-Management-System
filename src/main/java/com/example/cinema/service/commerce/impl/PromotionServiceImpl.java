@@ -4,9 +4,12 @@ import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.PromotionRequest;
 import com.example.cinema.model.dto.response.PromotionResponse;
 import com.example.cinema.model.entity.Customer;
+import com.example.cinema.model.entity.MembershipBenefit;
 import com.example.cinema.model.entity.Promotion;
+import com.example.cinema.model.enums.MembershipTier;
 import com.example.cinema.repository.commerce.PromotionRepository;
 import com.example.cinema.repository.user.CustomerRepository;
+import com.example.cinema.repository.user.MembershipBenefitRepository;
 import com.example.cinema.service.commerce.pricing.DiscountStrategy;
 import com.example.cinema.service.commerce.pricing.DiscountStrategyFactory;
 import com.example.cinema.service.commerce.PromotionService;
@@ -27,15 +30,18 @@ public class PromotionServiceImpl implements PromotionService {
 
     private final PromotionRepository promotionRepository;
     private final CustomerRepository customerRepository;
+    private final MembershipBenefitRepository benefitRepository;
     private final DiscountStrategyFactory strategyFactory;
     private final ModelMapper modelMapper;
 
     public PromotionServiceImpl(PromotionRepository promotionRepository,
             CustomerRepository customerRepository,
+            MembershipBenefitRepository benefitRepository,
             DiscountStrategyFactory strategyFactory,
             ModelMapper modelMapper) {
         this.promotionRepository = promotionRepository;
         this.customerRepository = customerRepository;
+        this.benefitRepository = benefitRepository;
         this.strategyFactory = strategyFactory;
         this.modelMapper = modelMapper;
     }
@@ -48,12 +54,27 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
+    public List<PromotionResponse> getActivePromotions() {
+        LocalDate now = LocalDate.now();
+        return promotionRepository.findAll().stream()
+                .filter(p -> p.getIsActive() && 
+                            !now.isBefore(p.getStartDate()) && 
+                            !now.isAfter(p.getEndDate()) &&
+                            (p.getUsageLimit() == null || p.getUsedCount() < p.getUsageLimit()))
+                .map(p -> modelMapper.map(p, PromotionResponse.class))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     @com.example.cinema.config.LogAction(action = "CREATE", target = "PROMOTION")
     public PromotionResponse createPromotion(PromotionRequest request) {
         if (promotionRepository.existsByCode(request.getCode())) {
             throw new AppException("Mã khuyến mãi đã tồn tại");
         }
+
+        MembershipBenefit benefit = benefitRepository.findByTier(request.getMinTier() != null ? request.getMinTier() : MembershipTier.STANDARD)
+                .orElseThrow(() -> new AppException("Không tìm thấy cấu hình hạng thành viên: " + request.getMinTier()));
 
         Promotion promotion = new Promotion.Builder(
                 request.getCode(),
@@ -64,7 +85,9 @@ public class PromotionServiceImpl implements PromotionService {
                 .minOrder(request.getMinOrderAmount())
                 .maxDiscount(request.getMaxDiscountAmount())
                 .limit(request.getUsageLimit())
-                .minTier(request.getMinTier())
+                .minTier(benefit)
+                .requiredPoints(request.getRequiredPoints())
+                .redeemable(request.getIsRedeemable())
                 .build();
 
         Promotion saved = promotionRepository.save(promotion);
@@ -78,7 +101,6 @@ public class PromotionServiceImpl implements PromotionService {
 
         validatePromotionRules(promotion, orderAmount);
 
-        // Áp dụng Strategy Pattern để tính số tiền giảm
         DiscountStrategy strategy = strategyFactory.getStrategy(promotion.getDiscountType());
         BigDecimal discountAmount = strategy.calculateDiscount(promotion, orderAmount);
 
@@ -106,17 +128,15 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException("Đơn hàng chưa đạt giá trị tối thiểu " + promotion.getMinOrderAmount() + " VNĐ");
         }
 
-        // Kiểm tra Hạng thành viên (Mandate: Tier Check)
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
             String username = ((UserDetails) principal).getUsername();
-            Customer customer = customerRepository.findByUserUsername(username)
-                    .orElse(null); // Manager/Admin might not be in Customer table
+            Customer customer = customerRepository.findByUserUsername(username).orElse(null);
 
             if (customer != null && promotion.getMinTier() != null) {
-                if (customer.getMembershipTier().ordinal() < promotion.getMinTier().ordinal()) {
+                if (customer.getMembershipTier().ordinal() < promotion.getMinTier().getTier().ordinal()) {
                     throw new AppException("Hạng thành viên của bạn (" + customer.getMembershipTier() +
-                            ") chưa đủ điều kiện áp dụng mã này (Yêu cầu tối thiểu: " + promotion.getMinTier() + ")");
+                            ") chưa đủ điều kiện áp dụng mã này (Yêu cầu tối thiểu: " + promotion.getMinTier().getTier() + ")");
                 }
             }
         }

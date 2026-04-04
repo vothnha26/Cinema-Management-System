@@ -164,11 +164,12 @@ public class BookingServiceImpl implements BookingService {
         return details;
     }
 
-    private List<BookingCombo> processComboPricing(Booking booking, Map<Long, Integer> comboRequests) {
+    private List<BookingCombo> processComboPricing(Booking booking, Map<String, Integer> comboRequests) {
         List<BookingCombo> bookingCombos = new ArrayList<>();
         if (comboRequests != null) {
-            for (Map.Entry<Long, Integer> entry : comboRequests.entrySet()) {
-                Combo combo = comboRepository.findById(entry.getKey())
+            for (Map.Entry<String, Integer> entry : comboRequests.entrySet()) {
+                Long comboId = Long.parseLong(entry.getKey());
+                Combo combo = comboRepository.findById(comboId)
                         .orElseThrow(() -> new AppException("Combo not found"));
                 
                 BookingCombo bc = new BookingCombo();
@@ -200,8 +201,8 @@ public class BookingServiceImpl implements BookingService {
         Promotion promotion = promotionRepository.findByCodeAndIsActiveTrue(promoCode)
                 .orElseThrow(() -> new AppException("Invalid promotion code"));
         
-        if (customer.getMembershipTier().ordinal() < promotion.getMinTier().ordinal()) {
-            throw new AppException("Membership tier too low for this promotion. Required: " + promotion.getMinTier());
+        if (customer.getMembershipTier().ordinal() < promotion.getMinTier().getTier().ordinal()) {
+            throw new AppException("Membership tier too low for this promotion. Required: " + promotion.getMinTier().getTier());
         }
 
         if (promotion.getEndDate() != null && promotion.getEndDate().isBefore(java.time.LocalDate.now())) {

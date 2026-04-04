@@ -49,14 +49,18 @@ public class Movie {
     private Long tmdbId;
 
     @ManyToMany
+    @JoinTable(name = "movie_formats", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "format_id"))
+    private java.util.Set<Format> formats = new java.util.HashSet<>();
+
+    @ManyToMany
     @JoinTable(name = "movie_genres", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
-    private Set<Genre> genres;
+    private java.util.Set<Genre> genres = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MovieActor> movieActors;
+    private java.util.Set<MovieActor> movieActors = new java.util.HashSet<>();
 
     @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<MovieDirector> movieDirectors;
+    private java.util.Set<MovieDirector> movieDirectors = new java.util.HashSet<>();
 
     public Movie() {
     }
@@ -155,6 +159,14 @@ public class Movie {
 
     public void setTmdbId(Long tmdbId) {
         this.tmdbId = tmdbId;
+    }
+
+    public Set<Format> getFormats() {
+        return formats;
+    }
+
+    public void setFormats(Set<Format> formats) {
+        this.formats = formats;
     }
 
     public Set<Genre> getGenres() {

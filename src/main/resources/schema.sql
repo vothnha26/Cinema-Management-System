@@ -56,18 +56,72 @@ INSERT INTO customers (id, user_id, full_name, phone, membership_tier, total_spe
 (10, 14, 'Trương Minh Quang', '0901112230', 'STANDARD', 0.00, 0),
 (11, 15, 'Lý Phương Thảo', '0901112231', 'SILVER', 950000.00, 95);
 
+CREATE TABLE formats (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE movie_formats (
+    movie_id BIGINT NOT NULL,
+    format_id BIGINT NOT NULL,
+    PRIMARY KEY (movie_id, format_id),
+    FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
+    FOREIGN KEY (format_id) REFERENCES formats(id) ON DELETE CASCADE
+);
+
+CREATE TABLE membership_benefits (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tier VARCHAR(50) NOT NULL UNIQUE,
+    discount_percent DOUBLE NOT NULL,
+    point_multiplier DOUBLE DEFAULT 1.0
+);
+
+-- Seed membership benefits
+INSERT INTO membership_benefits (tier, discount_percent, point_multiplier) VALUES 
+('STANDARD', 0.0, 1.0),
+('SILVER', 5.0, 1.1),
+('GOLD', 10.0, 1.2),
+('PLATINUM', 15.0, 1.5);
+
+-- Seed formats
+INSERT INTO formats (id, name) VALUES 
+(1, 'HALL_2D'), (2, 'HALL_3D'), (3, 'IMAX'), (4, 'HALL_4DX');
+
 -- 3. Table: directors
-INSERT INTO directors (id, name) VALUES 
-(1, 'Christopher Nolan'), (2, 'Denis Villeneuve'), (3, 'Greta Gerwig'), (4, 'Martin Scorsese'), 
-(5, 'Quentin Tarantino'), (6, 'James Cameron'), (7, 'Steven Spielberg'), (8, 'Bong Joon-ho'), 
-(9, 'Wes Anderson'), (10, 'Makoto Shinkai'), (11, 'Trần Anh Hùng'), (12, 'Victor Vũ'),
-(13, 'Lý Hải'), (14, 'Trấn Thành'), (15, 'Nguyễn Quang Dũng');
+INSERT INTO directors (id, name, avatar_url) VALUES 
+(1, 'Christopher Nolan', '/j9o4vYBs69HlyBrT0vSbpI9Az9y.jpg'), 
+(2, 'Denis Villeneuve', '/isGByv08u9G56YnSSTp86NAn64B.jpg'), 
+(3, 'Greta Gerwig', '/pD0pIuT3fH6S3776scvS09Ofveo.jpg'), 
+(4, 'Martin Scorsese', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(5, 'Quentin Tarantino', '/96vGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(6, 'James Cameron', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(7, 'Steven Spielberg', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(8, 'Bong Joon-ho', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(9, 'Wes Anderson', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(10, 'Makoto Shinkai', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(11, 'Trần Anh Hùng', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(12, 'Victor Vũ', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'),
+(13, 'Lý Hải', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(14, 'Trấn Thành', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(15, 'Nguyễn Quang Dũng', '/9uGBy997M6YvSBySSTp86NAn64B.jpg');
 
 -- 4. Table: actors
-INSERT INTO actors (id, name) VALUES 
-(1, 'Cillian Murphy'), (2, 'Timothée Chalamet'), (3, 'Zendaya'), (4, 'Ryan Gosling'), (5, 'Margot Robbie'), 
-(6, 'Leonardo DiCaprio'), (7, 'Robert Downey Jr.'), (8, 'Tom Cruise'), (9, 'Scarlett Johansson'), 
-(10, 'Florence Pugh'), (11, 'Song Kang-ho'), (12, 'Thái Hòa'), (13, 'Kaity Nguyễn'), (14, 'Kiều Minh Tuấn'), (15, 'Ninh Dương Lan Ngọc');
+INSERT INTO actors (id, name, avatar_url) VALUES 
+(1, 'Cillian Murphy', '/ll8p97pP6YvSBySSTp86NAn64B.jpg'), 
+(2, 'Timothée Chalamet', '/BE7p6YvSBySSTp86NAn64B.jpg'), 
+(3, 'Zendaya', '/86vGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(4, 'Ryan Gosling', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(5, 'Margot Robbie', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(6, 'Leonardo DiCaprio', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(7, 'Robert Downey Jr.', '/1Yfmst19osOfSBySSTp86NAn64B.jpg'), 
+(8, 'Tom Cruise', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(9, 'Scarlett Johansson', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(10, 'Florence Pugh', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(11, 'Song Kang-ho', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(12, 'Thái Hòa', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(13, 'Kaity Nguyễn', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(14, 'Kiều Minh Tuấn', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
+(15, 'Ninh Dương Lan Ngọc', '/9uGBy997M6YvSBySSTp86NAn64B.jpg');
 
 -- 5. Table: genres
 INSERT INTO genres (id, name) VALUES 
@@ -102,10 +156,10 @@ INSERT INTO movie_actors (movie_id, actor_id, character_name, display_order) VAL
 (1,1,'Oppenheimer',1), (1,7,'Strauss',2), (2,2,'Paul',1), (2,3,'Chani',2), (3,5,'Barbie',1), (3,4,'Ken',2), (6,14,'Dương',1), (6,15,'Mai',2), (7,12,'Hai',1), (9,11,'Po',1);
 
 -- 10. Table: rooms
-INSERT INTO rooms (id, name, type, capacity, status) VALUES 
-(1, 'Room 01', 'HALL_2D', 100, 1), (2, 'Room 02', 'HALL_2D', 100, 1), (3, 'Room 03', 'HALL_3D', 80, 1), 
-(4, 'IMAX Special', 'IMAX', 150, 1), (5, 'Premium 4DX', 'HALL_4DX', 60, 1), (6, 'Room 06', 'HALL_2D', 120, 1), 
-(7, 'Room 07', 'HALL_2D', 120, 1), (8, 'Room 08', 'HALL_3D', 80, 1), (9, 'IMAX HFR', 'IMAX', 200, 1), (10, 'Luxury', 'HALL_2D', 40, 1);
+INSERT INTO rooms (id, name, type, capacity, num_rows, num_cols, status) VALUES 
+(1, 'Room 01', 'HALL_2D', 100, 10, 10, 1), (2, 'Room 02', 'HALL_2D', 100, 10, 10, 1), (3, 'Room 03', 'HALL_3D', 80, 8, 10, 1), 
+(4, 'IMAX Special', 'IMAX', 150, 10, 15, 1), (5, 'Premium 4DX', 'HALL_4DX', 60, 6, 10, 1), (6, 'Room 06', 'HALL_2D', 120, 10, 12, 1), 
+(7, 'Room 07', 'HALL_2D', 120, 10, 12, 1), (8, 'Room 08', 'HALL_3D', 80, 8, 10, 1), (9, 'IMAX HFR', 'IMAX', 200, 10, 20, 1), (10, 'Luxury', 'HALL_2D', 40, 4, 10, 1);
 
 -- 11. Table: seat_prices
 INSERT INTO seat_prices (id, room_type, seat_type, price, effective_date, is_active) VALUES 

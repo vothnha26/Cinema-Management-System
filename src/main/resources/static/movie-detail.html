@@ -370,7 +370,10 @@
         try {
             const resp = await fetch(`/api/movies/${movieId}`);
             if (!resp.ok) throw new Error('Movie not found');
-            const m = await resp.json();
+            const res = await resp.json();
+            
+            if (!res.success || !res.data) throw new Error('Failed to load movie');
+            const m = res.data;
             
             document.title = `${m.title} – StarCinema`;
             document.querySelector('.movie-title').textContent = m.title;
@@ -400,39 +403,11 @@
                 `;
             }
 
-            // 3. Render Đạo diễn (Directors)
-            const directorContainer = document.querySelector('.info-card .row.mb-5 .col-md-6:first-child');
-            if (m.directors && m.directors.length > 0) {
-                const d = m.directors[0]; // Lấy đạo diễn đầu tiên
-                directorContainer.innerHTML = `
-                    <span class="section-label">Đạo diễn</span>
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="cast-avatar m-0">
-                            <img src="${d.avatarUrl || 'https://via.placeholder.com/100'}" alt="${d.name}">
-                        </div>
-                        <div>
-                            <span class="fw-bold">${d.name}</span>
-                            <div class="cast-role">Director</div>
-                        </div>
-                    </div>
-                `;
+            // 3 & 4. Render Đạo diễn & Diễn viên (Ưu tiên TMDB nếu có tmdbId)
+            if (m.tmdbId) {
+                fetchTMDBExtraInfo(m.tmdbId, m.directors, m.actors);
             } else {
-                directorContainer.innerHTML = '<span class="section-label">Đạo diễn</span><div class="text-muted small">Thông tin đang cập nhật</div>';
-            }
-
-            // 4. Render Diễn viên (Actors)
-            const actorList = document.querySelector('.cast-list');
-            if (m.actors && m.actors.length > 0) {
-                actorList.innerHTML = m.actors.map(a => `
-                    <div class="cast-item">
-                        <div class="cast-avatar">
-                            <img src="${a.avatarUrl || 'https://via.placeholder.com/100'}" alt="${a.name}">
-                        </div>
-                        <span class="cast-name">${a.name}</span>
-                    </div>
-                `).join('');
-            } else {
-                actorList.innerHTML = '<div class="text-muted small">Thông tin đang cập nhật</div>';
+                renderPeople(m.directors, m.actors);
             }
 
             // 5. Xử lý Trailer YouTube
@@ -467,24 +442,109 @@
         }
     }
 
+    async function fetchTMDBExtraInfo(tmdbId, dbDirectors, dbActors) {
+        try {
+            const resp = await fetch(`/api/tmdb/movie/${tmdbId}`);
+            const data = await resp.json();
+            
+            // TMDB trả về credits.cast và credits.crew
+            const cast = data.credits?.cast || [];
+            const crew = data.credits?.crew || [];
+            
+            const directors = crew.filter(c => c.job === 'Director').map(d => ({
+                name: d.name,
+                avatarUrl: d.profile_path ? `https://image.tmdb.org/t/p/w185${d.profile_path}` : null
+            }));
+            
+            const actors = cast.slice(0, 10).map(a => ({
+                name: a.name,
+                avatarUrl: a.profile_path ? `https://image.tmdb.org/t/p/w185${a.profile_path}` : null,
+                role: a.character
+            }));
+
+            // Nếu TMDB có dữ liệu xịn, dùng nó. Không thì fallback về DB
+            renderPeople(directors.length ? directors : dbDirectors, actors.length ? actors : dbActors);
+        } catch (e) {
+            console.warn('TMDB Extra Info failed, fallback to DB', e);
+            renderPeople(dbDirectors, dbActors);
+        }
+    }
+
+    function renderPeople(directors, actors) {
+        const placeholder = 'https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-grey-d8257e0e6720368ad56d53a3ecb90146f503b3a9d77b583b095160833e713706.svg';
+        
+        // Render Đạo diễn
+        const directorContainer = document.querySelector('.info-card .row.mb-5 .col-md-6:first-child');
+        if (directors && directors.length > 0) {
+            const d = directors[0];
+            const dAvatar = d.avatarUrl 
+                ? (d.avatarUrl.startsWith('http') ? d.avatarUrl : `https://image.tmdb.org/t/p/w185${d.avatarUrl}`)
+                : placeholder;
+            
+            directorContainer.innerHTML = `
+                <span class="section-label">Đạo diễn</span>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="cast-avatar m-0 shadow-sm" style="background: #1a1d29; display: flex; align-items: center; justify-content: center;">
+                        <img src="${dAvatar}" alt="${d.name}" style="width: 100%; height: 100%; object-fit: ${d.avatarUrl ? 'cover' : 'contain'}; padding: ${d.avatarUrl ? '0' : '15px'}">
+                    </div>
+                    <div>
+                        <span class="fw-bold">${d.name}</span>
+                        <div class="cast-role">Đạo diễn</div>
+                    </div>
+                </div>
+            `;
+        } else {
+            directorContainer.innerHTML = '<span class="section-label">Đạo diễn</span><div class="text-muted small">Đang cập nhật...</div>';
+        }
+
+        // Render Diễn viên
+        const actorList = document.querySelector('.cast-list');
+        if (actors && actors.length > 0) {
+            actorList.innerHTML = actors.map(a => {
+                const aAvatar = a.avatarUrl 
+                    ? (a.avatarUrl.startsWith('http') ? a.avatarUrl : `https://image.tmdb.org/t/p/w185${a.avatarUrl}`)
+                    : placeholder;
+                
+                return `
+                    <div class="cast-item">
+                        <div class="cast-avatar shadow-sm" style="background: #1a1d29; display: flex; align-items: center; justify-content: center;">
+                            <img src="${aAvatar}" alt="${a.name}" style="width: 100%; height: 100%; object-fit: ${a.avatarUrl ? 'cover' : 'contain'}; padding: ${a.avatarUrl ? '0' : '10px'}">
+                        </div>
+                        <span class="cast-name text-truncate" title="${a.name}">${a.name}</span>
+                        ${a.role ? `<div class="cast-role text-truncate" style="font-size:0.65rem" title="${a.role}">${a.role}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        } else {
+            actorList.innerHTML = '<div class="text-muted small">Đang cập nhật...</div>';
+        }
+    }
+
     async function loadShowtimes() {
         try {
             const resp = await fetch(`/api/showtimes?movieId=${movieId}`);
-            const showtimes = await resp.json();
+            const res = await resp.json();
+            
+            if (!res.success || !res.data) return;
+            let showtimes = res.data;
+
+            // --- NEW: Lọc suất chiếu cách hiện tại ít nhất 1 tiếng ---
+            const nowPlusOneHour = new Date();
+            nowPlusOneHour.setHours(nowPlusOneHour.getHours() + 1);
+            showtimes = showtimes.filter(s => new Date(s.startTime) > nowPlusOneHour);
+            // --------------------------------------------------------
 
             const bookingCard = document.querySelector('.booking-card');
             const noteCard = bookingCard?.querySelector('.p-3.rounded-3');
             const oldScheduleBlocks = bookingCard ? Array.from(bookingCard.querySelectorAll('.mb-4')) : [];
             oldScheduleBlocks.forEach((block) => block.remove());
 
-            if (!bookingCard || !noteCard) {
-                return;
-            }
+            if (!bookingCard || !noteCard) return;
 
             if (showtimes.length === 0) {
                 noteCard.insertAdjacentHTML(
                     'beforebegin',
-                    '<div class="text-center py-3" style="color:var(--text-muted)">Hien chua co lich chieu cho phim nay.</div>'
+                    '<div class="text-center py-3" style="color:var(--text-muted)">Hiện chưa có lịch chiếu cho phim này.</div>'
                 );
                 return;
             }
@@ -553,7 +613,10 @@
         try {
             const resp = await fetch('/api/movies/showing');
             if (!resp.ok) return;
-            const allMovies = await resp.json();
+            const res = await resp.json();
+            
+            if (!res.success || !res.data) return;
+            const allMovies = res.data;
             
             // Lọc bỏ phim hiện tại và chỉ lấy tối đa 4 phim
             const suggestions = allMovies

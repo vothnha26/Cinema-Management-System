@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarCinema – Dashboard Quản Lý</title>
+    <title>StarCinema – Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -45,18 +44,18 @@
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
-        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: transform 0.3s; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: transform 0.3s; height: 100%; }
         .stat-card:hover { transform: translateY(-5px); border-color: var(--accent); }
         .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 16px; }
-        .icon-revenue { background: rgba(80,200,100,0.1); color: #50C864; }
-        .icon-tickets { background: rgba(100,180,255,0.1); color: #64B4FF; }
-        .icon-movies { background: rgba(245,166,35,0.1); color: var(--accent-gold); }
-        .icon-members { background: rgba(229,19,58,0.1); color: var(--accent); }
+        .icon-1 { background: rgba(80,200,100,0.1); color: #50C864; }
+        .icon-2 { background: rgba(100,180,255,0.1); color: #64B4FF; }
+        .icon-3 { background: rgba(245,166,35,0.1); color: var(--accent-gold); }
+        .icon-4 { background: rgba(229,19,58,0.1); color: var(--accent); }
         
         .stat-value { font-size: 1.8rem; font-weight: 700; margin-bottom: 4px; }
         .stat-label { color: var(--text-muted); font-size: 0.9rem; }
 
-        .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+        .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 30px; }
         .chart-title { font-weight: 600; font-size: 1.1rem; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
 
         .custom-table { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
@@ -64,9 +63,6 @@
         .table thead { background: var(--surface); }
         .table th { border: none; padding: 16px 24px; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
         .table td { border-top: 1px solid var(--border); padding: 16px 24px; vertical-align: middle; }
-        
-        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
-        .status-success { background: rgba(80,200,100,0.1); color: #50C864; }
 
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
@@ -76,122 +72,180 @@
 <body>
 
 <aside class="sidebar">
-    <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-    <ul class="nav-menu">
-        <li class="nav-item"><a href="dashboard.html" class="nav-link-admin active"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin"><i class="bi bi-film"></i> Quản lý phim</a></li>
-        <li class="nav-item"><a href="manage-showtimes.html" class="nav-link-admin"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
-        <li class="nav-item"><a href="#" class="nav-link-admin"><i class="bi bi-ticket-perforated"></i> Quản lý vé</a></li>
-        <li class="nav-item"><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
-    </ul>
-    <div class="user-panel">
-        <div class="admin-profile">
-            <div class="admin-avatar">AD</div>
-            <div>
-                <div style="font-size:0.9rem;font-weight:600">Admin User</div>
-                <div style="font-size:0.75rem;color:var(--text-muted)">Quản trị viên</div>
-            </div>
-        </div>
-    </div>
+    <!-- Rendered by sidebar.js -->
 </aside>
 
 <main class="main-content">
     <div class="header-section">
-        <h1 class="page-title">Dashboard</h1>
+        <div>
+            <h1 class="page-title" id="dashboardTitle">Dashboard</h1>
+            <p class="text-muted m-0" id="dashboardSubtitle">Chào mừng trở lại hệ thống quản trị.</p>
+        </div>
         <div class="text-end">
             <div style="font-size:0.8rem;color:var(--text-muted)">Hôm nay</div>
             <div style="font-weight:600" id="currentDate">--/--/----</div>
         </div>
     </div>
 
-    <div class="row g-4 mb-5">
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon icon-revenue"><i class="bi bi-currency-dollar"></i></div>
-                <div class="stat-value" id="statRevenue">0</div>
-                <div class="stat-label">Doanh thu hôm nay</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon icon-tickets"><i class="bi bi-ticket-detailed"></i></div>
-                <div class="stat-value" id="statTickets">0</div>
-                <div class="stat-label">Vé đã bán</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon icon-movies"><i class="bi bi-play-btn"></i></div>
-                <div class="stat-value" id="statMovies">0</div>
-                <div class="stat-label">Phim đang chiếu</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon icon-members"><i class="bi bi-person-plus"></i></div>
-                <div class="stat-value" id="statMembers">0</div>
-                <div class="stat-label">Thành viên mới</div>
-            </div>
-        </div>
+    <!-- STATS ROW (Dàn hàng ngang) -->
+    <div class="row g-4 mb-5" id="statsRow">
+        <!-- Will be populated by JS based on role -->
     </div>
 
+    <!-- CHARTS ROW -->
     <div class="row g-4 mb-5">
         <div class="col-lg-8">
             <div class="chart-container">
-                <div class="chart-title"><i class="bi bi-graph-up text-accent"></i> Doanh thu 7 ngày qua</div>
-                <div style="height: 300px;"><canvas id="revenueChart"></canvas></div>
+                <div class="chart-title" id="mainChartTitle"><i class="bi bi-graph-up text-accent"></i> Hoạt động hệ thống</div>
+                <div style="height: 300px;"><canvas id="mainChart"></canvas></div>
             </div>
         </div>
         <div class="col-lg-4">
             <div class="chart-container">
-                <div class="chart-title"><i class="bi bi-pie-chart text-warning"></i> Tỷ trọng thể loại</div>
-                <div style="height:300px;"><canvas id="genreChart"></canvas></div>
+                <div class="chart-title" id="subChartTitle"><i class="bi bi-pie-chart text-warning"></i> Phân bổ dữ liệu</div>
+                <div style="height:300px;"><canvas id="subChart"></canvas></div>
             </div>
         </div>
     </div>
 
-    <div class="chart-title mb-3"><i class="bi bi-clock-history text-primary"></i> Giao dịch gần nhất</div>
+    <!-- LIST ROW -->
+    <div class="chart-title mb-3" id="listTitle"><i class="bi bi-clock-history text-primary"></i> Hoạt động gần đây</div>
     <div class="custom-table">
         <table class="table">
-            <thead>
-                <tr>
-                    <th>Mã đặt vé</th>
-                    <th>Khách hàng</th>
-                    <th>Phim</th>
-                    <th>Suất chiếu</th>
-                    <th>Giá trị</th>
-                    <th>Trạng thái</th>
-                </tr>
+            <thead id="tableHead">
+                <!-- Header dynamic -->
             </thead>
-            <tbody id="recentBookings">
+            <tbody id="tableBody">
                 <tr><td colspan="6" class="text-center py-4 text-muted">Đang tải dữ liệu...</td></tr>
             </tbody>
         </table>
     </div>
 </main>
 
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
 <script>
+    const role = localStorage.getItem('cinemaRole');
+
     document.addEventListener('DOMContentLoaded', () => {
+        if (!AuthGuard.requireRole(['ADMIN', 'MANAGER'])) return;
+
         document.getElementById('currentDate').textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        initCharts();
-        // Sau này sẽ gọi API để load data thật tại đây
+        
+        setupDashboardByRole();
     });
 
-    function initCharts() {
-        const revCtx = document.getElementById('revenueChart').getContext('2d');
-        new Chart(revCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'Doanh thu', data: [], borderColor: '#E5133A', fill: true, tension: 0.4 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-        });
+    function setupDashboardByRole() {
+        const statsRow = document.getElementById('statsRow');
+        const title = document.getElementById('dashboardTitle');
+        const subtitle = document.getElementById('dashboardSubtitle');
 
-        const genCtx = document.getElementById('genreChart').getContext('2d');
-        new Chart(genCtx, {
-            type: 'doughnut',
-            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#E5133A', '#F5A623', '#64C8FF'] }] },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+        if (role === 'MANAGER') {
+            title.innerHTML = 'QUẢN LÝ <span>NGHIỆP VỤ</span>';
+            subtitle.textContent = 'Thống kê doanh thu và vận hành rạp chiếu phim.';
+            
+            statsRow.innerHTML = `
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon icon-1"><i class="bi bi-currency-dollar"></i></div><div class="stat-value" id="val1">0đ</div><div class="stat-label">Doanh thu hôm nay</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon icon-2"><i class="bi bi-ticket-detailed"></i></div><div class="stat-value" id="val2">0</div><div class="stat-label">Vé đã bán</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon icon-3"><i class="bi bi-play-btn"></i></div><div class="stat-value" id="val3">0</div><div class="stat-label">Phim đang chiếu</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon icon-4"><i class="bi bi-calendar-check"></i></div><div class="stat-value" id="val4">0</div><div class="stat-label">Suất chiếu sắp tới</div></div></div>
+            `;
+            
+            document.getElementById('mainChartTitle').innerHTML = '<i class="bi bi-graph-up text-accent"></i> Doanh thu 7 ngày qua';
+            document.getElementById('subChartTitle').innerHTML = '<i class="bi bi-pie-chart text-warning"></i> Tỷ trọng doanh thu phim';
+            document.getElementById('listTitle').innerHTML = '<i class="bi bi-clock-history text-primary"></i> Giao dịch vé mới nhất';
+            
+            document.getElementById('tableHead').innerHTML = `
+                <tr><th>Mã đơn</th><th>Phim</th><th>Suất chiếu</th><th>Giá trị</th><th>Trạng thái</th></tr>
+            `;
+            
+            loadManagerData();
+        } 
+        else if (role === 'ADMIN') {
+            title.innerHTML = 'QUẢN TRỊ <span>HỆ THỐNG</span>';
+            subtitle.textContent = 'Quản lý người dùng, phân quyền và giám sát bảo mật.';
+            
+            statsRow.innerHTML = `
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon icon-1"><i class="bi bi-people"></i></div><div class="stat-value" id="val1">0</div><div class="stat-label">Tổng người dùng</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon icon-2"><i class="bi bi-person-badge"></i></div><div class="stat-value" id="val2">0</div><div class="stat-label">Nhân viên & Quản lý</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon icon-3"><i class="bi bi-person-plus"></i></div><div class="stat-value" id="val3">0</div><div class="stat-label">Đăng ký mới (tháng)</div></div></div>
+                <div class="col-md-3"><div class="stat-card"><div class="stat-icon icon-4"><i class="bi bi-shield-lock"></i></div><div class="stat-value" id="val4">0</div><div class="stat-label">Cảnh báo hệ thống</div></div></div>
+            `;
+
+            document.getElementById('mainChartTitle').innerHTML = '<i class="bi bi-activity text-info"></i> Lượt truy cập hệ thống';
+            document.getElementById('subChartTitle').innerHTML = '<i class="bi bi-pie-chart text-success"></i> Phân bổ vai trò người dùng';
+            document.getElementById('listTitle').innerHTML = '<i class="bi bi-shield-check text-warning"></i> Nhật ký truy cập (Audit Logs)';
+            
+            document.getElementById('tableHead').innerHTML = `
+                <tr><th>Thời gian</th><th>Người dùng</th><th>Hành động</th><th>Đối tượng</th><th>Kết quả</th></tr>
+            `;
+            
+            loadAdminData();
+        }
+    }
+
+    async function loadManagerData() {
+        try {
+            const res = await api.get('/statistics/summary');
+            if (res.success) {
+                const d = res.data;
+                document.getElementById('val1').textContent = new Intl.NumberFormat('vi-VN').format(d.todayRevenue) + 'đ';
+                document.getElementById('val2').textContent = d.todayTickets;
+                document.getElementById('val3').textContent = d.showingMovies;
+                document.getElementById('val4').textContent = d.upcomingShowtimes || 0;
+            }
+            initCharts('manager');
+            loadRecentBookings();
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadAdminData() {
+        try {
+            // Giả lập API cho Admin (sau này bạn thay bằng API thật)
+            document.getElementById('val1').textContent = '1,240';
+            document.getElementById('val2').textContent = '45';
+            document.getElementById('val3').textContent = '12';
+            document.getElementById('val4').textContent = '0';
+            
+            initCharts('admin');
+            loadAuditLogs();
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadRecentBookings() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Dữ liệu mẫu cho Manager...</td></tr>';
+    }
+
+    async function loadAuditLogs() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Dữ liệu mẫu cho Admin...</td></tr>';
+    }
+
+    function initCharts(roleType) {
+        const mainCtx = document.getElementById('mainChart').getContext('2d');
+        const subCtx = document.getElementById('subChart').getContext('2d');
+
+        if (roleType === 'manager') {
+            new Chart(mainCtx, {
+                type: 'line',
+                data: { labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], datasets: [{ label: 'Doanh thu', data: [12, 19, 3, 5, 2, 3, 10], borderColor: '#E5133A', fill: true, tension: 0.4 }] }
+            });
+            new Chart(subCtx, {
+                type: 'doughnut',
+                data: { labels: ['Hành động', 'Hài', 'Kinh dị'], datasets: [{ data: [40, 30, 30], backgroundColor: ['#E5133A', '#F5A623', '#64C8FF'] }] }
+            });
+        } else {
+            new Chart(mainCtx, {
+                type: 'bar',
+                data: { labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'], datasets: [{ label: 'Lượt truy cập', data: [100, 120, 90, 150, 200, 300, 250], backgroundColor: '#64C8FF' }] }
+            });
+            new Chart(subCtx, {
+                type: 'pie',
+                data: { labels: ['Khách hàng', 'Staff', 'Manager'], datasets: [{ data: [80, 15, 5], backgroundColor: ['#50C864', '#F5A623', '#E5133A'] }] }
+            });
+        }
     }
 </script>
 </body>

@@ -13,6 +13,8 @@ public class ShowtimeRequest {
     @NotNull(message = "Thời gian bắt đầu không được để trống")
     private LocalDateTime startTime;
 
+    private Long formatId;
+
     public ShowtimeRequest() {
     }
 
@@ -38,5 +40,13 @@ public class ShowtimeRequest {
 
     public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
+    }
+
+    public Long getFormatId() {
+        return formatId;
+    }
+
+    public void setFormatId(Long formatId) {
+        this.formatId = formatId;
     }
 }

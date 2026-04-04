@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class PromotionResponse {
+    private Long id;
     private String code;
     private String name;
     private DiscountType discountType;
@@ -14,7 +15,18 @@ public class PromotionResponse {
     private MembershipTier minTier;
     private LocalDate startDate;
     private LocalDate endDate;
+    private Boolean isActive;
+    private Integer requiredPoints;
+    private Boolean isRedeemable;
     private BigDecimal appliedDiscountAmount;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getCode() {
         return code;
@@ -70,6 +82,30 @@ public class PromotionResponse {
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean active) {
+        isActive = active;
+    }
+
+    public Integer getRequiredPoints() {
+        return requiredPoints;
+    }
+
+    public void setRequiredPoints(Integer requiredPoints) {
+        this.requiredPoints = requiredPoints;
+    }
+
+    public Boolean getIsRedeemable() {
+        return isRedeemable;
+    }
+
+    public void setIsRedeemable(Boolean redeemable) {
+        isRedeemable = redeemable;
     }
 
     public BigDecimal getAppliedDiscountAmount() {

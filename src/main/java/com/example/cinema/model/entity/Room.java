@@ -21,6 +21,12 @@ public class Room {
     @Column(nullable = false)
     private Integer capacity;
 
+    @Column(name = "num_rows")
+    private Integer rows;
+
+    @Column(name = "num_cols")
+    private Integer cols;
+
     private Boolean status = true;
 
     public Room() {
@@ -56,6 +62,22 @@ public class Room {
 
     public void setCapacity(Integer capacity) {
         this.capacity = capacity;
+    }
+
+    public Integer getRows() {
+        return rows;
+    }
+
+    public void setRows(Integer rows) {
+        this.rows = rows;
+    }
+
+    public Integer getCols() {
+        return cols;
+    }
+
+    public void setCols(Integer cols) {
+        this.cols = cols;
     }
 
     public Boolean getStatus() {

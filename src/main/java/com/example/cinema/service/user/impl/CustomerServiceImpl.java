@@ -4,13 +4,16 @@ import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.UpdateProfileRequest;
 import com.example.cinema.model.dto.response.CustomerResponse;
 import com.example.cinema.model.entity.Customer;
+import com.example.cinema.model.entity.MembershipBenefit;
 import com.example.cinema.model.entity.User;
 import com.example.cinema.model.enums.MembershipTier;
 import com.example.cinema.model.enums.NotificationType;
 import com.example.cinema.repository.user.CustomerRepository;
+import com.example.cinema.repository.user.MembershipBenefitRepository;
 import com.example.cinema.repository.user.UserRepository;
 import com.example.cinema.service.notification.INotificationAutomationService;
 import com.example.cinema.service.user.CustomerService;
+import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,15 +27,18 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final UserRepository userRepository;
+    private final MembershipBenefitRepository membershipBenefitRepository;
     private final ModelMapper modelMapper;
     private final INotificationAutomationService notificationAutomationService;
 
     public CustomerServiceImpl(CustomerRepository customerRepository,
             UserRepository userRepository,
+            MembershipBenefitRepository membershipBenefitRepository,
             ModelMapper modelMapper,
             INotificationAutomationService notificationAutomationService) {
         this.customerRepository = customerRepository;
         this.userRepository = userRepository;
+        this.membershipBenefitRepository = membershipBenefitRepository;
         this.modelMapper = modelMapper;
         this.notificationAutomationService = notificationAutomationService;
     }
@@ -75,15 +81,19 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public List<CustomerResponse> getAllCustomers() {
+        return customerRepository.findAll().stream()
+                .map(c -> modelMapper.map(c, CustomerResponse.class))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
     public BigDecimal getDiscountPercentage(MembershipTier tier) {
         if (tier == null)
             return BigDecimal.ZERO;
-        return switch (tier) {
-            case SILVER -> BigDecimal.valueOf(5);
-            case GOLD -> BigDecimal.valueOf(10);
-            case PLATINUM -> BigDecimal.valueOf(15);
-            default -> BigDecimal.ZERO;
-        };
+        return membershipBenefitRepository.findByTier(tier)
+                .map(b -> BigDecimal.valueOf(b.getDiscountPercent()))
+                .orElse(BigDecimal.ZERO);
     }
 
     @Override
@@ -96,11 +106,17 @@ public class CustomerServiceImpl implements CustomerService {
         BigDecimal newSpending = customer.getTotalSpending().add(amount);
         customer.setTotalSpending(newSpending);
 
-        // 2. Tính điểm thưởng (1 điểm cho mỗi 10,000 VNĐ)
-        int additionalPoints = amount.divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.FLOOR).intValue();
+        // 2. Tính điểm thưởng dựa trên multiplier của hạng
+        double multiplier = membershipBenefitRepository.findByTier(customer.getMembershipTier())
+                .map(MembershipBenefit::getPointMultiplier)
+                .orElse(1.0);
+
+        int basePoints = amount.divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.FLOOR).intValue();
+        int additionalPoints = (int) (basePoints * multiplier);
+
         customer.setPoints(customer.getPoints() + additionalPoints);
 
-        // 3. Cập nhật hạng thành viên tương ứng với chi tiêu mới
+        // 3. Cập nhật hạng thành viên
         updateMembershipTier(customer);
 
         customerRepository.save(customer);

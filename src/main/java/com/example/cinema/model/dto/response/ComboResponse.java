@@ -8,6 +8,7 @@ public class ComboResponse {
     private String description;
     private BigDecimal price;
     private String imageUrl;
+    private Integer stockQuantity;
 
     public Long getId() {
         return id;
@@ -47,5 +48,13 @@ public class ComboResponse {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public Integer getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stockQuantity = stockQuantity;
     }
 }

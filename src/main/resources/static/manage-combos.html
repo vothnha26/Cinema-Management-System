@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
@@ -17,87 +19,56 @@
         }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
-        
-        /* ── SIDEBAR ── */
-        .sidebar {
-          width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border);
-          height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px;
-          display: flex; flex-direction: column;
-        }
-        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; display: block; }
+        .sidebar { width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border); height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px; display: flex; flex-direction: column; }
+        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; }
         .brand span { color: var(--accent); }
-        .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
-        .nav-item { margin-bottom: 8px; }
-        .nav-link-admin {
-          display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-          color: var(--text-muted); text-decoration: none; border-radius: 10px;
-          transition: all 0.2s; font-weight: 500;
-        }
-        .nav-link-admin i { font-size: 1.2rem; }
+        .nav-link-admin { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted); text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500; margin-bottom: 8px; }
         .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
         .nav-link-admin.active { background: var(--gradient); color: #fff; }
+        .user-panel { border-top: 1px solid var(--border); padding-top: 20px; margin-top: auto; }
 
-        /* ── MAIN CONTENT ── */
         .main-content { margin-left: var(--sidebar-width); padding: 40px; min-height: 100vh; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
-        .btn-add {
-          background: var(--gradient); color: #fff; border: none; padding: 10px 24px;
-          border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px;
-        }
-
-        /* ── COMBO CARDS ── */
-        .combo-card {
-          background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-          overflow: hidden; transition: transform 0.2s; height: 100%;
-        }
-        .combo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-        .combo-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--surface); }
+        .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; transition: opacity 0.2s; }
+        .combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .combo-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: 0.3s; }
+        .combo-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .combo-img { width: 100%; height: 180px; object-fit: cover; background: var(--surface); }
         .combo-body { padding: 20px; }
-        .combo-name { font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; color: var(--text); }
-        .combo-desc { font-size: 0.85rem; color: var(--text-muted); height: 40px; overflow: hidden; margin-bottom: 16px; }
-        .combo-price { font-weight: 700; color: var(--accent-gold); font-size: 1.2rem; }
-
-        /* ── MODAL ── */
-        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
-        .modal-header, .modal-footer { border-color: var(--border); padding: 20px 24px; }
-        .form-control, .form-select { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; }
+        .combo-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
+        .combo-price { color: var(--accent-gold); font-weight: 700; font-size: 1.1rem; }
         
-        .img-preview-box {
-          width: 100%; aspect-ratio: 16/9; border: 2px dashed var(--border);
-          border-radius: 12px; display: flex; flex-direction: column;
-          align-items: center; justify-content: center; color: var(--text-muted);
-          cursor: pointer; overflow: hidden; position: relative;
-        }
-        .img-preview-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
+        .form-control { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; }
+        .form-control:focus { border-color: var(--accent); background: var(--surface); color: #fff; outline: none; box-shadow: none; }
+
+        .image-preview-box { width: 100%; height: 180px; border: 2px dashed var(--border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
+        .image-preview-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+        
+        .stock-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
+        .stock-low { background: rgba(229,19,58,0.1); color: var(--accent); }
+        .stock-ok { background: rgba(80,200,100,0.1); color: #50C864; }
     </style>
 </head>
 <body>
 
-<aside class="sidebar">
-    <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-    <ul class="nav-menu">
-        <li class="nav-item"><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin"><i class="bi bi-film"></i> Quản lý phim</a></li>
-        <li class="nav-item"><a href="manage-showtimes.html" class="nav-link-admin"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
-        <li class="nav-item"><a href="manage-rooms.html" class="nav-link-admin"><i class="bi bi-door-open"></i> Phòng chiếu</a></li>
-        <li class="nav-item"><a href="#" class="nav-link-admin"><i class="bi bi-ticket-perforated"></i> Quản lý vé</a></li>
-        <li class="nav-item"><a href="manage-combos.html" class="nav-link-admin active"><i class="bi bi-cup-straw"></i> Combo đồ ăn</a></li>
-        <li class="nav-item"><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
-    </ul>
-</aside>
+<aside class="sidebar"></aside>
 
 <main class="main-content">
     <div class="header-section">
-        <h1 class="page-title">Quản lý Combo</h1>
-        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#comboModal" onclick="resetForm()">
-            <i class="bi bi-plus-lg"></i> Thêm combo mới
+        <div>
+            <h1 class="page-title">Quản lý Combo</h1>
+            <p class="text-muted m-0">Bắp nước và các gói dịch vụ đi kèm.</p>
+        </div>
+        <button class="btn-add" onclick="openAddModal()">
+            <i class="bi bi-plus-lg me-2"></i> THÊM COMBO MỚI
         </button>
     </div>
 
-    <div class="row g-4" id="comboList">
-        <!-- Combo cards loaded via JS -->
+    <div class="combo-grid" id="comboGrid">
+        <div class="col-12 text-center py-5">Đang tải dữ liệu...</div>
     </div>
 </main>
 
@@ -106,123 +77,156 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold" id="modalTitle">Thiết lập Combo mới</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="modalTitle">THÔNG TIN COMBO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <form id="comboForm">
                     <input type="hidden" id="comboId">
-                    <div class="mb-3">
-                        <label class="form-label">Ảnh minh họa</label>
-                        <div class="img-preview-box" onclick="document.getElementById('imgInput').click()">
-                            <i class="bi bi-image mb-2" style="font-size:2rem"></i>
-                            <span style="font-size:0.8rem">Tải ảnh lên (16:9)</span>
-                            <img src="" id="imgPreview">
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted">Hình ảnh Combo</label>
+                        <div class="image-preview-box" onclick="document.getElementById('imageInput').click()">
+                            <i class="bi bi-image fs-1 text-muted"></i>
+                            <span class="text-muted small">Nhấp để chọn ảnh</span>
+                            <img id="imagePreview" style="display: none;">
                         </div>
-                        <input type="file" id="imgInput" hidden accept="image/*" onchange="previewImg(this)">
+                        <input type="file" id="imageInput" class="d-none" accept="image/*" onchange="previewImage(this)">
+                        <input type="hidden" id="imageUrl">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Tên Combo</label>
-                        <input type="text" id="comboName" class="form-control" placeholder="Ví dụ: Combo Bắp + Nước lớn" required>
+                        <label class="form-label small fw-bold text-muted">Tên combo</label>
+                        <input type="text" name="name" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Mô tả chi tiết</label>
-                        <textarea id="comboDesc" class="form-control" rows="2" placeholder="Ví dụ: 1 bắp rang bơ 60oz + 2 nước ngọt 32oz..."></textarea>
+                        <label class="form-label small fw-bold text-muted">Mô tả</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Giá bán (VNĐ)</label>
-                        <input type="number" id="comboPrice" class="form-control" placeholder="Ví dụ: 99000" required>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Giá bán (VNĐ)</label>
+                            <input type="number" name="price" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Số lượng tồn kho</label>
+                            <input type="number" name="stockQuantity" class="form-control" value="100" required>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-link text-muted text-decoration-none" data-bs-dismiss="modal">Hủy bỏ</button>
-                <button type="button" class="btn btn-add px-4" onclick="saveCombo()">Lưu thông tin</button>
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="saveCombo()">LƯU COMBO</button>
             </div>
         </div>
     </div>
 </div>
 
+<script src="/js/auth-guard.js"></script>
+<script>AuthGuard.requireRole(['MANAGER']);</script>
+<script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    const comboModal = new bootstrap.Modal(document.getElementById('comboModal'));
+    let allCombos = [];
+
     document.addEventListener('DOMContentLoaded', loadCombos);
 
-    const comboModal = new bootstrap.Modal(document.getElementById('comboModal'));
-
     async function loadCombos() {
-        const res = await api.get('/combos');
-        if (res.success) renderCombos(res.data);
+        try {
+            const res = await api.get('/combos');
+            if (res.success) {
+                allCombos = res.data;
+                renderCombos(allCombos);
+            }
+        } catch (e) { console.error(e); }
     }
 
     function renderCombos(combos) {
-        const container = document.getElementById('comboList');
-        container.innerHTML = combos.map(c => `
-            <div class="col-md-4 col-lg-3">
+        document.getElementById('comboGrid').innerHTML = combos.map(c => {
+            const stockClass = (c.stockQuantity || 0) < 10 ? 'stock-low' : 'stock-ok';
+            return `
                 <div class="combo-card">
-                    <img src="${c.imageUrl || 'https://placehold.co/600x400?text=Combo'}" class="combo-img">
+                    <img src="${c.imageUrl || 'https://placehold.co/300x180?text=Combo'}" class="combo-img" onerror="this.src='https://placehold.co/300x180?text=Combo'">
                     <div class="combo-body">
-                        <div class="combo-name">${c.name}</div>
-                        <div class="combo-desc">${c.description || ''}</div>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="combo-name">${c.name}</div>
+                            <span class="stock-badge ${stockClass}">Kho: ${c.stockQuantity || 0}</span>
+                        </div>
+                        <div class="text-muted small mb-3">${c.description || 'Không có mô tả'}</div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <div class="combo-price">${new Intl.NumberFormat('vi-VN').format(c.price)}đ</div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-sm btn-outline-light p-1" style="border-radius:6px" onclick="editCombo(${c.id})"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-sm btn-outline-danger p-1" style="border-radius:6px" onclick="deleteCombo(${c.id})"><i class="bi bi-trash"></i></button>
+                            <span class="combo-price">${new Intl.NumberFormat('vi-VN').format(c.price)}đ</span>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-light" onclick="editCombo(${c.id})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCombo(${c.id})"><i class="bi bi-trash"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
-    function resetForm() {
+    function openAddModal() {
         document.getElementById('comboForm').reset();
         document.getElementById('comboId').value = '';
-        document.getElementById('imgPreview').style.display = 'none';
-        document.querySelector('.img-preview-box i').style.display = 'block';
-        document.querySelector('.img-preview-box span').style.display = 'block';
-        document.getElementById('modalTitle').textContent = 'Thiết lập Combo mới';
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('modalTitle').innerText = 'THÊM COMBO MỚI';
+        comboModal.show();
     }
 
-    async function editCombo(id) {
-        const res = await api.get(`/combos/${id}`);
-        if (res.success) {
-            const c = res.data;
-            document.getElementById('comboId').value = c.id;
-            document.getElementById('comboName').value = c.name;
-            document.getElementById('comboDesc').value = c.description;
-            document.getElementById('comboPrice').value = c.price;
-            if (c.imageUrl) {
-                const preview = document.getElementById('imgPreview');
-                preview.src = c.imageUrl;
-                preview.style.display = 'block';
-                document.querySelector('.img-preview-box i').style.display = 'none';
-                document.querySelector('.img-preview-box span').style.display = 'none';
-            }
-            document.getElementById('modalTitle').textContent = 'Chỉnh sửa Combo';
-            comboModal.show();
+    function editCombo(id) {
+        const c = allCombos.find(x => x.id === id);
+        if (!c) return;
+        const f = document.getElementById('comboForm');
+        document.getElementById('comboId').value = c.id;
+        f.querySelector('[name="name"]').value = c.name;
+        f.querySelector('[name="description"]').value = c.description || '';
+        f.querySelector('[name="price"]').value = c.price;
+        f.querySelector('[name="stockQuantity"]').value = c.stockQuantity || 0;
+        document.getElementById('imageUrl').value = c.imageUrl || '';
+        
+        if (c.imageUrl) {
+            const prev = document.getElementById('imagePreview');
+            prev.src = c.imageUrl; prev.style.display = 'block';
+        } else {
+            document.getElementById('imagePreview').style.display = 'none';
         }
+        
+        document.getElementById('modalTitle').innerText = 'CẬP NHẬT COMBO';
+        comboModal.show();
     }
 
     async function saveCombo() {
         const id = document.getElementById('comboId').value;
-        const formData = new FormData();
-        const comboData = {
-            name: document.getElementById('comboName').value,
-            description: document.getElementById('comboDesc').value,
-            price: parseFloat(document.getElementById('comboPrice').value)
-        };
+        const f = document.getElementById('comboForm');
         
-        formData.append('combo', new Blob([JSON.stringify(comboData)], { type: 'application/json' }));
-        const fileInput = document.getElementById('imgInput');
-        if (fileInput.files[0]) formData.append('image', fileInput.files[0]);
+        const data = {
+            name: f.querySelector('[name="name"]').value.trim(),
+            description: f.querySelector('[name="description"]').value.trim(),
+            price: parseFloat(f.querySelector('[name="price"]').value),
+            stockQuantity: parseInt(f.querySelector('[name="stockQuantity"]').value) || 0,
+            imageUrl: document.getElementById('imageUrl').value
+        };
 
-        const res = await (id ? api.put(`/combos/${id}`, formData, true) : api.post('/combos', formData, true));
-        if (res.success) {
-            comboModal.hide(); loadCombos();
+        if (!data.name || isNaN(data.price)) return alert('Vui lòng nhập đủ thông tin!');
+
+        const fd = new FormData();
+        fd.append('combo', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+        
+        const fileInput = document.getElementById('imageInput');
+        if (fileInput.files.length > 0) {
+            fd.append('image', fileInput.files[0]);
         }
+
+        try {
+            const res = await (id ? api.put(`/combos/${id}`, fd, true) : api.post('/combos', fd, true));
+            if (res.success) {
+                comboModal.hide();
+                loadCombos();
+                alert('Lưu combo thành công!');
+            } else alert('Lỗi: ' + res.message);
+        } catch (e) { alert('Lỗi máy chủ khi lưu combo.'); }
     }
 
     async function deleteCombo(id) {
@@ -232,16 +236,14 @@
         }
     }
 
-    function previewImg(input) {
+    function previewImage(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                const preview = document.getElementById('imgPreview');
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-                document.querySelector('.img-preview-box i').style.display = 'none';
-                document.querySelector('.img-preview-box span').style.display = 'none';
-            };
+                const prev = document.getElementById('imagePreview');
+                prev.src = e.target.result;
+                prev.style.display = 'block';
+            }
             reader.readAsDataURL(input.files[0]);
         }
     }

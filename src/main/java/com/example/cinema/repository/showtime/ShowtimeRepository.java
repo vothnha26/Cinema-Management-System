@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     List<Showtime> findAllByStartTimeBetween(LocalDateTime start, LocalDateTime end);
+    List<Showtime> findByMovieId(Long movieId);
     void deleteByStartTimeBetween(LocalDateTime start, LocalDateTime end);
     void deleteByStartTimeBetweenAndIdNotIn(LocalDateTime start, LocalDateTime end, List<Long> ids);
     List<Showtime> findByMovieIdAndStatus(Long movieId, ShowtimeStatus status);

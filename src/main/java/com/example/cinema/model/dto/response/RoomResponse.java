@@ -10,6 +10,8 @@ public class RoomResponse {
     private String name;
     private RoomType type;
     private Integer capacity;
+    private Integer rows;
+    private Integer cols;
     private Boolean status;
     private List<SeatResponse> seats;
 
@@ -96,6 +98,22 @@ public class RoomResponse {
 
     public void setCapacity(Integer capacity) {
         this.capacity = capacity;
+    }
+
+    public Integer getRows() {
+        return rows;
+    }
+
+    public void setRows(Integer rows) {
+        this.rows = rows;
+    }
+
+    public Integer getCols() {
+        return cols;
+    }
+
+    public void setCols(Integer cols) {
+        this.cols = cols;
     }
 
     public Boolean getStatus() {

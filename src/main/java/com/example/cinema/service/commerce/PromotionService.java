@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface PromotionService {
     List<PromotionResponse> getAllPromotions();
-
+    List<PromotionResponse> getActivePromotions();
     PromotionResponse createPromotion(PromotionRequest request);
 
     PromotionResponse validatePromotion(String code, BigDecimal orderAmount);

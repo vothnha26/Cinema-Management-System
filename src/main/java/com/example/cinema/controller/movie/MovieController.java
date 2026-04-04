@@ -28,6 +28,16 @@ public class MovieController {
         return ResponseEntity.ok(ApiResponse.ok(movies));
     }
 
+    @GetMapping("/showing")
+    public ResponseEntity<ApiResponse<List<MovieResponse>>> getShowingMovies() {
+        return ResponseEntity.ok(ApiResponse.ok(movieService.getShowingMovies()));
+    }
+
+    @GetMapping("/coming")
+    public ResponseEntity<ApiResponse<List<MovieResponse>>> getComingSoonMovies() {
+        return ResponseEntity.ok(ApiResponse.ok(movieService.getComingSoonMovies()));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<MovieResponse>> getMovieById(@PathVariable Long id) {
         MovieResponse movie = movieService.getMovieById(id);

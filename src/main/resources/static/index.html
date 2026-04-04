@@ -558,14 +558,18 @@
             ]);
             
             if (respShow.ok) {
-                const dataShow = await respShow.json();
-                MOVIES_SHOWING = dataShow.map(mapMovie);
-                if (MOVIES_SHOWING.length > 0) initHeroSlider();
+                const res = await respShow.json();
+                if (res.success && res.data) {
+                    MOVIES_SHOWING = res.data.map(mapMovie);
+                    if (MOVIES_SHOWING.length > 0) initHeroSlider();
+                }
             }
             
             if (respCome.ok) {
-                const dataCome = await respCome.json();
-                MOVIES_COMING = dataCome.map(mapMovie);
+                const res = await respCome.json();
+                if (res.success && res.data) {
+                    MOVIES_COMING = res.data.map(mapMovie);
+                }
             }
 
             // Nếu không có phim nào, hiển thị thông báo thay vì "Đang tải"

@@ -20,6 +20,10 @@ public class Showtime {
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
+    @ManyToOne
+    @JoinColumn(name = "format_id")
+    private Format format;
+
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
 
@@ -61,6 +65,14 @@ public class Showtime {
 
     public void setRoom(Room room) {
         this.room = room;
+    }
+
+    public Format getFormat() {
+        return format;
+    }
+
+    public void setFormat(Format format) {
+        this.format = format;
     }
 
     public LocalDateTime getStartTime() {

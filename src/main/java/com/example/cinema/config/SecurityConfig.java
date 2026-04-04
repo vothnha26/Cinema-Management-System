@@ -49,35 +49,29 @@ public class SecurityConfig {
                                 "/js/**", "/css/**", "/images/**")
                         .permitAll()
 
-                        // TMDB API (Dành cho Manager/Admin tìm phim)
-                        .requestMatchers("/api/tmdb/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+                        // TMDB API (Dành cho Manager tìm phim)
+                        .requestMatchers("/api/tmdb/**").hasAuthority("ROLE_MANAGER")
 
-                        // Manager / admin features
-                        .requestMatchers(HttpMethod.POST, "/api/movies").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/movies/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/movies/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
-                        .requestMatchers("/api/statistics", "/api/statistics/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
-                        .requestMatchers("/api/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+                        // Manager features (Movies, Showtimes, Rooms, Combos, Promotions, Statistics, Audit)
+                        .requestMatchers(HttpMethod.POST, "/api/movies", "/api/showtimes", "/api/rooms", "/api/combos", "/api/promotions").hasAuthority("ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/movies/**", "/api/showtimes/**", "/api/rooms/**", "/api/combos/**", "/api/promotions/**").hasAuthority("ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/movies/**", "/api/showtimes/**", "/api/rooms/**", "/api/combos/**", "/api/promotions/**").hasAuthority("ROLE_MANAGER")
+                        .requestMatchers("/api/statistics/**", "/api/audit/**", "/api/scheduling/**").hasAuthority("ROLE_MANAGER")
+                        .requestMatchers("/api/manager/**").hasAuthority("ROLE_MANAGER")
 
-                        // Staff / admin features
-                        .requestMatchers("/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_ADMIN")
+                        // Staff features
+                        .requestMatchers("/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER")
 
                         // Customer / staff booking flow
-                        .requestMatchers(HttpMethod.POST, "/api/bookings")
-                        .hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF")
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/{code}")
-                        .hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/bookings").hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF")
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/{code}").hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF", "ROLE_MANAGER")
                         .requestMatchers(HttpMethod.GET, "/api/bookings/me").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/*/checkin").hasAuthority("ROLE_STAFF")
 
-                        // Customer membership / payment / notification flow
-                        .requestMatchers("/api/customers/me", "/api/customers/me/**").hasAuthority("ROLE_CUSTOMER")
-                        .requestMatchers("/api/notifications/**").hasAuthority("ROLE_CUSTOMER")
-                        .requestMatchers("/api/payments/me", "/api/payments/*").hasAuthority("ROLE_CUSTOMER")
-
-                        // Admin only
-                        .requestMatchers("/api/users/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        // Admin & Manager (Management features)
+                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/users/**").hasAuthority("ROLE_ADMIN")
 
                         .anyRequest().authenticated());
         return http.build();

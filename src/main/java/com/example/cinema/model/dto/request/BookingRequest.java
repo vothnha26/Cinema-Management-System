@@ -1,51 +1,35 @@
 package com.example.cinema.model.dto.request;
 
 import com.example.cinema.model.enums.PaymentMethod;
-
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
 public class BookingRequest {
-    @NotNull(message = "Showtime ID cannot be null")
+    @NotNull(message = "Showtime ID is required")
     private Long showtimeId;
 
-    private Long promotionId; // Optional promotion code id
-
-    private String promotionCode; // Optional promotion string code
-
-    @NotEmpty(message = "Must select at least one seat")
+    @NotEmpty(message = "At least one seat must be selected")
     private List<Long> seatIds;
 
-    // Map combo_id to quantity
-    private Map<Long, Integer> combos;
+    // Đổi sang String key để Jackson map từ JSON mượt mà hơn
+    private Map<String, Integer> combos;
+    
+    private String promotionCode;
 
+    @NotNull(message = "Payment method is required")
     private PaymentMethod paymentMethod;
 
-    // Getters and Setters
+    public BookingRequest() {
+    }
+
     public Long getShowtimeId() {
         return showtimeId;
     }
 
     public void setShowtimeId(Long showtimeId) {
         this.showtimeId = showtimeId;
-    }
-
-    public Long getPromotionId() {
-        return promotionId;
-    }
-
-    public void setPromotionId(Long promotionId) {
-        this.promotionId = promotionId;
-    }
-
-    public String getPromotionCode() {
-        return promotionCode;
-    }
-
-    public void setPromotionCode(String promotionCode) {
-        this.promotionCode = promotionCode;
     }
 
     public List<Long> getSeatIds() {
@@ -56,12 +40,20 @@ public class BookingRequest {
         this.seatIds = seatIds;
     }
 
-    public Map<Long, Integer> getCombos() {
+    public Map<String, Integer> getCombos() {
         return combos;
     }
 
-    public void setCombos(Map<Long, Integer> combos) {
+    public void setCombos(Map<String, Integer> combos) {
         this.combos = combos;
+    }
+
+    public String getPromotionCode() {
+        return promotionCode;
+    }
+
+    public void setPromotionCode(String promotionCode) {
+        this.promotionCode = promotionCode;
     }
 
     public PaymentMethod getPaymentMethod() {

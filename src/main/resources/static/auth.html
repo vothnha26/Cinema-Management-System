@@ -437,8 +437,10 @@
           localStorage.setItem('cinemaRole', data.role);
           localStorage.setItem('cinemaUsername', data.username);
           
-          if (data.role === 'ADMIN' || data.role === 'STAFF') {
+          if (data.role === 'ADMIN' || data.role === 'MANAGER') {
             window.location.href = 'dashboard.html';
+          } else if (data.role === 'STAFF') {
+            window.location.href = 'pos.html';
           } else {
             window.location.href = 'index.html';
           }

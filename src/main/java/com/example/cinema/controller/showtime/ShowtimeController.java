@@ -22,8 +22,21 @@ public class ShowtimeController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ShowtimeResponse>>> getAllShowtimes() {
-        return ResponseEntity.ok(ApiResponse.ok(showtimeService.getAllShowtimes()));
+    public ResponseEntity<ApiResponse<List<ShowtimeResponse>>> getAllShowtimes(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
+        return ResponseEntity.ok(ApiResponse.ok(showtimeService.getAllShowtimes(date)));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ShowtimeResponse>> getShowtimeById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(showtimeService.getAllShowtimes(null).stream()
+                .filter(s -> s.getId().equals(id)).findFirst().orElse(null)));
+    }
+
+    @GetMapping("/{id}/seats")
+    public ResponseEntity<ApiResponse<List<com.example.cinema.model.dto.response.SeatResponse>>> getSeats(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(showtimeService.getSeatStatusForShowtime(id)));
     }
 
     @PostMapping
@@ -32,7 +45,8 @@ public class ShowtimeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ShowtimeResponse>> updateShowtime(@PathVariable Long id, @RequestBody @Valid ShowtimeRequest request) {
+    public ResponseEntity<ApiResponse<ShowtimeResponse>> updateShowtime(@PathVariable Long id,
+            @RequestBody @Valid ShowtimeRequest request) {
         return ResponseEntity.ok(ApiResponse.ok(showtimeService.updateShowtime(id, request)));
     }
 
