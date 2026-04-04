@@ -20,151 +20,78 @@
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
         
-        /* ── SIDEBAR (Same as Dashboard) ── */
+        /* ── SIDEBAR ── */
         .sidebar {
-          width: var(--sidebar-width);
-          background: var(--surface);
-          border-right: 1px solid var(--border);
-          height: 100vh;
-          position: fixed;
-          top: 0; left: 0;
-          z-index: 1000;
-          padding: 24px;
-          display: flex;
-          flex-direction: column;
+          width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border);
+          height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px;
+          display: flex; flex-direction: column;
         }
-        .brand {
-          font-family: 'Bebas Neue', sans-serif;
-          font-size: 1.8rem;
-          letter-spacing: 3px;
-          color: var(--text);
-          margin-bottom: 40px;
-          text-decoration: none;
-          display: block;
-        }
+        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; display: block; }
         .brand span { color: var(--accent); }
         .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
         .nav-item { margin-bottom: 8px; }
         .nav-link-admin {
-          display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-          color: var(--text-muted); text-decoration: none; border-radius: 10px;
-          transition: all 0.2s; font-weight: 500;
+          display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted);
+          text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500;
         }
-        .nav-link-admin i { font-size: 1.2rem; }
         .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
         .nav-link-admin.active { background: var(--gradient); color: #fff; }
 
         .user-panel { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
         .admin-profile { display: flex; align-items: center; gap: 12px; }
         .admin-avatar {
-          width: 40px; height: 40px; border-radius: 10px;
-          background: var(--gradient); display: flex; align-items: center; justify-content: center;
-          font-weight: 700; color: #fff;
+          width: 40px; height: 40px; border-radius: 10px; background: var(--gradient);
+          display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff;
         }
 
         /* ── MAIN CONTENT ── */
-        .main-content {
-          margin-left: var(--sidebar-width);
-          padding: 40px;
-          min-height: 100vh;
-        }
+        .main-content { margin-left: var(--sidebar-width); padding: 40px; min-height: 100vh; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
-        /* ── TOOLBAR ── */
-        .toolbar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 24px;
-          gap: 16px;
-        }
-        .search-box {
-          position: relative;
-          flex: 1;
-          max-width: 400px;
-        }
-        .search-box i {
-          position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
-          color: var(--text-muted);
-        }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; }
+        .search-box { position: relative; flex: 1; max-width: 400px; }
+        .search-box i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
         .search-box input {
-          width: 100%;
-          background: var(--card);
-          border: 1px solid var(--border);
-          color: var(--text);
-          padding: 10px 16px 10px 44px;
-          border-radius: 12px;
-          outline: none;
-          transition: border-color 0.2s;
+          width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text);
+          padding: 10px 16px 10px 44px; border-radius: 12px; outline: none; transition: border-color 0.2s;
         }
         .search-box input:focus { border-color: var(--accent); }
         
         .btn-add {
-          background: var(--gradient);
-          color: #fff;
-          border: none;
-          padding: 10px 24px;
-          border-radius: 10px;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          transition: opacity 0.2s;
+          background: var(--gradient); color: #fff; border: none; padding: 10px 24px;
+          border-radius: 10px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: opacity 0.2s;
         }
         .btn-add:hover { opacity: 0.9; color: #fff; }
 
         /* ── MOVIE TABLE ── */
-        .custom-table {
-          background: var(--card);
-          border: 1px solid var(--border);
-          border-radius: 16px;
-          overflow: hidden;
-        }
+        .custom-table { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
         .table { margin: 0; color: var(--text); border-color: var(--border); }
         .table thead { background: var(--surface); }
-        .table th {
-          border: none; padding: 16px 24px;
-          color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase;
-        }
+        .table th { border: none; padding: 16px 24px; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
         .table td { border-top: 1px solid var(--border); padding: 16px 24px; vertical-align: middle; }
         
-        .movie-thumb {
-          width: 45px; height: 65px; border-radius: 6px; object-fit: cover;
-          background: var(--border);
-        }
-        .status-badge {
-          padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
-        }
+        .movie-thumb { width: 45px; height: 65px; border-radius: 6px; object-fit: cover; background: var(--border); }
+        .status-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
         .badge-showing { background: rgba(80,200,100,0.1); color: #50C864; }
         .badge-coming { background: rgba(245,166,35,0.1); color: var(--accent-gold); }
         
         .action-btn {
-          width: 32px; height: 32px; border-radius: 8px;
-          display: inline-flex; align-items: center; justify-content: center;
-          border: 1px solid var(--border); color: var(--text-muted);
+          width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center;
+          justify-content: center; border: 1px solid var(--border); color: var(--text-muted);
           transition: all 0.2s; cursor: pointer; background: transparent;
         }
         .btn-edit:hover { background: rgba(100,180,255,0.1); color: #64B4FF; border-color: #64B4FF; }
         .btn-delete:hover { background: rgba(229,19,58,0.1); color: var(--accent); border-color: var(--accent); }
 
         /* ── MODAL ── */
-        .modal-content {
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: 20px;
-          color: var(--text);
-        }
+        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
         .modal-header { border-bottom: 1px solid var(--border); padding: 24px; }
         .modal-footer { border-top: 1px solid var(--border); padding: 20px 24px; }
         .form-label { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; margin-bottom: 8px; }
-        .form-control, .form-select {
-          background: var(--card); border: 1px solid var(--border);
-          color: var(--text); border-radius: 10px; padding: 10px 14px;
-        }
-        .form-control:focus, .form-select:focus {
-          background: var(--card); border-color: var(--accent); color: var(--text); box-shadow: none;
-        }
+        .form-control, .form-select { background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 14px; }
+        .form-control:focus, .form-select:focus { background: var(--card); border-color: var(--accent); color: var(--text); box-shadow: none; }
+        
         .poster-preview-box {
           width: 100%; aspect-ratio: 2/3; border: 2px dashed var(--border);
           border-radius: 12px; display: flex; flex-direction: column;
@@ -174,7 +101,16 @@
         .poster-preview-box:hover { border-color: var(--accent); color: var(--accent); }
         .poster-preview-img { width: 100%; height: 100%; object-fit: cover; display: none; }
 
-        /* Scrollbar */
+        /* Genre Checkbox Styles */
+        .genre-checkbox-item {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 6px 12px; border-radius: 8px; cursor: pointer;
+            transition: all 0.2s; font-size: 0.85rem; user-select: none;
+        }
+        .genre-checkbox-item:hover { border-color: var(--accent); }
+        .genre-checkbox-item input:checked + span { color: var(--accent); font-weight: 600; }
+        .genre-checkbox-item.active { background: rgba(229,19,58,0.1); border-color: var(--accent); color: var(--accent); }
+
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -182,7 +118,6 @@
 </head>
 <body>
 
-<!-- SIDEBAR -->
 <aside class="sidebar">
     <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
     <ul class="nav-menu">
@@ -205,7 +140,6 @@
     </div>
 </aside>
 
-<!-- MAIN CONTENT -->
 <main class="main-content">
     <div class="header-section">
         <h1 class="page-title">Quản lý phim</h1>
@@ -233,70 +167,14 @@
                     <th class="text-end">Thao tác</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="movie-thumb" style="background: linear-gradient(135deg, #1a0a0f, #8b1030); display:flex; align-items:center; justify-content:center; font-size:1.2rem">⚡</div>
-                            <div>
-                                <div class="fw-bold text-white">Avengers: Secret Wars</div>
-                                <div style="font-size:0.8rem; color:var(--text-muted)">Đạo diễn: Anthony Russo</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>Action, Sci-Fi</td>
-                    <td>168 phút</td>
-                    <td><span class="text-warning">⭐ 9.2</span></td>
-                    <td><span class="status-badge badge-showing">Đang chiếu</span></td>
-                    <td class="text-end">
-                        <button class="action-btn btn-edit me-1" title="Sửa"><i class="bi bi-pencil-square"></i></button>
-                        <button class="action-btn btn-delete" title="Xóa"><i class="bi bi-trash"></i></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="movie-thumb" style="background: linear-gradient(135deg, #0a0f1a, #1a3060); display:flex; align-items:center; justify-content:center; font-size:1.2rem">🦇</div>
-                            <div>
-                                <div class="fw-bold text-white">The Dark Knight Returns</div>
-                                <div style="font-size:0.8rem; color:var(--text-muted)">Đạo diễn: Christopher Nolan</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>Action, Drama</td>
-                    <td>152 phút</td>
-                    <td><span class="text-warning">⭐ 8.9</span></td>
-                    <td><span class="status-badge badge-showing">Đang chiếu</span></td>
-                    <td class="text-end">
-                        <button class="action-btn btn-edit me-1" title="Sửa"><i class="bi bi-pencil-square"></i></button>
-                        <button class="action-btn btn-delete" title="Xóa"><i class="bi bi-trash"></i></button>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="movie-thumb" style="background: linear-gradient(135deg, #1a140a, #5a4010); display:flex; align-items:center; justify-content:center; font-size:1.2rem">🚀</div>
-                            <div>
-                                <div class="fw-bold text-white">Star Wars: Episode X</div>
-                                <div style="font-size:0.8rem; color:var(--text-muted)">Đạo diễn: J.J. Abrams</div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>Sci-Fi, Adventure</td>
-                    <td>140 phút</td>
-                    <td><span class="text-muted">Chưa có</span></td>
-                    <td><span class="status-badge badge-coming">Sắp chiếu</span></td>
-                    <td class="text-end">
-                        <button class="action-btn btn-edit me-1" title="Sửa"><i class="bi bi-pencil-square"></i></button>
-                        <button class="action-btn btn-delete" title="Xóa"><i class="bi bi-trash"></i></button>
-                    </td>
-                </tr>
+            <tbody id="movieListBody">
+                <!-- Data loaded via JS -->
             </tbody>
         </table>
     </div>
 </main>
 
-<!-- MODAL: ADD/EDIT MOVIE -->
+<!-- MODAL -->
 <div class="modal fade" id="movieModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -305,7 +183,6 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <!-- TMDB Search Bar -->
                 <div class="mb-4 pb-3 border-bottom">
                     <label class="form-label text-accent fw-bold"><i class="bi bi-search"></i> Tìm kiếm nhanh từ TMDB</label>
                     <div class="input-group">
@@ -319,8 +196,6 @@
                     <input type="hidden" id="movieId">
                     <input type="hidden" id="tmdbId">
                     <input type="hidden" id="posterUrl">
-                    <input type="hidden" id="directorAvatarUrl">
-                    <input type="hidden" id="actorAvatarUrls">
                     <div class="row g-4">
                         <div class="col-md-4">
                             <label class="form-label">Poster phim</label>
@@ -335,35 +210,41 @@
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label">Tên phim</label>
-                                    <input type="text" class="form-control" placeholder="Nhập tên phim...">
+                                    <input type="text" name="title" class="form-control" placeholder="Nhập tên phim...">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Đạo diễn</label>
-                                    <input type="text" class="form-control" placeholder="Tên đạo diễn...">
+                                    <input type="text" name="director" class="form-control" placeholder="Tên đạo diễn...">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Thời lượng (phút)</label>
-                                    <input type="number" class="form-control" placeholder="Ví dụ: 120">
+                                    <input type="number" name="duration" class="form-control" placeholder="Ví dụ: 120">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label d-block">Thể loại</label>
+                                    <div id="genresContainer" class="d-flex flex-wrap gap-2 p-2 rounded-3" style="background: var(--card); border: 1px solid var(--border); max-height: 120px; overflow-y: auto;">
+                                        <!-- Genres loaded via JS -->
+                                    </div>
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Diễn viên</label>
-                                    <input type="text" class="form-control" placeholder="Các diễn viên chính...">
+                                    <input type="text" name="actors" class="form-control" placeholder="Các diễn viên chính...">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Trạng thái</label>
-                                    <select class="form-select">
+                                    <select name="status" class="form-select">
                                         <option value="SHOWING">Đang chiếu</option>
                                         <option value="COMING">Sắp chiếu</option>
                                         <option value="END">Ngừng chiếu</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Trailer URL (YouTube)</label>
-                                    <input type="text" class="form-control" placeholder="https://youtube.com/...">
+                                    <label class="form-label">Trailer URL</label>
+                                    <input type="text" name="trailerUrl" class="form-control" placeholder="https://youtube.com/...">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Mô tả phim</label>
-                                    <textarea class="form-control" rows="4" placeholder="Tóm tắt nội dung phim..."></textarea>
+                                    <textarea name="description" class="form-control" rows="3" placeholder="Tóm tắt nội dung phim..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -372,7 +253,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-link text-muted text-decoration-none fw-600" data-bs-dismiss="modal">Hủy bỏ</button>
-                <button type="button" id="saveMovieBtn" class="btn btn-add px-4" onclick="saveMovie()">Lưu thông tin</button>
+                <button type="button" class="btn btn-add px-4" onclick="saveMovie()">Lưu thông tin</button>
             </div>
         </div>
     </div>
@@ -383,14 +264,37 @@
 <script>
     const movieModal = new bootstrap.Modal(document.getElementById('movieModal'));
     let allMovies = [];
+    let availableGenres = [];
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadMovies();
+        init();
         const searchInput = document.querySelector('.search-box input');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => filterMovies(e.target.value));
-        }
+        if (searchInput) searchInput.addEventListener('input', (e) => filterMovies(e.target.value));
     });
+
+    async function init() {
+        await loadGenres();
+        await loadMovies();
+    }
+
+    async function loadGenres() {
+        const res = await api.get('/genres');
+        if (res.success) {
+            availableGenres = res.data;
+            const container = document.getElementById('genresContainer');
+            container.innerHTML = availableGenres.map(g => `
+                <label class="genre-checkbox-item">
+                    <input type="checkbox" name="genreNames" value="${g.name}" class="d-none" onchange="toggleGenreUI(this)">
+                    <span>${g.name}</span>
+                </label>
+            `).join('');
+        }
+    }
+
+    function toggleGenreUI(checkbox) {
+        if (checkbox.checked) checkbox.parentElement.classList.add('active');
+        else checkbox.parentElement.classList.remove('active');
+    }
 
     async function loadMovies() {
         const res = await api.get('/movies');
@@ -401,8 +305,7 @@
     }
 
     function renderMovies(movies) {
-        const tbody = document.querySelector('.custom-table tbody');
-        if (!tbody) return;
+        const tbody = document.getElementById('movieListBody');
         tbody.innerHTML = movies.map(m => `
             <tr>
                 <td>
@@ -414,10 +317,10 @@
                         </div>
                     </div>
                 </td>
-                <td>${(m.genres || []).join(', ') || 'N/A'}</td>
+                <td><small>${(m.genres || []).join(', ') || 'N/A'}</small></td>
                 <td>${m.duration} phút</td>
                 <td><span class="text-warning">★ ${m.rating || 0}</span></td>
-                <td><span class="status-badge ${m.status === 'SHOWING' ? 'badge-showing' : 'badge-coming'}">${m.status === 'SHOWING' ? 'Đang chiếu' : 'Sắp chiếu'}</span></td>
+                <td><span class="status-badge ${m.status === 'SHOWING' ? 'badge-showing' : 'badge-coming'}">${m.status}</span></td>
                 <td class="text-end">
                     <button class="action-btn btn-edit me-1" onclick="editMovie(${m.id})"><i class="bi bi-pencil-square"></i></button>
                     <button class="action-btn btn-delete" onclick="deleteMovie(${m.id})"><i class="bi bi-trash"></i></button>
@@ -434,26 +337,19 @@
     async function searchTMDB() {
         const query = document.getElementById('tmdbSearchInput').value;
         if (!query) return;
-
         const resultsEl = document.getElementById('tmdbResults');
         resultsEl.innerHTML = '<div class="list-group-item bg-dark text-white">Đang tìm...</div>';
         resultsEl.style.display = 'block';
-
         const res = await api.get(`/tmdb/search?query=${encodeURIComponent(query)}`);
         if (res && res.results) {
             resultsEl.innerHTML = res.results.map(m => `
                 <button type="button" class="list-group-item list-group-item-action bg-dark text-white border-secondary" onclick="fillFromTMDB(${m.id})">
                     <div class="d-flex align-items-center">
                         <img src="${m.poster_path}" style="width:40px; height:60px; object-fit:cover; margin-right:10px;" onerror="this.src='https://via.placeholder.com/40x60'">
-                        <div>
-                            <div class="fw-bold">${m.title}</div>
-                            <div class="small text-muted">${m.release_date || 'N/A'}</div>
-                        </div>
+                        <div><div class="fw-bold">${m.title}</div><div class="small text-muted">${m.release_date || 'N/A'}</div></div>
                     </div>
                 </button>
             `).join('');
-        } else {
-            resultsEl.innerHTML = '<div class="list-group-item bg-dark text-white">Không tìm thấy phim</div>';
         }
     }
 
@@ -461,135 +357,118 @@
         document.getElementById('tmdbResults').style.display = 'none';
         const m = await api.get(`/tmdb/movie/${id}`);
         if (m) {
-            document.getElementById('tmdbId').value = m.id;
             const form = document.getElementById('movieForm');
-            form.querySelector('input[placeholder="Nhập tên phim..."]').value = m.title;
-            form.querySelector('textarea').value = m.overview;
-            form.querySelector('input[placeholder="Ví dụ: 120"]').value = m.runtime || 120;
-            form.querySelector('input[placeholder="Tên đạo diễn..."]').value = (m.credits?.crew?.find(c => c.job === 'Director'))?.name || '';
+            form.title.value = m.title || '';
+            form.description.value = m.overview || '';
+            form.duration.value = m.runtime || 120;
+            form.director.value = (m.credits?.crew?.find(c => c.job === 'Director'))?.name || '';
+            form.actors.value = m.credits?.cast?.slice(0, 5).map(c => c.name).join(', ') || '';
+            document.getElementById('tmdbId').value = m.id;
             
-            const actorsInput = form.querySelector('input[placeholder="Các diễn viên chính..."]');
-            if (actorsInput && m.credits?.cast) {
-                actorsInput.value = m.credits.cast.slice(0, 5).map(c => c.name).join(', ');
+            // Genre Mapping: TMDB (English) -> StarCinema (Vietnamese)
+            const genreMap = {
+                'Action': 'Hành động', 'Adventure': 'Phiêu lưu', 'Animation': 'Hoạt hình',
+                'Comedy': 'Hài', 'Crime': 'Tội phạm', 'Documentary': 'Tài liệu',
+                'Drama': 'Chính kịch', 'Family': 'Gia đình', 'Fantasy': 'Viễn tưởng',
+                'History': 'Lịch sử', 'Horror': 'Kinh dị', 'Music': 'Âm nhạc',
+                'Mystery': 'Bí ẩn', 'Romance': 'Lãng mạn', 'Science Fiction': 'Viễn tưởng',
+                'TV Movie': 'Phim TV', 'Thriller': 'Gây cấn', 'War': 'Chiến tranh', 'Western': 'Miền tây'
+            };
+
+            // Backend now returns 'genres' as a list of objects after DTO update
+            if (m.genres && m.genres.length > 0) {
+                const tmdbGenreNames = m.genres.map(g => g.name);
+                const mappedGenres = tmdbGenreNames.map(name => genreMap[name] || name).map(n => n.toLowerCase());
+
+                document.querySelectorAll('input[name="genreNames"]').forEach(cb => {
+                    cb.checked = mappedGenres.includes(cb.value.toLowerCase());
+                    toggleGenreUI(cb);
+                });
+            } else if (m.genre_ids) {
+                // Fallback to genre_ids if needed (but DTO update should provide genres)
+                console.warn('Backend returned genre_ids instead of genres objects');
             }
 
-            if (m.poster_path) {
-                document.getElementById('posterUrl').value = m.poster_path;
+            // Backend returns 'poster_path' or 'posterPath' (Spring Boot/Jackson behavior)
+            const posterPath = m.poster_path || m.posterPath;
+            if (posterPath) {
+                document.getElementById('posterUrl').value = posterPath;
                 const preview = document.getElementById('posterPreview');
-                preview.src = m.poster_path;
+                preview.src = posterPath; 
                 preview.style.display = 'block';
                 document.querySelector('.poster-preview-box i').style.display = 'none';
                 document.querySelector('.poster-preview-box span').style.display = 'none';
             }
-            alert('Đã tải thông tin từ TMDB!');
+            alert('Đã đồng bộ từ TMDB thành công!');
         }
     }
 
-    async function saveMovie() {
-        const form = document.getElementById('movieForm');
-        const data = {
-            title: form.querySelector('input[placeholder="Nhập tên phim..."]').value,
-            description: form.querySelector('textarea').value,
-            duration: parseInt(form.querySelector('input[placeholder="Ví dụ: 120"]').value) || 0,
-            status: form.querySelector('select').value,
-            director: form.querySelector('input[placeholder="Tên đạo diễn..."]').value,
-            actors: form.querySelector('input[placeholder="Các diễn viên chính..."]').value,
-            posterUrl: document.getElementById('posterUrl').value,
-            tmdbId: parseInt(document.getElementById('tmdbId').value) || null,
-            rating: 8.5
-        };
-
-        if (!data.title || data.duration <= 0) {
-            alert('Vui lòng nhập đầy đủ Tên phim và Thời lượng!');
-            return;
-        }
-
-        const res = await api.post('/movies', data);
-        if (res.success) {
-            movieModal.hide();
-            loadMovies();
-            alert('Thành công: Phim mới đã được thêm vào hệ thống!');
-        } else {
-            alert('Lỗi: ' + res.message);
-        }
-    }
-
-    async function editMovie(id) {
+    function editMovie(id) {
         const movie = allMovies.find(m => m.id === id);
         if (!movie) return;
-
-        // Cập nhật tiêu đề modal
         document.querySelector('#movieModal .modal-title').innerText = 'Sửa thông tin phim';
-        
-        // Điền dữ liệu vào form
         document.getElementById('movieId').value = movie.id;
         document.getElementById('tmdbId').value = movie.tmdbId || '';
         document.getElementById('posterUrl').value = movie.posterUrl || '';
         
         const form = document.getElementById('movieForm');
-        form.querySelector('input[placeholder="Nhập tên phim..."]').value = movie.title;
-        form.querySelector('textarea').value = movie.description || '';
-        form.querySelector('input[placeholder="Ví dụ: 120"]').value = movie.duration;
-        form.querySelector('input[placeholder="Tên đạo diễn..."]').value = movie.director || '';
-        form.querySelector('input[placeholder="Các diễn viên chính..."]').value = movie.actors || '';
-        form.querySelector('select').value = movie.status;
-        form.querySelector('input[placeholder="https://youtube.com/..."]').value = movie.trailerUrl || '';
+        form.title.value = movie.title;
+        form.description.value = movie.description || '';
+        form.duration.value = movie.duration;
+        form.director.value = movie.director || '';
+        form.actors.value = movie.actors || '';
+        form.status.value = movie.status;
+        form.trailerUrl.value = movie.trailerUrl || '';
 
-        // Hiển thị ảnh preview
+        // Check genres
+        const movieGenres = movie.genres.map(g => g.toLowerCase());
+        document.querySelectorAll('input[name="genreNames"]').forEach(cb => {
+            cb.checked = movieGenres.includes(cb.value.toLowerCase());
+            toggleGenreUI(cb);
+        });
+
         const preview = document.getElementById('posterPreview');
         if (movie.posterUrl) {
-            preview.src = movie.posterUrl;
-            preview.style.display = 'block';
+            preview.src = movie.posterUrl; preview.style.display = 'block';
             document.querySelector('.poster-preview-box i').style.display = 'none';
             document.querySelector('.poster-preview-box span').style.display = 'none';
-        } else {
-            preview.style.display = 'none';
-            document.querySelector('.poster-preview-box i').style.display = 'block';
-            document.querySelector('.poster-preview-box span').style.display = 'block';
         }
-
         movieModal.show();
     }
 
     async function saveMovie() {
         const id = document.getElementById('movieId').value;
         const form = document.getElementById('movieForm');
-        const data = {
-            title: form.querySelector('input[placeholder="Nhập tên phim..."]').value,
-            description: form.querySelector('textarea').value,
-            duration: parseInt(form.querySelector('input[placeholder="Ví dụ: 120"]').value) || 0,
-            status: form.querySelector('select').value,
-            director: form.querySelector('input[placeholder="Tên đạo diễn..."]').value,
-            actors: form.querySelector('input[placeholder="Các diễn viên chính..."]').value,
-            posterUrl: document.getElementById('posterUrl').value,
-            trailerUrl: form.querySelector('input[placeholder="https://youtube.com/..."]').value,
+        
+        const selectedGenres = Array.from(document.querySelectorAll('input[name="genreNames"]:checked')).map(cb => cb.value);
+
+        const movieData = {
+            title: form.title.value.trim(),
+            description: form.description.value.trim(),
+            duration: parseInt(form.duration.value) || 0,
+            status: form.status.value,
+            director: form.director.value.trim(),
+            actors: form.actors.value.trim(),
+            genres: selectedGenres,
+            posterUrl: document.getElementById('posterUrl').value.trim(),
+            trailerUrl: form.trailerUrl.value.trim(),
             tmdbId: parseInt(document.getElementById('tmdbId').value) || null,
             rating: 8.5
         };
 
-        if (!data.title || data.duration <= 0) {
-            alert('Vui lòng nhập đầy đủ Tên phim và Thời lượng!');
-            return;
-        }
+        if (!movieData.title || movieData.duration <= 0) return alert('Vui lòng điền đủ thông tin!');
 
-        let res;
-        if (id) {
-            // Cập nhật phim hiện có
-            res = await api.put(`/movies/${id}`, data);
-        } else {
-            // Thêm phim mới
-            res = await api.post('/movies', data);
-        }
+        const formData = new FormData();
+        formData.append('movie', new Blob([JSON.stringify(movieData)], { type: 'application/json' }));
+        const fileInput = document.getElementById('posterInput');
+        if (fileInput.files && fileInput.files[0]) formData.append('poster', fileInput.files[0]);
 
+        const res = await (id ? api.put(`/movies/${id}`, formData, true) : api.post('/movies', formData, true));
         if (res.success) {
-            movieModal.hide();
-            loadMovies();
-            alert(id ? 'Đã cập nhật thông tin phim!' : 'Đã thêm phim mới thành công!');
-            // Reset form
+            movieModal.hide(); loadMovies();
+            alert('Thao tác thành công!');
             resetForm();
-        } else {
-            alert('Lỗi: ' + res.message);
-        }
+        } else alert('Lỗi: ' + res.message);
     }
 
     function resetForm() {
@@ -597,46 +476,35 @@
         document.getElementById('tmdbId').value = '';
         document.getElementById('posterUrl').value = '';
         document.getElementById('movieForm').reset();
-        document.querySelector('#movieModal .modal-title').innerText = 'Thêm phim mới';
-        
-        const preview = document.getElementById('posterPreview');
-        preview.style.display = 'none';
+        document.querySelectorAll('input[name="genreNames"]').forEach(cb => { cb.checked = false; toggleGenreUI(cb); });
+        document.getElementById('posterPreview').style.display = 'none';
         document.querySelector('.poster-preview-box i').style.display = 'block';
         document.querySelector('.poster-preview-box span').style.display = 'block';
+        document.querySelector('#movieModal .modal-title').innerText = 'Thêm phim mới';
     }
 
-    // Lắng nghe sự kiện đóng modal để reset form
     document.getElementById('movieModal').addEventListener('hidden.bs.modal', resetForm);
 
     async function deleteMovie(id) {
         if (confirm('Xóa phim này?')) {
             const res = await api.delete(`/movies/${id}`);
-            if (res.success) {
-                loadMovies();
-                alert('Đã xóa phim thành công!');
-            } else {
-                alert('Lỗi: ' + res.message);
-            }
+            if (res.success) loadMovies();
         }
     }
 
     function previewImage(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = (e) => {
                 const preview = document.getElementById('posterPreview');
-                preview.src = e.target.result;
-                preview.style.display = 'block';
+                preview.src = e.target.result; preview.style.display = 'block';
                 document.querySelector('.poster-preview-box i').style.display = 'none';
                 document.querySelector('.poster-preview-box span').style.display = 'none';
-                // Nếu tải ảnh lên trực tiếp, xóa URL TMDB
                 document.getElementById('posterUrl').value = '';
             }
             reader.readAsDataURL(input.files[0]);
         }
     }
 </script>
-</body>
-</html>
 </body>
 </html>

@@ -26,6 +26,18 @@ public class TMDBMovieDto {
     @JsonProperty("genre_ids")
     private List<Integer> genreIds;
 
+    @JsonProperty("genres")
+    private List<Genre> genres;
+
+    public static class Genre {
+        private Integer id;
+        private String name;
+        public Integer getId() { return id; }
+        public void setId(Integer id) { this.id = id; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+    }
+
     @JsonProperty("credits")
     private Credits credits;
 
@@ -106,6 +118,8 @@ public class TMDBMovieDto {
     public void setRuntime(Integer runtime) { this.runtime = runtime; }
     public List<Integer> getGenreIds() { return genreIds; }
     public void setGenreIds(List<Integer> genreIds) { this.genreIds = genreIds; }
+    public List<Genre> getGenres() { return genres; }
+    public void setGenres(List<Genre> genres) { this.genres = genres; }
     public Credits getCredits() { return credits; }
     public void setCredits(Credits credits) { this.credits = credits; }
     public Videos getVideos() { return videos; }
