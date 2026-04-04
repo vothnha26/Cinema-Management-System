@@ -105,6 +105,7 @@
         <li><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
         <li><a href="manage-movies.html" class="nav-link-admin"><i class="bi bi-film"></i> Quản lý phim</a></li>
         <li><a href="manage-showtimes.html" class="nav-link-admin active"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
+        <li><a href="manage-rooms.html" class="nav-link-admin"><i class="bi bi-door-open"></i> Phòng chiếu</a></li>
         <li><a href="#" class="nav-link-admin"><i class="bi bi-ticket-perforated"></i> Quản lý vé</a></li>
         <li><a href="manage-users.html" class="nav-link-admin"><i class="bi bi-people"></i> Người dùng</a></li>
         <li><a href="#" class="nav-link-admin"><i class="bi bi-gear"></i> Cài đặt</a></li>
@@ -159,10 +160,10 @@
     </div>
 
     <div class="schedule-container" id="scheduleContainer">
-        <!-- Rooms and Showtimes will be rendered here -->
+        <!-- Suất chiếu thật sẽ được tải từ API và render tại đây -->
         <div class="text-center py-5">
             <div class="spinner-border text-danger" role="status"></div>
-            <p class="mt-3 text-muted">Đang tải dữ liệu lịch chiếu...</p>
+            <p class="mt-3 text-muted">Đang tải lịch chiếu từ hệ thống...</p>
         </div>
     </div>
 </main>
@@ -185,6 +186,27 @@
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Ngày áp dụng</label>
                     <input type="date" id="aiDate" class="form-control form-control-custom">
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-muted">Bắt đầu từ</label>
+                        <input type="time" id="aiStartTime" class="form-control form-control-custom" value="09:00">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small fw-bold text-muted">Kết thúc lúc</label>
+                        <input type="time" id="aiEndTime" class="form-control form-control-custom" value="23:59">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-muted d-flex justify-content-between">
+                        Tỉ lệ ưu tiên phim HOT
+                        <span id="ratioValue" class="text-info">70%</span>
+                    </label>
+                    <input type="range" class="form-range" id="aiRatio" min="0" max="100" step="10" value="70" oninput="document.getElementById('ratioValue').innerText = this.value + '%'">
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>Đa dạng phim</span>
+                        <span>Tập trung phim HOT</span>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Chế độ vận hành</label>
@@ -324,7 +346,12 @@
                             ${room.name.toUpperCase()} 
                             <span class="badge ${room.type === 'IMAX' ? 'bg-warning text-dark' : 'bg-secondary'} ms-2" style="font-size:0.6rem">${room.type}</span>
                         </div>
-                        <div class="room-meta">Sức chứa: ${room.capacity} ghế | Trạng thái: <span class="text-success">Hoạt động</span></div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="room-meta">Sức chứa: ${room.capacity} ghế</div>
+                            <a href="design-room.html?id=${room.id}" class="btn btn-sm btn-outline-light border-secondary" style="font-size: 0.7rem; border-radius: 6px;">
+                                <i class="bi bi-grid-3x3 me-1"></i> SƠ ĐỒ GHẾ
+                            </a>
+                        </div>
                     </div>
                     <div class="time-timeline scroll-hide p-4 d-flex gap-3 align-items-start">
                         ${roomShowtimes.length > 0 ? roomShowtimes.map(s => renderShowtimeBlock(s, isPreview)).join('') : 
@@ -336,8 +363,8 @@
     }
 
     function renderShowtimeBlock(s, isPreview) {
-        const startTime = new Date(s.startTime).toLocaleTimeString([], { hour: '2d-digit', minute: '2d-digit' });
-        const endTime = new Date(s.endTime).toLocaleTimeString([], { hour: '2d-digit', minute: '2d-digit' });
+        const startTime = new Date(s.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const endTime = new Date(s.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const isDraft = s.id < 0; // Backend marks AI drafts with negative IDs
 
         return `
@@ -357,6 +384,7 @@
     async function generateAISuggestions() {
         const date = document.getElementById('aiDate').value;
         const mode = document.querySelector('input[name="aiMode"]:checked').value;
+        const ratio = document.getElementById('aiRatio').value / 100;
 
         if (!date) return alert('Vui lòng chọn ngày!');
 
@@ -366,7 +394,7 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> ĐANG TÍNH TOÁN...';
 
         try {
-            const res = await api.post(`/scheduling/suggest?date=${date}&mode=${mode}`, {});
+            const res = await api.post(`/scheduling/suggest?date=${date}&mode=${mode}&ratio=${ratio}`, {});
             if (res.success) {
                 aiDraftShowtimes = res.data;
                 renderSchedule(aiDraftShowtimes, true);

@@ -150,6 +150,7 @@ public class BookingServiceImpl implements BookingService {
             BookingDetail detail = new BookingDetail();
             detail.setBooking(booking);
             detail.setSeat(seat);
+            detail.setSeatCode(seat.getSeatCode()); // Lưu vết tên ghế vĩnh viễn
             
             SeatPrice sp = seatPriceRepository.findLatestPrice(
                     showtime.getRoom().getType(), 

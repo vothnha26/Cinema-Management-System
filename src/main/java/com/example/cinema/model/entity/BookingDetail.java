@@ -16,18 +16,22 @@ public class BookingDetail {
     private Booking booking;
 
     @ManyToOne
-    @JoinColumn(name = "seat_id", nullable = false)
+    @JoinColumn(name = "seat_id", nullable = true) // Cho phép null để xóa ghế thoải mái
     private Seat seat;
+
+    @Column(name = "seat_code") // Lưu tên ghế (vd: A1) để audit sau này
+    private String seatCode;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
     public BookingDetail() {}
 
-    public BookingDetail(Long id, Booking booking, Seat seat, BigDecimal price) {
+    public BookingDetail(Long id, Booking booking, Seat seat, String seatCode, BigDecimal price) {
         this.id = id;
         this.booking = booking;
         this.seat = seat;
+        this.seatCode = seatCode;
         this.price = price;
     }
 
@@ -53,6 +57,14 @@ public class BookingDetail {
 
     public void setSeat(Seat seat) {
         this.seat = seat;
+    }
+
+    public String getSeatCode() {
+        return seatCode;
+    }
+
+    public void setSeatCode(String seatCode) {
+        this.seatCode = seatCode;
     }
 
     public BigDecimal getPrice() {

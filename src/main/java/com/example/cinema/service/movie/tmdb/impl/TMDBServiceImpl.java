@@ -9,6 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 @Service
 public class TMDBServiceImpl implements TMDBService {
 
@@ -23,6 +28,8 @@ public class TMDBServiceImpl implements TMDBService {
     @Value("${tmdb.api.image-base}")
     private String imageBase;
 
+    private Map<Integer, String> genreCache = new java.util.HashMap<>();
+
     public TMDBServiceImpl(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
@@ -31,8 +38,27 @@ public class TMDBServiceImpl implements TMDBService {
     public void init() {
         if (apiKey != null) {
             apiKey = apiKey.trim();
-            System.out.println(">>> TMDB Service initialized with key: " +
-                    (apiKey.length() > 5 ? apiKey.substring(0, 5) + "..." : "EMPTY"));
+            loadMasterGenres();
+        }
+    }
+
+    private void loadMasterGenres() {
+        try {
+            String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/genre/movie/list")
+                    .queryParam("api_key", apiKey)
+                    .queryParam("language", "vi")
+                    .build().encode().toUriString();
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+            if (response != null && response.containsKey("genres")) {
+                List<Map<String, Object>> genres = (List<Map<String, Object>>) response.get("genres");
+                for (Map<String, Object> g : genres) {
+                    genreCache.put((Integer) g.get("id"), (String) g.get("name"));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println(">>> TMDB: Không thể tải danh sách thể loại: " + e.getMessage());
         }
     }
 
@@ -47,20 +73,17 @@ public class TMDBServiceImpl implements TMDBService {
                     .encode()
                     .toUriString();
 
-            System.out.println(">>> Calling TMDB (Search): " + url.replace(apiKey, "HIDDEN_KEY"));
             TMDBSearchResponse response = restTemplate.getForObject(url, TMDBSearchResponse.class);
             if (response != null && response.getResults() != null) {
-                response.getResults().forEach(this::processPosters);
+                response.getResults().forEach(m -> {
+                    processPosters(m);
+                    translateGenres(m);
+                });
             }
             return response;
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            String errorMsg = "Lỗi từ TMDB: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
-            System.err.println(">>> " + errorMsg);
-            throw new org.springframework.web.server.ResponseStatusException(e.getStatusCode(), errorMsg);
         } catch (Exception e) {
-            System.err.println(">>> TMDB Unexpected Error: " + e.getMessage());
             throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi kết nối TMDB: " + e.getMessage());
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi tìm kiếm TMDB: " + e.getMessage());
         }
     }
 
@@ -70,32 +93,114 @@ public class TMDBServiceImpl implements TMDBService {
             String url = UriComponentsBuilder.fromHttpUrl(baseUrl + "/movie/" + tmdbId)
                     .queryParam("api_key", apiKey)
                     .queryParam("language", "vi")
-                    .queryParam("append_to_response", "credits,videos")
+                    .queryParam("append_to_response", "credits,videos,release_dates")
+                    .queryParam("include_video_language", "vi,en,null")
                     .build()
                     .encode()
                     .toUriString();
 
-            System.out.println(">>> Calling TMDB (Full Detail): " + url.replace(apiKey, "HIDDEN_KEY"));
             TMDBMovieDto movie = restTemplate.getForObject(url, TMDBMovieDto.class);
             if (movie != null) {
                 processPosters(movie);
+                translateGenres(movie);
+                processVNReleaseDate(movie);
             }
             return movie;
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            String errorMsg = "Lỗi chi tiết từ TMDB: " + e.getStatusCode();
-            throw new org.springframework.web.server.ResponseStatusException(e.getStatusCode(), errorMsg);
         } catch (Exception e) {
+            System.err.println(">>> TMDB Detail Error: " + e.getMessage());
             throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Lỗi lấy chi tiết TMDB: " + e.getMessage());
+                    org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi lấy chi tiết TMDB: " + e.getMessage());
+        }
+    }
+
+    private void processVNReleaseDate(TMDBMovieDto movie) {
+        if (movie == null || movie.getReleaseDates() == null || movie.getReleaseDates().getResults() == null) return;
+
+        // 1. Tìm bản ghi tại Việt Nam (VN)
+        Optional<TMDBMovieDto.ReleaseDateResult> vnRelease = movie.getReleaseDates().getResults().stream()
+                .filter(r -> r != null && "VN".equalsIgnoreCase(r.getIso()))
+                .findFirst();
+
+        if (vnRelease.isPresent()) {
+            List<TMDBMovieDto.ReleaseDateDetail> details = vnRelease.get().getReleaseDates();
+            if (details != null) {
+                // Lấy ngày phát hành đầu tiên có sẵn
+                details.stream().filter(d -> d.getReleaseDate() != null).findFirst()
+                        .ifPresent(d -> movie.setReleaseDate(d.getReleaseDate().split("T")[0]));
+                
+                // Lấy độ tuổi đầu tiên không trống
+                details.stream()
+                        .map(TMDBMovieDto.ReleaseDateDetail::getCertification)
+                        .filter(c -> c != null && !c.isEmpty())
+                        .findFirst()
+                        .ifPresent(movie::setCertification);
+            }
+        }
+
+        // 2. Nếu vẫn trống độ tuổi, lấy từ Mỹ (US) và dịch sang mác Việt Nam
+        if (movie.getCertification() == null || movie.getCertification().isEmpty()) {
+            movie.getReleaseDates().getResults().stream()
+                .filter(r -> r != null && "US".equalsIgnoreCase(r.getIso()))
+                .findFirst()
+                .ifPresent(r -> {
+                    if (r.getReleaseDates() != null) {
+                        r.getReleaseDates().stream()
+                            .map(TMDBMovieDto.ReleaseDateDetail::getCertification)
+                            .filter(c -> c != null && !c.isEmpty())
+                            .findFirst()
+                            .ifPresent(usCert -> movie.setCertification(mapUSCertToVN(usCert)));
+                    }
+                });
+        }
+        
+        // 3. Mặc định là P nếu không tìm thấy gì
+        if (movie.getCertification() == null || movie.getCertification().isEmpty()) {
+            movie.setCertification("P");
+        }
+    }
+
+    private String mapUSCertToVN(String usCert) {
+        if (usCert == null) return "P";
+        switch (usCert.toUpperCase()) {
+            case "G": return "P";
+            case "PG": return "K";
+            case "PG-13": return "T13";
+            case "R": return "T18";
+            case "NC-17": return "C18";
+            default: return "P";
+        }
+    }
+
+    private void translateGenres(TMDBMovieDto movie) {
+        if (movie == null) return;
+        if (genreCache.isEmpty()) loadMasterGenres();
+        
+        if (movie.getGenreIds() != null && !genreCache.isEmpty()) {
+            List<TMDBMovieDto.Genre> genres = new ArrayList<>();
+            for (Integer id : movie.getGenreIds()) {
+                if (genreCache.containsKey(id)) {
+                    TMDBMovieDto.Genre g = new TMDBMovieDto.Genre();
+                    g.setId(id);
+                    g.setName(genreCache.get(id));
+                    genres.add(g);
+                }
+            }
+            movie.setGenres(genres);
+        } else if (movie.getGenres() != null && !genreCache.isEmpty()) {
+            for (TMDBMovieDto.Genre g : movie.getGenres()) {
+                if (g != null && genreCache.containsKey(g.getId())) {
+                    g.setName(genreCache.get(g.getId()));
+                }
+            }
         }
     }
 
     private void processPosters(TMDBMovieDto movie) {
-        if (movie.getPosterPath() != null) {
+        if (movie == null) return;
+        if (movie.getPosterPath() != null && !movie.getPosterPath().startsWith("http")) {
             movie.setPosterPath(imageBase + movie.getPosterPath());
         }
-        if (movie.getBackdropPath() != null) {
+        if (movie.getBackdropPath() != null && !movie.getBackdropPath().startsWith("http")) {
             movie.setBackdropPath(imageBase + movie.getBackdropPath());
         }
     }

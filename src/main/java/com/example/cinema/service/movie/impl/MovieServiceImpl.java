@@ -156,21 +156,62 @@ public class MovieServiceImpl implements MovieService {
         movie.setDescription(request.getDescription());
         movie.setDuration(request.getDuration());
         movie.setReleaseDate(request.getReleaseDate());
-        movie.setRating(request.getRating() != null ? request.getRating() : 0.0);
+        movie.setStatus(request.getStatus() != null ? request.getStatus() : movie.getStatus());
+        movie.setRating(request.getRating() != null ? request.getRating() : movie.getRating());
         
         if (poster != null && !poster.isEmpty()) {
             try {
                 movie.setPosterUrl(movieMediaService.uploadPoster(poster));
             } catch (IOException e) {
-                // Keep old one or use new URL
+                if (request.getPosterUrl() != null) movie.setPosterUrl(request.getPosterUrl());
             }
-        } else {
+        } else if (request.getPosterUrl() != null) {
             movie.setPosterUrl(request.getPosterUrl());
         }
         
         movie.setTrailerUrl(request.getTrailerUrl());
+        movie.setTmdbId(request.getTmdbId());
+
+        // Update Genres
+        if (request.getGenres() != null) {
+            Set<Genre> genres = request.getGenres().stream()
+                .map(name -> genreRepository.findByName(name)
+                    .orElseGet(() -> genreRepository.save(new Genre(null, name))))
+                .collect(Collectors.toSet());
+            movie.setGenres(genres);
+        }
+
+        Movie savedMovie = movieRepository.save(movie);
+
+        // Update Directors
+        movieDirectorRepository.deleteByMovieId(id);
+        if (request.getDirector() != null && !request.getDirector().isEmpty()) {
+            String[] directors = request.getDirector().split(",");
+            for (String dName : directors) {
+                String name = dName.trim();
+                Director director = directorRepository.findByName(name)
+                    .orElseGet(() -> directorRepository.save(new Director(null, name, null)));
+                
+                MovieDirector.MovieDirectorId mdId = new MovieDirector.MovieDirectorId(savedMovie.getId(), director.getId());
+                movieDirectorRepository.save(new MovieDirector(mdId, savedMovie, director, DirectorRole.MAIN));
+            }
+        }
+
+        // Update Actors
+        movieActorRepository.deleteByMovieId(id);
+        if (request.getActors() != null && !request.getActors().isEmpty()) {
+            String[] cast = request.getActors().split(",");
+            for (int i = 0; i < cast.length; i++) {
+                String name = cast[i].trim();
+                Actor actor = actorRepository.findByName(name)
+                    .orElseGet(() -> actorRepository.save(new Actor(null, name, null)));
+                
+                MovieActor.MovieActorId maId = new MovieActor.MovieActorId(savedMovie.getId(), actor.getId());
+                movieActorRepository.save(new MovieActor(maId, savedMovie, actor, "N/A", i));
+            }
+        }
         
-        return mapToResponse(movieRepository.save(movie));
+        return mapToResponse(savedMovie);
     }
 
     @Override

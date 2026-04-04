@@ -44,7 +44,11 @@ public class TMDBMovieDto {
     @JsonProperty("videos")
     private Videos videos;
 
-    // Nested classes for credits and videos
+    @JsonProperty("release_dates")
+    private ReleaseDatesWrapper releaseDates;
+
+    private String certification;
+
     public static class Credits {
         private List<Cast> cast;
         private List<Crew> crew;
@@ -99,6 +103,33 @@ public class TMDBMovieDto {
         public void setType(String type) { this.type = type; }
     }
 
+    public static class ReleaseDatesWrapper {
+        private List<ReleaseDateResult> results;
+        public List<ReleaseDateResult> getResults() { return results; }
+        public void setResults(List<ReleaseDateResult> results) { this.results = results; }
+    }
+
+    public static class ReleaseDateResult {
+        @JsonProperty("iso_3166_1")
+        private String iso;
+        @JsonProperty("release_dates")
+        private List<ReleaseDateDetail> releaseDates;
+        public String getIso() { return iso; }
+        public void setIso(String iso) { this.iso = iso; }
+        public List<ReleaseDateDetail> getReleaseDates() { return releaseDates; }
+        public void setReleaseDates(List<ReleaseDateDetail> releaseDates) { this.releaseDates = releaseDates; }
+    }
+
+    public static class ReleaseDateDetail {
+        @JsonProperty("release_date")
+        private String releaseDate;
+        private String certification;
+        public String getReleaseDate() { return releaseDate; }
+        public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
+        public String getCertification() { return certification; }
+        public void setCertification(String certification) { this.certification = certification; }
+    }
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -124,4 +155,8 @@ public class TMDBMovieDto {
     public void setCredits(Credits credits) { this.credits = credits; }
     public Videos getVideos() { return videos; }
     public void setVideos(Videos videos) { this.videos = videos; }
+    public String getCertification() { return certification; }
+    public void setCertification(String certification) { this.certification = certification; }
+    public ReleaseDatesWrapper getReleaseDates() { return releaseDates; }
+    public void setReleaseDates(ReleaseDatesWrapper releaseDates) { this.releaseDates = releaseDates; }
 }

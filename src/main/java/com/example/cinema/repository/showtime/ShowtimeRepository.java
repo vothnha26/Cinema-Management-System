@@ -9,6 +9,7 @@ import java.util.List;
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     List<Showtime> findAllByStartTimeBetween(LocalDateTime start, LocalDateTime end);
     void deleteByStartTimeBetween(LocalDateTime start, LocalDateTime end);
+    void deleteByStartTimeBetweenAndIdNotIn(LocalDateTime start, LocalDateTime end, List<Long> ids);
     List<Showtime> findByMovieIdAndStatus(Long movieId, ShowtimeStatus status);
 
     @org.springframework.data.jpa.repository.Query("SELECT s FROM Showtime s WHERE s.room.id = :roomId " +

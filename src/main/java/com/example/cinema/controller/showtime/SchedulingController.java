@@ -24,8 +24,11 @@ public class SchedulingController {
     @PostMapping("/suggest")
     public ResponseEntity<ApiResponse<List<ShowtimeResponse>>> suggest(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(defaultValue = "OVERWRITE") String mode) {
-        return ResponseEntity.ok(ApiResponse.ok(schedulingService.generateAISuggestions(date, mode)));
+            @RequestParam(defaultValue = "OVERWRITE") String mode,
+            @RequestParam(defaultValue = "0.7") double ratio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) java.time.LocalTime startTime,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) java.time.LocalTime endTime) {
+        return ResponseEntity.ok(ApiResponse.ok(schedulingService.generateAISuggestions(date, mode, ratio, startTime, endTime)));
     }
 
     @PostMapping("/apply")

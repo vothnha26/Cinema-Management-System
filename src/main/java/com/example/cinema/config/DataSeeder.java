@@ -19,9 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class DataSeeder {
 
     @Bean
-    public CommandLineRunner initData(UserRepository userRepository, 
-                                      CustomerRepository customerRepository, 
-                                      PasswordEncoder passwordEncoder) {
+    public CommandLineRunner initData(UserRepository userRepository,
+            CustomerRepository customerRepository,
+            PasswordEncoder passwordEncoder) {
         return args -> {
             // 1. Tạo Admin
             if (!userRepository.existsByUsername("admin")) {
