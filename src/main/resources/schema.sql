@@ -22,6 +22,7 @@ TRUNCATE TABLE actors;
 TRUNCATE TABLE directors;
 TRUNCATE TABLE customers;
 TRUNCATE TABLE users;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- 1. Table: users (15 records)
 -- Passwords: password123
@@ -56,72 +57,18 @@ INSERT INTO customers (id, user_id, full_name, phone, membership_tier, total_spe
 (10, 14, 'Trương Minh Quang', '0901112230', 'STANDARD', 0.00, 0),
 (11, 15, 'Lý Phương Thảo', '0901112231', 'SILVER', 950000.00, 95);
 
-CREATE TABLE formats (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
-);
-
-CREATE TABLE movie_formats (
-    movie_id BIGINT NOT NULL,
-    format_id BIGINT NOT NULL,
-    PRIMARY KEY (movie_id, format_id),
-    FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
-    FOREIGN KEY (format_id) REFERENCES formats(id) ON DELETE CASCADE
-);
-
-CREATE TABLE membership_benefits (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tier VARCHAR(50) NOT NULL UNIQUE,
-    discount_percent DOUBLE NOT NULL,
-    point_multiplier DOUBLE DEFAULT 1.0
-);
-
--- Seed membership benefits
-INSERT INTO membership_benefits (tier, discount_percent, point_multiplier) VALUES 
-('STANDARD', 0.0, 1.0),
-('SILVER', 5.0, 1.1),
-('GOLD', 10.0, 1.2),
-('PLATINUM', 15.0, 1.5);
-
--- Seed formats
-INSERT INTO formats (id, name) VALUES 
-(1, 'HALL_2D'), (2, 'HALL_3D'), (3, 'IMAX'), (4, 'HALL_4DX');
-
 -- 3. Table: directors
-INSERT INTO directors (id, name, avatar_url) VALUES 
-(1, 'Christopher Nolan', '/j9o4vYBs69HlyBrT0vSbpI9Az9y.jpg'), 
-(2, 'Denis Villeneuve', '/isGByv08u9G56YnSSTp86NAn64B.jpg'), 
-(3, 'Greta Gerwig', '/pD0pIuT3fH6S3776scvS09Ofveo.jpg'), 
-(4, 'Martin Scorsese', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(5, 'Quentin Tarantino', '/96vGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(6, 'James Cameron', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(7, 'Steven Spielberg', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(8, 'Bong Joon-ho', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(9, 'Wes Anderson', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(10, 'Makoto Shinkai', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(11, 'Trần Anh Hùng', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(12, 'Victor Vũ', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'),
-(13, 'Lý Hải', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(14, 'Trấn Thành', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(15, 'Nguyễn Quang Dũng', '/9uGBy997M6YvSBySSTp86NAn64B.jpg');
+INSERT INTO directors (id, name) VALUES 
+(1, 'Christopher Nolan'), (2, 'Denis Villeneuve'), (3, 'Greta Gerwig'), (4, 'Martin Scorsese'), 
+(5, 'Quentin Tarantino'), (6, 'James Cameron'), (7, 'Steven Spielberg'), (8, 'Bong Joon-ho'), 
+(9, 'Wes Anderson'), (10, 'Makoto Shinkai'), (11, 'Trần Anh Hùng'), (12, 'Victor Vũ'),
+(13, 'Lý Hải'), (14, 'Trấn Thành'), (15, 'Nguyễn Quang Dũng');
 
 -- 4. Table: actors
-INSERT INTO actors (id, name, avatar_url) VALUES 
-(1, 'Cillian Murphy', '/ll8p97pP6YvSBySSTp86NAn64B.jpg'), 
-(2, 'Timothée Chalamet', '/BE7p6YvSBySSTp86NAn64B.jpg'), 
-(3, 'Zendaya', '/86vGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(4, 'Ryan Gosling', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(5, 'Margot Robbie', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(6, 'Leonardo DiCaprio', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(7, 'Robert Downey Jr.', '/1Yfmst19osOfSBySSTp86NAn64B.jpg'), 
-(8, 'Tom Cruise', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(9, 'Scarlett Johansson', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(10, 'Florence Pugh', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(11, 'Song Kang-ho', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(12, 'Thái Hòa', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(13, 'Kaity Nguyễn', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(14, 'Kiều Minh Tuấn', '/9uGBy997M6YvSBySSTp86NAn64B.jpg'), 
-(15, 'Ninh Dương Lan Ngọc', '/9uGBy997M6YvSBySSTp86NAn64B.jpg');
+INSERT INTO actors (id, name) VALUES 
+(1, 'Cillian Murphy'), (2, 'Timothée Chalamet'), (3, 'Zendaya'), (4, 'Ryan Gosling'), (5, 'Margot Robbie'), 
+(6, 'Leonardo DiCaprio'), (7, 'Robert Downey Jr.'), (8, 'Tom Cruise'), (9, 'Scarlett Johansson'), 
+(10, 'Florence Pugh'), (11, 'Song Kang-ho'), (12, 'Thái Hòa'), (13, 'Kaity Nguyễn'), (14, 'Kiều Minh Tuấn'), (15, 'Ninh Dương Lan Ngọc');
 
 -- 5. Table: genres
 INSERT INTO genres (id, name) VALUES 
@@ -129,19 +76,19 @@ INSERT INTO genres (id, name) VALUES
 (6, 'Hoạt hình'), (7, 'Lãng mạn'), (8, 'Gia đình'), (9, 'Tội phạm'), (10, 'Tâm lý');
 
 -- 6. Table: movies
-INSERT INTO movies (id, title, description, duration, release_date, status, rating, age_rating) VALUES 
-(1, 'Oppenheimer', 'Cha đẻ bom nguyên tử.', 180, '2023-07-21', 'STOPPED', 8.4, 'T18'),
-(2, 'Dune: Part Two', 'Paul Atreides phục thù.', 166, '2024-03-01', 'NOW_SHOWING', 8.7, 'T13'),
-(3, 'Barbie', 'Barbie đến thế giới thực.', 114, '2023-07-21', 'STOPPED', 6.9, 'P'),
-(4, 'Killers of the Flower Moon', 'Vụ án bộ tộc Osage.', 206, '2023-10-20', 'STOPPED', 7.6, 'T18'),
-(5, 'Suzume', 'Khóa chặt cửa thiên tai.', 122, '2023-03-10', 'STOPPED', 7.7, 'P'),
-(6, 'Mai', 'Tình yêu và định kiến.', 131, '2024-02-10', 'NOW_SHOWING', 7.5, 'T18'),
-(7, 'Lật Mặt 7', 'Một điều ước của mẹ.', 138, '2024-04-26', 'NOW_SHOWING', 8.2, 'K'),
-(8, 'Godzilla x Kong', 'Đế chế mới của Titan.', 115, '2024-03-29', 'NOW_SHOWING', 6.2, 'T13'),
-(9, 'Kung Fu Panda 4', 'Po và Thủ lĩnh tinh thần.', 94, '2024-03-08', 'NOW_SHOWING', 6.3, 'P'),
-(10, 'Muôn Vị Nhân Gian', 'Ẩm thực và tình yêu.', 135, '2024-03-22', 'NOW_SHOWING', 7.3, 'T13'),
-(11, 'Deadpool & Wolverine', 'Bùng nổ Marvel.', 127, '2024-07-26', 'COMING', 8.0, 'T18'),
-(12, 'Joker 2', 'Điên có đôi.', 140, '2024-10-04', 'COMING', 0.0, 'T18');
+INSERT INTO movies (id, title, description, duration, release_date, status, rating) VALUES 
+(1, 'Oppenheimer', 'Cha đẻ bom nguyên tử.', 180, '2023-07-21', 'STOPPED', 'C18'),
+(2, 'Dune: Part Two', 'Paul Atreides phục thù.', 166, '2024-03-01', 'NOW_SHOWING', 'C13'),
+(3, 'Barbie', 'Barbie đến thế giới thực.', 114, '2023-07-21', 'STOPPED', 'P'),
+(4, 'Killers of the Flower Moon', 'Vụ án bộ tộc Osage.', 206, '2023-10-20', 'STOPPED', 'C18'),
+(5, 'Suzume', 'Khóa chặt cửa thiên tai.', 122, '2023-03-10', 'STOPPED', 'P'),
+(6, 'Mai', 'Tình yêu và định kiến.', 131, '2024-02-10', 'NOW_SHOWING', 'C18'),
+(7, 'Lật Mặt 7', 'Một điều ước của mẹ.', 138, '2024-04-26', 'NOW_SHOWING', 'K'),
+(8, 'Godzilla x Kong', 'Đế chế mới của Titan.', 115, '2024-03-29', 'NOW_SHOWING', 'C13'),
+(9, 'Kung Fu Panda 4', 'Po và Thủ lĩnh tinh thần.', 94, '2024-03-08', 'NOW_SHOWING', 'P'),
+(10, 'Muôn Vị Nhân Gian', 'Ẩm thực và tình yêu.', 135, '2024-03-22', 'NOW_SHOWING', 'C13'),
+(11, 'Deadpool & Wolverine', 'Bùng nổ Marvel.', 127, '2024-07-26', 'COMING_SOON', 'C18'),
+(12, 'Joker 2', 'Điên có đôi.', 140, '2024-10-04', 'COMING_SOON', 'C18');
 
 -- 7. Table: movie_genres
 INSERT INTO movie_genres (movie_id, genre_id) VALUES 
@@ -156,10 +103,10 @@ INSERT INTO movie_actors (movie_id, actor_id, character_name, display_order) VAL
 (1,1,'Oppenheimer',1), (1,7,'Strauss',2), (2,2,'Paul',1), (2,3,'Chani',2), (3,5,'Barbie',1), (3,4,'Ken',2), (6,14,'Dương',1), (6,15,'Mai',2), (7,12,'Hai',1), (9,11,'Po',1);
 
 -- 10. Table: rooms
-INSERT INTO rooms (id, name, type, capacity, num_rows, num_cols, status) VALUES 
-(1, 'Room 01', 'HALL_2D', 100, 10, 10, 1), (2, 'Room 02', 'HALL_2D', 100, 10, 10, 1), (3, 'Room 03', 'HALL_3D', 80, 8, 10, 1), 
-(4, 'IMAX Special', 'IMAX', 150, 10, 15, 1), (5, 'Premium 4DX', 'HALL_4DX', 60, 6, 10, 1), (6, 'Room 06', 'HALL_2D', 120, 10, 12, 1), 
-(7, 'Room 07', 'HALL_2D', 120, 10, 12, 1), (8, 'Room 08', 'HALL_3D', 80, 8, 10, 1), (9, 'IMAX HFR', 'IMAX', 200, 10, 20, 1), (10, 'Luxury', 'HALL_2D', 40, 4, 10, 1);
+INSERT INTO rooms (id, name, type, capacity, status) VALUES 
+(1, 'Room 01', 'HALL_2D', 100, 1), (2, 'Room 02', 'HALL_2D', 100, 1), (3, 'Room 03', 'HALL_3D', 80, 1), 
+(4, 'IMAX Special', 'IMAX', 150, 1), (5, 'Premium 4DX', 'HALL_4DX', 60, 1), (6, 'Room 06', 'HALL_2D', 120, 1), 
+(7, 'Room 07', 'HALL_2D', 120, 1), (8, 'Room 08', 'HALL_3D', 80, 1), (9, 'IMAX HFR', 'IMAX', 200, 1), (10, 'Luxury', 'HALL_2D', 40, 1);
 
 -- 11. Table: seat_prices
 INSERT INTO seat_prices (id, room_type, seat_type, price, effective_date, is_active) VALUES 
@@ -173,21 +120,21 @@ INSERT INTO seats (id, room_id, row_char, col_num, type, status) VALUES
 (6, 4, 'F', 11, 'VIP', 1), (7, 5, 'C', 3, 'STANDARD', 1), (8, 5, 'G', 8, 'VIP', 1), (9, 2, 'B', 1, 'STANDARD', 1), (10, 2, 'B', 2, 'STANDARD', 1), (11, 9, 'H', 15, 'VIP', 1), (12, 10, 'A', 1, 'VIP', 1);
 
 -- 13. Table: showtimes
-INSERT INTO showtimes (id, movie_id, room_id, start_time, end_time, status, total_seats) VALUES 
-(1, 2, 4, '2026-03-29 18:00:00', '2026-03-29 20:46:00', 'UPCOMING', 150), (2, 6, 1, '2026-03-29 19:00:00', '2026-03-29 21:11:00', 'UPCOMING', 100),
-(3, 7, 2, '2026-03-29 20:00:00', '2026-03-29 22:18:00', 'UPCOMING', 100), (4, 8, 5, '2026-03-30 14:00:00', '2026-03-30 15:55:00', 'UPCOMING', 60),
-(5, 9, 3, '2026-03-30 15:00:00', '2026-03-30 16:34:00', 'UPCOMING', 80), (6, 10, 6, '2026-03-30 17:00:00', '2026-03-30 19:15:00', 'UPCOMING', 120),
-(7, 2, 9, '2026-03-30 20:00:00', '2026-03-30 22:46:00', 'UPCOMING', 200), (8, 6, 7, '2026-03-31 18:30:00', '2026-03-31 20:41:00', 'UPCOMING', 120),
-(9, 7, 1, '2026-03-31 19:00:00', '2026-03-31 21:18:00', 'UPCOMING', 100), (10, 8, 4, '2026-03-31 21:00:00', '2026-03-31 22:55:00', 'UPCOMING', 150),
-(11, 1, 1, '2026-03-28 10:00:00', '2026-03-28 13:00:00', 'ENDED', 100), (12, 3, 2, '2026-03-28 14:00:00', '2026-03-28 15:54:00', 'ENDED', 100),
-(13, 2, 4, '2026-03-28 19:00:00', '2026-03-28 21:46:00', 'SHOWING', 150), (14, 10, 10, '2026-04-01 19:00:00', '2026-04-01 21:15:00', 'UPCOMING', 40),
-(15, 9, 8, '2026-04-01 10:00:00', '2026-04-01 11:34:00', 'UPCOMING', 80);
+INSERT INTO showtimes (id, movie_id, room_id, start_time, end_time, status) VALUES 
+(1, 2, 4, '2026-03-29 18:00:00', '2026-03-29 20:46:00', 'UPCOMING'), (2, 6, 1, '2026-03-29 19:00:00', '2026-03-29 21:11:00', 'UPCOMING'),
+(3, 7, 2, '2026-03-29 20:00:00', '2026-03-29 22:18:00', 'UPCOMING'), (4, 8, 5, '2026-03-30 14:00:00', '2026-03-30 15:55:00', 'UPCOMING'),
+(5, 9, 3, '2026-03-30 15:00:00', '2026-03-30 16:34:00', 'UPCOMING'), (6, 10, 6, '2026-03-30 17:00:00', '2026-03-30 19:15:00', 'UPCOMING'),
+(7, 2, 9, '2026-03-30 20:00:00', '2026-03-30 22:46:00', 'UPCOMING'), (8, 6, 7, '2026-03-31 18:30:00', '2026-03-31 20:41:00', 'UPCOMING'),
+(9, 7, 1, '2026-03-31 19:00:00', '2026-03-31 21:18:00', 'UPCOMING'), (10, 8, 4, '2026-03-31 21:00:00', '2026-03-31 22:55:00', 'UPCOMING'),
+(11, 1, 1, '2026-03-28 10:00:00', '2026-03-28 13:00:00', 'ENDED'), (12, 3, 2, '2026-03-28 14:00:00', '2026-03-28 15:54:00', 'ENDED'),
+(13, 2, 4, '2026-03-28 19:00:00', '2026-03-28 21:46:00', 'SHOWING'), (14, 10, 10, '2026-04-01 19:00:00', '2026-04-01 21:15:00', 'UPCOMING'),
+(15, 9, 8, '2026-04-01 10:00:00', '2026-04-01 11:34:00', 'UPCOMING');
 
 -- 14. Table: combos
-INSERT INTO combos (id, name, description, price, is_active, stock_quantity) VALUES 
-(1, 'Single', '1 Bắp M + 1 Nước L', 75000.00, 1, 100), (2, 'Couple', '1 Bắp L + 2 Nước L', 125000.00, 1, 100), (3, 'Family', '2 Bắp L + 4 Nước L', 280000.00, 1, 50),
-(4, 'Premium', '1 Bắp phô mai + 1 Juice', 95000.00, 1, 80), (5, 'Kids', 'Bắp mini + Milo', 65000.00, 1, 120), (6, 'Night', 'Bắp L + Cafe', 110000.00, 1, 60),
-(7, 'Party', '3 Bắp L + 6 Nước', 450000.00, 1, 30), (8, 'Hotdog', 'Hotdog + Nước L', 85000.00, 1, 40), (9, 'Nachos', 'Nachos + Nước L', 90000.00, 1, 40), (10, 'Healthy', 'Salad + Suối', 70000.00, 1, 20);
+INSERT INTO combos (id, name, description, price, is_active) VALUES 
+(1, 'Single', '1 Bắp M + 1 Nước L', 75000.00, 1), (2, 'Couple', '1 Bắp L + 2 Nước L', 125000.00, 1), (3, 'Family', '2 Bắp L + 4 Nước L', 280000.00, 1),
+(4, 'Premium', '1 Bắp phô mai + 1 Juice', 95000.00, 1), (5, 'Kids', 'Bắp mini + Milo', 65000.00, 1), (6, 'Night', 'Bắp L + Cafe', 110000.00, 1),
+(7, 'Party', '3 Bắp L + 6 Nước', 450000.00, 1), (8, 'Hotdog', 'Hotdog + Nước L', 85000.00, 1), (9, 'Nachos', 'Nachos + Nước L', 90000.00, 1), (10, 'Healthy', 'Salad + Suối', 70000.00, 1);
 
 -- 15. Table: promotions
 INSERT INTO promotions (id, code, name, discount_type, discount_value, min_tier, start_date, end_date, is_active) VALUES 
@@ -246,6 +193,6 @@ INSERT INTO notifications (id, user_id, title, message, type, is_read) VALUES
 (7, 9, 'Chào mừng', 'Welcome to Cinema!', 'SYSTEM', 0), (8, 10, 'Sinh nhật', 'Giảm 50% tháng này.', 'PROMOTION', 0),
 (9, 11, 'Sử dụng', 'Check-in BOK009 xong.', 'BOOKING', 1), (10, 12, 'Hạng VIP', 'Chào mừng Platinum.', 'SYSTEM', 0),
 (11, 13, 'Phim mới', 'Deadpool ra mắt tháng 7.', 'PROMOTION', 0), (12, 14, 'Bảo trì', 'Bảo trì lúc 2h sáng.', 'SYSTEM', 0),
-(13, 15, 'Đã hủy', 'Vé BOK006 đã hủy.', 'BOOKING', 1), (14, 5, '+50', '+50 điểm tích lũy.', 'BOOKING', 0), (15, 6, 'Gift code', 'Tặng mã COMBOOFF.', 'PROMOTION', 0);
+(13, 15, 'Đã hủy', 'Vé BOK006 đã hủy.', 'BOOKING', 1), (14, 5, 'Điểm mới', '+50 điểm tích lũy.', 'BOOKING', 0), (15, 6, 'Gift code', 'Tặng mã COMBOOFF.', 'PROMOTION', 0);
 
 SET FOREIGN_KEY_CHECKS = 1;
