@@ -28,28 +28,14 @@ public class EmailNotificationStrategy implements INotificationStrategy {
             helper.setTo(to);
             helper.setSubject(subject);
 
-            // Tách mã đơn hàng từ body nếu có (Body hiện tại truyền bookingCode)
-            String bookingCode = body;
-            String qrBase64 = QRCodeGenerator.generateQRCodeBase64(bookingCode, 200, 200);
-
-            String htmlContent = "<html><body style='font-family: Arial, sans-serif; color: #333;'>"
-                    + "<div style='max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;'>"
-                    + "<div style='background: linear-gradient(135deg, #E5133A, #8B0020); padding: 20px; text-align: center;'>"
-                    + "<h1 style='color: #fff; margin: 0; letter-spacing: 5px;'>STAR CINEMA</h1>"
-                    + "</div>"
-                    + "<div style='padding: 30px; text-align: center;'>"
-                    + "<h2>Cảm ơn bạn đã đặt vé!</h2>"
-                    + "<p>Mã đặt vé của bạn là:</p>"
-                    + "<div style='background: #f8f9fa; border: 2px dashed #E5133A; padding: 15px; display: inline-block; font-size: 24px; font-weight: bold; color: #E5133A; margin: 10px 0;'>"
-                    + bookingCode + "</div>"
-                    + "<p style='color: #666;'>Vui lòng đưa mã QR dưới đây cho nhân viên tại rạp để nhận vé.</p>"
-                    + "<img src='data:image/png;base64," + qrBase64 + "' style='width: 200px; height: 200px; margin: 20px 0; border: 1px solid #eee;' />"
-                    + "<p style='font-size: 12px; color: #999;'>Đây là email tự động, vui lòng không phản hồi.</p>"
-                    + "</div>"
-                    + "<div style='background: #0F1320; color: #7B82A0; padding: 15px; text-align: center; font-size: 12px;'>"
-                    + "© 2026 StarCinema - Trải nghiệm điện ảnh đỉnh cao"
-                    + "</div>"
-                    + "</div></body></html>";
+            // Nếu body đã là HTML (bắt đầu bằng <html hoặc <!DOCTYPE) thì gửi trực tiếp
+            // Nếu không, bọc trong mẫu khung của StarCinema
+            String htmlContent;
+            if (body.trim().toLowerCase().startsWith("<html") || body.trim().toLowerCase().startsWith("<!doctype")) {
+                htmlContent = body;
+            } else {
+                htmlContent = wrapInStarCinemaTemplate(subject, body);
+            }
 
             helper.setText(htmlContent, true);
             mailSender.send(mimeMessage);
@@ -57,6 +43,23 @@ public class EmailNotificationStrategy implements INotificationStrategy {
         } catch (Exception e) {
             System.err.println("❌ [EmailStrategy] Gửi mail thất bại tới " + to + ": " + e.getMessage());
         }
+    }
+
+    private String wrapInStarCinemaTemplate(String title, String content) {
+        return "<html><body style='font-family: Arial, sans-serif; color: #333;'>"
+                + "<div style='max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;'>"
+                + "<div style='background: linear-gradient(135deg, #E5133A, #8B0020); padding: 20px; text-align: center;'>"
+                + "<h1 style='color: #fff; margin: 0; letter-spacing: 5px;'>STAR CINEMA</h1>"
+                + "</div>"
+                + "<div style='padding: 30px;'>"
+                + "<h2>" + title + "</h2>"
+                + "<div style='line-height: 1.6; color: #444;'>" + content + "</div>"
+                + "<p style='font-size: 12px; color: #999; margin-top: 30px;'>Đây là email tự động từ hệ thống quản trị StarCinema.</p>"
+                + "</div>"
+                + "<div style='background: #0F1320; color: #7B82A0; padding: 15px; text-align: center; font-size: 12px;'>"
+                + "© 2026 StarCinema - Trải nghiệm điện ảnh đỉnh cao"
+                + "</div>"
+                + "</div></body></html>";
     }
 
     @Override

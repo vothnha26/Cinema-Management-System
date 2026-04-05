@@ -6,6 +6,7 @@ import com.example.cinema.model.dto.response.UserResponse;
 import com.example.cinema.model.entity.User;
 import com.example.cinema.model.enums.Role;
 import com.example.cinema.repository.user.UserRepository;
+import com.example.cinema.service.notification.INotificationService;
 import com.example.cinema.service.user.IUserService;
 
 import org.modelmapper.ModelMapper;
@@ -26,13 +27,16 @@ public class UserServiceImpl implements IUserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
+    private final INotificationService notificationService;
 
     public UserServiceImpl(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            ModelMapper modelMapper) {
+            ModelMapper modelMapper,
+            INotificationService notificationService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -119,6 +123,26 @@ public class UserServiceImpl implements IUserService {
             throw new RuntimeException("Không thể xóa tài khoản ADMIN.");
         }
         userRepository.delete(user);
+    }
+
+    @Override
+    public void sendResetPasswordEmail(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng", userId));
+
+        // Tạo link đơn giản (trong thực tế cần mã hóa token và lưu vào DB/Redis)
+        String resetLink = "http://localhost:8082/reset-password.html?email=" + user.getEmail();
+        String subject = "🔑 Yêu cầu đặt lại mật khẩu - StarCinema";
+        String body = "<p>Chào bạn,</p>"
+                + "<p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản StarCinema của bạn.</p>"
+                + "<p>Vui lòng nhấn vào nút bên dưới để thực hiện thay đổi mật khẩu:</p>"
+                + "<div style='text-align: center; margin: 30px 0;'>"
+                + "  <a href='" + resetLink + "' style='background-color: #E5133A; color: white; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 5px;'>ĐẶT LẠI MẬT KHẨU</a>"
+                + "</div>"
+                + "<p>Nếu bạn không yêu cầu thay đổi mật khẩu, vui lòng bỏ qua email này.</p>";
+
+        // Sử dụng Strategy EMAIL qua NotificationService (DIP)
+        notificationService.sendNotification(user.getEmail(), subject, body, "EMAIL");
     }
 
     private UserResponse toResponse(User user) {

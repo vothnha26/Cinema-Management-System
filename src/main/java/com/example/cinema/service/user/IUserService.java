@@ -35,4 +35,9 @@ public interface IUserService {
      * Xóa tài khoản (không cấp quyền xóa Admin).
      */
     void deleteUser(Long id);
+
+    /**
+     * Gửi Email Reset Mật khẩu cho nhân viên (SOLID: Sử dụng Notification Channel).
+     */
+    void sendResetPasswordEmail(Long userId);
 }

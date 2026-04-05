@@ -75,6 +75,15 @@ public class AdminUserController {
     }
 
     /**
+     * Gửi yêu cầu đổi mật khẩu qua email cho nhân viên.
+     */
+    @PostMapping("/{id}/reset-password")
+    public ResponseEntity<ApiResponse<String>> requestResetPassword(@PathVariable Long id) {
+        userService.sendResetPasswordEmail(id);
+        return ResponseEntity.ok(ApiResponse.ok("Link đổi mật khẩu đã được gửi đến Gmail của nhân viên."));
+    }
+
+    /**
      * Xóa tài khoản.
      */
     @DeleteMapping("/{id}")
