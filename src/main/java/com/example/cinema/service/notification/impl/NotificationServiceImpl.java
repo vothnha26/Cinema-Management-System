@@ -88,6 +88,7 @@ public class NotificationServiceImpl implements INotificationService, INotificat
     }
 
     @Override
+    @org.springframework.scheduling.annotation.Async
     public void sendNotification(String to, String subject, String body, String channel) {
         INotificationStrategy strategy = strategies.get(channel.toUpperCase());
         if (strategy != null) {
