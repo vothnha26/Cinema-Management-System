@@ -28,15 +28,18 @@ public class UserServiceImpl implements IUserService {
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
     private final INotificationService notificationService;
+    private final com.example.cinema.service.auth.IAuthService authService;
 
     public UserServiceImpl(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             ModelMapper modelMapper,
-            INotificationService notificationService) {
+            INotificationService notificationService,
+            @org.springframework.context.annotation.Lazy com.example.cinema.service.auth.IAuthService authService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
         this.notificationService = notificationService;
+        this.authService = authService;
     }
 
     @Override
@@ -75,11 +78,24 @@ public class UserServiceImpl implements IUserService {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
-        user.setPassword(passwordEncoder.encode(password));
+        
+        // Nếu không truyền pass (Onboarding), dùng UUID để bảo mật
+        String initialPassword = (password == null || password.isEmpty()) ? java.util.UUID.randomUUID().toString() : password;
+        user.setPassword(passwordEncoder.encode(initialPassword));
+        
         user.setRole(role);
         user.setStatus(true);
 
-        return toResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+
+        // TỰ ĐỘNG GỬI MAIL THIẾT LẬP MẬT KHẨU CHO NHÂN VIÊN MỚI
+        try {
+            authService.requestPasswordReset(email);
+        } catch (Exception e) {
+            System.err.println("⚠️ Không thể gửi mail Onboarding: " + e.getMessage());
+        }
+
+        return toResponse(savedUser);
     }
 
     @Override
