@@ -201,8 +201,6 @@
         document.getElementById('username').value = '';
         document.getElementById('username').disabled = false;
         document.getElementById('email').value = '';
-        document.getElementById('password').value = '';
-        document.getElementById('passwordField').style.display = 'block';
         document.getElementById('role').value = 'STAFF';
         userModal.show();
     }
@@ -216,7 +214,6 @@
         document.getElementById('username').value = u.username;
         document.getElementById('username').disabled = true; // Read-only
         document.getElementById('email').value = u.email;
-        document.getElementById('passwordField').style.display = 'none'; // Không đổi pass trực tiếp ở đây
         document.getElementById('role').value = u.role;
         userModal.show();
     }
@@ -226,7 +223,6 @@
         const data = {
             username: document.getElementById('username').value,
             email: document.getElementById('email').value,
-            password: document.getElementById('password').value,
             role: document.getElementById('role').value
         };
 
