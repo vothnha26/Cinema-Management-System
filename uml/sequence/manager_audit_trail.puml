@@ -1,0 +1,30 @@
+@startuml Manager Audit Trail Sequence
+title Sequence Diagram: Truy xuất lịch sử hoạt động (Manager)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-audit.html" as UI
+control "AuditLogController" as Ctrl
+entity "AuditLogService" as Svc
+database "MySQL" as DB
+
+Manager -> UI: Tìm kiếm theo User, Hành động, Thời gian
+UI -> Ctrl: GET /api/audit-logs?user=...&action=...
+activate Ctrl
+
+Ctrl -> Svc: getFilteredLogs(params)
+activate Svc
+
+Svc -> DB: findAll(predicate)
+activate DB
+DB --> Svc: List<AuditLog>
+deactivate DB
+
+Svc --> Ctrl: List<AuditLogResponse>
+deactivate Svc
+
+Ctrl --> UI: 200 OK
+deactivate Ctrl
+
+UI -> Manager: Hiển thị danh sách lịch sử thao tác
+@enduml

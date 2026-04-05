@@ -14,12 +14,24 @@ public class StatisticsResponse {
     private Map<String, BigDecimal> revenueByDay;   // Date -> Amount
     private Map<String, Long> ticketsByDay;         // Date -> Count
     private Map<Integer, BigDecimal> revenueByHour; // Hour (0-23) -> Amount
+    private Map<String, BigDecimal> revenueByRoom; // Room Name -> Amount
+    private Map<String, Double> occupancyByRoom;   // Room Name -> Percentage
 
     public StatisticsResponse() {
     }
 
     public static class Builder {
         private StatisticsResponse response = new StatisticsResponse();
+
+        public Builder revenueByRoom(Map<String, BigDecimal> data) {
+            response.revenueByRoom = data;
+            return this;
+        }
+
+        public Builder occupancyByRoom(Map<String, Double> data) {
+            response.occupancyByRoom = data;
+            return this;
+        }
 
         public Builder totalRevenue(BigDecimal total) {
             response.totalRevenue = total;
@@ -87,4 +99,6 @@ public class StatisticsResponse {
     public Map<String, BigDecimal> getRevenueByDay() { return revenueByDay; }
     public Map<String, Long> getTicketsByDay() { return ticketsByDay; }
     public Map<Integer, BigDecimal> getRevenueByHour() { return revenueByHour; }
+    public Map<String, BigDecimal> getRevenueByRoom() { return revenueByRoom; }
+    public Map<String, Double> getOccupancyByRoom() { return occupancyByRoom; }
 }

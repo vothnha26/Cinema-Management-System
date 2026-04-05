@@ -38,4 +38,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.createdAt BETWEEN :start AND :end " +
            "GROUP BY FUNCTION('HOUR', b.createdAt)")
     List<Object[]> calculateRevenueByHour(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT b.showtime.room.name, SUM(b.totalPrice) " +
+           "FROM Booking b WHERE b.status IN ('CONFIRMED', 'CHECKED_IN') " +
+           "AND b.createdAt BETWEEN :start AND :end " +
+           "GROUP BY b.showtime.room.name")
+    List<Object[]> calculateRevenueByRoom(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

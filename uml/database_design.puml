@@ -1,0 +1,203 @@
+@startuml StarCinema Database Design
+!define primary_key(x) <b><color:#b8861b><&key></color> x</b>
+!define foreign_key(x) <color:#aaaaaa><&key></color> x
+!define column(x) <color:#efefef><&label></color> x
+!define table(x) entity x << (T,#4b86b4) >>
+
+skinparam roundcorner 5
+skinparam linetype ortho
+skinparam shadowidng false
+skinparam theme cerulean
+
+table(users) {
+    primary_key(id): BIGINT
+    column(username): VARCHAR(50)
+    column(password): VARCHAR(255)
+    column(email): VARCHAR(100)
+    column(role): ENUM
+    column(status): BOOLEAN
+    column(created_at): TIMESTAMP
+}
+
+table(customers) {
+    primary_key(id): BIGINT
+    foreign_key(user_id): BIGINT
+    column(full_name): VARCHAR(100)
+    column(phone): VARCHAR(20)
+    column(email): VARCHAR(100)
+    column(membership_tier): ENUM
+    column(points): INT
+    column(total_spending): DECIMAL
+    column(created_at): TIMESTAMP
+}
+
+table(membership_benefits) {
+    primary_key(tier): ENUM
+    column(discount_percent): DOUBLE
+    column(point_multiplier): DOUBLE
+}
+
+table(movies) {
+    primary_key(id): BIGINT
+    column(title): VARCHAR(255)
+    column(description): TEXT
+    column(duration): INT
+    column(release_date): DATE
+    column(poster_url): VARCHAR(255)
+    column(status): ENUM
+}
+
+table(genres) {
+    primary_key(id): BIGINT
+    column(name): VARCHAR(50)
+}
+
+table(movie_genre) {
+    foreign_key(movie_id): BIGINT
+    foreign_key(genre_id): BIGINT
+}
+
+table(showtimes) {
+    primary_key(id): BIGINT
+    foreign_key(movie_id): BIGINT
+    foreign_key(room_id): BIGINT
+    foreign_key(format_id): BIGINT
+    column(start_time): TIMESTAMP
+    column(end_time): TIMESTAMP
+    column(status): ENUM
+    column(total_seats): INT
+}
+
+table(formats) {
+    primary_key(id): BIGINT
+    column(name): VARCHAR(20)
+}
+
+table(rooms) {
+    primary_key(id): BIGINT
+    column(name): VARCHAR(50)
+    column(type): ENUM
+    column(total_rows): INT
+    column(total_cols): INT
+    column(capacity): INT
+}
+
+table(seats) {
+    primary_key(id): BIGINT
+    foreign_key(room_id): BIGINT
+    column(seat_number): VARCHAR(10)
+    column(row_index): INT
+    column(col_index): INT
+    column(type): ENUM
+    column(status): ENUM
+}
+
+table(seat_prices) {
+    primary_key(id): BIGINT
+    column(room_type): ENUM
+    column(seat_type): ENUM
+    column(price): DECIMAL
+    column(effective_date): DATE
+}
+
+table(bookings) {
+    primary_key(id): BIGINT
+    foreign_key(customer_id): BIGINT
+    foreign_key(showtime_id): BIGINT
+    foreign_key(promotion_id): BIGINT
+    column(booking_code): VARCHAR(20)
+    column(total_price): DECIMAL
+    column(discount_amount): DECIMAL
+    column(final_amount): DECIMAL
+    column(status): ENUM
+    column(created_at): TIMESTAMP
+}
+
+table(booking_details) {
+    primary_key(id): BIGINT
+    foreign_key(booking_id): BIGINT
+    foreign_key(seat_id): BIGINT
+    column(price): DECIMAL
+}
+
+table(payments) {
+    primary_key(id): BIGINT
+    foreign_key(booking_id): BIGINT
+    column(transaction_id): VARCHAR(100)
+    column(amount): DECIMAL
+    column(method): VARCHAR(50)
+    column(status): ENUM
+    column(paid_at): TIMESTAMP
+}
+
+table(combos) {
+    primary_key(id): BIGINT
+    column(name): VARCHAR(100)
+    column(description): TEXT
+    column(price): DECIMAL
+    column(image_url): VARCHAR(255)
+}
+
+table(booking_combos) {
+    primary_key(id): BIGINT
+    foreign_key(booking_id): BIGINT
+    foreign_key(combo_id): BIGINT
+    column(quantity): INT
+    column(price): DECIMAL
+}
+
+table(promotions) {
+    primary_key(id): BIGINT
+    column(code): VARCHAR(20)
+    column(name): VARCHAR(255)
+    column(discount_type): ENUM
+    column(discount_value): DECIMAL
+    column(start_date): DATE
+    column(end_date): DATE
+    column(min_order_amount): DECIMAL
+    column(usage_limit): INT
+    column(used_count): INT
+}
+
+table(audit_logs) {
+    primary_key(id): BIGINT
+    column(username): VARCHAR(50)
+    column(action): VARCHAR(100)
+    column(target_id): VARCHAR(50)
+    column(details): TEXT
+    column(created_at): TIMESTAMP
+}
+
+table(notifications) {
+    primary_key(id): BIGINT
+    foreign_key(user_id): BIGINT
+    column(title): VARCHAR(255)
+    column(message): TEXT
+    column(type): ENUM
+    column(is_read): BOOLEAN
+    column(created_at): TIMESTAMP
+}
+
+' Relationships
+users "1" -down- "0..1" customers
+customers "1" -right- "*" bookings
+customers "*" -left- "1" membership_benefits
+
+movies "1" -- "*" showtimes
+movies "*" -- "*" genres
+rooms "1" -- "*" showtimes
+rooms "1" -- "*" seats
+formats "1" -- "*" showtimes
+
+bookings "1" -- "*" booking_details
+bookings "1" -- "*" booking_combos
+bookings "1" -- "1" payments
+bookings "*" -up- "0..1" promotions
+
+booking_details "*" -- "1" seats
+booking_combos "*" -- "1" combos
+
+users "1" -- "*" notifications
+users "1" -- "*" audit_logs
+
+@enduml

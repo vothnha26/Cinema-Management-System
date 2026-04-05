@@ -49,7 +49,7 @@ public class CustomerServiceImpl implements CustomerService {
         if (principal instanceof UserDetails) {
             String username = ((UserDetails) principal).getUsername();
             Customer customer = customerRepository.findByUserUsername(username)
-                    .orElseThrow(() -> new AppException("Customer profile not found"));
+                    .orElseThrow(() -> new com.example.cinema.exception.ResourceNotFoundException("Customer profile", "username", username));
 
             CustomerResponse response = modelMapper.map(customer, CustomerResponse.class);
             response.setUsername(customer.getUser().getUsername());

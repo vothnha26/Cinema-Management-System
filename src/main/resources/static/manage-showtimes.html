@@ -42,6 +42,18 @@
     /* ── TIMELINE SCEDULER ── */
     .timeline-container { flex: 1; overflow: auto; position: relative; display: flex; }
     
+    /* ── MOVIE PANEL (RIGHT) ── */
+    .movie-panel { width: 280px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+    .movie-panel-header { padding: 20px; border-bottom: 1px solid var(--border); }
+    .movie-list-scroll { flex: 1; overflow-y: auto; padding: 15px; }
+    .movie-item-filter { padding: 12px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: flex; gap: 12px; align-items: center; }
+    .movie-item-filter:hover { background: rgba(255,255,255,0.05); }
+    .movie-item-filter.active { background: rgba(229,19,58,0.1); border-color: var(--accent); }
+    .movie-poster-tiny { width: 40px; height: 55px; border-radius: 6px; object-fit: cover; background: #1a1d29; }
+    .movie-info-tiny { flex: 1; overflow: hidden; }
+    .movie-info-tiny .title { font-size: 0.8rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .movie-info-tiny .meta { font-size: 0.65rem; color: var(--text-muted); }
+
     /* Room Headers (Y-Axis) */
     .room-labels { width: 180px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); position: sticky; left: 0; z-index: 20; }
     .room-label-item { height: 120px; border-bottom: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; justify-content: center; background: var(--surface); }
@@ -140,7 +152,7 @@
     </div>
   </div>
 
-  <div class="scheduler-wrapper">
+  <div class="scheduler-wrapper" style="flex-direction: row;">
     <div class="timeline-container">
       <!-- Cột tên phòng -->
       <div class="room-labels" id="roomLabels"></div>
@@ -149,6 +161,17 @@
       <div class="timeline-content">
         <div class="time-header" id="timeHeader"></div>
         <div id="timelineGrid"></div>
+      </div>
+    </div>
+
+    <!-- Cột phim đang chiếu -->
+    <div class="movie-panel">
+      <div class="movie-panel-header">
+        <h6 class="m-0 fw-800" style="letter-spacing: 1px;">PHIM ĐANG CHIẾU</h6>
+        <p class="text-muted small m-0 mt-1">Chọn phim để lọc lịch chiếu</p>
+      </div>
+      <div class="movie-list-scroll" id="movieFilterList">
+        <div class="text-center py-5 text-muted">Đang tải phim...</div>
       </div>
     </div>
   </div>
@@ -285,6 +308,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let allMovies = [], allRooms = [], currentShowtimes = [], currentAIResult = [], isAILoading = false;
+    let selectedMovieId = null;
     const detailModal = new bootstrap.Modal(document.getElementById('showtimeDetailModal'));
     const addModal = new bootstrap.Modal(document.getElementById('addModal'));
     const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
@@ -299,6 +323,7 @@
         
         renderTimeHeader();
         renderRoomLabels();
+        renderMovieList();
         loadShowtimes();
         
         // Load options for selects
@@ -308,6 +333,40 @@
         document.getElementById('editRoomId').innerHTML = roomOptions;
         document.getElementById('addMovieId').innerHTML = movieOptions;
         document.getElementById('addRoomId').innerHTML = roomOptions;
+    }
+
+    function renderMovieList() {
+        const showingMovies = allMovies.filter(m => ['SHOWING', 'NOW_SHOWING', 'PRE_RELEASE'].includes(m.status));
+        const listEl = document.getElementById('movieFilterList');
+        
+        if (showingMovies.length === 0) {
+            listEl.innerHTML = '<div class="text-center py-5 text-muted small">Không có phim đang chiếu</div>';
+            return;
+        }
+
+        listEl.innerHTML = showingMovies.map(m => `
+            <div class="movie-item-filter" id="filter-m-${m.id}" onclick="filterByMovie(${m.id})">
+                <img src="${m.posterUrl || 'https://placehold.co/40x55'}" class="movie-poster-tiny" onerror="this.src='https://placehold.co/40x55'">
+                <div class="movie-info-tiny">
+                    <div class="title">${m.title}</div>
+                    <div class="meta">${m.duration} phút • ${m.ageRating || 'P'}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterByMovie(movieId) {
+        if (selectedMovieId === movieId) {
+            selectedMovieId = null;
+            document.querySelectorAll('.movie-item-filter').forEach(el => el.classList.remove('active'));
+        } else {
+            selectedMovieId = movieId;
+            document.querySelectorAll('.movie-item-filter').forEach(el => el.classList.remove('active'));
+            document.getElementById(`filter-m-${movieId}`).classList.add('active');
+        }
+        
+        const listToRender = currentAIResult.length > 0 ? currentAIResult : currentShowtimes;
+        renderTimeline(listToRender);
     }
 
     function renderSidebar(role) {

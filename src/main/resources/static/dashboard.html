@@ -33,7 +33,16 @@
         .stat-value { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
         .stat-label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
-        .chart-container { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; margin-top: 30px; }
+        .chart-container { 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 24px; 
+            padding: 30px; 
+            margin-top: 30px; 
+            height: 400px; 
+            position: relative; 
+        }
+        .chart-container.large { height: 350px; }
         .chart-title { font-weight: 700; color: #fff; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
         
         .filter-bar { background: var(--surface); border: 1px solid var(--border); padding: 15px 25px; border-radius: 16px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; }
@@ -42,10 +51,7 @@
 </head>
 <body>
 
-<aside>
-    <div class="sidebar-header"><h2>STAR<span>CINEMA</span></h2></div>
-    <ul class="sidebar-menu" id="dynamicSidebar"></ul>
-</aside>
+<aside class="sidebar"></aside>
 
 <main>
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -105,27 +111,61 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="chart-container">
-                <div class="chart-title"><i class="bi bi-graph-up text-danger"></i>BIỂU ĐỒ DOANH THU THEO NGÀY</div>
-                <canvas id="revenueChart" height="300"></canvas>
+    <div class="row g-4 mt-2">
+        <!-- DOANH THU THEO PHIM (TOP MOVIES) -->
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-trophy text-warning"></i>TOP DOANH THU THEO PHIM</div>
+                <div id="movieRevenueList" class="mt-4">
+                    <!-- Phim sẽ được render ở đây -->
+                </div>
             </div>
         </div>
-        <div class="col-lg-4">
-            <div class="chart-container">
-                <div class="chart-title"><i class="bi bi-pie-chart text-warning"></i>TỶ TRỌNG THEO PHIM</div>
-                <canvas id="movieChart" height="300"></canvas>
+
+        <!-- DOANH THU THEO KHUNG GIỜ -->
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-clock-history text-info"></i>PHÂN BỔ DOANH THU THEO GIỜ</div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="hourChart"></canvas>
+                </div>
             </div>
         </div>
+
+        <!-- DOANH THU THEO PHÒNG & TỶ LỆ LẤP ĐẦY -->
         <div class="col-lg-12">
-            <div class="chart-container">
-                <div class="chart-title"><i class="bi bi-clock text-info"></i>PHÂN BỔ DOANH THU THEO GIỜ TRONG NGÀY</div>
-                <canvas id="hourChart" height="200"></canvas>
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-door-open text-danger"></i>HIỆU SUẤT PHÒNG CHIẾU & TỶ LỆ LẤP GHẾ</div>
+                <div class="row g-4 mt-2" id="roomPerformanceGrid">
+                    <!-- Room stats sẽ được render ở đây -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- BIỂU ĐỒ DOANH THU THEO NGÀY (VẪN GIỮ NHƯNG LÀM GỌN) -->
+        <div class="col-lg-12">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-graph-up text-danger"></i>XU HƯỚNG DOANH THU THEO NGÀY</div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </main>
+
+<style>
+    .analytics-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; height: 100%; }
+    .movie-rank-item { margin-bottom: 20px; }
+    .movie-rank-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
+    .progress-star { height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+    .progress-star-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #FF4D6D); border-radius: 10px; transition: 1s ease-out; }
+    
+    .room-perf-card { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 20px; transition: 0.3s; }
+    .room-perf-card:hover { border-color: var(--accent); }
+    .occupancy-gauge { width: 60px; height: 60px; border-radius: 50%; border: 4px solid rgba(229,19,58,0.1); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: var(--accent); position: relative; }
+    .occupancy-gauge::after { content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border-radius: 50%; border: 4px solid var(--accent); border-bottom-color: transparent; border-left-color: transparent; transform: rotate(45deg); }
+</style>
 
 <script src="/js/auth-guard.js"></script>
 <script>AuthGuard.requireRole(['ADMIN', 'MANAGER']);</script>
@@ -171,68 +211,41 @@
     }
 
     function updateCharts(data) {
-        // 1. Revenue Chart (Line)
-        const revCtx = document.getElementById('revenueChart').getContext('2d');
-        if (revenueChart) revenueChart.destroy();
-        revenueChart = new Chart(revCtx, {
-            type: 'line',
-            data: {
-                labels: Object.keys(data.revenueByDay),
-                datasets: [{
-                    label: 'Doanh thu (VNĐ)',
-                    data: Object.values(data.revenueByDay),
-                    borderColor: '#E5133A',
-                    backgroundColor: 'rgba(229, 19, 58, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 5,
-                    pointBackgroundColor: '#E5133A'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0' } },
-                    x: { grid: { display: false }, ticks: { color: '#7B82A0' } }
-                }
-            }
-        });
+        // 1. TOP DOANH THU THEO PHIM (Progress Bars)
+        const movieBox = document.getElementById('movieRevenueList');
+        const sortedMovies = Object.entries(data.revenueByMovie).sort((a, b) => b[1] - a[1]);
+        const maxRev = sortedMovies.length > 0 ? sortedMovies[0][1] : 1;
+        
+        movieBox.innerHTML = sortedMovies.map(([title, rev]) => {
+            const percent = (rev / maxRev) * 100;
+            return `
+                <div class="movie-rank-item">
+                    <div class="movie-rank-info">
+                        <span class="text-white text-truncate me-2">${title}</span>
+                        <span class="text-accent">${new Intl.NumberFormat('vi-VN').format(rev)}đ</span>
+                    </div>
+                    <div class="progress-star">
+                        <div class="progress-star-bar" style="width: ${percent}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join('') || '<div class="text-center py-5 text-muted">Không có dữ liệu phim</div>';
 
-        // 2. Movie Chart (Doughnut)
-        const movieCtx = document.getElementById('movieChart').getContext('2d');
-        if (movieChart) movieChart.destroy();
-        movieChart = new Chart(movieCtx, {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(data.revenueByMovie),
-                datasets: [{
-                    data: Object.values(data.revenueByMovie),
-                    backgroundColor: ['#E5133A', '#F5A623', '#3B82F6', '#10B981', '#9B59B6', '#6366F1'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: '#7B82A0', padding: 20 } } }
-            }
-        });
-
-        // 3. Hour Chart (Bar)
+        // 2. DOANH THU THEO GIỜ (Area Chart)
         const hourCtx = document.getElementById('hourChart').getContext('2d');
         if (hourChart) hourChart.destroy();
         hourChart = new Chart(hourCtx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: Object.keys(data.revenueByHour).map(h => h + ':00'),
                 datasets: [{
                     label: 'Doanh thu',
                     data: Object.values(data.revenueByHour),
-                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                    borderRadius: 5
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
                 }]
             },
             options: {
@@ -242,6 +255,54 @@
                 plugins: { legend: { display: false } },
                 scales: {
                     y: { display: false },
+                    x: { grid: { display: false }, ticks: { color: '#7B82A0', maxRotation: 0 } }
+                }
+            }
+        });
+
+        // 3. HIỆU SUẤT PHÒNG CHIẾU (Grid Cards)
+        const roomBox = document.getElementById('roomPerformanceGrid');
+        const rooms = Object.keys(data.revenueByRoom);
+        roomBox.innerHTML = rooms.map(room => {
+            const rev = data.revenueByRoom[room] || 0;
+            const occ = data.occupancyByRoom[room] || 0;
+            return `
+                <div class="col-md-3">
+                    <div class="room-perf-card d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-bold text-white mb-1">${room}</div>
+                            <div class="text-muted small">Doanh thu: <span class="text-success fw-bold">${new Intl.NumberFormat('vi-VN').format(rev)}đ</span></div>
+                        </div>
+                        <div class="occupancy-gauge" title="Tỷ lệ lấp ghế">${occ}%</div>
+                    </div>
+                </div>
+            `;
+        }).join('') || '<div class="col-12 text-center py-4 text-muted">Chưa có suất chiếu trong khoảng thời gian này</div>';
+
+        // 4. BIỂU ĐỒ XU HƯỚNG (Vẫn giữ cho Dashboard đầy đủ)
+        const revCtx = document.getElementById('revenueChart').getContext('2d');
+        if (revenueChart) revenueChart.destroy();
+        revenueChart = new Chart(revCtx, {
+            type: 'line',
+            data: {
+                labels: Object.keys(data.revenueByDay),
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: Object.values(data.revenueByDay),
+                    borderColor: '#E5133A',
+                    backgroundColor: 'rgba(229, 19, 58, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0' } },
                     x: { grid: { display: false }, ticks: { color: '#7B82A0' } }
                 }
             }
