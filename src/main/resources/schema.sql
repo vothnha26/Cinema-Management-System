@@ -1,6 +1,4 @@
 -- Cinema Management System - Ultimate Seed Data Script
-USE cinema_db;
-
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE booking_combos;
 TRUNCATE TABLE booking_details;
@@ -10,7 +8,7 @@ TRUNCATE TABLE notifications;
 TRUNCATE TABLE promotions;
 TRUNCATE TABLE combos;
 TRUNCATE TABLE showtimes;
-TRUNCATE TABLE seat_prices;
+TRUNCATE TABLE room_seat_layouts;
 TRUNCATE TABLE seats;
 TRUNCATE TABLE rooms;
 TRUNCATE TABLE movie_actors;
