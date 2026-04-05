@@ -181,7 +181,11 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         if (showtime.getFormat() != null) res.setFormatName(showtime.getFormat().getName());
         res.setStatus(showtime.getStatus());
         res.setTotalSeats(showtime.getTotalSeats());
-        res.setSoldSeats(showtime.getSoldSeats());
+        
+        // ĐẾM THỰC TẾ TỪ DATABASE: Lấy tất cả ghế có trong đơn hàng chưa bị hủy (PENDING, CONFIRMED, CHECKED_IN)
+        List<Long> bookedSeats = bookingDetailRepository.findBookedSeatIdsByShowtime(showtime.getId());
+        res.setSoldSeats(bookedSeats != null ? bookedSeats.size() : 0);
+        
         return res;
     }
 }
