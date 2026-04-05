@@ -1,8 +1,10 @@
 package com.example.cinema.service.auth.impl;
 
 import com.example.cinema.exception.AppException;
+import com.example.cinema.model.dto.request.ChangePasswordRequest;
 import com.example.cinema.model.dto.request.LoginRequest;
 import com.example.cinema.model.dto.request.RegisterRequest;
+import com.example.cinema.model.dto.request.VerifyOtpRequest;
 import com.example.cinema.model.dto.response.AuthResponse;
 import com.example.cinema.model.entity.Customer;
 import com.example.cinema.model.entity.User;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
@@ -40,6 +43,7 @@ public class AuthServiceImpl implements IAuthService {
     private final INotificationService notificationService;
 
     private static final String RESET_TOKEN_PREFIX = "reset_token:";
+    private static final String OTP_PREFIX = "otp:";
 
     public AuthServiceImpl(UserRepository userRepository, CustomerRepository customerRepository,
             PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
@@ -57,22 +61,26 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
-            throw new AppException("Username is already taken");
-        }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new AppException("Email is already taken");
-        }
+    public String register(RegisterRequest request) {
+        // Kiểm tra xem User đã tồn tại chưa
+        userRepository.findByUsername(request.getUsername()).ifPresent(u -> {
+            if (u.getStatus()) throw new AppException("Tên đăng nhập đã tồn tại.");
+        });
 
-        User user = new User();
+        userRepository.findByEmail(request.getEmail()).ifPresent(u -> {
+            if (u.getStatus()) throw new AppException("Email đã được sử dụng.");
+        });
+
+        // Nếu chưa tồn tại hoặc chưa kích hoạt, lưu/cập nhật thông tin
+        User user = userRepository.findByEmail(request.getEmail()).orElse(new User());
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setEmail(request.getEmail());
         user.setRole(Role.CUSTOMER);
+        user.setStatus(false); // Chưa kích hoạt
         user = userRepository.save(user);
 
-        Customer customer = new Customer();
+        Customer customer = customerRepository.findByUserId(user.getId()).orElse(new Customer());
         customer.setUser(user);
         customer.setFullName(request.getFullName());
         customer.setPhone(request.getPhone());
@@ -81,8 +89,45 @@ public class AuthServiceImpl implements IAuthService {
         customer.setTotalSpending(BigDecimal.ZERO);
         customerRepository.save(customer);
 
-        // Auto login after registration
-        return login(new LoginRequest(request.getUsername(), request.getPassword()));
+        // 1. Sinh OTP (6 chữ số)
+        String otp = String.format("%06d", new Random().nextInt(1000000));
+
+        // 2. Lưu vào Redis (Hết hạn sau 5 phút)
+        redisTemplate.opsForValue().set(OTP_PREFIX + request.getEmail(), otp, Duration.ofMinutes(5));
+
+        // 3. Gửi Email OTP
+        String subject = "🔐 Mã xác thực đăng ký StarCinema";
+        String body = "<h3>Chào " + request.getFullName() + ",</h3>"
+                + "<p>Mã OTP để kích hoạt tài khoản của bạn là: <b style='font-size: 20px; color: #E5133A;'>" + otp + "</b></p>"
+                + "<p>Mã này có hiệu lực trong 5 phút. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>";
+
+        notificationService.sendNotification(request.getEmail(), subject, body, "EMAIL");
+
+        return "Vui lòng kiểm tra email để nhận mã OTP.";
+    }
+
+    @Override
+    @Transactional
+    public void verifyOtp(VerifyOtpRequest request) {
+        String savedOtp = redisTemplate.opsForValue().get(OTP_PREFIX + request.getEmail());
+        
+        if (savedOtp == null) {
+            throw new AppException("Mã OTP đã hết hạn hoặc không tồn tại.");
+        }
+
+        if (!savedOtp.equals(request.getOtp())) {
+            throw new AppException("Mã OTP không chính xác.");
+        }
+
+        // Kích hoạt tài khoản
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException("Người dùng không tồn tại."));
+        
+        user.setStatus(true);
+        userRepository.save(user);
+
+        // Xóa OTP sau khi xác thực thành công
+        redisTemplate.delete(OTP_PREFIX + request.getEmail());
     }
 
     @Override
@@ -94,6 +139,10 @@ public class AuthServiceImpl implements IAuthService {
         // Retrieve user by username OR email for the response
         User user = userRepository.findByUsernameOrEmail(request.getUsername(), request.getUsername())
                 .orElseThrow(() -> new AppException("User not found"));
+
+        if (!user.getStatus()) {
+            throw new AppException("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để nhận mã OTP.");
+        }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String jwt = jwtUtil.generateToken(userDetails, user.getRole().name());
@@ -110,7 +159,7 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     @Transactional
-    public void changePassword(String username, com.example.cinema.model.dto.request.ChangePasswordRequest request) {
+    public void changePassword(String username, ChangePasswordRequest request) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new AppException("User not found"));
 

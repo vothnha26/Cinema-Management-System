@@ -3,12 +3,14 @@ package com.example.cinema.service.commerce.pricing;
 import java.math.BigDecimal;
 
 public abstract class PriceDecorator implements PriceCalculator {
-    protected PriceCalculator wrappedCalculator;
+    protected PriceCalculator wrapped;
 
-    public PriceDecorator(PriceCalculator calculator) {
-        this.wrappedCalculator = calculator;
+    public PriceDecorator(PriceCalculator wrapped) {
+        this.wrapped = wrapped;
     }
 
     @Override
-    public abstract BigDecimal calculate();
+    public BigDecimal calculate() {
+        return wrapped.calculate();
+    }
 }

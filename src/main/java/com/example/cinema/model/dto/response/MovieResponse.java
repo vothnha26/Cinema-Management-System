@@ -17,7 +17,7 @@ public class MovieResponse {
     private Integer priorityLevel;
     private Long tmdbId;
     private java.time.LocalDate releaseDate;
-    private List<String> formats;
+    private List<FormatResponse> formats;
     private List<String> genres;
     private List<PersonResponse> actors;
     private List<PersonResponse> directors;
@@ -121,11 +121,11 @@ public class MovieResponse {
         this.releaseDate = releaseDate;
     }
 
-    public List<String> getFormats() {
+    public List<FormatResponse> getFormats() {
         return formats;
     }
 
-    public void setFormats(List<String> formats) {
+    public void setFormats(List<FormatResponse> formats) {
         this.formats = formats;
     }
 

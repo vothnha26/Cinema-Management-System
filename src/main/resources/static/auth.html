@@ -305,6 +305,44 @@
 
     <div class="alert-auth" id="alertMsg"></div>
 
+    <!-- OTP PANEL -->
+    <div id="otpPanel" class="form-panel" style="display:none">
+        <div class="text-center mb-4">
+            <i class="bi bi-shield-lock" style="font-size: 3rem; color: var(--accent);"></i>
+            <h4 class="mt-3">Xác thực tài khoản</h4>
+            <p class="text-muted small">Chúng tôi đã gửi mã OTP gồm 6 chữ số đến email của bạn. Vui lòng kiểm tra và nhập mã bên dưới.</p>
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Mã OTP</label>
+            <input type="text" class="form-control text-center" placeholder="000000" id="otpCode" maxlength="6" style="font-size: 1.5rem; letter-spacing: 8px; font-weight: 700;">
+        </div>
+        <button class="btn-auth" onclick="handleVerifyOtp()">
+            <i class="bi bi-check-circle me-2"></i>Xác nhận OTP
+        </button>
+        <div class="text-center mt-3">
+            <a href="javascript:void(0)" onclick="switchTab('register')" class="small text-decoration-none" style="color: var(--text-muted);">Quay lại Đăng ký</a>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD PANEL -->
+    <div id="forgotPanel" class="form-panel" style="display:none">
+        <div class="text-center mb-4">
+            <i class="bi bi-envelope-at" style="font-size: 3rem; color: var(--accent);"></i>
+            <h4 class="mt-3">Quên mật khẩu?</h4>
+            <p class="text-muted small">Nhập email đã đăng ký của bạn. Chúng tôi sẽ gửi một liên kết để đặt lại mật khẩu.</p>
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Email tài khoản</label>
+            <input type="email" class="form-control" placeholder="your-email@example.com" id="forgotEmail">
+        </div>
+        <button class="btn-auth" onclick="handleForgotPassword()">
+            <i class="bi bi-send-fill me-2"></i>Gửi yêu cầu
+        </button>
+        <div class="text-center mt-3">
+            <a href="javascript:void(0)" onclick="switchTab('login')" class="small text-decoration-none" style="color: var(--text-muted);">Quay lại Đăng nhập</a>
+        </div>
+    </div>
+
     <!-- LOGIN FORM -->
     <div id="loginPanel" class="form-panel">
         <div class="mb-form">
@@ -321,7 +359,7 @@
             </div>
         </div>
         <div class="forgot-link">
-            <a href="#">Quên mật khẩu?</a>
+            <a href="javascript:void(0)" onclick="switchTab('forgot')">Quên mật khẩu?</a>
         </div>
         <button class="btn-auth" onclick="handleLogin()">
             <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
@@ -396,10 +434,20 @@
       });
       const lp = document.getElementById('loginPanel');
       const rp = document.getElementById('registerPanel');
-      if (tab === 'login') { lp.style.display = 'block'; rp.style.display = 'none'; }
-      else { lp.style.display = 'none'; rp.style.display = 'block'; }
-      lp.classList.add('form-panel');
-      rp.classList.add('form-panel');
+      const op = document.getElementById('otpPanel');
+      const fp = document.getElementById('forgotPanel');
+      const tabs = document.querySelector('.auth-tabs');
+
+      // Reset display
+      [lp, rp, op, fp].forEach(p => p.style.display = 'none');
+      tabs.style.display = 'flex';
+
+      if (tab === 'login') { lp.style.display = 'block'; }
+      else if (tab === 'register') { rp.style.display = 'block'; }
+      else if (tab === 'forgot') { fp.style.display = 'block'; tabs.style.display = 'none'; }
+      else if (tab === 'otp') { op.style.display = 'block'; tabs.style.display = 'none'; }
+      
+      [lp, rp, op, fp].forEach(p => { if(p) p.classList.add('form-panel'); });
     }
 
     function togglePass(id, btn) {
@@ -464,7 +512,7 @@
 
       if (!email || !pass || !fullName || !phone) { showAlert('Vui lòng nhập đầy đủ thông tin.'); return; }
       if (pass !== pass2) { showAlert('Mật khẩu xác nhận không khớp.'); return; }
-      if (pass.length < 6) { showAlert('Mật khẩu phải có ít nhất 6 ký tự.'); return; }
+      if (pass.length < 6) { showAlert('Mật khẩu phải có nhất 6 ký tự.'); return; }
       
       const username = email.split('@')[0];
 
@@ -481,12 +529,12 @@
           })
         });
 
+        const apiResponse = await response.json();
         if (response.ok) {
-          alert('Đăng ký thành công! Vui lòng đăng nhập.');
-          switchTab('login');
+          switchTab('otp');
+          showAlert(apiResponse.data);
         } else {
-          const apiResponse = await response.json();
-          showAlert(apiResponse.message || 'Đăng ký thất bại. Có thể email đã được sử dụng.');
+          showAlert(apiResponse.message || 'Đăng ký thất bại.');
         }
       } catch (err) {
         console.error(err);
@@ -494,7 +542,54 @@
       }
     }
 
-    // Build film grid with gradient placeholders
+    async function handleVerifyOtp() {
+      const email = document.getElementById('regEmail').value.trim();
+      const otp = document.getElementById('otpCode').value.trim();
+      if (!otp) { showAlert('Vui lòng nhập mã OTP.'); return; }
+
+      try {
+        const response = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, otp: otp })
+        });
+
+        const apiResponse = await response.json();
+        if (response.ok) {
+          alert('Xác thực thành công! Bạn có thể đăng nhập ngay bây giờ.');
+          location.reload();
+        } else {
+          showAlert(apiResponse.message || 'Mã OTP không hợp lệ.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Lỗi kết nối máy chủ.');
+      }
+    }
+
+    async function handleForgotPassword() {
+      const email = document.getElementById('forgotEmail').value.trim();
+      if (!email) { showAlert('Vui lòng nhập email.'); return; }
+
+      try {
+        const response = await fetch(`/api/auth/forgot-password?email=${encodeURIComponent(email)}`, {
+          method: 'POST'
+        });
+
+        if (response.ok) {
+          alert('Yêu cầu đã được gửi! Vui lòng kiểm tra email của bạn để lấy liên kết đặt lại mật khẩu.');
+          switchTab('login');
+        } else {
+          const apiResponse = await response.json();
+          showAlert(apiResponse.message || 'Không tìm thấy người dùng với email này.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Lỗi kết nối máy chủ.');
+      }
+    }
+
+    // Build film grid
     const colors = [
       ['#1a0a0a','#8B0020'], ['#0a0d1a','#1B2A5A'], ['#0d1a0a','#1B5A2A'],
       ['#1a120a','#5A3A1B'], ['#0a1a1a','#1B4A5A'], ['#1a0a14','#5A1B3A'],
@@ -503,12 +598,14 @@
     ];
     const labels = ['Action','Drama','Comedy','Sci-Fi','Horror','Romance','Thriller','Animation','Documentary','Fantasy'];
     const grid = document.getElementById('filmGrid');
-    for(let i = 0; i < 10; i++) {
-      const cell = document.createElement('div');
-      cell.className = 'film-cell';
-      cell.style.background = `linear-gradient(135deg, ${colors[i][0]}, ${colors[i][1]})`;
-      cell.innerHTML = `<div style="position:absolute;bottom:8px;left:8px;font-size:0.7rem;color:rgba(255,255,255,0.4);font-family:Outfit,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px">${labels[i]}</div>`;
-      grid.appendChild(cell);
+    if(grid) {
+        for(let i = 0; i < 10; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'film-cell';
+          cell.style.background = `linear-gradient(135deg, ${colors[i][0]}, ${colors[i][1]})`;
+          cell.innerHTML = `<div style="position:absolute;bottom:8px;left:8px;font-size:0.7rem;color:rgba(255,255,255,0.4);font-family:Outfit,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px">${labels[i]}</div>`;
+          grid.appendChild(cell);
+        }
     }
 </script>
 </body>

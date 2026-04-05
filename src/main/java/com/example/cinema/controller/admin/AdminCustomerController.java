@@ -29,4 +29,11 @@ public class AdminCustomerController {
     public ResponseEntity<ApiResponse<CustomerResponse>> lookupCustomer(@RequestParam String phone) {
         return ResponseEntity.ok(ApiResponse.ok(customerService.getCustomerByPhone(phone)));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<CustomerResponse>> updateCustomer(
+            @PathVariable Long id,
+            @jakarta.validation.Valid @RequestBody com.example.cinema.model.dto.request.AdminUpdateCustomerRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(customerService.updateCustomerByAdmin(id, request)));
+    }
 }

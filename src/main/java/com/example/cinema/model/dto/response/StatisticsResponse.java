@@ -8,10 +8,12 @@ public class StatisticsResponse {
     private BigDecimal ticketRevenue;
     private BigDecimal comboRevenue;
     private Long totalTicketsSold;
+    private Long newCustomersCount;
     private Double averageOccupancyRate;
     private Map<String, BigDecimal> revenueByMovie; // Movie Title -> Amount
-    private Map<String, BigDecimal> revenueByDay; // Date -> Amount
-    private Map<String, Long> ticketsByDay; // Date -> Count
+    private Map<String, BigDecimal> revenueByDay;   // Date -> Amount
+    private Map<String, Long> ticketsByDay;         // Date -> Count
+    private Map<Integer, BigDecimal> revenueByHour; // Hour (0-23) -> Amount
 
     public StatisticsResponse() {
     }
@@ -39,6 +41,11 @@ public class StatisticsResponse {
             return this;
         }
 
+        public Builder newCustomers(Long count) {
+            response.newCustomersCount = count;
+            return this;
+        }
+
         public Builder occupancyRate(Double rate) {
             response.averageOccupancyRate = rate;
             return this;
@@ -59,41 +66,25 @@ public class StatisticsResponse {
             return this;
         }
 
+        public Builder revenueByHour(Map<Integer, BigDecimal> data) {
+            response.revenueByHour = data;
+            return this;
+        }
+
         public StatisticsResponse build() {
             return response;
         }
     }
 
     // Getters
-    public BigDecimal getTotalRevenue() {
-        return totalRevenue;
-    }
-
-    public BigDecimal getTicketRevenue() {
-        return ticketRevenue;
-    }
-
-    public BigDecimal getComboRevenue() {
-        return comboRevenue;
-    }
-
-    public Long getTotalTicketsSold() {
-        return totalTicketsSold;
-    }
-
-    public Double getAverageOccupancyRate() {
-        return averageOccupancyRate;
-    }
-
-    public Map<String, BigDecimal> getRevenueByMovie() {
-        return revenueByMovie;
-    }
-
-    public Map<String, BigDecimal> getRevenueByDay() {
-        return revenueByDay;
-    }
-
-    public Map<String, Long> getTicketsByDay() {
-        return ticketsByDay;
-    }
+    public BigDecimal getTotalRevenue() { return totalRevenue; }
+    public BigDecimal getTicketRevenue() { return ticketRevenue; }
+    public BigDecimal getComboRevenue() { return comboRevenue; }
+    public Long getTotalTicketsSold() { return totalTicketsSold; }
+    public Long getNewCustomersCount() { return newCustomersCount; }
+    public Double getAverageOccupancyRate() { return averageOccupancyRate; }
+    public Map<String, BigDecimal> getRevenueByMovie() { return revenueByMovie; }
+    public Map<String, BigDecimal> getRevenueByDay() { return revenueByDay; }
+    public Map<String, Long> getTicketsByDay() { return ticketsByDay; }
+    public Map<Integer, BigDecimal> getRevenueByHour() { return revenueByHour; }
 }

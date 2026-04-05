@@ -17,6 +17,7 @@ public class ShowtimeResponse {
     private Long roomId;
     private String roomName;
     private String roomType;
+    private Long formatId;
     private String formatName;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -104,6 +105,14 @@ public class ShowtimeResponse {
 
     public void setRoomType(String roomType) {
         this.roomType = roomType;
+    }
+
+    public Long getFormatId() {
+        return formatId;
+    }
+
+    public void setFormatId(Long formatId) {
+        this.formatId = formatId;
     }
 
     public String getFormatName() {

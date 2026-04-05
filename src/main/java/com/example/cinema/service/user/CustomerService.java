@@ -15,6 +15,7 @@ public interface CustomerService {
 
     List<CustomerResponse> getAllCustomers();
     CustomerResponse getCustomerByPhone(String phone);
+    CustomerResponse updateCustomerByAdmin(Long id, com.example.cinema.model.dto.request.AdminUpdateCustomerRequest request);
     BigDecimal getDiscountPercentage(MembershipTier tier);
 
     /**

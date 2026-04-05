@@ -231,7 +231,10 @@
                         <img src="${m.posterUrl || 'https://placehold.co/45x65'}" class="movie-poster-sm" onerror="this.src='https://placehold.co/45x65'">
                         <div>
                             <div class="fw-bold">${m.title}</div>
-                            <div class="mt-1">${(m.formats || []).map(f => `<span class="badge bg-secondary me-1" style="font-size:0.6rem">${f.replace('HALL_','')}</span>`).join('')}</div>
+                            <div class="mt-1">${(m.formats || []).map(f => {
+                                const formatName = typeof f === 'string' ? f : (f.name || '');
+                                return `<span class="badge bg-secondary me-1" style="font-size:0.6rem">${formatName.replace('HALL_','')}</span>`;
+                            }).join('')}</div>
                         </div>
                     </div>
                 </td>

@@ -13,5 +13,5 @@ public interface PricingService {
 
     SeatPriceResponse updateSeatPrice(SeatPriceRequest request);
 
-    BigDecimal calculateTicketPrice(Showtime showtime, Seat seat);
+    com.example.cinema.model.dto.response.PriceCalculationResult calculateTicketPrice(Showtime showtime, Seat seat);
 }

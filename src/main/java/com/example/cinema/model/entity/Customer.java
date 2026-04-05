@@ -14,13 +14,15 @@ public class Customer {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
     private String phone;
+
+    private String email;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "membership_tier")
@@ -32,73 +34,37 @@ public class Customer {
     @Column(nullable = false)
     private Integer points = 0;
 
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
+
     public Customer() {
     }
 
-    public Customer(Long id, User user, String fullName, String phone, MembershipTier membershipTier,
-            BigDecimal totalSpending, Integer points) {
-        this.id = id;
-        this.user = user;
-        this.fullName = fullName;
-        this.phone = phone;
-        this.membershipTier = membershipTier;
-        this.totalSpending = totalSpending;
-        this.points = points;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public User getUser() {
-        return user;
-    }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getFullName() {
-        return fullName;
-    }
+    public MembershipTier getMembershipTier() { return membershipTier; }
+    public void setMembershipTier(MembershipTier membershipTier) { this.membershipTier = membershipTier; }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
+    public BigDecimal getTotalSpending() { return totalSpending; }
+    public void setTotalSpending(BigDecimal totalSpending) { this.totalSpending = totalSpending; }
 
-    public String getPhone() {
-        return phone;
-    }
+    public Integer getPoints() { return points; }
+    public void setPoints(Integer points) { this.points = points; }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public MembershipTier getMembershipTier() {
-        return membershipTier;
-    }
-
-    public void setMembershipTier(MembershipTier membershipTier) {
-        this.membershipTier = membershipTier;
-    }
-
-    public BigDecimal getTotalSpending() {
-        return totalSpending;
-    }
-
-    public void setTotalSpending(BigDecimal totalSpending) {
-        this.totalSpending = totalSpending;
-    }
-
-    public Integer getPoints() {
-        return points;
-    }
-
-    public void setPoints(Integer points) {
-        this.points = points;
-    }
+    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

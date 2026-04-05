@@ -3,14 +3,19 @@ package com.example.cinema.service.commerce.impl;
 import com.example.cinema.config.LogAction;
 import com.example.cinema.model.dto.request.SeatPriceRequest;
 import com.example.cinema.model.dto.response.SeatPriceResponse;
+import com.example.cinema.model.dto.response.PriceCalculationResult;
 import com.example.cinema.model.entity.SeatPrice;
+import com.example.cinema.model.entity.PricingRule;
+import com.example.cinema.model.enums.PricingRuleType;
 import com.example.cinema.repository.room.SeatPriceRepository;
 import com.example.cinema.service.commerce.PricingService;
+import com.example.cinema.service.commerce.pricing.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,10 +23,14 @@ import java.util.stream.Collectors;
 public class PricingServiceImpl implements PricingService {
 
         private final SeatPriceRepository seatPriceRepository;
+        private final com.example.cinema.repository.commerce.PricingRuleRepository pricingRuleRepository;
         private final ModelMapper modelMapper;
 
-        public PricingServiceImpl(SeatPriceRepository seatPriceRepository, ModelMapper modelMapper) {
+        public PricingServiceImpl(SeatPriceRepository seatPriceRepository, 
+                                  com.example.cinema.repository.commerce.PricingRuleRepository pricingRuleRepository,
+                                  ModelMapper modelMapper) {
                 this.seatPriceRepository = seatPriceRepository;
+                this.pricingRuleRepository = pricingRuleRepository;
                 this.modelMapper = modelMapper;
         }
 
@@ -36,7 +45,6 @@ public class PricingServiceImpl implements PricingService {
         @Transactional
         @LogAction(action = "UPDATE", target = "PRICING")
         public SeatPriceResponse updateSeatPrice(SeatPriceRequest request) {
-                // 1. Vô hiệu hóa tất cả các cấu hình giá cũ của cùng loại phòng/ghế
                 List<SeatPrice> oldPrices = seatPriceRepository
                                 .findAllByRoomTypeAndSeatTypeAndIsActiveTrue(request.getRoomType(),
                                                 request.getSeatType());
@@ -46,7 +54,6 @@ public class PricingServiceImpl implements PricingService {
                 }
                 seatPriceRepository.saveAll(oldPrices);
 
-                // 2. Kiểm tra xem đã có cấu hình cho ngày hiệu lực này chưa
                 SeatPrice seatPrice = seatPriceRepository
                                 .findByRoomTypeAndSeatTypeAndEffectiveDate(request.getRoomType(), request.getSeatType(),
                                                 request.getEffectiveDate())
@@ -63,34 +70,47 @@ public class PricingServiceImpl implements PricingService {
         }
 
         @Override
-        public BigDecimal calculateTicketPrice(com.example.cinema.model.entity.Showtime showtime,
+        public PriceCalculationResult calculateTicketPrice(com.example.cinema.model.entity.Showtime showtime,
                         com.example.cinema.model.entity.Seat seat) {
-                // Lấy giá gốc cho loại ghế và loại phòng từ DB
                 BigDecimal basePrice = seatPriceRepository
                                 .findByRoomTypeAndSeatTypeAndIsActiveTrue(showtime.getRoom().getType(), seat.getType())
                                 .map(SeatPrice::getPrice)
                                 .orElse(new BigDecimal("80000.00"));
 
-                // Áp dụng Decorator Pattern để tính toán
-                com.example.cinema.service.commerce.pricing.PriceCalculator calculator = new com.example.cinema.service.commerce.pricing.BasePriceCalculator(
-                                basePrice);
+                PriceCalculator calculator = new BasePriceCalculator(basePrice);
+                List<String> appliedRules = new ArrayList<>();
+                appliedRules.add("Giá gốc: " + basePrice.intValue() + "đ");
 
-                // Bọc thêm lớp Room Type Surcharge
-                calculator = new com.example.cinema.service.commerce.pricing.RoomTypeDecorator(calculator,
-                                showtime.getRoom().getType());
+                String format = showtime.getFormat() != null ? showtime.getFormat().getName() : "2D";
+                List<PricingRule> rules = pricingRuleRepository.findActiveRulesByContext(
+                        showtime.getRoom().getType(),
+                        seat.getType(),
+                        format
+                );
 
-                // Bọc thêm lớp Seat Type Surcharge
-                calculator = new com.example.cinema.service.commerce.pricing.SeatTypeDecorator(calculator,
-                                seat.getType());
+                java.time.DayOfWeek dayOfWeek = showtime.getStartTime().getDayOfWeek();
+                java.time.LocalTime showTime = showtime.getStartTime().toLocalTime();
 
-                // Bọc thêm lớp Day of Week (Monday/Tuesday discounts, Weekend surcharge)
-                calculator = new com.example.cinema.service.commerce.pricing.DayOfWeekDecorator(calculator,
-                                showtime.getStartTime());
+                for (PricingRule rule : rules) {
+                    if (rule.getApplicableDays() != null && !rule.getApplicableDays().isEmpty()) {
+                        if (!rule.getApplicableDays().contains(dayOfWeek)) continue;
+                    }
+                    if (rule.getStartTime() != null && rule.getEndTime() != null) {
+                        if (showTime.isBefore(rule.getStartTime()) || showTime.isAfter(rule.getEndTime())) continue;
+                    }
 
-                // Bọc thêm lớp Time Slot (Happy Hour)
-                calculator = new com.example.cinema.service.commerce.pricing.TimeSlotDecorator(calculator,
-                                showtime.getStartTime());
+                    if (rule.getType() == PricingRuleType.ADDITIVE) {
+                        calculator = new AdditiveDecorator(calculator, rule.getValue());
+                        appliedRules.add(rule.getName() + " (+" + rule.getValue().intValue() + "đ)");
+                    } else if (rule.getType() == PricingRuleType.SUBTRACTIVE) {
+                        calculator = new AdditiveDecorator(calculator, rule.getValue().negate());
+                        appliedRules.add(rule.getName() + " (-" + rule.getValue().intValue() + "đ)");
+                    } else if (rule.getType() == PricingRuleType.PERCENTAGE) {
+                        calculator = new PercentageDecorator(calculator, rule.getValue());
+                        appliedRules.add(rule.getName() + " (x" + rule.getValue() + ")");
+                    }
+                }
 
-                return calculator.calculate();
+                return new PriceCalculationResult(calculator.calculate(), appliedRules);
         }
 }

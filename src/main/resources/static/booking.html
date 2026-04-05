@@ -12,11 +12,10 @@
     <style>
         :root {
           --bg:#080B14;--surface:#0F1320;--card:#161B2E;--border:#252A3D;
-          --accent:#E5133A;--accent-gold:#F5A623;--text:#E8EAF0;--text-muted:#7B82A0;
+          --accent:#E5133A;--accent-gold:#F5A623;--text:#E8EAF0;--text-muted:#A0AEC0;
           --gradient:linear-gradient(135deg,#E5133A,#8B0020);
-          --seat-available:#252A3D;--seat-selected:#10B981; /* Xanh lá cho ghế ĐANG CHỌN */
-          --seat-locked:#E5133A;   /* Đỏ cho ghế NGƯỜI KHÁC ĐANG GIỮ */
-          --seat-booked:#1a1a2a;   /* Đen cho ghế ĐÃ BÁN */
+          --seat-available:#252A3D;--seat-selected:#10B981;
+          --seat-locked:#E5133A;--seat-booked:#1a1a2a;
           --seat-vip:#F5A623;--seat-couple:#9B59B6;
         }
         *{box-sizing:border-box;margin:0;padding:0}
@@ -25,44 +24,38 @@
         .booking-layout{display:grid;grid-template-columns:1fr 350px;gap:24px;max-width:1200px;margin:0 auto;padding:20px}
         .panel{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px}
         .section-label{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:1px;color:var(--accent);margin-bottom:20px;display:flex;align-items:center;gap:10px}
-        
         .seat-grid{display:grid;gap:5px;margin:0 auto;width:fit-content}
-        .seat{width:32px;height:30px;border-radius:6px;background:var(--seat-available);border:1.5px solid #3a4060;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;transition:0.15s;position:relative}
-        
-        /* Của mình đang chọn: Xanh lá */
+        .seat{width:32px;height:30px;border-radius:6px;background:var(--seat-available);border:1.5px solid #3a4060;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;transition:0.15s;position:relative;color:#fff}
         .seat.selected{background:var(--seat-selected) !important;border-color:var(--seat-selected) !important;color:#fff !important;box-shadow:0 0 10px rgba(16,185,129,0.4)}
-        
-        /* Người khác đang giữ: Đỏ rực */
         .seat.locked{background:var(--seat-locked) !important;border-color:var(--seat-locked) !important;color:#fff !important;cursor:not-allowed !important;animation: pulse 2s infinite;}
-        
-        /* Đã bán: Đen tối */
         .seat.booked{background:var(--seat-booked) !important;cursor:not-allowed !important;pointer-events:none;color:transparent !important}
         .seat.booked::after{content:'✕';color:#2a2a3a;position:absolute;font-size:0.75rem}
-
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-
-        .info-input { background: var(--surface); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 10px; }
+        .info-input { background: var(--surface) !important; border: 1px solid var(--border) !important; color: #fff !important; padding: 12px; border-radius: 10px; }
+        .info-input:focus { border-color: var(--accent) !important; box-shadow: none; }
         .btn-next{background:var(--gradient);color:#fff;border:none;width:100%;padding:14px;border-radius:12px;font-weight:700;cursor:pointer;margin-top:10px}
         .step-panel{display:none} .step-panel.active{display:block}
         .payment-overlay { position: fixed; inset: 0; background: rgba(8,11,20,.98); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         .payment-overlay.show { display: flex; }
+        #price-breakdown div { font-size: 0.75rem; border-left: 2px solid var(--accent); padding-left: 8px; margin-bottom: 4px; color: var(--text-muted); }
+        .row-label { color: var(--accent-gold); font-weight: 800; font-size: 0.85rem; }
+        .text-muted { color: var(--text-muted) !important; }
+        label { color: var(--text) !important; font-weight: 600; margin-bottom: 8px; display: block; }
     </style>
 </head>
 <body>
-
 <nav class="navbar border-bottom border-secondary py-3">
     <div class="container-xxl d-flex justify-content-between align-items-center">
-        <a href="index.html" style="font-family:'Bebas Neue'; font-size:1.8rem; color:#fff">STAR<span class="text-danger">CINEMA</span></a>
+        <a href="index.html" style="font-family:'Bebas Neue'; font-size:1.8rem; color:#fff; text-decoration:none">STAR<span class="text-danger">CINEMA</span></a>
         <div class="timer-badge" id="timerContainer"><i class="bi bi-clock-history"></i> <span id="timerText">05:00</span></div>
     </div>
 </nav>
-
 <div class="booking-layout">
     <div>
         <div class="step-panel active" id="panel-1">
             <div class="panel">
                 <span class="section-label"><i class="bi bi-grid-3x3-gap"></i> CHỌN VỊ TRÍ GHẾ</span>
-                <div class="d-flex justify-content-center gap-4 mb-4 small text-muted">
+                <div class="d-flex justify-content-center gap-4 mb-4 small">
                     <div class="d-flex align-items-center gap-2"><div class="seat" style="width:16px;height:16px"></div>Trống</div>
                     <div class="d-flex align-items-center gap-2"><div class="seat selected" style="width:16px;height:16px"></div>Bạn chọn</div>
                     <div class="d-flex align-items-center gap-2"><div class="seat locked" style="width:16px;height:16px"></div>Đang được giữ</div>
@@ -72,14 +65,23 @@
                 <div class="seat-grid" id="seatGrid"></div>
             </div>
         </div>
-        <!-- Các bước khác giữ nguyên -->
         <div class="step-panel" id="panel-2">
-            <div class="panel">
+            <div class="panel" id="guestInfoPanel">
                 <span class="section-label"><i class="bi bi-person-bounding-box"></i> THÔNG TIN NHẬN VÉ</span>
                 <div class="row g-3">
-                    <div class="col-md-6"><label class="small text-muted fw-bold mb-2">HỌ VÀ TÊN *</label><input type="text" id="custName" class="form-control info-input"></div>
-                    <div class="col-md-6"><label class="small text-muted fw-bold mb-2">SỐ ĐIỆN THOẠI *</label><input type="text" id="custPhone" class="form-control info-input"></div>
-                    <div class="col-md-12"><label class="small text-muted fw-bold mb-2">EMAIL NHẬN VÉ *</label><input type="email" id="custEmail" class="form-control info-input"></div>
+                    <div class="col-md-6"><label class="small text-uppercase">Họ và tên *</label><input type="text" id="custName" class="form-control info-input" placeholder="Nhập họ tên"></div>
+                    <div class="col-md-6"><label class="small text-uppercase">Số điện thoại *</label><input type="text" id="custPhone" class="form-control info-input" placeholder="Nhập số điện thoại"></div>
+                    <div class="col-md-12"><label class="small text-uppercase">Email nhận vé *</label><input type="email" id="custEmail" class="form-control info-input" placeholder="Nhập email"></div>
+                </div>
+            </div>
+            <div class="panel" id="customerWelcomePanel" style="display:none">
+                <span class="section-label"><i class="bi bi-person-check"></i> THÔNG TIN TÀI KHOẢN</span>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width:50px; height:50px; font-size:1.5rem; font-weight:800" id="userInitial">U</div>
+                    <div>
+                        <div class="fw-bold fs-5" id="welcomeName">Xin chào, Khách hàng</div>
+                        <div class="small text-muted" id="welcomeEmail">email@example.com</div>
+                    </div>
                 </div>
             </div>
             <div class="panel"><span class="section-label"><i class="bi bi-bag-plus"></i> THÊM BẮP NƯỚC</span><div id="comboList"></div></div>
@@ -101,34 +103,34 @@
     <aside>
         <div class="panel" style="position:sticky; top:100px">
             <span class="section-label">TÓM TẮT ĐƠN HÀNG</span>
-            <div class="mb-3"><div class="small text-muted">Phim:</div><div class="fw-bold" id="sum-movie">...</div></div>
-            <div class="mb-3"><div class="small text-muted">Ghế:</div><div class="fw-bold text-accent-gold" id="sum-seats">Chưa chọn</div></div>
+            <div class="mb-3"><div class="small text-muted">Phim:</div><div class="fw-bold text-white" id="sum-movie">...</div></div>
+            <div class="mb-3"><div class="small text-muted">Ghế:</div><div class="fw-bold text-accent-gold" id="sum-seats">Chưa chọn</div><div id="price-breakdown" class="mt-2"></div></div>
             <hr class="border-secondary">
-            <div class="d-flex justify-content-between mb-2"><span>Giá vé:</span><span id="sum-t-price">0đ</span></div>
-            <div class="d-flex justify-content-between mb-2"><span>Combo:</span><span id="sum-c-price">0đ</span></div>
+            <div class="d-flex justify-content-between mb-2"><span>Giá vé:</span><span id="sum-t-price" class="text-white">0đ</span></div>
+            <div class="d-flex justify-content-between mb-2"><span>Combo:</span><span id="sum-c-price" class="text-white">0đ</span></div>
             <div class="d-flex justify-content-between total-row mt-3 pt-3 border-top border-secondary"><span class="fw-bold">TỔNG CỘNG</span><span class="fw-bold text-danger fs-4" id="sum-total">0đ</span></div>
         </div>
     </aside>
 </div>
-
 <div class="payment-overlay" id="payOverlay">
     <div class="bg-dark p-5 rounded-4 text-center border border-secondary" style="max-width:450px">
-        <h4 class="fw-bold mb-3">Quét mã thanh toán</h4>
-        <div class="bg-white p-2 rounded-3 mb-4 mx-auto" style="width:220px; height:220px"><img id="qrImage" src="" class="w-100 h-100"></div>
-        <button class="btn btn-danger w-100 py-3 fw-bold" onclick="confirmPayment()">TÔI ĐÃ THANH TOÁN</button>
+        <div class="mb-4">
+            <i class="bi bi-check2-circle text-success" style="font-size: 4rem;"></i>
+        </div>
+        <h4 class="fw-bold mb-3 text-white">Xác nhận thanh toán</h4>
+        <p class="text-muted mb-4">Bạn đang thực hiện thanh toán cho đơn hàng. Nhấn nút bên dưới để xác nhận đã hoàn tất chuyển khoản.</p>
+        <button class="btn btn-danger w-100 py-3 fw-bold" onclick="confirmPayment()">XÁC NHẬN ĐÃ THANH TOÁN</button>
+        <button class="btn btn-link text-muted mt-3 text-decoration-none" onclick="document.getElementById('payOverlay').classList.remove('show')">Quay lại</button>
     </div>
 </div>
-
 <script src="/js/api.js"></script>
 <script>
     const showtimeId = new URLSearchParams(window.location.search).get('showtimeId');
     const token = localStorage.getItem('cinemaToken');
     let bookingSessionId = localStorage.getItem('bookingSessionId') || ('sess-' + Math.random().toString(36).substring(2, 15));
     localStorage.setItem('bookingSessionId', bookingSessionId);
-
     let currentStep = 1, selectedSeats = [], allSeats = [], combos = [], selectedCombos = {}, customer = null, payMethod = 'MOMO';
     let timeLeft = 300, timerInterval, pendingCode = null;
-
     async function init() {
         if(!showtimeId) return window.location.href='index.html';
         const [stRes, seatRes, comboRes, custRes, lockedRes] = await Promise.all([
@@ -138,28 +140,26 @@
             token ? api.get('/customers/me') : Promise.resolve(null),
             api.get(`/bookings/my-locked-seats?showtimeId=${showtimeId}&sessionId=${bookingSessionId}`)
         ]);
-        
         if (stRes.success) document.getElementById('sum-movie').textContent = stRes.data.movieTitle;
         allSeats = seatRes.data || []; combos = comboRes.data || [];
-        
         if (lockedRes?.success && Array.isArray(lockedRes.data)) {
-            selectedSeats = [];
-            lockedRes.data.forEach(id => {
-                const s = allSeats.find(x => Number(x.id) === Number(id));
-                if (s) selectedSeats.push(s);
-            });
+            lockedRes.data.forEach(id => { const s = allSeats.find(x => Number(x.id) === Number(id)); if (s) selectedSeats.push(s); });
         }
-
         if(custRes?.success && custRes.data) {
             customer = custRes.data;
-            const f = document.getElementById('custName'); f.value = customer.fullName || ''; f.disabled = true;
-            const p = document.getElementById('custPhone'); p.value = customer.phone || ''; p.disabled = true;
-            const e = document.getElementById('custEmail'); e.value = customer.email || ''; e.disabled = !!customer.email;
+            document.getElementById('guestInfoPanel').style.display = 'none';
+            document.getElementById('customerWelcomePanel').style.display = 'block';
+            document.getElementById('welcomeName').textContent = 'Xin chào, ' + (customer.fullName || 'Khách hàng');
+            document.getElementById('welcomeEmail').textContent = customer.email || '';
+            document.getElementById('userInitial').textContent = (customer.fullName || 'U').substring(0,1).toUpperCase();
+            
+            // Gán giá trị vào input ẩn để gửi lên backend đồng bộ
+            document.getElementById('custName').value = customer.fullName || '';
+            document.getElementById('custPhone').value = customer.phone || '';
+            document.getElementById('custEmail').value = customer.email || '';
         }
-
         renderSeats(); renderCombos(); startTimer(); updateSummary();
     }
-
     function startTimer() {
         if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(() => {
@@ -169,101 +169,97 @@
             if(timeLeft <= 0) { clearInterval(timerInterval); alert('Hết thời gian giữ vé!'); location.reload(); }
         }, 1000);
     }
-
     function renderSeats() {
         const grid = document.getElementById('seatGrid');
         if (!allSeats.length) return;
         const rows = [...new Set(allSeats.map(s => s.rowChar))].sort();
         const maxCol = Math.max(...allSeats.map(s => s.colNum));
-        grid.style.gridTemplateColumns = `25px repeat(${maxCol}, 35px)`;
+        grid.style.gridTemplateColumns = `30px repeat(${maxCol}, 35px)`;
         grid.innerHTML = '';
         rows.forEach(r => {
-            grid.insertAdjacentHTML('beforeend', `<div class="row-label">${r}</div>`);
+            grid.insertAdjacentHTML('beforeend', `<div class="row-label d-flex align-items-center justify-content-center">${r}</div>`);
             for(let c=1; c<=maxCol; c++) {
                 const s = allSeats.find(x => x.rowChar === r && x.colNum === c);
                 if(!s) { grid.insertAdjacentHTML('beforeend', '<div></div>'); continue; }
-                
                 const isMySelected = selectedSeats.some(x => Number(x.id) === Number(s.id));
-                const isLockedByOthers = !s.available && !isMySelected; // Bị khóa bởi người khác
-                
+                const isLockedByOthers = !s.available && !isMySelected;
                 const cls = `seat ${s.seatType.toLowerCase()} ${isMySelected ? 'selected' : (isLockedByOthers ? 'locked' : (!s.available ? 'booked' : ''))}`;
-                
                 const el = document.createElement('div');
                 el.className = cls;
                 el.textContent = s.available || isMySelected || isLockedByOthers ? s.seatCode : '';
-                
-                // Chỉ cho phép nhấn nếu là ghế trống HOẶC là ghế của mình đang chọn (để giải phóng)
-                if(s.available || isMySelected) {
-                    el.onclick = () => toggleSeat(s);
-                }
-                
+                if(s.available || isMySelected) el.onclick = () => toggleSeat(s);
                 grid.appendChild(el);
             }
         });
     }
-
     async function toggleSeat(s) {
         const idx = selectedSeats.findIndex(x => Number(x.id) === Number(s.id));
-        const isSelecting = (idx === -1);
-        try {
-            if (isSelecting) {
-                if(selectedSeats.length >= 8) return alert('Tối đa 8 ghế!');
-                const res = await api.post(`/bookings/hold-seat?showtimeId=${showtimeId}&seatId=${s.id}&sessionId=${bookingSessionId}`);
-                if (res.success) { selectedSeats.push(s); timeLeft = 300; }
-                else { alert(res.message); return; }
-            } else {
-                // GIẢI PHÓNG GHẾ: Quay về trạng thái ban đầu
-                await api.post(`/bookings/release-seat?showtimeId=${showtimeId}&seatId=${s.id}&sessionId=${bookingSessionId}`);
-                selectedSeats.splice(idx, 1);
-            }
-            renderSeats(); updateSummary();
-        } catch (e) { alert('Lỗi kết nối giữ ghế.'); }
+        if (idx === -1) {
+            if(selectedSeats.length >= 8) return alert('Tối đa 8 ghế!');
+            const res = await api.post(`/bookings/hold-seat?showtimeId=${showtimeId}&seatId=${s.id}&sessionId=${bookingSessionId}`);
+            if (res.success) { selectedSeats.push(s); timeLeft = 300; } else { alert(res.message); return; }
+        } else {
+            await api.post(`/bookings/release-seat?showtimeId=${showtimeId}&seatId=${s.id}&sessionId=${bookingSessionId}`);
+            selectedSeats.splice(idx, 1);
+        }
+        renderSeats(); updateSummary();
     }
-
     function renderCombos() {
         if (!combos.length) return;
         document.getElementById('comboList').innerHTML = combos.map(c => `
             <div class="d-flex justify-content-between align-items-center mb-2 p-2 border border-secondary rounded-3">
-                <div><div class="small fw-bold">${c.name}</div><div class="text-muted small">${c.price.toLocaleString()}đ</div></div>
+                <div><div class="small fw-bold text-white">${c.name}</div><div class="text-muted small">${c.price.toLocaleString()}đ</div></div>
                 <div class="d-flex align-items-center gap-2">
                     <button class="btn btn-sm btn-dark" onclick="changeCombo(${c.id},-1)">-</button>
-                    <span class="small">${selectedCombos[c.id] || 0}</span>
+                    <span class="small text-white">${selectedCombos[c.id] || 0}</span>
                     <button class="btn btn-sm btn-dark" onclick="changeCombo(${c.id},1)">+</button>
                 </div>
             </div>`).join('');
     }
-
     function changeCombo(id, delta) { selectedCombos[id] = (selectedCombos[id] || 0) + delta; if(selectedCombos[id] <= 0) delete selectedCombos[id]; renderCombos(); updateSummary(); }
-
     function updateSummary() {
         const tPrice = selectedSeats.reduce((sum, s) => sum + s.price, 0);
         const cPrice = Object.entries(selectedCombos).reduce((sum, [id, q]) => {
-            const c = combos.find(x => x.id == id);
-            return sum + (c ? c.price * q : 0);
+            const c = combos.find(x => x.id == id); return sum + (c ? c.price * q : 0);
         }, 0);
         document.getElementById('sum-seats').textContent = selectedSeats.map(s=>s.seatCode).join(', ') || 'Chưa chọn';
+        const breakdownDiv = document.getElementById('price-breakdown');
+        if (selectedSeats.length > 0) {
+            const firstSeat = selectedSeats[0];
+            breakdownDiv.innerHTML = (firstSeat.priceBreakdown || []).map(b => `<div><i class="bi bi-info-circle me-1"></i>${b}</div>`).join('');
+        } else breakdownDiv.innerHTML = '';
         document.getElementById('sum-t-price').textContent = tPrice.toLocaleString() + 'đ';
         document.getElementById('sum-c-price').textContent = cPrice.toLocaleString() + 'đ';
         document.getElementById('sum-total').textContent = (tPrice + cPrice).toLocaleString() + 'đ';
     }
-
-    function nextStep() { if(currentStep === 1 && !selectedSeats.length) return alert('Chọn ghế!'); if(currentStep === 2 && (!document.getElementById('custName').value || !document.getElementById('custEmail').value)) return alert('Nhập đủ thông tin!'); if(currentStep === 3) return handleFinalBooking(); currentStep++; applyStepUI(); }
+    function nextStep() { 
+        if(currentStep === 1 && !selectedSeats.length) return alert('Chọn ghế!'); 
+        if(currentStep === 2 && !customer && (!document.getElementById('custName').value || !document.getElementById('custEmail').value)) return alert('Nhập đủ thông tin!'); 
+        if(currentStep === 3) return handleFinalBooking(); 
+        currentStep++; 
+        applyStepUI(); 
+    }
     function prevStep() { if (currentStep === 1) { window.location.href = `index.html`; return; } currentStep--; applyStepUI(); }
     function applyStepUI() { document.querySelectorAll('.step-panel').forEach((p,i) => p.classList.toggle('active', i+1 === currentStep)); document.getElementById('btnPrev').disabled = false; document.getElementById('btnNext').textContent = currentStep === 3 ? 'XÁC NHẬN THANH TOÁN' : 'TIẾP TỤC'; }
-
     async function handleFinalBooking() {
         const body = { showtimeId: Number(showtimeId), seatIds: selectedSeats.map(s => s.id), combos: selectedCombos, paymentMethod: payMethod, fullName: document.getElementById('custName').value, email: document.getElementById('custEmail').value, phone: document.getElementById('custPhone').value };
-        try {
-            const res = await api.post('/bookings', body);
-            if(res.bookingCode) { pendingCode = res.bookingCode; const checkout = await api.post(`/payments/${res.bookingCode}/checkout`); document.getElementById('qrImage').src = checkout.qrCodeUrl; document.getElementById('payOverlay').classList.add('show'); }
-        } catch(e) { alert(e.message); }
+        const res = await api.post('/bookings', body);
+        if(res.bookingCode) { 
+            pendingCode = res.bookingCode; 
+            // Hiện bảng xác nhận thanh toán giả lập
+            document.getElementById('payOverlay').classList.add('show'); 
+        }
     }
-
-    async function confirmPayment() {
-        const res = await api.post(`/payments/${pendingCode}/confirm`);
-        if(res.success) { alert('Thành công!'); localStorage.removeItem('bookingSessionId'); window.location.href = 'history.html'; }
+    async function confirmPayment() { 
+        const res = await api.post(`/payments/${pendingCode}/confirm`); 
+        if(res.bookingCode) { 
+            alert('Thanh toán thành công!'); 
+            localStorage.removeItem('bookingSessionId'); 
+            window.location.href = 'history.html'; 
+        } else {
+            alert(res.message || 'Có lỗi xảy ra khi xác nhận thanh toán.');
+        }
     }
-
     function selectPay(el, m) { payMethod = m; document.querySelectorAll('#payMethods .btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
     init();
 </script>

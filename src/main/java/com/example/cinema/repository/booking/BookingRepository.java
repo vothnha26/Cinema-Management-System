@@ -7,21 +7,35 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
-import java.util.Optional;
-import java.util.List;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findByBookingCode(String bookingCode);
     List<Booking> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
-    List<Booking> findByStatusAndShowtimeStartTimeBetween(BookingStatus status, LocalDateTime start, LocalDateTime end);
-
-    @Query("SELECT SUM(b.totalPrice) FROM Booking b WHERE b.status = 'CONFIRMED' OR b.status = 'CHECKED_IN'")
+    
+    @Query("SELECT SUM(b.totalPrice) FROM Booking b WHERE b.status IN ('CONFIRMED', 'CHECKED_IN')")
     BigDecimal calculateTotalRevenue();
 
     @Query("SELECT COUNT(bd) FROM BookingDetail bd WHERE bd.booking.status IN ('CONFIRMED', 'CHECKED_IN')")
     long countTotalTickets();
 
-    @Query("SELECT SUM(b.totalPrice) FROM Booking b WHERE (b.status = 'CONFIRMED' OR b.status = 'CHECKED_IN') AND b.createdAt >= :date")
-    BigDecimal calculateRevenueByDate(@Param("date") LocalDateTime date);
+    @Query("SELECT FUNCTION('DATE', b.createdAt) as date, SUM(b.totalPrice) as revenue " +
+           "FROM Booking b WHERE b.status IN ('CONFIRMED', 'CHECKED_IN') " +
+           "AND b.createdAt BETWEEN :start AND :end " +
+           "GROUP BY FUNCTION('DATE', b.createdAt)")
+    List<Object[]> calculateRevenueByDay(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT b.showtime.movie.title, SUM(b.totalPrice) " +
+           "FROM Booking b WHERE b.status IN ('CONFIRMED', 'CHECKED_IN') " +
+           "AND b.createdAt BETWEEN :start AND :end " +
+           "GROUP BY b.showtime.movie.title")
+    List<Object[]> calculateRevenueByMovie(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT FUNCTION('HOUR', b.createdAt) as hour, SUM(b.totalPrice) as revenue " +
+           "FROM Booking b WHERE b.status IN ('CONFIRMED', 'CHECKED_IN') " +
+           "AND b.createdAt BETWEEN :start AND :end " +
+           "GROUP BY FUNCTION('HOUR', b.createdAt)")
+    List<Object[]> calculateRevenueByHour(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

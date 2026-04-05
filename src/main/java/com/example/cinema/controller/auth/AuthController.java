@@ -3,6 +3,7 @@ package com.example.cinema.controller.auth;
 import com.example.cinema.model.dto.request.ChangePasswordRequest;
 import com.example.cinema.model.dto.request.LoginRequest;
 import com.example.cinema.model.dto.request.RegisterRequest;
+import com.example.cinema.model.dto.request.VerifyOtpRequest;
 import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.model.dto.response.AuthResponse;
 import com.example.cinema.service.auth.IAuthService;
@@ -33,9 +34,15 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
-        return new ResponseEntity<>(ApiResponse.created(response), org.springframework.http.HttpStatus.CREATED);
+    public ResponseEntity<ApiResponse<String>> register(@Valid @RequestBody RegisterRequest request) {
+        String message = authService.register(request);
+        return ResponseEntity.ok(ApiResponse.ok(message));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ApiResponse<Void>> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        authService.verifyOtp(request);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     @PostMapping("/change-password")
@@ -51,6 +58,12 @@ public class AuthController {
             @RequestParam String token,
             @RequestParam String newPassword) {
         authService.resetPasswordWithToken(token, newPassword);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@RequestParam String email) {
+        authService.requestPasswordReset(email);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

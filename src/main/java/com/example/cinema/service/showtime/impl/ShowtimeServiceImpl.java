@@ -4,15 +4,16 @@ import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.ShowtimeRequest;
 import com.example.cinema.model.dto.response.SeatResponse;
 import com.example.cinema.model.dto.response.ShowtimeResponse;
+import com.example.cinema.model.dto.response.PriceCalculationResult;
 import com.example.cinema.model.entity.*;
 import com.example.cinema.model.enums.ShowtimeStatus;
 import com.example.cinema.repository.booking.BookingDetailRepository;
 import com.example.cinema.repository.movie.MovieRepository;
 import com.example.cinema.repository.room.RoomRepository;
-import com.example.cinema.repository.room.SeatPriceRepository;
 import com.example.cinema.repository.room.SeatRepository;
 import com.example.cinema.repository.showtime.ShowtimeRepository;
 import com.example.cinema.service.showtime.ShowtimeService;
+import com.example.cinema.service.commerce.PricingService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     private final ShowtimeRepository showtimeRepository;
     private final SeatRepository seatRepository;
     private final BookingDetailRepository bookingDetailRepository;
-    private final SeatPriceRepository seatPriceRepository;
+    private final PricingService pricingService;
     private final MovieRepository movieRepository;
     private final RoomRepository roomRepository;
     private final com.example.cinema.repository.movie.FormatRepository formatRepository;
@@ -42,7 +43,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     public ShowtimeServiceImpl(ShowtimeRepository showtimeRepository, 
                                 SeatRepository seatRepository,
                                 BookingDetailRepository bookingDetailRepository, 
-                                SeatPriceRepository seatPriceRepository,
+                                PricingService pricingService,
                                 MovieRepository movieRepository,
                                 RoomRepository roomRepository,
                                 com.example.cinema.repository.movie.FormatRepository formatRepository,
@@ -50,7 +51,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         this.showtimeRepository = showtimeRepository;
         this.seatRepository = seatRepository;
         this.bookingDetailRepository = bookingDetailRepository;
-        this.seatPriceRepository = seatPriceRepository;
+        this.pricingService = pricingService;
         this.movieRepository = movieRepository;
         this.roomRepository = roomRepository;
         this.formatRepository = formatRepository;
@@ -61,9 +62,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     public List<ShowtimeResponse> getAllShowtimes(LocalDate date) {
         List<Showtime> showtimes;
         if (date != null) {
-            LocalDateTime start = date.atStartOfDay();
-            LocalDateTime end = date.atTime(23, 59, 59);
-            showtimes = showtimeRepository.findAllByStartTimeBetween(start, end);
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = date.atTime(java.time.LocalTime.MAX);
+            showtimes = showtimeRepository.findAllByStartTimeBetween(startOfDay, endOfDay);
         } else {
             showtimes = showtimeRepository.findAll();
         }
@@ -86,10 +87,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         
         List<Seat> allSeats = seatRepository.findByRoomId(showtime.getRoom().getId());
         
-        // 1. Lấy ghế đã mua từ DB
         Set<Long> bookedSeatIds = new HashSet<>(bookingDetailRepository.findBookedSeatIdsByShowtime(showtimeId));
         
-        // 2. Lấy ghế đang khóa từ Redis
         String pattern = LOCK_KEY_PREFIX + showtimeId + ":*";
         Set<String> keys = redisTemplate.keys(pattern);
         Set<Long> lockedSeatIds = new HashSet<>();
@@ -107,15 +106,11 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             res.setColNum(seat.getColNum());
             res.setSeatCode(seat.getRowChar() + seat.getColNum());
             res.setSeatType(seat.getType());
-            
-            // Khả dụng nếu KHÔNG nằm trong cả 2 danh sách
             res.setAvailable(!bookedSeatIds.contains(seat.getId()) && !lockedSeatIds.contains(seat.getId()));
             
-            BigDecimal price = seatPriceRepository.findLatestPrice(
-                    showtime.getRoom().getType(), seat.getType(), showtime.getStartTime().toLocalDate())
-                    .map(SeatPrice::getPrice)
-                    .orElse(BigDecimal.valueOf(60000));
-            res.setPrice(price);
+            PriceCalculationResult calculation = pricingService.calculateTicketPrice(showtime, seat);
+            res.setPrice(calculation.getFinalPrice());
+            res.setPriceBreakdown(calculation.getAppliedRules());
             
             return res;
         }).collect(Collectors.toList());
@@ -134,6 +129,12 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setStatus(ShowtimeStatus.UPCOMING);
         showtime.setTotalSeats(room.getCapacity());
         showtime.setSoldSeats(0);
+        
+        if (request.getFormatId() != null) {
+            showtime.setFormat(formatRepository.findById(request.getFormatId())
+                    .orElseThrow(() -> new AppException("Format not found")));
+        }
+        
         return mapToResponse(showtimeRepository.save(showtime));
     }
 
@@ -147,6 +148,14 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setRoom(room);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(request.getStartTime().plusMinutes(movie.getDuration()));
+        
+        if (request.getFormatId() != null) {
+            showtime.setFormat(formatRepository.findById(request.getFormatId())
+                    .orElseThrow(() -> new AppException("Format not found")));
+        } else {
+            showtime.setFormat(null);
+        }
+        
         return mapToResponse(showtimeRepository.save(showtime));
     }
 
@@ -178,11 +187,13 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         }
         res.setStartTime(showtime.getStartTime());
         res.setEndTime(showtime.getEndTime());
-        if (showtime.getFormat() != null) res.setFormatName(showtime.getFormat().getName());
+        if (showtime.getFormat() != null) {
+            res.setFormatId(showtime.getFormat().getId());
+            res.setFormatName(showtime.getFormat().getName());
+        }
         res.setStatus(showtime.getStatus());
         res.setTotalSeats(showtime.getTotalSeats());
         
-        // ĐẾM THỰC TẾ TỪ DATABASE: Lấy tất cả ghế có trong đơn hàng chưa bị hủy (PENDING, CONFIRMED, CHECKED_IN)
         List<Long> bookedSeats = bookingDetailRepository.findBookedSeatIdsByShowtime(showtime.getId());
         res.setSoldSeats(bookedSeats != null ? bookedSeats.size() : 0);
         

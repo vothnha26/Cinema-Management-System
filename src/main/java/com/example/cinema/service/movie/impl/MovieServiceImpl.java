@@ -3,6 +3,7 @@ package com.example.cinema.service.movie.impl;
 import com.example.cinema.config.LogAction;
 import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.MovieRequest;
+import com.example.cinema.model.dto.response.FormatResponse;
 import com.example.cinema.model.dto.response.MovieResponse;
 import com.example.cinema.model.dto.response.PersonResponse;
 import com.example.cinema.model.entity.Actor;
@@ -275,7 +276,7 @@ public class MovieServiceImpl implements MovieService {
 
         if (movie.getFormats() != null) {
             response.setFormats(movie.getFormats().stream()
-                    .map(Format::getName)
+                    .map(f -> new FormatResponse(f.getId(), f.getName()))
                     .collect(Collectors.toList()));
         } else {
             response.setFormats(new ArrayList<>());

@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/reset-password").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/verify-otp", "/api/auth/reset-password", "/api/auth/forgot-password").permitAll()
                         .requestMatchers("/api/auth/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/movies", "/api/movies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/showtimes", "/api/showtimes/**").permitAll()
@@ -63,7 +63,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER")
 
                         // Customer / staff booking flow
-                        .requestMatchers(HttpMethod.POST, "/api/bookings").hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF")
+                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/hold-seat", "/api/bookings/release-seat").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/my-locked-seats").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/bookings/{code}").hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF", "ROLE_MANAGER")
                         .requestMatchers(HttpMethod.GET, "/api/bookings/me").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").hasAuthority("ROLE_CUSTOMER")

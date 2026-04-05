@@ -95,6 +95,37 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @Transactional
+    public CustomerResponse updateCustomerByAdmin(Long id, com.example.cinema.model.dto.request.AdminUpdateCustomerRequest request) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new AppException("Customer not found"));
+
+        customer.setFullName(request.getFullName().trim());
+        customer.setPhone(request.getPhone());
+        customer.setEmail(request.getEmail());
+        customer.setMembershipTier(request.getMembershipTier());
+        customer.setPoints(request.getPoints());
+        customer.setTotalSpending(request.getTotalSpending());
+
+        // Update associated user if exists
+        if (customer.getUser() != null) {
+            User user = customer.getUser();
+            if (request.getEmail() != null) {
+                String normalizedEmail = request.getEmail().trim().toLowerCase();
+                if (!normalizedEmail.equalsIgnoreCase(user.getEmail())
+                        && userRepository.existsByEmail(normalizedEmail)) {
+                    throw new AppException("Email is already taken");
+                }
+                user.setEmail(normalizedEmail);
+                userRepository.save(user);
+            }
+        }
+
+        customerRepository.save(customer);
+        return modelMapper.map(customer, CustomerResponse.class);
+    }
+
+    @Override
     public BigDecimal getDiscountPercentage(MembershipTier tier) {
         if (tier == null)
             return BigDecimal.ZERO;

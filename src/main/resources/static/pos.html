@@ -543,7 +543,10 @@
             combos: Object.keys(selectedCombos).length ? selectedCombos : null, 
             promotionCode: appliedVoucher?.code, 
             paymentMethod: 'CASH', 
-            customerPhone: currentMember?.phone 
+            // Đồng bộ với BookingRequest.java
+            fullName: currentMember ? currentMember.fullName : 'Khách vãng lai',
+            phone: currentMember ? currentMember.phone : document.getElementById('memberPhone').value,
+            email: currentMember ? currentMember.email : null
         };
         
         const btn = document.getElementById('btnFinalize'); 
@@ -553,7 +556,7 @@
         try {
             const res = await api.post('/bookings', body);
             if(res.bookingCode) { 
-                await api.post(`/payments/${res.bookingCode}/confirm`); 
+                // Không cần gọi /confirm vì CASH đã được Backend auto-confirm
                 showNotify('Thành công', 'Đã đặt vé và in hóa đơn!', 'success'); 
                 setTimeout(() => location.reload(), 1500); 
             }

@@ -132,18 +132,74 @@
     </div>
 </div>
 
+<!-- CUSTOMER EDIT MODAL -->
+<div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">CHỈNH SỬA THÀNH VIÊN</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="customerForm">
+                    <input type="hidden" id="editCustomerId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Họ và tên</label>
+                        <input type="text" id="editCustomerName" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Số điện thoại</label>
+                            <input type="text" id="editCustomerPhone" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Email</label>
+                            <input type="email" id="editCustomerEmail" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Hạng thành viên</label>
+                        <select id="editCustomerTier" class="form-select">
+                            <option value="STANDARD">STANDARD</option>
+                            <option value="SILVER">SILVER</option>
+                            <option value="GOLD">GOLD</option>
+                            <option value="PLATINUM">PLATINUM</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Điểm thưởng</label>
+                            <input type="number" id="editCustomerPoints" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Tổng chi tiêu (VNĐ)</label>
+                            <input type="number" id="editCustomerSpending" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" id="btnSaveCustomer" onclick="saveCustomer()">CẬP NHẬT</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="/js/auth-guard.js"></script>
 <script>AuthGuard.requireRole(['MANAGER', 'ADMIN']);</script>
 <script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    let benefitModal;
+    let benefitModal, customerModal;
     let allBenefits = [];
+    let allCustomers = [];
     let isEditingBenefit = false;
 
     document.addEventListener('DOMContentLoaded', () => {
         benefitModal = new bootstrap.Modal(document.getElementById('benefitModal'));
+        customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
         loadBenefits();
         loadCustomers();
     });
@@ -225,22 +281,71 @@
         try {
             const res = await api.get('/admin/customers');
             if (res.success) {
+                allCustomers = res.data;
                 document.getElementById('customerTableBody').innerHTML = res.data.map(c => `
                     <tr>
                         <td>
-                            <div class="fw-bold">${c.fullName || 'N/A'}</div>
+                            <div class="fw-bold text-white">${c.fullName || 'N/A'}</div>
                             <div class="small text-muted">${c.phone || c.email || ''}</div>
                         </td>
                         <td><span class="badge bg-dark border border-secondary tier-${c.membershipTier.toLowerCase()}">${c.membershipTier}</span></td>
                         <td class="text-warning fw-bold">${new Intl.NumberFormat().format(c.points)} pts</td>
-                        <td>${new Intl.NumberFormat('vi-VN').format(c.totalSpending)}đ</td>
+                        <td class="text-white">${new Intl.NumberFormat('vi-VN').format(c.totalSpending)}đ</td>
                         <td class="text-end">
+                            <button class="btn btn-sm btn-outline-danger me-2" onclick="openEditCustomerModal(${c.id})"><i class="bi bi-pencil-square"></i></button>
                             <button class="btn btn-sm btn-outline-info" onclick="alert('Tính năng đang phát triển: Xem lịch sử giao dịch khách hàng')"><i class="bi bi-clock-history"></i></button>
                         </td>
                     </tr>
                 `).join('');
             }
         } catch (e) { console.error(e); }
+    }
+
+    function openEditCustomerModal(id) {
+        const c = allCustomers.find(x => x.id === id);
+        if (!c) return;
+        
+        document.getElementById('editCustomerId').value = c.id;
+        document.getElementById('editCustomerName').value = c.fullName;
+        document.getElementById('editCustomerPhone').value = c.phone || '';
+        document.getElementById('editCustomerEmail').value = c.email || '';
+        document.getElementById('editCustomerTier').value = c.membershipTier;
+        document.getElementById('editCustomerPoints').value = c.points;
+        document.getElementById('editCustomerSpending').value = c.totalSpending;
+        
+        customerModal.show();
+    }
+
+    async function saveCustomer() {
+        const id = document.getElementById('editCustomerId').value;
+        const data = {
+            fullName: document.getElementById('editCustomerName').value,
+            phone: document.getElementById('editCustomerPhone').value,
+            email: document.getElementById('editCustomerEmail').value,
+            membershipTier: document.getElementById('editCustomerTier').value,
+            points: parseInt(document.getElementById('editCustomerPoints').value),
+            totalSpending: parseFloat(document.getElementById('editCustomerSpending').value)
+        };
+
+        const btn = document.getElementById('btnSaveCustomer');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+
+        try {
+            const res = await api.put(`/admin/customers/${id}`, data);
+            if (res.success) {
+                customerModal.hide();
+                await loadCustomers();
+                alert('Cập nhật thông tin khách hàng thành công!');
+            } else {
+                alert('Lỗi: ' + res.message);
+            }
+        } catch (e) {
+            alert('Lỗi hệ thống khi cập nhật khách hàng.');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'CẬP NHẬT';
+        }
     }
 </script>
 </body>
