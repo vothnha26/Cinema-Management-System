@@ -176,6 +176,18 @@
         return `https://image.tmdb.org/t/p/w500${cleanPath}`;
     }
 
+    function addRule() {
+        const container = document.getElementById('ruleContainer');
+        const div = document.createElement('div');
+        div.className = 'd-flex gap-2 mb-2';
+        div.innerHTML = `
+            <select class="form-select form-select-sm rule-movie"><option value="">Phim...</option>${allMovies.map(m=>`<option value="${m.id}">${m.title}</option>`).join('')}</select>
+            <select class="form-select form-select-sm rule-room"><option value="">Phòng...</option>${allRooms.map(r=>`<option value="${r.id}">${r.name}</option>`).join('')}</select>
+            <button class="btn btn-sm btn-link text-danger p-0" onclick="this.parentElement.remove()"><i class="bi bi-x-circle-fill"></i></button>
+        `;
+        container.appendChild(div);
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('filterDate').valueAsDate = new Date();
         try {
