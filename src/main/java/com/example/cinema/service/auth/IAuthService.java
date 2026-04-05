@@ -25,4 +25,9 @@ public interface IAuthService {
      * Đổi mật khẩu cho người dùng hiện tại.
      */
     void changePassword(String username, ChangePasswordRequest request);
+
+    /**
+     * Đặt lại mật khẩu (dùng cho luồng quên mật khẩu/admin reset).
+     */
+    void resetPassword(String email, String newPassword);
 }

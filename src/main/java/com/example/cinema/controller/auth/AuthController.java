@@ -45,4 +45,12 @@ public class AuthController {
         authService.changePassword(principal.getName(), request);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @RequestParam String email,
+            @RequestParam String newPassword) {
+        authService.resetPassword(email, newPassword);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
 }
