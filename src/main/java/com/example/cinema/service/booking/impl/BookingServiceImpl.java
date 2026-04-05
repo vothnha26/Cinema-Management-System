@@ -52,6 +52,9 @@ public class BookingServiceImpl implements BookingService {
     private final StringRedisTemplate redisTemplate;
 
     private static final String LOCK_KEY_PREFIX = "seat_lock:";
+    private static final String DEADLINE_KEY_PREFIX = "seat_deadline:";
+    private static final Duration HOLD_DURATION = Duration.ofMinutes(5);
+    private static final Duration MAX_HOLD_LIMIT = Duration.ofMinutes(15);
 
     public BookingServiceImpl(BookingRepository bookingRepository, ShowtimeRepository showtimeRepository,
                               SeatRepository seatRepository, CustomerRepository customerRepository,
@@ -77,27 +80,41 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public void holdSeat(Long showtimeId, Long seatId, String sessionId) {
-        String key = LOCK_KEY_PREFIX + showtimeId + ":" + seatId;
+        String lockKey = LOCK_KEY_PREFIX + showtimeId + ":" + seatId;
+        String deadlineKey = DEADLINE_KEY_PREFIX + showtimeId + ":" + seatId + ":" + sessionId;
         
-        // Sử dụng setIfAbsent (NX) của Redis để khóa nguyên tử
-        Boolean success = redisTemplate.opsForValue().setIfAbsent(key, sessionId, Duration.ofMinutes(5));
+        // Kiểm tra xem ghế đã bị khóa bởi người khác chưa
+        String currentLockOwner = redisTemplate.opsForValue().get(lockKey);
         
-        if (Boolean.FALSE.equals(success)) {
-            String currentLockOwner = redisTemplate.opsForValue().get(key);
-            if (!sessionId.equals(currentLockOwner)) {
-                throw new AppException("Ghế này đang được người khác chọn");
+        if (currentLockOwner == null) {
+            // Khóa mới: Tạo cả Lock và Deadline (Giới hạn cứng 15 phút)
+            redisTemplate.opsForValue().set(lockKey, sessionId, HOLD_DURATION);
+            redisTemplate.opsForValue().set(deadlineKey, "ACTIVE", MAX_HOLD_LIMIT);
+            log.info("Seat {} locked by session {} with 15m hard deadline", seatId, sessionId);
+        } else if (sessionId.equals(currentLockOwner)) {
+            // Gia hạn: Chỉ cho phép nếu chưa vượt quá Deadline 15 phút
+            Boolean stillAllowed = redisTemplate.hasKey(deadlineKey);
+            if (Boolean.TRUE.equals(stillAllowed)) {
+                redisTemplate.expire(lockKey, HOLD_DURATION);
+            } else {
+                // Đã quá 15 phút, buộc phải nhả ghế để người khác có cơ hội
+                redisTemplate.delete(lockKey);
+                throw new AppException("Thời gian giữ ghế tối đa đã hết (15 phút). Vui lòng chọn lại.");
             }
-            // Nếu là chính mình đang giữ, gia hạn thêm 5 phút
-            redisTemplate.expire(key, Duration.ofMinutes(5));
+        } else {
+            throw new AppException("Ghế này đang được người khác chọn");
         }
     }
 
     @Override
     public void releaseSeat(Long showtimeId, Long seatId, String sessionId) {
-        String key = LOCK_KEY_PREFIX + showtimeId + ":" + seatId;
-        String currentLockOwner = redisTemplate.opsForValue().get(key);
+        String lockKey = LOCK_KEY_PREFIX + showtimeId + ":" + seatId;
+        String deadlineKey = DEADLINE_KEY_PREFIX + showtimeId + ":" + seatId + ":" + sessionId;
+        
+        String currentLockOwner = redisTemplate.opsForValue().get(lockKey);
         if (sessionId.equals(currentLockOwner)) {
-            redisTemplate.delete(key);
+            redisTemplate.delete(lockKey);
+            redisTemplate.delete(deadlineKey);
         }
     }
 
