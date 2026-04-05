@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarCinema – Quản Lý Nhân Viên</title>
+    <title>StarCinema – Quản Lý Nhân Sự</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -52,15 +52,20 @@
         .badge-manager { background: rgba(245,166,35,0.15); color: var(--accent-gold); border: 1px solid rgba(245,166,35,0.3); }
         .badge-staff { background: rgba(100,200,255,0.15); color: #64C8FF; border: 1px solid rgba(100,200,255,0.3); }
 
+        .status-indicator { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .status-active { background: #50C864; box-shadow: 0 0 10px rgba(80,200,100,0.5); }
+        .status-locked { background: #7B82A0; }
+
         .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; }
         .action-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); width: 36px; height: 36px; border-radius: 8px; transition: all 0.2s; }
         .action-btn:hover { border-color: var(--accent); color: var(--accent); }
         .btn-reset { color: var(--accent-gold) !important; }
-        .btn-reset:hover { border-color: var(--accent-gold); }
+        .btn-status-toggle { color: #64C8FF !important; }
 
         .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
         .form-control-custom { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 16px; }
         .form-control-custom:focus { border-color: var(--accent); background: var(--surface); color: var(--text); box-shadow: none; }
+        .form-control-custom:disabled { background: var(--bg); opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -80,9 +85,9 @@
     <div class="header-section">
         <div>
             <h1 class="page-title">Quản lý nhân sự</h1>
-            <p class="text-muted m-0">Gửi Gmail đổi mật khẩu hoặc quản lý Staff/Manager</p>
+            <p class="text-muted m-0">Quản lý tài khoản, trạng thái và gửi mail bảo mật</p>
         </div>
-        <button class="btn-add" data-bs-toggle="modal" data-bs-target="#userModal">
+        <button class="btn-add" onclick="showCreateModal()">
             <i class="bi bi-person-plus-fill me-2"></i> THÊM NHÂN VIÊN
         </button>
     </div>
@@ -91,37 +96,40 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>Địa chỉ Email</th>
+                    <th>Email liên hệ</th>
                     <th>Vai trò</th>
-                    <th>Ngày hoạt động</th>
-                    <th class="text-end">Gửi Reset Mail | Xóa</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th class="text-end">Hành động</th>
                 </tr>
             </thead>
             <tbody id="userList">
-                <tr><td colspan="4" class="text-center py-5">Đang tải danh sách nhân sự...</td></tr>
+                <tr><td colspan="5" class="text-center py-5">Đang tải danh sách nhân sự...</td></tr>
             </tbody>
         </table>
     </div>
 </main>
 
+<!-- USER MODAL (Create & Edit) -->
 <div class="modal fade" id="userModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0">
             <div class="modal-header border-0 p-4">
-                <h5 class="modal-title fw-bold" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;">Tài khoản nhân viên mới</h5>
+                <h5 class="modal-title fw-bold" id="modalTitle" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;">Tài khoản nhân viên</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4 pt-0">
+                <input type="hidden" id="userId">
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Email (Gmail công việc)</label>
-                    <input type="email" id="email" class="form-control form-control-custom" placeholder="example@gmail.com">
+                    <input type="email" id="email" class="form-control form-control-custom">
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Username định danh</label>
                     <input type="text" id="username" class="form-control form-control-custom" placeholder="Vd: nva_staff">
                 </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Mật khẩu mặc định</label>
+                <div id="passwordField" class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Mật khẩu ban đầu</label>
                     <input type="password" id="password" class="form-control form-control-custom">
                 </div>
                 <div class="mb-3">
@@ -134,23 +142,26 @@
             </div>
             <div class="modal-footer border-0 p-4">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-danger px-4" onclick="saveUser()">TẠO TÀI KHOẢN</button>
+                <button type="button" class="btn btn-danger px-4" id="saveBtn" onclick="saveUser()">LƯU THÔNG TIN</button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    const userModal = new bootstrap.Modal(document.getElementById('userModal'));
+    let currentStaff = [];
+
     document.addEventListener('DOMContentLoaded', loadUsers);
 
     async function loadUsers() {
         try {
             const res = await api.get('/admin/users');
             if (res.success) {
-                // Chỉ lấy Manager và Staff
-                const staffOnly = res.data.filter(u => u.role === 'STAFF' || u.role === 'MANAGER');
-                renderUsers(staffOnly);
+                currentStaff = res.data.filter(u => u.role === 'STAFF' || u.role === 'MANAGER');
+                renderUsers(currentStaff);
             }
         } catch (err) { console.error(err); }
     }
@@ -158,19 +169,29 @@
     function renderUsers(users) {
         const list = document.getElementById('userList');
         if (users.length === 0) {
-            list.innerHTML = '<tr><td colspan="4" class="text-center py-4">Chưa có nhân viên nào được tạo.</td></tr>';
+            list.innerHTML = '<tr><td colspan="5" class="text-center py-4">Chưa có nhân viên nào.</td></tr>';
             return;
         }
         list.innerHTML = users.map(u => `
             <tr>
-                <td><div class="fw-bold">${u.email}</div></td>
+                <td><div class="fw-bold">${u.email}</div><div class="small text-muted">${u.username}</div></td>
                 <td><span class="role-badge ${u.role === 'MANAGER' ? 'badge-manager' : 'badge-staff'}">${u.role}</span></td>
+                <td>
+                    <span class="status-indicator ${u.status ? 'status-active' : 'status-locked'}"></span>
+                    ${u.status ? 'Hoạt động' : 'Đã khóa'}
+                </td>
                 <td>${new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
                 <td class="text-end">
-                    <button class="action-btn btn-reset me-2" onclick="sendResetMail(${u.id}, '${u.email}')" title="Gửi link đổi mật khẩu qua Gmail">
-                        <i class="bi bi-envelope-at-fill"></i>
+                    <button class="action-btn btn-reset me-1" onclick="sendResetMail(${u.id}, '${u.email}')" title="Gửi link đổi mật khẩu">
+                        <i class="bi bi-envelope-at"></i>
                     </button>
-                    <button class="action-btn" onclick="deleteUser(${u.id})" title="Xóa tài khoản">
+                    <button class="action-btn me-1" onclick="showEditModal(${u.id})" title="Chỉnh sửa thông tin">
+                        <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button class="action-btn btn-status-toggle me-1" onclick="toggleStatus(${u.id})" title="${u.status ? 'Khóa tài khoản' : 'Mở khóa'}">
+                        <i class="bi ${u.status ? 'bi-shield-check' : 'bi-shield-lock-fill text-danger'}"></i>
+                    </button>
+                    <button class="action-btn" onclick="deleteUser(${u.id})" title="Xóa vĩnh viễn">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
@@ -178,38 +199,77 @@
         `).join('');
     }
 
-    async function sendResetMail(id, email) {
-        if (!confirm(`Hệ thống sẽ gửi một link đổi mật khẩu đến Gmail: ${email}. Bạn có chắc chắn không?`)) return;
-        
-        try {
-            const res = await api.post(`/admin/users/${id}/reset-password`, {});
-            if (res.success) {
-                alert('Thành công! Link đổi mật khẩu đã được gửi đến: ' + email);
-            } else {
-                alert('Lỗi: ' + res.message);
-            }
-        } catch (err) { alert('Lỗi hệ thống khi gửi mail.'); }
+    function showCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Tạo tài khoản nhân viên';
+        document.getElementById('userId').value = '';
+        document.getElementById('username').value = '';
+        document.getElementById('username').disabled = false;
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('passwordField').style.display = 'block';
+        document.getElementById('role').value = 'STAFF';
+        userModal.show();
+    }
+
+    function showEditModal(id) {
+        const u = currentStaff.find(user => user.id === id);
+        if (!u) return;
+
+        document.getElementById('modalTitle').textContent = 'Chỉnh sửa nhân viên';
+        document.getElementById('userId').value = u.id;
+        document.getElementById('username').value = u.username;
+        document.getElementById('username').disabled = true; // Read-only
+        document.getElementById('email').value = u.email;
+        document.getElementById('passwordField').style.display = 'none'; // Không đổi pass trực tiếp ở đây
+        document.getElementById('role').value = u.role;
+        userModal.show();
     }
 
     async function saveUser() {
+        const id = document.getElementById('userId').value;
         const data = {
             username: document.getElementById('username').value,
             email: document.getElementById('email').value,
             password: document.getElementById('password').value,
             role: document.getElementById('role').value
         };
-        if (!data.username || !data.email || !data.password) return alert('Vui lòng điền đủ thông tin!');
 
-        const res = await api.post('/admin/users/staff', data);
-        if (res.success) {
-            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
-            loadUsers();
-            alert('Đã tạo tài khoản nhân viên thành công!');
-        } else alert('Lỗi: ' + res.message);
+        try {
+            let res;
+            if (id) {
+                // Update
+                res = await api.put(`/admin/users/${id}`, { email: data.email, role: data.role });
+            } else {
+                // Create
+                if (!data.username || !data.email || !data.password) return alert('Vui lòng điền đủ thông tin!');
+                res = await api.post('/admin/users/staff', data);
+            }
+
+            if (res.success) {
+                userModal.hide();
+                loadUsers();
+                alert('Thao tác thành công!');
+            } else alert('Lỗi: ' + res.message);
+        } catch (err) { alert('Lỗi kết nối máy chủ.'); }
+    }
+
+    async function toggleStatus(id) {
+        try {
+            const res = await api.patch(`/admin/users/${id}/status`, {});
+            if (res.success) loadUsers();
+        } catch (err) { alert('Lỗi khi thay đổi trạng thái.'); }
+    }
+
+    async function sendResetMail(id, email) {
+        if (!confirm(`Gửi link đặt lại mật khẩu đến Gmail: ${email}?`)) return;
+        try {
+            const res = await api.post(`/admin/users/${id}/reset-password`, {});
+            if (res.success) alert('Đã gửi thành công!');
+        } catch (err) { alert('Lỗi gửi mail.'); }
     }
 
     async function deleteUser(id) {
-        if (!confirm('Hành động này không thể hoàn tác. Xóa nhân viên này?')) return;
+        if (!confirm('Xóa vĩnh viễn tài khoản này?')) return;
         const res = await api.delete(`/admin/users/${id}`);
         if (res.success) loadUsers();
     }
