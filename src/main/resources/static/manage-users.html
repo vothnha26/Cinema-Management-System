@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarCinema – Quản Lý Người Dùng</title>
+    <title>StarCinema – Quản Lý Nhân Viên</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -12,10 +12,7 @@
     <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <script src="/js/auth-guard.js"></script>
     <script>
-        // Bảo vệ trang: Chỉ cho phép ADMIN và MANAGER
-        if (!AuthGuard.requireRole(['ADMIN', 'MANAGER'])) {
-            // Redirected by AuthGuard
-        }
+        if (!AuthGuard.requireRole(['ADMIN', 'MANAGER'])) {}
     </script>
     <style>
         :root {
@@ -27,7 +24,6 @@
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
         
-        /* ── SIDEBAR ── */
         .sidebar {
           width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border);
           height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px;
@@ -42,12 +38,10 @@
         .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
         .nav-link-admin.active { background: var(--gradient); color: #fff; }
 
-        /* ── MAIN CONTENT ── */
         .main-content { margin-left: var(--sidebar-width); padding: 40px; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
-        /* ── TABLE ── */
         .custom-table { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
         .table { color: var(--text); margin-bottom: 0; vertical-align: middle; }
         .table thead { background: var(--surface); }
@@ -55,17 +49,16 @@
         .table td { border-top: 1px solid var(--border); padding: 20px; font-size: 0.95rem; }
         
         .role-badge { padding: 4px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .badge-admin { background: rgba(229,19,58,0.15); color: var(--accent); border: 1px solid rgba(229,19,58,0.3); }
+        .badge-manager { background: rgba(245,166,35,0.15); color: var(--accent-gold); border: 1px solid rgba(245,166,35,0.3); }
         .badge-staff { background: rgba(100,200,255,0.15); color: #64C8FF; border: 1px solid rgba(100,200,255,0.3); }
-        .badge-customer { background: rgba(80,200,100,0.15); color: #50C864; border: 1px solid rgba(80,200,100,0.3); }
 
         .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; }
         .action-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); width: 36px; height: 36px; border-radius: 8px; transition: all 0.2s; }
         .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-reset { color: var(--accent-gold) !important; }
+        .btn-reset:hover { border-color: var(--accent-gold); }
 
         .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
-        .modal-header { border-bottom: 1px solid var(--border); }
-        .modal-footer { border-top: 1px solid var(--border); }
         .form-control-custom { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 16px; }
         .form-control-custom:focus { border-color: var(--accent); background: var(--surface); color: var(--text); box-shadow: none; }
     </style>
@@ -76,91 +69,72 @@
     <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
     <ul class="nav-menu list-unstyled">
         <li><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li><a href="manage-users.html" class="nav-link-admin active"><i class="bi bi-people"></i> Người dùng</a></li>
+        <li><a href="manage-users.html" class="nav-link-admin active"><i class="bi bi-people"></i> Nhân viên</a></li>
     </ul>
-    
     <div class="mt-auto">
-        <button class="btn-logout w-100" onclick="AuthGuard.logout()" style="background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; transition: all 0.2s;">
-            <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
-        </button>
+        <button class="btn btn-outline-secondary w-100" onclick="AuthGuard.logout()">Đăng xuất</button>
     </div>
 </aside>
 
 <main class="main-content">
     <div class="header-section">
         <div>
-            <h1 class="page-title">Quản lý người dùng</h1>
-            <p class="text-muted m-0">Quản lý tài khoản nhân viên và khách hàng</p>
+            <h1 class="page-title">Quản lý nhân sự</h1>
+            <p class="text-muted m-0">Gửi Gmail đổi mật khẩu hoặc quản lý Staff/Manager</p>
         </div>
         <button class="btn-add" data-bs-toggle="modal" data-bs-target="#userModal">
-            <i class="bi bi-plus-lg me-2"></i> THÊM NHÂN VIÊN
+            <i class="bi bi-person-plus-fill me-2"></i> THÊM NHÂN VIÊN
         </button>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <select id="roleFilter" class="form-select form-control-custom" onchange="loadUsers()">
-                <option value="">Tất cả vai trò</option>
-                <option value="ADMIN">Quản trị viên (ADMIN)</option>
-                <option value="STAFF">Nhân viên (STAFF)</option>
-                <option value="CUSTOMER">Khách hàng (CUSTOMER)</option>
-            </select>
-        </div>
-        <div class="col-md-8">
-            <input type="text" id="userSearch" class="form-control form-control-custom" placeholder="Tìm kiếm theo username hoặc email..." oninput="filterUsers()">
-        </div>
-    </div>
-
-    <div class="custom-table">
-        <table class="table" id="userTable">
+    <div class="custom-table mt-4">
+        <table class="table">
             <thead>
                 <tr>
-                    <th>Username</th>
-                    <th>Email</th>
+                    <th>Địa chỉ Email</th>
                     <th>Vai trò</th>
-                    <th>Ngày tạo</th>
-                    <th class="text-end">Thao tác</th>
+                    <th>Ngày hoạt động</th>
+                    <th class="text-end">Gửi Reset Mail | Xóa</th>
                 </tr>
             </thead>
             <tbody id="userList">
-                <!-- Data will be loaded here -->
+                <tr><td colspan="4" class="text-center py-5">Đang tải danh sách nhân sự...</td></tr>
             </tbody>
         </table>
     </div>
 </main>
 
-<!-- USER MODAL -->
 <div class="modal fade" id="userModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content border-0">
             <div class="modal-header border-0 p-4">
-                <h5 class="modal-title fw-bold" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;">Tạo tài khoản nhân viên</h5>
+                <h5 class="modal-title fw-bold" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;">Tài khoản nhân viên mới</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4 pt-0">
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Username</label>
-                    <input type="text" id="username" class="form-control form-control-custom">
+                    <label class="form-label small fw-bold text-muted">Email (Gmail công việc)</label>
+                    <input type="email" id="email" class="form-control form-control-custom" placeholder="example@gmail.com">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Email</label>
-                    <input type="email" id="email" class="form-control form-control-custom">
+                    <label class="form-label small fw-bold text-muted">Username định danh</label>
+                    <input type="text" id="username" class="form-control form-control-custom" placeholder="Vd: nva_staff">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Mật khẩu</label>
+                    <label class="form-label small fw-bold text-muted">Mật khẩu mặc định</label>
                     <input type="password" id="password" class="form-control form-control-custom">
                 </div>
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted">Vai trò</label>
                     <select id="role" class="form-select form-control-custom">
-                        <option value="STAFF">Nhân viên (STAFF)</option>
-                        <option value="MANAGER">Quản lý (MANAGER)</option>
+                        <option value="STAFF">Nhân viên bán vé (STAFF)</option>
+                        <option value="MANAGER">Quản lý rạp (MANAGER)</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer border-0 p-4">
-                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="saveUser()">XÁC NHẬN</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4" onclick="saveUser()">TẠO TÀI KHOẢN</button>
             </div>
         </div>
     </div>
@@ -168,45 +142,53 @@
 
 <script src="/js/api.js"></script>
 <script>
-    let allUsers = [];
-
     document.addEventListener('DOMContentLoaded', loadUsers);
 
     async function loadUsers() {
-        const role = document.getElementById('roleFilter').value;
-        const url = role ? `/admin/users?role=${role}` : '/admin/users';
-        
         try {
-            const res = await api.get(url);
+            const res = await api.get('/admin/users');
             if (res.success) {
-                allUsers = res.data;
-                renderUsers(allUsers);
+                // Chỉ lấy Manager và Staff
+                const staffOnly = res.data.filter(u => u.role === 'STAFF' || u.role === 'MANAGER');
+                renderUsers(staffOnly);
             }
-        } catch (err) {
-            console.error('Lỗi tải người dùng:', err);
-        }
+        } catch (err) { console.error(err); }
     }
 
     function renderUsers(users) {
         const list = document.getElementById('userList');
+        if (users.length === 0) {
+            list.innerHTML = '<tr><td colspan="4" class="text-center py-4">Chưa có nhân viên nào được tạo.</td></tr>';
+            return;
+        }
         list.innerHTML = users.map(u => `
             <tr>
-                <td><div class="fw-bold text-white">${u.username}</div></td>
-                <td>${u.email}</td>
-                <td><span class="role-badge ${getRoleBadgeClass(u.role)}">${u.role}</span></td>
+                <td><div class="fw-bold">${u.email}</div></td>
+                <td><span class="role-badge ${u.role === 'MANAGER' ? 'badge-manager' : 'badge-staff'}">${u.role}</span></td>
                 <td>${new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
                 <td class="text-end">
-                    <button class="action-btn me-2" onclick="editUser(${u.id})"><i class="bi bi-pencil-square"></i></button>
-                    <button class="action-btn" onclick="deleteUser(${u.id})"><i class="bi bi-trash"></i></button>
+                    <button class="action-btn btn-reset me-2" onclick="sendResetMail(${u.id}, '${u.email}')" title="Gửi link đổi mật khẩu qua Gmail">
+                        <i class="bi bi-envelope-at-fill"></i>
+                    </button>
+                    <button class="action-btn" onclick="deleteUser(${u.id})" title="Xóa tài khoản">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </td>
             </tr>
         `).join('');
     }
 
-    function getRoleBadgeClass(role) {
-        if (role === 'ADMIN') return 'badge-admin';
-        if (role === 'STAFF' || role === 'MANAGER') return 'badge-staff';
-        return 'badge-customer';
+    async function sendResetMail(id, email) {
+        if (!confirm(`Hệ thống sẽ gửi một link đổi mật khẩu đến Gmail: ${email}. Bạn có chắc chắn không?`)) return;
+        
+        try {
+            const res = await api.post(`/admin/users/${id}/reset-password`, {});
+            if (res.success) {
+                alert('Thành công! Link đổi mật khẩu đã được gửi đến: ' + email);
+            } else {
+                alert('Lỗi: ' + res.message);
+            }
+        } catch (err) { alert('Lỗi hệ thống khi gửi mail.'); }
     }
 
     async function saveUser() {
@@ -216,40 +198,20 @@
             password: document.getElementById('password').value,
             role: document.getElementById('role').value
         };
+        if (!data.username || !data.email || !data.password) return alert('Vui lòng điền đủ thông tin!');
 
-        if (!data.username || !data.password) return alert('Vui lòng nhập đầy đủ thông tin!');
-
-        try {
-            const res = await api.post('/admin/users/staff', data);
-            if (res.success) {
-                bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
-                loadUsers();
-                alert('Tạo tài khoản thành công!');
-            } else {
-                alert('Lỗi: ' + res.message);
-            }
-        } catch (err) {
-            alert('Lỗi kết nối máy chủ.');
-        }
+        const res = await api.post('/admin/users/staff', data);
+        if (res.success) {
+            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+            loadUsers();
+            alert('Đã tạo tài khoản nhân viên thành công!');
+        } else alert('Lỗi: ' + res.message);
     }
 
     async function deleteUser(id) {
-        if (!confirm('Bạn có chắc chắn muốn xóa tài khoản này không?')) return;
-        try {
-            const res = await api.delete(`/admin/users/${id}`);
-            if (res.success) loadUsers();
-        } catch (err) {
-            alert('Lỗi khi xóa.');
-        }
-    }
-
-    function filterUsers() {
-        const query = document.getElementById('userSearch').value.toLowerCase();
-        const filtered = allUsers.filter(u => 
-            u.username.toLowerCase().includes(query) || 
-            u.email.toLowerCase().includes(query)
-        );
-        renderUsers(filtered);
+        if (!confirm('Hành động này không thể hoàn tác. Xóa nhân viên này?')) return;
+        const res = await api.delete(`/admin/users/${id}`);
+        if (res.success) loadUsers();
     }
 </script>
 </body>
