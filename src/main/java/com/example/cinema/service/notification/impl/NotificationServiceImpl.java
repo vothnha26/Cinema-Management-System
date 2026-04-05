@@ -8,12 +8,14 @@ import com.example.cinema.repository.notification.NotificationRepository;
 import com.example.cinema.repository.user.UserRepository;
 import com.example.cinema.service.notification.INotificationAutomationService;
 import com.example.cinema.service.notification.INotificationService;
+import com.example.cinema.service.notification.INotificationStrategy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,10 +23,16 @@ public class NotificationServiceImpl implements INotificationService, INotificat
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final Map<String, INotificationStrategy> strategies;
 
-    public NotificationServiceImpl(NotificationRepository notificationRepository, UserRepository userRepository) {
+    public NotificationServiceImpl(NotificationRepository notificationRepository, 
+                                   UserRepository userRepository,
+                                   List<INotificationStrategy> strategyList) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        // Chuyển danh sách strategy thành Map để truy xuất nhanh qua tên channel (OCP)
+        this.strategies = strategyList.stream()
+                .collect(Collectors.toMap(INotificationStrategy::getChannel, s -> s));
     }
 
     @Override
@@ -72,6 +80,21 @@ public class NotificationServiceImpl implements INotificationService, INotificat
         notification.setIsRead(false);
         notification.setCreatedAt(LocalDateTime.now());
         notificationRepository.save(notification);
+
+        // Mặc định nếu là thông báo hệ thống/đặt vé thì gửi thêm Email nếu User có email
+        if (user.getEmail() != null && !user.getEmail().isEmpty()) {
+            sendNotification(user.getEmail(), title, message, "EMAIL");
+        }
+    }
+
+    @Override
+    public void sendNotification(String to, String subject, String body, String channel) {
+        INotificationStrategy strategy = strategies.get(channel.toUpperCase());
+        if (strategy != null) {
+            strategy.send(to, subject, body);
+        } else {
+            System.err.println("❌ Không tìm thấy strategy cho kênh: " + channel);
+        }
     }
 
     // --- Implementation of INotificationAutomationService ---

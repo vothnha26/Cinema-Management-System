@@ -12,4 +12,9 @@ public interface INotificationService {
     void markAsRead(Long notificationId);
     void markAllAsRead();
     void sendAndSave(User user, String title, String message, NotificationType type);
+
+    /**
+     * Gửi thông báo trực tiếp qua một kênh cụ thể (EMAIL, SMS...) mà không cần lưu vào DB.
+     */
+    void sendNotification(String to, String subject, String body, String channel);
 }
