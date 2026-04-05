@@ -233,7 +233,7 @@
                 res = await api.put(`/admin/users/${id}`, { email: data.email, role: data.role });
             } else {
                 // Create
-                if (!data.username || !data.email || !data.password) return alert('Vui lòng điền đủ thông tin!');
+                if (!data.username || !data.email) return alert('Vui lòng điền đủ thông tin!');
                 res = await api.post('/admin/users/staff', data);
             }
 
