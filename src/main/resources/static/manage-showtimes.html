@@ -35,6 +35,7 @@
     /* ── TIME GRID ── */
     .timeline-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 25px; }
     .room-row { margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+    .room-row:last-child { border-bottom: none; }
     .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
     .room-name { font-weight: 700; font-size: 1.1rem; color: #fff; }
     .room-type-tag { font-size: 0.7rem; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: var(--text-muted); border: 1px solid var(--border); }
@@ -182,24 +183,22 @@
         div.className = 'rule-item';
         div.innerHTML = `
             <div class="row g-2 align-items-center">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <select class="form-select form-select-sm rule-type" onchange="updateRuleValues(this)">
-                        <option value="PRIORITY">Phim Tier (Ưu tiên)</option>
+                        <option value="PRIORITY">Độ ưu tiên (Tier)</option>
                         <option value="GENRE">Theo Thể loại</option>
                     </select>
                 </div>
-                <div class="col-md-4 rule-val-container">
-                    <select class="form-select form-select-sm rule-value">
-                        <option value="8">Độ ưu tiên >= 8</option>
-                        <option value="5">Độ ưu tiên >= 5</option>
-                    </select>
+                <div class="col-md-3 rule-val-container">
+                    <input type="number" class="form-control form-control-sm rule-value" placeholder="Mức (1-10)" min="1" max="10" value="8">
                 </div>
-                <div class="col-md-3">
-                    <select class="form-select form-select-sm rule-time">
-                        <option value="08:00-12:00">Sáng (8h-12h)</option>
-                        <option value="12:00-18:00">Chiều (12h-18h)</option>
-                        <option value="18:00-23:00" selected>GIỜ VÀNG (18h-23h)</option>
-                    </select>
+                <div class="col-md-5">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-dark text-muted border-secondary">Từ</span>
+                        <input type="time" class="form-control bg-dark text-white border-secondary rule-start" value="18:00">
+                        <span class="input-group-text bg-dark text-muted border-secondary">Đến</span>
+                        <input type="time" class="form-control bg-dark text-white border-secondary rule-end" value="23:00">
+                    </div>
                 </div>
                 <div class="col-md-1 text-end">
                     <button class="btn btn-sm text-danger" onclick="this.closest('.rule-item').remove()"><i class="bi bi-trash"></i></button>
@@ -212,7 +211,7 @@
     function updateRuleValues(select) {
         const container = select.closest('.row').querySelector('.rule-val-container');
         if (select.value === 'PRIORITY') {
-            container.innerHTML = `<select class="form-select form-select-sm rule-value"><option value="8">Độ ưu tiên >= 8</option><option value="5">Độ ưu tiên >= 5</option></select>`;
+            container.innerHTML = `<input type="number" class="form-control form-control-sm rule-value" placeholder="Mức (1-10)" min="1" max="10" value="8">`;
         } else {
             container.innerHTML = `<select class="form-select form-select-sm rule-value">${allGenres.map(g=>`<option value="${g.name}">${g.name}</option>`).join('')}</select>`;
         }
@@ -230,13 +229,12 @@
 
     async function generateAI() {
         const rules = Array.from(document.querySelectorAll('.rule-item')).map(item => {
-            const timeRange = item.querySelector('.rule-time').value.split('-');
             return {
                 priorityType: item.querySelector('.rule-type').value,
                 targetValue: item.querySelector('.rule-value').value,
-                startTime: timeRange[0] + ":00",
-                endTime: timeRange[1] + ":00",
-                weightBoost: 2.0
+                startTime: item.querySelector('.rule-start').value + ":00",
+                endTime: item.querySelector('.rule-end').value + ":00",
+                weightBoost: 2.5
             };
         });
 
@@ -267,7 +265,6 @@
         if (res.success) { showNotify('Đã lưu lịch chiếu chính thức!'); loadShowtimes(); }
     }
 
-    // Logic hỗ trợ render cũ
     function renderMovieCards() { document.getElementById('movieList').innerHTML = allMovies.map(m => `<div class="movie-card-sm"><img src="${m.posterUrl}" class="movie-poster-xs"><div class="movie-info"><div class="movie-name-sm">${m.title}</div><div class="text-muted small">${m.duration}p • ${m.ageRating}</div></div></div>`).join(''); }
     async function loadShowtimes() { const res = await api.get(`/showtimes?date=${document.getElementById('filterDate').value}`); if(res.success){ renderTimeline(res.data); document.getElementById('aiActions').classList.add('d-none'); } }
     function renderTimeline(list) {
