@@ -96,4 +96,18 @@ public class AuthServiceImpl implements IAuthService {
 
         return new AuthResponse(jwt, user.getUsername(), user.getRole().name(), fullName);
     }
+
+    @Override
+    @Transactional
+    public void changePassword(String username, com.example.cinema.model.dto.request.ChangePasswordRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException("User not found"));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new AppException("Mật khẩu cũ không chính xác");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
 }

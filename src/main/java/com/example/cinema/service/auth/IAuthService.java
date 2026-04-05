@@ -1,5 +1,6 @@
 package com.example.cinema.service.auth;
 
+import com.example.cinema.model.dto.request.ChangePasswordRequest;
 import com.example.cinema.model.dto.request.LoginRequest;
 import com.example.cinema.model.dto.request.RegisterRequest;
 import com.example.cinema.model.dto.response.AuthResponse;
@@ -19,4 +20,9 @@ public interface IAuthService {
      * Đăng ký tài khoản khách hàng (Customer).
      */
     AuthResponse register(RegisterRequest request);
+
+    /**
+     * Đổi mật khẩu cho người dùng hiện tại.
+     */
+    void changePassword(String username, ChangePasswordRequest request);
 }

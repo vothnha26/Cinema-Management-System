@@ -19,6 +19,7 @@ import com.example.cinema.service.notification.INotificationAutomationService;
 import com.example.cinema.service.user.CustomerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.GrantedAuthority;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,6 +49,9 @@ public class BookingServiceImpl implements BookingService {
     private final NotificationRepository notificationRepository;
     private final CustomerService customerService;
     private final INotificationAutomationService notificationAutomationService;
+    private final StringRedisTemplate redisTemplate;
+
+    private static final String LOCK_KEY_PREFIX = "seat_lock:";
 
     public BookingServiceImpl(BookingRepository bookingRepository, ShowtimeRepository showtimeRepository,
                               SeatRepository seatRepository, CustomerRepository customerRepository,
@@ -54,7 +59,8 @@ public class BookingServiceImpl implements BookingService {
                               PromotionRepository promotionRepository, SeatPriceRepository seatPriceRepository,
                               NotificationRepository notificationRepository,
                               CustomerService customerService,
-                              INotificationAutomationService notificationAutomationService) {
+                              INotificationAutomationService notificationAutomationService,
+                              StringRedisTemplate redisTemplate) {
         this.bookingRepository = bookingRepository;
         this.showtimeRepository = showtimeRepository;
         this.seatRepository = seatRepository;
@@ -66,6 +72,49 @@ public class BookingServiceImpl implements BookingService {
         this.notificationRepository = notificationRepository;
         this.customerService = customerService;
         this.notificationAutomationService = notificationAutomationService;
+        this.redisTemplate = redisTemplate;
+    }
+
+    @Override
+    public void holdSeat(Long showtimeId, Long seatId, String sessionId) {
+        String key = LOCK_KEY_PREFIX + showtimeId + ":" + seatId;
+        
+        // Sử dụng setIfAbsent (NX) của Redis để khóa nguyên tử
+        Boolean success = redisTemplate.opsForValue().setIfAbsent(key, sessionId, Duration.ofMinutes(5));
+        
+        if (Boolean.FALSE.equals(success)) {
+            String currentLockOwner = redisTemplate.opsForValue().get(key);
+            if (!sessionId.equals(currentLockOwner)) {
+                throw new AppException("Ghế này đang được người khác chọn");
+            }
+            // Nếu là chính mình đang giữ, gia hạn thêm 5 phút
+            redisTemplate.expire(key, Duration.ofMinutes(5));
+        }
+    }
+
+    @Override
+    public void releaseSeat(Long showtimeId, Long seatId, String sessionId) {
+        String key = LOCK_KEY_PREFIX + showtimeId + ":" + seatId;
+        String currentLockOwner = redisTemplate.opsForValue().get(key);
+        if (sessionId.equals(currentLockOwner)) {
+            redisTemplate.delete(key);
+        }
+    }
+
+    @Override
+    public List<Long> getMyLockedSeats(Long showtimeId, String sessionId) {
+        String pattern = LOCK_KEY_PREFIX + showtimeId + ":*";
+        Set<String> keys = redisTemplate.keys(pattern);
+        if (keys == null) return new ArrayList<>();
+
+        List<Long> mySeats = new ArrayList<>();
+        for (String key : keys) {
+            if (sessionId.equals(redisTemplate.opsForValue().get(key))) {
+                String[] parts = key.split(":");
+                mySeats.add(Long.parseLong(parts[2]));
+            }
+        }
+        return mySeats;
     }
 
     @Override
@@ -74,17 +123,15 @@ public class BookingServiceImpl implements BookingService {
         log.info("Starting booking process for request: {}", request);
 
         Customer customer = null;
-        // 1. Ưu tiên tìm theo SĐT gửi lên (áp dụng cho POS hoặc Khách vãng lai nhập thông tin)
         if (request.getPhone() != null && !request.getPhone().isEmpty()) {
             customer = customerRepository.findByPhone(request.getPhone()).orElse(null);
         }
         
-        // 2. Nếu không tìm thấy theo SĐT, thử lấy từ Token đăng nhập
         if (customer == null) {
             try {
                 customer = getCurrentCustomer();
             } catch (Exception e) {
-                log.debug("Proceeding as guest with info: {} / {}", request.getFullName(), request.getEmail());
+                log.debug("Proceeding as guest guest");
             }
         }
 
@@ -92,7 +139,6 @@ public class BookingServiceImpl implements BookingService {
         validateSeatsAvailability(showtime.getId(), request.getSeatIds());
 
         Booking booking = new Booking();
-        // Lưu thông tin liên hệ trực tiếp vào booking (để gửi mail ngay cả khi khách vãng lai)
         booking.setCustomer(customer);
         
         List<BookingDetail> details = processSeatPricing(booking, showtime, request.getSeatIds());
@@ -100,7 +146,6 @@ public class BookingServiceImpl implements BookingService {
 
         BigDecimal totalPrice = calculateInitialTotal(details, combos);
 
-        // Áp dụng khuyến mãi và giảm giá
         totalPrice = applyPromotion(booking, customer, request.getPromotionCode(), totalPrice);
         if (customer != null) {
             totalPrice = applyMembershipDiscount(customer, totalPrice);
@@ -109,17 +154,18 @@ public class BookingServiceImpl implements BookingService {
         finalizeBooking(booking, customer, showtime, details, combos, totalPrice, request.getPaymentMethod());
         Booking savedBooking = bookingRepository.save(booking);
 
-        // --- GỬI THÔNG BÁO / EMAIL ---
+        // Sau khi đặt thành công, giải phóng các khóa ghế trong Redis
+        request.getSeatIds().forEach(seatId -> {
+            String key = LOCK_KEY_PREFIX + showtime.getId() + ":" + seatId;
+            redisTemplate.delete(key);
+        });
+
         if (customer != null) {
-            // Tích điểm và gửi thông báo hệ thống cho hội viên
             if (savedBooking.getPayment().getPaymentStatus() == PaymentStatus.SUCCESS) {
                 customerService.addLoyaltyPoints(customer, totalPrice);
             }
             createNotification(customer.getUser(), "Đặt vé thành công", 
                 "Booking " + savedBooking.getBookingCode() + " đã được xác nhận.", NotificationType.BOOKING);
-        } else if (request.getEmail() != null) {
-            // Gửi mail cho khách vãng lai (Giả lập qua automation service)
-            log.info("Sending ticket {} to guest email: {}", savedBooking.getBookingCode(), request.getEmail());
         }
 
         return mapToResponse(savedBooking);
@@ -138,7 +184,6 @@ public class BookingServiceImpl implements BookingService {
     private Showtime getAndValidateShowtime(Long showtimeId) {
         Showtime showtime = showtimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new AppException("Showtime not found"));
-
         if (showtime.getStatus() != ShowtimeStatus.UPCOMING) {
             throw new AppException("This showtime is not open for booking");
         }
@@ -149,7 +194,7 @@ public class BookingServiceImpl implements BookingService {
         List<Long> bookedSeatIds = bookingDetailRepository.findBookedSeatIdsByShowtime(showtimeId);
         for (Long seatId : seatIds) {
             if (bookedSeatIds.contains(seatId)) {
-                throw new AppException("Seat " + seatId + " is already booked");
+                throw new AppException("Ghế " + seatId + " đã có người đặt");
             }
         }
     }
@@ -159,18 +204,13 @@ public class BookingServiceImpl implements BookingService {
         for (Long seatId : seatIds) {
             Seat seat = seatRepository.findById(seatId)
                     .orElseThrow(() -> new AppException("Seat not found"));
-            
             BookingDetail detail = new BookingDetail();
             detail.setBooking(booking);
             detail.setSeat(seat);
             detail.setSeatCode(seat.getSeatCode());
-            
             SeatPrice sp = seatPriceRepository.findLatestPrice(
-                    showtime.getRoom().getType(), 
-                    seat.getType(), 
-                    showtime.getStartTime().toLocalDate())
+                    showtime.getRoom().getType(), seat.getType(), showtime.getStartTime().toLocalDate())
                 .orElseThrow(() -> new AppException("Price not found for seat " + seat.getSeatCode()));
-                
             detail.setPrice(sp.getPrice());
             details.add(detail);
         }
@@ -182,9 +222,7 @@ public class BookingServiceImpl implements BookingService {
         if (comboRequests != null) {
             for (Map.Entry<String, Integer> entry : comboRequests.entrySet()) {
                 Long comboId = Long.parseLong(entry.getKey());
-                Combo combo = comboRepository.findById(comboId)
-                        .orElseThrow(() -> new AppException("Combo not found"));
-                
+                Combo combo = comboRepository.findById(comboId).orElseThrow(() -> new AppException("Combo not found"));
                 BookingCombo bc = new BookingCombo();
                 bc.setBooking(booking);
                 bc.setCombo(combo);
@@ -197,222 +235,76 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private BigDecimal calculateInitialTotal(List<BookingDetail> details, List<BookingCombo> combos) {
-        BigDecimal total = details.stream()
-                .map(BookingDetail::getPrice)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-                
-        BigDecimal comboTotal = combos.stream()
-                .map(bc -> bc.getPrice().multiply(BigDecimal.valueOf(bc.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-                
-        return total.add(comboTotal);
+        BigDecimal total = details.stream().map(BookingDetail::getPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal cTotal = combos.stream().map(bc -> bc.getPrice().multiply(BigDecimal.valueOf(bc.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return total.add(cTotal);
     }
 
     private BigDecimal applyPromotion(Booking booking, Customer customer, String promoCode, BigDecimal currentTotal) {
         if (promoCode == null || promoCode.isEmpty()) return currentTotal;
-
-        Promotion promotion = promotionRepository.findByCodeAndIsActiveTrue(promoCode)
-                .orElseThrow(() -> new AppException("Invalid promotion code"));
-        
-        // Kiểm tra hạng thành viên tối thiểu (chỉ nếu có customer)
+        Promotion promotion = promotionRepository.findByCodeAndIsActiveTrue(promoCode).orElseThrow(() -> new AppException("Mã không hợp lệ"));
         if (customer != null && promotion.getMinTier() != null) {
             if (customer.getMembershipTier().ordinal() < promotion.getMinTier().getTier().ordinal()) {
-                throw new AppException("Membership tier too low for this promotion. Required: " + promotion.getMinTier().getTier());
+                throw new AppException("Hạng thành viên không đủ điều kiện");
             }
-        } else if (customer == null && promotion.getMinTier() != null && promotion.getMinTier().getTier() != MembershipTier.STANDARD) {
-            throw new AppException("This promotion is for registered members only");
         }
-
-        if (promotion.getEndDate() != null && promotion.getEndDate().isBefore(java.time.LocalDate.now())) {
-            throw new AppException("Promotion expired");
-        }
-
         booking.setPromotion(promotion);
-        BigDecimal discount;
-        if (promotion.getDiscountType() == DiscountType.FIXED) {
-            discount = promotion.getDiscountValue();
-        } else {
-            discount = currentTotal.multiply(promotion.getDiscountValue()).divide(BigDecimal.valueOf(100));
-        }
-        log.debug("Applying promotion {}: -{}", promoCode, discount);
+        BigDecimal discount = (promotion.getDiscountType() == DiscountType.FIXED) ? promotion.getDiscountValue() : currentTotal.multiply(promotion.getDiscountValue()).divide(BigDecimal.valueOf(100));
         return currentTotal.subtract(discount);
     }
 
     private BigDecimal applyMembershipDiscount(Customer customer, BigDecimal currentTotal) {
-        BigDecimal discountPercent = customerService.getDiscountPercentage(customer.getMembershipTier());
-        if (discountPercent.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal mDiscount = currentTotal.multiply(discountPercent).divide(BigDecimal.valueOf(100));
-            log.debug("Applying membership discount for tier {}: -{}", customer.getMembershipTier(), mDiscount);
-            return currentTotal.subtract(mDiscount);
-        }
-        return currentTotal;
+        BigDecimal pct = customerService.getDiscountPercentage(customer.getMembershipTier());
+        return currentTotal.subtract(currentTotal.multiply(pct).divide(BigDecimal.valueOf(100)));
     }
 
-    private void finalizeBooking(Booking booking, Customer customer, Showtime showtime,
-                                 List<BookingDetail> details, List<BookingCombo> combos,
-                                 BigDecimal totalPrice, PaymentMethod paymentMethod) {
-        PaymentMethod resolvedPaymentMethod = paymentMethod != null ? paymentMethod : PaymentMethod.MOMO;
-        // Tự động CONFIRMED nếu thanh toán tại quầy (CASH/CARD)
-        boolean isStaffSale = resolvedPaymentMethod == PaymentMethod.CASH || resolvedPaymentMethod == PaymentMethod.CARD;
-
+    private void finalizeBooking(Booking booking, Customer customer, Showtime showtime, List<BookingDetail> details, List<BookingCombo> combos, BigDecimal totalPrice, PaymentMethod paymentMethod) {
+        PaymentMethod pm = paymentMethod != null ? paymentMethod : PaymentMethod.MOMO;
+        boolean isStaff = pm == PaymentMethod.CASH || pm == PaymentMethod.CARD;
         booking.setCustomer(customer);
         booking.setShowtime(showtime);
         booking.setBookingCode("BKG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         booking.setTotalPrice(totalPrice);
-        booking.setStatus(isStaffSale ? BookingStatus.CONFIRMED : BookingStatus.PENDING);
+        booking.setStatus(isStaff ? BookingStatus.CONFIRMED : BookingStatus.PENDING);
         booking.setDetails(details);
         booking.setCombos(combos);
-
         Payment payment = new Payment();
         payment.setBooking(booking);
         payment.setAmount(totalPrice);
-        payment.setPaymentMethod(resolvedPaymentMethod);
-        payment.setPaymentStatus(isStaffSale ? PaymentStatus.SUCCESS : PaymentStatus.PENDING);
-        if (isStaffSale) {
-            payment.setTransactionId("POS-" + UUID.randomUUID().toString().substring(0, 10).toUpperCase());
-            payment.setPaidAt(LocalDateTime.now());
-        }
+        payment.setPaymentMethod(pm);
+        payment.setPaymentStatus(isStaff ? PaymentStatus.SUCCESS : PaymentStatus.PENDING);
         booking.setPayment(payment);
     }
 
-    @Override
-    public List<BookingResponse> getMyBookings() {
-        Customer customer = getCurrentCustomer();
-        return bookingRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId())
-                .stream().map(this::mapToResponse)
-                .collect(Collectors.toList());
+    @Override public List<BookingResponse> getMyBookings() { return bookingRepository.findByCustomerIdOrderByCreatedAtDesc(getCurrentCustomer().getId()).stream().map(this::mapToResponse).collect(Collectors.toList()); }
+    @Override public BookingResponse getMyBookingByCode(String code) { return mapToResponse(bookingRepository.findByBookingCode(code).orElseThrow(() -> new AppException("Not found"))); }
+    
+    @Override @Transactional public void cancelBooking(String code) { 
+        Booking b = bookingRepository.findByBookingCode(code).orElseThrow(() -> new AppException("Not found"));
+        b.setStatus(BookingStatus.CANCELLED);
+        bookingRepository.save(b);
     }
 
-    @Override
-    public BookingResponse getMyBookingByCode(String bookingCode) {
-        Booking booking = bookingRepository.findByBookingCode(bookingCode)
-                .orElseThrow(() -> new AppException("Booking not found"));
-
-        if (!hasAuthority("ROLE_STAFF")) {
-            Customer customer = getCurrentCustomer();
-            if (booking.getCustomer() != null && !booking.getCustomer().getId().equals(customer.getId())) {
-                throw new AppException("Unauthorized to view this booking");
-            }
-        }
-
-        return mapToResponse(booking);
-    }
-
-    private boolean hasAuthority(String authority) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            return false;
-        }
-        return authentication.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .anyMatch(authority::equals);
-    }
-
-    @Override
-    @Transactional
-    public void cancelBooking(String bookingCode) {
-        Customer customer = getCurrentCustomer();
-        
-        Booking booking = bookingRepository.findByBookingCode(bookingCode)
-                .orElseThrow(() -> new AppException("Booking not found"));
-                
-        if (booking.getCustomer() != null && !booking.getCustomer().getId().equals(customer.getId())) {
-            throw new AppException("Unauthorized to cancel this booking");
-        }
-
-        if (booking.getShowtime().getStartTime().isBefore(LocalDateTime.now().plusHours(1))) {
-            throw new AppException("Cannot cancel within 1 hour of showtime");
-        }
-
-        booking.setStatus(BookingStatus.CANCELLED);
-        if (booking.getPayment() != null) {
-            if (booking.getPayment().getPaymentStatus() == PaymentStatus.SUCCESS) {
-                booking.getPayment().setPaymentStatus(PaymentStatus.REFUNDED);
-            } else {
-                booking.getPayment().setPaymentStatus(PaymentStatus.FAILED);
-                booking.getPayment().setTransactionId(null);
-                booking.getPayment().setPaidAt(null);
-            }
-        }
-        bookingRepository.save(booking);
-        
-        if (customer != null) {
-            createNotification(customer.getUser(),
-                    "Huy ve thanh cong",
-                    "Booking " + bookingCode + " da duoc huy. Trang thai thanh toan da duoc cap nhat.",
-                    NotificationType.SYSTEM);
-        }
-        log.info("Booking {} cancelled", bookingCode);
-    }
-
-    @Override
-    @Transactional
-    public void checkInBooking(String bookingCode) {
-        Booking booking = bookingRepository.findByBookingCode(bookingCode)
-                .orElseThrow(() -> new AppException("Booking not found"));
-
-        if (booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new AppException("Cancelled booking cannot be checked in");
-        }
-
-        if (booking.getStatus() == BookingStatus.CHECKED_IN) {
-            throw new AppException("Booking already checked in");
-        }
-
-        if (booking.getPayment() == null || booking.getPayment().getPaymentStatus() != PaymentStatus.SUCCESS) {
-            throw new AppException("Booking has not been paid successfully");
-        }
-
-        booking.setStatus(BookingStatus.CHECKED_IN);
-        bookingRepository.save(booking);
-
-        if (booking.getCustomer() != null) {
-            notificationAutomationService.notifyUser(
-                    booking.getCustomer().getUser(),
-                    "Check-in thanh cong",
-                    "Booking " + booking.getBookingCode() + " da check-in thanh cong tai rap.",
-                    NotificationType.SYSTEM);
-        }
+    @Override @Transactional public void checkInBooking(String code) {
+        Booking b = bookingRepository.findByBookingCode(code).orElseThrow(() -> new AppException("Not found"));
+        b.setStatus(BookingStatus.CHECKED_IN);
+        bookingRepository.save(b);
     }
 
     private BookingResponse mapToResponse(Booking booking) {
-        BookingResponse response = new BookingResponse();
-        response.setId(booking.getId());
-        response.setBookingCode(booking.getBookingCode());
-        response.setMovieTitle(booking.getShowtime().getMovie().getTitle());
-        response.setRoomName(booking.getShowtime().getRoom().getName());
-        response.setShowTime(booking.getShowtime().getStartTime());
-        response.setTotalPrice(booking.getTotalPrice());
-        response.setStatus(booking.getStatus());
-        response.setCreatedAt(booking.getCreatedAt());
-        response.setPromotionCode(booking.getPromotion() != null ? booking.getPromotion().getCode() : null);
-        
-        if (booking.getDetails() != null) {
-            response.setSeatCodes(booking.getDetails().stream()
-                    .map(d -> d.getSeat().getSeatCode())
-                    .collect(Collectors.toList()));
-        }
-        if (booking.getCombos() != null) {
-            response.setComboSummary(booking.getCombos().stream()
-                    .map(combo -> combo.getCombo().getName() + " x" + combo.getQuantity())
-                    .collect(Collectors.toList()));
-        }
-        if (booking.getPayment() != null) {
-            response.setPaymentMethod(booking.getPayment().getPaymentMethod());
-            response.setPaymentStatus(booking.getPayment().getPaymentStatus());
-            response.setTransactionId(booking.getPayment().getTransactionId());
-            response.setPaidAt(booking.getPayment().getPaidAt());
-        }
-        return response;
+        BookingResponse res = new BookingResponse();
+        res.setBookingCode(booking.getBookingCode());
+        res.setMovieTitle(booking.getShowtime().getMovie().getTitle());
+        res.setTotalPrice(booking.getTotalPrice());
+        res.setStatus(booking.getStatus());
+        res.setSeatCodes(booking.getDetails().stream().map(d -> d.getSeat().getSeatCode()).collect(Collectors.toList()));
+        return res;
     }
 
-    private void createNotification(User user, String title, String message, NotificationType type) {
+    private void createNotification(User user, String title, String msg, NotificationType type) {
         if (user == null) return;
-        Notification notification = new Notification();
-        notification.setUser(user);
-        notification.setTitle(title);
-        notification.setMessage(message);
-        notification.setType(type);
-        notificationRepository.save(notification);
+        Notification n = new Notification();
+        n.setUser(user); n.setTitle(title); n.setMessage(msg); n.setType(type);
+        notificationRepository.save(n);
     }
 }

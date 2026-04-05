@@ -25,6 +25,23 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.createBooking(request));
     }
 
+    @PostMapping("/hold-seat")
+    public ResponseEntity<ApiResponse<Void>> holdSeat(@RequestParam Long showtimeId, @RequestParam Long seatId, @RequestParam String sessionId) {
+        bookingService.holdSeat(showtimeId, seatId, sessionId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/release-seat")
+    public ResponseEntity<ApiResponse<Void>> releaseSeat(@RequestParam Long showtimeId, @RequestParam Long seatId, @RequestParam String sessionId) {
+        bookingService.releaseSeat(showtimeId, seatId, sessionId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @GetMapping("/my-locked-seats")
+    public ResponseEntity<ApiResponse<List<Long>>> getMyLockedSeats(@RequestParam Long showtimeId, @RequestParam String sessionId) {
+        return ResponseEntity.ok(ApiResponse.ok(bookingService.getMyLockedSeats(showtimeId, sessionId)));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<List<BookingResponse>> getMyBookings() {
         return ResponseEntity.ok(bookingService.getMyBookings());

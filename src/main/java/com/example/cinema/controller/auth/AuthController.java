@@ -1,5 +1,6 @@
 package com.example.cinema.controller.auth;
 
+import com.example.cinema.model.dto.request.ChangePasswordRequest;
 import com.example.cinema.model.dto.request.LoginRequest;
 import com.example.cinema.model.dto.request.RegisterRequest;
 import com.example.cinema.model.dto.response.ApiResponse;
@@ -7,10 +8,9 @@ import com.example.cinema.model.dto.response.AuthResponse;
 import com.example.cinema.service.auth.IAuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 /**
  * Controller xác thực (SRP: Chỉ nhận HTTP request và trả response).
@@ -36,5 +36,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
         return new ResponseEntity<>(ApiResponse.created(response), org.springframework.http.HttpStatus.CREATED);
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            Principal principal,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(principal.getName(), request);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }
