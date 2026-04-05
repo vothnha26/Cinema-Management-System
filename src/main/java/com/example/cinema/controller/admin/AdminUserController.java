@@ -22,9 +22,11 @@ import java.util.List;
 public class AdminUserController {
 
     private final IUserService userService;
+    private final com.example.cinema.service.auth.IAuthService authService;
 
-    public AdminUserController(IUserService userService) {
+    public AdminUserController(IUserService userService, com.example.cinema.service.auth.IAuthService authService) {
         this.userService = userService;
+        this.authService = authService;
     }
 
     @GetMapping
@@ -75,11 +77,12 @@ public class AdminUserController {
     }
 
     /**
-     * Gửi yêu cầu đổi mật khẩu qua email cho nhân viên.
+     * Gửi yêu cầu đổi mật khẩu qua email cho nhân viên (Dùng Token bảo mật).
      */
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<ApiResponse<String>> requestResetPassword(@PathVariable Long id) {
-        userService.sendResetPasswordEmail(id);
+        UserResponse user = userService.getUserById(id);
+        authService.requestPasswordReset(user.getEmail());
         return ResponseEntity.ok(ApiResponse.ok("Link đổi mật khẩu đã được gửi đến Gmail của nhân viên."));
     }
 

@@ -27,7 +27,12 @@ public interface IAuthService {
     void changePassword(String username, ChangePasswordRequest request);
 
     /**
-     * Đặt lại mật khẩu (dùng cho luồng quên mật khẩu/admin reset).
+     * Yêu cầu đặt lại mật khẩu: Sinh token, lưu Redis và gửi Email.
      */
-    void resetPassword(String email, String newPassword);
+    void requestPasswordReset(String email);
+
+    /**
+     * Xác thực token và đặt mật khẩu mới.
+     */
+    void resetPasswordWithToken(String token, String newPassword);
 }
