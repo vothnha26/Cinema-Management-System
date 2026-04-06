@@ -1,7 +1,6 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.entity.RoomType;
-
+import com.example.cinema.model.enums.RoomStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -27,7 +26,8 @@ public class Room {
     @Column(name = "num_cols")
     private Integer cols;
 
-    private Boolean status = true;
+    @Enumerated(EnumType.STRING)
+    private RoomStatus status = RoomStatus.ACTIVE;
 
     public Room() {
     }
@@ -90,11 +90,15 @@ public class Room {
         this.cols = cols;
     }
 
-    public Boolean getStatus() {
+    public RoomStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Boolean status) {
+    public void setStatus(RoomStatus status) {
         this.status = status;
+    }
+
+    public java.util.Set<Format> getSupportedFormats() {
+        return roomType != null ? roomType.getSupportedFormats() : new java.util.HashSet<>();
     }
 }

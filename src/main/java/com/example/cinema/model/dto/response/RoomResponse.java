@@ -11,7 +11,7 @@ public class RoomResponse {
     private Integer capacity;
     private Integer rows;
     private Integer cols;
-    private Boolean status;
+    private com.example.cinema.model.enums.RoomStatus status;
     private List<SeatResponse> seats;
 
     public static class SeatResponse {
@@ -56,8 +56,8 @@ public class RoomResponse {
     public void setRows(Integer rows) { this.rows = rows; }
     public Integer getCols() { return cols; }
     public void setCols(Integer cols) { this.cols = cols; }
-    public Boolean getStatus() { return status; }
-    public void setStatus(Boolean status) { this.status = status; }
+    public com.example.cinema.model.enums.RoomStatus getStatus() { return status; }
+    public void setStatus(com.example.cinema.model.enums.RoomStatus status) { this.status = status; }
     public List<SeatResponse> getSeats() { return seats; }
     public void setSeats(List<SeatResponse> seats) { this.seats = seats; }
 }

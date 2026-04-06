@@ -171,7 +171,10 @@ public class SchedulingServiceImpl implements SchedulingService {
                             .max(Comparator.comparing(Format::getId)) // Ưu tiên ID cao (thường là IMAX/4DX)
                             .orElse(selectedMovie.getFormats().isEmpty() ? null : selectedMovie.getFormats().iterator().next());
                     
-                    res.setFormatName(selectedFormat.getName());
+                    if (selectedFormat != null) {
+                        res.setFormatId(selectedFormat.getId());
+                        res.setFormatName(selectedFormat.getName());
+                    }
                     
                     res.setStartTime(cursor);
                     res.setEndTime(expectedEndTime);
@@ -194,8 +197,14 @@ public class SchedulingServiceImpl implements SchedulingService {
                     kr.setMovieTitle(ks.getMovie().getTitle());
                     kr.setRoomId(ks.getRoom().getId());
                     kr.setRoomName(ks.getRoom().getName());
+                    if (ks.getFormat() != null) {
+                        kr.setFormatId(ks.getFormat().getId());
+                        kr.setFormatName(ks.getFormat().getName());
+                    }
                     kr.setStartTime(ks.getStartTime());
                     kr.setEndTime(ks.getEndTime());
+                    kr.setTotalSeats(ks.getTotalSeats());
+                    kr.setSoldSeats(ks.getSoldSeats());
                     suggestions.add(kr);
                 }
             }
@@ -241,6 +250,38 @@ public class SchedulingServiceImpl implements SchedulingService {
                 if (m.getGenres().stream().anyMatch(g -> g.getName().contains("Hành động") || g.getName().contains("Kinh dị"))) weight += 100.0;
             }
         }
+
+        // AI PROMPT PARSING (Xử lý lời nhắn từ Manager)
+        if (req.getCustomDirectives() != null && !req.getCustomDirectives().isBlank()) {
+            String prompt = req.getCustomDirectives().toLowerCase();
+            
+            // 1. Phân tích khung giờ từ Prompt
+            boolean isNightRef = prompt.contains("tối") || prompt.contains("khuya") || prompt.contains("đêm");
+            boolean isMorningRef = prompt.contains("sáng") || prompt.contains("trưa");
+            
+            // 2. Phân tích thể loại ưu tiên
+            for (Genre g : m.getGenres()) {
+                String gName = g.getName().toLowerCase();
+                if (prompt.contains(gName)) {
+                    // Nếu đúng khung giờ người dùng nhắc tới
+                    if ((isNightRef && time.isAfter(LocalTime.of(18, 0))) || 
+                        (isMorningRef && time.isBefore(LocalTime.of(14, 0))) ||
+                        (!isNightRef && !isMorningRef)) {
+                        weight *= 2.5; // Ưu tiên cực cao (Boost)
+                    }
+                }
+            }
+
+            // 3. Phân tích tên phim cụ thể
+            if (prompt.contains(m.getTitle().toLowerCase())) {
+                weight *= 3.0; // Ưu tiên tuyệt đối phim được nhắc tên
+            }
+            
+            // 4. Các chỉ thị đặc biệt
+            if (prompt.contains("phim mới") && m.getStatus() == MovieStatus.PRE_RELEASE) weight *= 2.0;
+            if (prompt.contains("rating") && m.getRating() >= 8.5) weight *= 1.5;
+        }
+
         return weight;
     }
 

@@ -12,6 +12,7 @@ public class SchedulingRequest {
     private LocalTime endTime;
     private String strategy; // BALANCED, REVENUE, CUSTOM
     private List<SchedulingRule> rules;
+    private String customDirectives;
 
     public SchedulingRequest() {}
 
@@ -29,4 +30,6 @@ public class SchedulingRequest {
     public void setStrategy(String strategy) { this.strategy = strategy; }
     public List<SchedulingRule> getRules() { return rules; }
     public void setRules(List<SchedulingRule> rules) { this.rules = rules; }
+    public String getCustomDirectives() { return customDirectives; }
+    public void setCustomDirectives(String customDirectives) { this.customDirectives = customDirectives; }
 }

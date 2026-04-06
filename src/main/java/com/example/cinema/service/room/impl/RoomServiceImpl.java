@@ -9,10 +9,16 @@ import com.example.cinema.model.dto.response.RoomResponse;
 import com.example.cinema.model.entity.Format;
 import com.example.cinema.model.entity.Room;
 import com.example.cinema.model.entity.Seat;
+import com.example.cinema.model.enums.RoomStatus;
 import com.example.cinema.repository.room.RoomRepository;
+import com.example.cinema.repository.room.RoomTypeRepository;
 import com.example.cinema.repository.room.SeatRepository;
+import com.example.cinema.repository.room.SeatTypeRepository;
+import com.example.cinema.repository.showtime.ShowtimeRepository;
+import com.example.cinema.repository.booking.BookingDetailRepository;
 import com.example.cinema.service.room.RoomService;
 import com.example.cinema.service.room.RoomTemplateService;
+import com.example.cinema.service.room.strategy.SeatLayoutFactory;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,20 +32,22 @@ public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
     private final SeatRepository seatRepository;
-    private final com.example.cinema.repository.room.SeatTypeRepository seatTypeRepository;
-    private final com.example.cinema.repository.showtime.ShowtimeRepository showtimeRepository;
-    private final com.example.cinema.repository.booking.BookingDetailRepository bookingDetailRepository;
+    private final SeatTypeRepository seatTypeRepository;
+    private final ShowtimeRepository showtimeRepository;
+    private final BookingDetailRepository bookingDetailRepository;
     private final ModelMapper modelMapper;
-    private final com.example.cinema.service.room.strategy.SeatLayoutFactory seatLayoutFactory;
+    private final SeatLayoutFactory seatLayoutFactory;
     private final RoomTemplateService roomTemplateService;
+    private final RoomTypeRepository roomTypeRepository;
 
     public RoomServiceImpl(RoomRepository roomRepository, SeatRepository seatRepository,
-            com.example.cinema.repository.room.SeatTypeRepository seatTypeRepository,
-            com.example.cinema.repository.showtime.ShowtimeRepository showtimeRepository,
-            com.example.cinema.repository.booking.BookingDetailRepository bookingDetailRepository,
+            SeatTypeRepository seatTypeRepository,
+            ShowtimeRepository showtimeRepository,
+            BookingDetailRepository bookingDetailRepository,
             ModelMapper modelMapper,
-            com.example.cinema.service.room.strategy.SeatLayoutFactory seatLayoutFactory,
-            RoomTemplateService roomTemplateService) {
+            SeatLayoutFactory seatLayoutFactory,
+            RoomTemplateService roomTemplateService,
+            RoomTypeRepository roomTypeRepository) {
         this.roomRepository = roomRepository;
         this.seatRepository = seatRepository;
         this.seatTypeRepository = seatTypeRepository;
@@ -48,17 +56,24 @@ public class RoomServiceImpl implements RoomService {
         this.modelMapper = modelMapper;
         this.seatLayoutFactory = seatLayoutFactory;
         this.roomTemplateService = roomTemplateService;
+        this.roomTypeRepository = roomTypeRepository;
+    }
+
+    private RoomResponse mapToResponse(Room room) {
+        RoomResponse response = modelMapper.map(room, RoomResponse.class);
+        if (room.getRoomType() != null && room.getRoomType().getSupportedFormats() != null) {
+            response.setSupportedFormats(room.getRoomType().getSupportedFormats().stream()
+                    .map(Format::getName).collect(Collectors.toList()));
+            response.setRoomTypeName(room.getRoomType().getName());
+        }
+        return response;
     }
 
     @Override
     public List<RoomResponse> getAllRooms() {
         return roomRepository.findAll().stream()
                 .map(room -> {
-                    RoomResponse res = modelMapper.map(room, RoomResponse.class);
-                    if (room.getRoomType() != null && room.getRoomType().getSupportedFormats() != null) {
-                        res.setSupportedFormats(room.getRoomType().getSupportedFormats().stream()
-                                .map(Format::getName).collect(Collectors.toList()));
-                    }
+                    RoomResponse res = mapToResponse(room);
                     List<Seat> seats = seatRepository.findByRoomId(room.getId());
                     res.setSeats(seats.stream()
                             .map(seat -> modelMapper.map(seat, RoomResponse.SeatResponse.class))
@@ -73,12 +88,8 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + id));
 
+        RoomResponse response = mapToResponse(room);
         List<Seat> seats = seatRepository.findByRoomId(id);
-        RoomResponse response = modelMapper.map(room, RoomResponse.class);
-        if (room.getRoomType() != null && room.getRoomType().getSupportedFormats() != null) {
-            response.setSupportedFormats(room.getRoomType().getSupportedFormats().stream()
-                    .map(Format::getName).collect(Collectors.toList()));
-        }
         response.setSeats(seats.stream()
                 .map(seat -> modelMapper.map(seat, RoomResponse.SeatResponse.class))
                 .collect(Collectors.toList()));
@@ -92,7 +103,11 @@ public class RoomServiceImpl implements RoomService {
     public RoomResponse createRoom(RoomRequest request) {
         Room room = new Room();
         room.setName(request.getName());
-        room.setType(request.getRoomTypeId());
+        
+        com.example.cinema.model.entity.RoomType roomType = roomTypeRepository.findById(request.getRoomTypeId())
+                .orElseThrow(() -> new AppException("Room type not found: " + request.getRoomTypeId()));
+        room.setRoomType(roomType);
+        room.setStatus(RoomStatus.ACTIVE);
         
         List<Seat> seats;
         
@@ -101,7 +116,6 @@ public class RoomServiceImpl implements RoomService {
             room.setRows(template.getRows());
             room.setCols(template.getCols());
             room.setCapacity(template.getSeats().size());
-            room.setStatus(true);
             
             Room savedRoom = roomRepository.save(room);
             
@@ -126,7 +140,6 @@ public class RoomServiceImpl implements RoomService {
             room.setRows(request.getRows());
             room.setCols(request.getCols());
             room.setCapacity(request.getRows() * request.getCols());
-            room.setStatus(true);
             
             Room savedRoom = roomRepository.save(room);
             
@@ -135,13 +148,7 @@ public class RoomServiceImpl implements RoomService {
         }
 
         seatRepository.saveAll(seats);
-
-        RoomResponse response = modelMapper.map(room, RoomResponse.class);
-        response.setSeats(seats.stream()
-                .map(seat -> modelMapper.map(seat, RoomResponse.SeatResponse.class))
-                .collect(Collectors.toList()));
-
-        return response;
+        return getRoomById(room.getId());
     }
 
     @Override
@@ -152,8 +159,11 @@ public class RoomServiceImpl implements RoomService {
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + id));
 
         room.setName(request.getName());
-        room.setType(request.getRoomTypeId());
-        // Không cập nhật capacity/rows/cols ở đây để bảo toàn sơ đồ ghế
+        if (!room.getRoomType().getId().equals(request.getRoomTypeId())) {
+            com.example.cinema.model.entity.RoomType newType = roomTypeRepository.findById(request.getRoomTypeId())
+                    .orElseThrow(() -> new AppException("Room type not found: " + request.getRoomTypeId()));
+            room.setRoomType(newType);
+        }
 
         Room updatedRoom = roomRepository.save(room);
         return getRoomById(updatedRoom.getId());
@@ -165,15 +175,11 @@ public class RoomServiceImpl implements RoomService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new AppException("Không tìm thấy phòng với ID: " + roomId));
 
-        // CHẶN: Nếu phòng đã có suất chiếu, không cho phép thay đổi kết cấu sơ đồ ghế (đảm bảo an toàn bán vé)
         if (showtimeRepository.existsByRoomId(roomId)) {
             throw new AppException("Không thể thay đổi kết cấu phòng vì đang có lịch chiếu hoạt động. Vui lòng xóa lịch chiếu trước!");
         }
 
-        // Xử lý ràng buộc khóa ngoại: Đặt seat = null cho các BookingDetail tham chiếu đến ghế của phòng này
         bookingDetailRepository.updateSeatToNullByRoomId(roomId);
-
-        // Xóa tất cả ghế cũ để tạo lại sơ đồ mới (đảm bảo tính nhất quán của grid)
         seatRepository.deleteByRoomId(roomId);
 
         List<Seat> newSeats = new ArrayList<>();
@@ -188,7 +194,6 @@ public class RoomServiceImpl implements RoomService {
             com.example.cinema.model.entity.SeatType st = seatTypeRepository.findById(req.getSeatTypeId())
                     .orElseThrow(() -> new AppException("Seat type not found: " + req.getSeatTypeId()));
             seat.setSeatType(st);
-            
             seat.setStatus(req.getStatus());
             
             newSeats.add(seat);
@@ -197,7 +202,6 @@ public class RoomServiceImpl implements RoomService {
             }
         }
 
-        // Cập nhật lại kích thước phòng từ request (nếu có)
         if (request.getRows() != null) room.setRows(request.getRows());
         if (request.getCols() != null) room.setCols(request.getCols());
         room.setCapacity(activeSeatsCount);

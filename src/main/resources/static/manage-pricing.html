@@ -155,7 +155,7 @@
 
     function renderMatrix() {
         document.getElementById('pricingMatrixBody').innerHTML = ROOM_TYPES.map(room => `<tr><td class="room-type-cell">${room.name}</td>${SEAT_TYPES.map(seat => {
-            const p = allPrices.find(x => x.roomType === room.id && x.seatType === seat.id);
+            const p = allPrices.find(x => x.roomTypeId === room.id && x.seatTypeId === seat.id);
             return `<td><div class="price-val">${p ? new Intl.NumberFormat().format(p.price) : '---'}</div><button class="btn-edit-price mt-2" onclick="openPriceModal('${room.id}', '${seat.id}', ${p?.price || 0}, '${room.name}', '${seat.name}')">SỬA</button></td>`;
         }).join('')}</tr>`).join('');
     }
@@ -200,9 +200,15 @@
     }
 
     async function savePrice() {
-        const data = { roomType: document.getElementById('roomType').value, seatType: document.getElementById('seatType').value, price: document.getElementById('priceInput').value, effectiveDate: document.getElementById('effectiveDate').value };
+        const data = { 
+            roomTypeId: document.getElementById('roomType').value, 
+            seatTypeId: document.getElementById('seatType').value, 
+            price: parseFloat(document.getElementById('priceInput').value), 
+            effectiveDate: document.getElementById('effectiveDate').value 
+        };
         const res = await api.put('/admin/pricing', data);
         if (res.success) { priceModal.hide(); loadData(); }
+        else { alert('Lỗi: ' + res.message); }
     }
 
     function openRuleModal(r = null) {

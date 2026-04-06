@@ -124,6 +124,12 @@
         <label class="form-label m-0">Ngày chiếu</label>
         <input type="date" id="filterDate" class="form-control form-control-sm" style="width:180px" onchange="loadShowtimes()">
       </div>
+      <div class="d-flex align-items-center gap-2">
+        <label class="form-label m-0">Định dạng</label>
+        <select id="filterFormat" class="form-select form-select-sm" style="width:120px" onchange="applyFilters()">
+            <option value="">Tất cả</option>
+        </select>
+      </div>
       <div class="vr bg-secondary opacity-25" style="height: 30px;"></div>
       <div id="aiStatusBadge" class="d-none animate__animated animate__pulse animate__infinite">
         <span class="badge rounded-pill bg-warning text-dark px-3 py-2 fw-800"><i class="bi bi-magic me-1"></i> ĐANG XEM LỊCH AI GỢI Ý</span>
@@ -300,9 +306,17 @@
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('filterDate').value = today;
         
-        const [mRes, rRes] = await Promise.all([api.get('/movies'), api.get('/rooms')]);
+        const [mRes, rRes, fRes] = await Promise.all([
+            api.get('/movies'), 
+            api.get('/rooms'),
+            api.get('/admin/master-data/formats')
+        ]);
         allMovies = mRes.data || []; allRooms = rRes.data || [];
         
+        if (fRes.success) {
+            document.getElementById('filterFormat').innerHTML += fRes.data.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+        }
+
         renderTimeHeader();
         renderRoomLabels();
         renderMovieList();
@@ -315,6 +329,17 @@
         document.getElementById('editRoomId').innerHTML = roomOptions;
         document.getElementById('addMovieId').innerHTML = movieOptions;
         document.getElementById('addRoomId').innerHTML = roomOptions;
+    }
+
+    function applyFilters() {
+        const formatVal = document.getElementById('filterFormat').value;
+        const baseList = currentAIResult.length > 0 ? currentAIResult : currentShowtimes;
+        const filtered = baseList.filter(s => {
+            const matchMovie = selectedMovieId ? s.movieId == selectedMovieId : true;
+            const matchFormat = formatVal ? s.formatName == formatVal : true;
+            return matchMovie && matchFormat;
+        });
+        renderTimeline(filtered);
     }
 
     function renderMovieList() {
@@ -347,8 +372,7 @@
             document.getElementById(`filter-m-${movieId}`).classList.add('active');
         }
         
-        const listToRender = currentAIResult.length > 0 ? currentAIResult : currentShowtimes;
-        renderTimeline(listToRender);
+        applyFilters();
     }
 
     function renderSidebar(role) {
@@ -497,10 +521,17 @@
 
             // Filter logic: Only show formats that are supported by the room
             if (room && room.supportedFormats && room.supportedFormats.length > 0) {
-                formatsToRender = movie.formats.filter(f => room.supportedFormats.includes(f.name));
+                formatsToRender = movie.formats.filter(f => {
+                    const fName = typeof f === 'string' ? f : f.name;
+                    return room.supportedFormats.includes(fName);
+                });
             }
 
-            formatSelect.innerHTML = formatsToRender.map(f => `<option value="${f.id}">${f.name}</option>`).join('');
+            formatSelect.innerHTML = formatsToRender.map(f => {
+                const id = typeof f === 'string' ? f : f.id;
+                const name = typeof f === 'string' ? f : f.name;
+                return `<option value="${id}">${name}</option>`;
+            }).join('');
             
             // If the filtered list is empty, show a warning or handle appropriately
             if (formatsToRender.length === 0) {

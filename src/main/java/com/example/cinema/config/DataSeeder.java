@@ -21,8 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 @Configuration
 public class DataSeeder {
@@ -39,14 +37,16 @@ public class DataSeeder {
                                       FormatRepository formatRepository,
                                       PasswordEncoder passwordEncoder) {
         return args -> {
-            // 0. Khởi tạo Formats trước
-            Format f2d = formatRepository.findById(1L).orElse(null);
-            if (f2d == null) {
-                f2d = formatRepository.save(new Format(1L, "2D", "Standard 2D"));
-                formatRepository.save(new Format(2L, "3D", "Advanced 3D"));
-                formatRepository.save(new Format(3L, "IMAX", "IMAX Premium"));
-                formatRepository.save(new Format(4L, "4DX", "4DX Motion"));
+            // 0. Khởi tạo Định dạng phim (Formats)
+            if (formatRepository.count() == 0) {
+                formatRepository.save(new Format(1L, "2D", "Standard 2D Digital Cinema"));
+                formatRepository.save(new Format(2L, "3D", "Advanced 3D Experience"));
+                formatRepository.save(new Format(3L, "IMAX", "IMAX Premium Cinematic Technology"));
+                formatRepository.save(new Format(4L, "4DX", "4DX Motion & Environmental Effects"));
+                System.out.println("✅ Đã khởi tạo danh sách Định dạng phim (2D, 3D, IMAX, 4DX)");
             }
+
+            Format f2d = formatRepository.findById(1L).orElse(null);
             Format f3d = formatRepository.findById(2L).orElse(null);
             Format fImax = formatRepository.findById(3L).orElse(null);
             Format f4dx = formatRepository.findById(4L).orElse(null);
@@ -57,13 +57,13 @@ public class DataSeeder {
                 rt2d.getSupportedFormats().add(f2d);
                 roomTypeRepository.save(rt2d);
 
-                RoomType rtImax = new RoomType("IMAX", "IMAX Premium Experience");
-                rtImax.getSupportedFormats().addAll(Arrays.asList(f2d, f3d, fImax));
-                roomTypeRepository.save(rtImax);
-
                 RoomType rt3d = new RoomType("HALL_3D", "Advanced 3D Cinema");
                 rt3d.getSupportedFormats().addAll(Arrays.asList(f2d, f3d));
                 roomTypeRepository.save(rt3d);
+
+                RoomType rtImax = new RoomType("IMAX", "IMAX Premium Experience");
+                rtImax.getSupportedFormats().addAll(Arrays.asList(f2d, f3d, fImax));
+                roomTypeRepository.save(rtImax);
 
                 RoomType rt4dx = new RoomType("HALL_4DX", "4DX Motion Dynamic");
                 rt4dx.getSupportedFormats().addAll(Arrays.asList(f2d, f3d, f4dx));
@@ -72,6 +72,7 @@ public class DataSeeder {
                 RoomType rtGold = new RoomType("GOLD_CLASS", "Elite Gold Class Cinema");
                 rtGold.getSupportedFormats().addAll(Arrays.asList(f2d, f3d));
                 roomTypeRepository.save(rtGold);
+                System.out.println("✅ Đã khởi tạo danh sách Loại phòng");
             }
 
             if (seatTypeRepository.count() == 0) {
@@ -80,6 +81,7 @@ public class DataSeeder {
                 seatTypeRepository.save(new SeatType("COUPLE", "Elite Sweetbox Couple"));
                 seatTypeRepository.save(new SeatType("DELUXE", "Deluxe Recliner"));
                 seatTypeRepository.save(new SeatType("EMPTY", "Empty Space/Aisle"));
+                System.out.println("✅ Đã khởi tạo danh sách Loại ghế");
             }
 
             // 1. Khởi tạo Thể loại (Genres)
@@ -112,8 +114,11 @@ public class DataSeeder {
                     seatPriceRepository.save(new SeatPrice(null, room2d, sStandard, BigDecimal.valueOf(85000), LocalDate.now()));
                     seatPriceRepository.save(new SeatPrice(null, room2d, sVip, BigDecimal.valueOf(110000), LocalDate.now()));
                     seatPriceRepository.save(new SeatPrice(null, room2d, sCouple, BigDecimal.valueOf(180000), LocalDate.now()));
-                    seatPriceRepository.save(new SeatPrice(null, roomImax, sStandard, BigDecimal.valueOf(150000), LocalDate.now()));
-                    seatPriceRepository.save(new SeatPrice(null, roomImax, sVip, BigDecimal.valueOf(210000), LocalDate.now()));
+                    
+                    if (roomImax != null) {
+                        seatPriceRepository.save(new SeatPrice(null, roomImax, sStandard, BigDecimal.valueOf(150000), LocalDate.now()));
+                        seatPriceRepository.save(new SeatPrice(null, roomImax, sVip, BigDecimal.valueOf(210000), LocalDate.now()));
+                    }
                     System.out.println("✅ Đã khởi tạo bảng giá vé mặc định");
                 }
             }

@@ -29,7 +29,7 @@
         .btn-add:hover { opacity: 0.9; color: #fff; }
 
         /* ── ROOM GRID ── */
-        .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
         .room-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; transition: all 0.3s; position: relative; overflow: hidden; display: flex; flex-direction: column; }
         .room-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         
@@ -38,10 +38,19 @@
         .tag-4dx { background: rgba(229,19,58,0.15); color: var(--accent); border: 1px solid rgba(229,19,58,0.3); }
         .tag-std { background: rgba(100,180,255,0.15); color: #64B4FF; border: 1px solid rgba(100,180,255,0.3); }
 
+        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; margin-bottom: 12px; }
+        .status-active { background: rgba(46, 213, 115, 0.15); color: #2ed573; }
+        .status-maintenance { background: rgba(255, 165, 2, 0.15); color: #ffa502; }
+        .status-inactive { background: rgba(255, 71, 87, 0.15); color: #ff4757; }
+
         .room-icon-box { width: 44px; height: 44px; border-radius: 12px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-muted); margin-bottom: 16px; transition: 0.3s; }
         .room-card:hover .room-icon-box { background: var(--accent); color: #fff; }
 
         .room-name { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+        
+        .format-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+        .format-chip { font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); }
+
         .room-stats { display: flex; gap: 12px; margin-bottom: 16px; }
         .stat-item { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-muted); }
         .stat-item i { color: var(--accent); }
@@ -118,11 +127,19 @@
                             <select name="type" id="roomTypeSelect" class="form-select"></select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold text-muted text-uppercase">Template (Tùy chọn)</label>
-                            <select name="templateFileName" id="templateSelect" class="form-select" onchange="toggleManualGrid()">
-                                <option value="">-- Tạo trống --</option>
+                            <label class="form-label small fw-bold text-muted text-uppercase">Trạng thái</label>
+                            <select name="status" class="form-select">
+                                <option value="ACTIVE">Sẵn sàng (Active)</option>
+                                <option value="MAINTENANCE">Bảo trì (Maintenance)</option>
+                                <option value="INACTIVE">Ngừng hoạt động (Inactive)</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Template sơ đồ (Tùy chọn)</label>
+                        <select name="templateFileName" id="templateSelect" class="form-select" onchange="toggleManualGrid()">
+                            <option value="">-- Tạo trống (Nhập tay kích thước) --</option>
+                        </select>
                     </div>
                     <div id="manualGridInputs" class="row g-3 mb-4">
                         <div class="col-md-6">
@@ -166,7 +183,7 @@
         }
         const tempRes = await api.get('/admin/room-templates');
         if (tempRes.success) {
-            document.getElementById('templateSelect').innerHTML = '<option value="">-- Tạo trống --</option>' + 
+            document.getElementById('templateSelect').innerHTML = '<option value="">-- Tạo trống (Nhập tay kích thước) --</option>' + 
                 tempRes.data.map(name => `<option value="${name}">${name.replace('.json', '').replace(/_/g, ' ')}</option>`).join('');
         }
     }
@@ -187,30 +204,50 @@
     function renderRooms(rooms) {
         const grid = document.getElementById('roomGrid');
         if (!rooms.length) {
-            grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Chưa có phòng chiếu nào.</div>';
+            grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Chưa có phòng chiếu nào được khởi tạo.</div>';
             return;
         }
 
         grid.innerHTML = rooms.map(r => {
-            const typeClass = r.type === 'IMAX' ? 'tag-imax' : (r.type === 'HALL_4DX' ? 'tag-4dx' : 'tag-std');
-            const typeLabel = (r.type || 'STD').replace('HALL_', '');
+            const typeClass = (r.roomTypeId === 'IMAX' || r.roomTypeId === 'HALL_IMAX') ? 'tag-imax' : 
+                            (r.roomTypeId === 'HALL_4DX' ? 'tag-4dx' : 'tag-std');
+            const typeLabel = (r.roomTypeId || 'STD').replace('HALL_', '');
             
-            // Generate Mini Layout
-            const rows = [...new Set(r.seats.map(s => s.rowChar))].sort();
-            const maxCol = Math.max(...r.seats.map(s => s.colNum));
+            // Format chips
+            const formatHtml = (r.supportedFormats || []).map(f => `<span class="format-chip">${f}</span>`).join('');
+
+            // Status Badge
+            let statusClass = 'status-active';
+            let statusText = 'Hoạt động';
+            if (r.status === 'MAINTENANCE') { statusClass = 'status-maintenance'; statusText = 'Bảo trì'; }
+            else if (r.status === 'INACTIVE') { statusClass = 'status-inactive'; statusText = 'Ngừng'; }
+
+            // Mini Layout
+            const rowsCount = r.rows || 1;
+            const colsCount = r.cols || 1;
+            const seats = r.seats || [];
             const miniLayoutHtml = `
-                <div class="mini-grid" style="grid-template-columns: repeat(${maxCol}, auto)">
-                    ${r.seats.sort((a,b) => (a.rowChar+a.colNum).localeCompare(b.rowChar+b.colNum)).map(s => `
-                        <div class="mini-seat ${s.type} ${!s.status ? 'DISABLED' : ''}"></div>
+                <div class="mini-grid" style="grid-template-columns: repeat(${colsCount}, auto)">
+                    ${seats.sort((a,b) => {
+                        if (a.rowChar !== b.rowChar) return a.rowChar.localeCompare(b.rowChar);
+                        return a.colNum - b.colNum;
+                    }).map(s => `
+                        <div class="mini-seat ${s.seatTypeId} ${!s.status ? 'DISABLED' : ''}"></div>
                     `).join('')}
                 </div>
             `;
 
             return `
-                <div class="room-card">
+                <div class="room-card animate__animated animate__fadeIn">
                     <span class="room-type-tag ${typeClass}">${typeLabel}</span>
+                    <div class="status-badge ${statusClass}">
+                        <i class="bi bi-circle-fill" style="font-size: 0.5rem"></i> ${statusText}
+                    </div>
                     <div class="room-icon-box"><i class="bi bi-display"></i></div>
                     <div class="room-name">${r.name}</div>
+                    
+                    <div class="format-chips">${formatHtml}</div>
+
                     <div class="room-stats">
                         <div class="stat-item"><i class="bi bi-person-workspace"></i> ${r.capacity} ghế</div>
                         <div class="stat-item"><i class="bi bi-grid-3x3"></i> ${r.rows}x${r.cols}</div>
@@ -219,8 +256,8 @@
                     <div class="mini-preview">${miniLayoutHtml}</div>
 
                     <div class="room-actions">
-                        <a href="design-room.html?id=${r.id}" class="action-btn-outline"><i class="bi bi-grid-3x3-gap"></i> THIẾT KẾ</a>
-                        <button class="action-btn-outline" style="flex:0 0 40px" onclick="editRoom(${r.id})"><i class="bi bi-pencil-square"></i></button>
+                        <a href="design-room.html?id=${r.id}" class="action-btn-outline"><i class="bi bi-grid-3x3-gap"></i> THIẾT KẾ GHẾ</a>
+                        <button class="action-btn-outline" style="flex:0 0 44px" onclick="editRoom(${r.id})"><i class="bi bi-pencil-square"></i></button>
                         <button class="action-btn-danger" onclick="deleteRoom(${r.id})"><i class="bi bi-trash"></i></button>
                     </div>
                 </div>
@@ -242,7 +279,8 @@
         const f = document.getElementById('roomForm');
         document.getElementById('roomId').value = r.id;
         f.querySelector('[name="name"]').value = r.name;
-        f.querySelector('[name="type"]').value = r.type;
+        f.querySelector('[name="type"]').value = r.roomTypeId;
+        f.querySelector('[name="status"]').value = r.status || 'ACTIVE';
         f.querySelector('[name="rows"]').value = r.rows;
         f.querySelector('[name="cols"]').value = r.cols;
         f.querySelector('[name="templateFileName"]').value = '';
@@ -257,6 +295,7 @@
         const data = {
             name: f.querySelector('[name="name"]').value,
             roomTypeId: f.querySelector('[name="type"]').value,
+            status: f.querySelector('[name="status"]').value,
             templateFileName: f.querySelector('[name="templateFileName"]').value
         };
         if (!data.templateFileName) {
@@ -269,7 +308,7 @@
     }
 
     async function deleteRoom(id) {
-        if (!confirm('Xóa phòng này?')) return;
+        if (!confirm('Xóa phòng này sẽ xóa toàn bộ suất chiếu và vé liên quan. Bạn chắc chắn?')) return;
         const res = await api.delete(`/rooms/${id}`);
         if (res.success) loadRooms();
         else alert('Lỗi: ' + res.message);

@@ -150,10 +150,7 @@
                                 <div class="col-md-12">
                                     <label class="form-label">Định dạng hỗ trợ</label>
                                     <div class="checkbox-container" id="formatsContainer">
-                                        <label class="checkbox-item"><input type="checkbox" name="formats" value="HALL_2D" class="d-none"><span>2D</span></label>
-                                        <label class="checkbox-item"><input type="checkbox" name="formats" value="HALL_3D" class="d-none"><span>3D</span></label>
-                                        <label class="checkbox-item"><input type="checkbox" name="formats" value="IMAX" class="d-none"><span>IMAX</span></label>
-                                        <label class="checkbox-item"><input type="checkbox" name="formats" value="HALL_4DX" class="d-none"><span>4DX</span></label>
+                                        <!-- Loaded via JS from database -->
                                     </div>
                                 </div>
 
@@ -187,7 +184,11 @@
     document.addEventListener('DOMContentLoaded', init);
 
     async function init() {
-        const resG = await api.get('/genres');
+        const [resG, resF] = await Promise.all([
+            api.get('/genres'),
+            api.get('/admin/master-data/formats')
+        ]);
+
         if (resG.success) {
             allGenres = resG.data;
             document.getElementById('genresContainer').innerHTML = allGenres.map(g => `
@@ -197,6 +198,16 @@
                 </label>
             `).join('');
         }
+
+        if (resF.success) {
+            document.getElementById('formatsContainer').innerHTML = resF.data.map(f => `
+                <label class="checkbox-item">
+                    <input type="checkbox" name="formats" value="${f.name}" class="d-none">
+                    <span>${f.name}</span>
+                </label>
+            `).join('');
+        }
+
         loadMovies();
     }
 
