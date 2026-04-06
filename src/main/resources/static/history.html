@@ -39,20 +39,19 @@
 </head>
 <body>
 <nav class="navbar-star">
-  <div class="container">
-    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
-      <div class="d-flex align-items-center gap-4 flex-wrap">
-        <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-        <div class="d-none d-lg-flex gap-1">
-          <a href="index.html" class="nav-link-star">Phim</a>
-          <a href="#" class="nav-link-star">Rạp & Giá</a>
-          <a href="history.html" class="nav-link-star active">Vé của tôi</a>
-          <a href="#" class="nav-link-star">Ưu đãi</a>
-        </div>
+  <div class="container-xxl d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-4">
+      <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
+      <div class="d-none d-lg-flex gap-2">
+        <a href="index.html" class="nav-link-star">Phim</a>
+        <a href="history.html" class="nav-link-star active">Vé của tôi</a>
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <div id="navAvatar" style="width:36px;height:36px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700">A</div>
-        <div id="navName" class="d-none d-md-block" style="font-size:.88rem;font-weight:600; cursor:pointer" onclick="switchTab('profile', document.querySelector('.tab-btn[onclick*=\'profile\']'))">Nguyễn Văn A</div>
+    </div>
+    <div id="authSection" class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <span id="navName" class="small text-muted fw-bold" style="cursor:pointer" onclick="switchTab('profile', document.querySelector('.tab-btn[onclick*=\'profile\']'))">Nguyễn Văn A</span>
+        <div id="navAvatar" class="badge-icon badge-point" style="width:36px;height:36px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;cursor:pointer;color:#fff" onclick="switchTab('profile', document.querySelector('.tab-btn[onclick*=\'profile\']'))">A</div>
+        <button class="btn btn-sm btn-outline-secondary" onclick="logout()" title="Đăng xuất"><i class="bi bi-box-arrow-right text-white"></i></button>
       </div>
     </div>
   </div>
