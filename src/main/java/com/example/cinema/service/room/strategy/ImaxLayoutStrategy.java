@@ -2,8 +2,6 @@ package com.example.cinema.service.room.strategy;
 
 import com.example.cinema.model.entity.Room;
 import com.example.cinema.model.entity.Seat;
-import com.example.cinema.model.enums.SeatType;
-
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -24,11 +22,11 @@ public class ImaxLayoutStrategy implements SeatLayoutStrategy {
 
                 // IMAX: Khu vực trung tâm (hàng 4 đến hàng 10) toàn bộ là VIP
                 if (i >= 4 && i <= 10) {
-                    seat.setType(SeatType.VIP);
+                    seat.setType("VIP");
                 } else if (i == rows - 1) {
-                    seat.setType(SeatType.COUPLE);
+                    seat.setType("COUPLE");
                 } else {
-                    seat.setType(SeatType.STANDARD);
+                    seat.setType("STANDARD");
                 }
 
                 seat.setStatus(true);

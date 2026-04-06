@@ -105,7 +105,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             res.setRowChar(seat.getRowChar());
             res.setColNum(seat.getColNum());
             res.setSeatCode(seat.getRowChar() + seat.getColNum());
-            res.setSeatType(seat.getType());
+            res.setSeatTypeId(seat.getSeatType().getId());
+            res.setSeatTypeName(seat.getSeatType().getName());
+            res.setSeatType(seat.getSeatType().getId()); // For frontend compatibility
             res.setAvailable(!bookedSeatIds.contains(seat.getId()) && !lockedSeatIds.contains(seat.getId()));
             
             PriceCalculationResult calculation = pricingService.calculateTicketPrice(showtime, seat);
@@ -121,6 +123,15 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     public ShowtimeResponse createShowtime(ShowtimeRequest request) {
         Movie movie = movieRepository.findById(request.getMovieId()).orElseThrow(() -> new AppException("Movie not found"));
         Room room = roomRepository.findById(request.getRoomId()).orElseThrow(() -> new AppException("Room not found"));
+        Format format = null;
+        if (request.getFormatId() != null) {
+            format = formatRepository.findById(request.getFormatId())
+                    .orElseThrow(() -> new AppException("Format not found"));
+        }
+
+        // Validation: Compatibility between RoomType and Format
+        validateRoomFormatCompatibility(room, format);
+
         Showtime showtime = new Showtime();
         showtime.setMovie(movie);
         showtime.setRoom(room);
@@ -129,11 +140,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         showtime.setStatus(ShowtimeStatus.UPCOMING);
         showtime.setTotalSeats(room.getCapacity());
         showtime.setSoldSeats(0);
-        
-        if (request.getFormatId() != null) {
-            showtime.setFormat(formatRepository.findById(request.getFormatId())
-                    .orElseThrow(() -> new AppException("Format not found")));
-        }
+        showtime.setFormat(format);
         
         return mapToResponse(showtimeRepository.save(showtime));
     }
@@ -144,19 +151,33 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         Showtime showtime = showtimeRepository.findById(id).orElseThrow(() -> new AppException("Not found"));
         Movie movie = movieRepository.findById(request.getMovieId()).orElseThrow(() -> new AppException("Movie not found"));
         Room room = roomRepository.findById(request.getRoomId()).orElseThrow(() -> new AppException("Room not found"));
+        Format format = null;
+        if (request.getFormatId() != null) {
+            format = formatRepository.findById(request.getFormatId())
+                    .orElseThrow(() -> new AppException("Format not found"));
+        }
+
+        // Validation: Compatibility between RoomType and Format
+        validateRoomFormatCompatibility(room, format);
+
         showtime.setMovie(movie);
         showtime.setRoom(room);
         showtime.setStartTime(request.getStartTime());
         showtime.setEndTime(request.getStartTime().plusMinutes(movie.getDuration()));
-        
-        if (request.getFormatId() != null) {
-            showtime.setFormat(formatRepository.findById(request.getFormatId())
-                    .orElseThrow(() -> new AppException("Format not found")));
-        } else {
-            showtime.setFormat(null);
-        }
+        showtime.setFormat(format);
         
         return mapToResponse(showtimeRepository.save(showtime));
+    }
+
+    private void validateRoomFormatCompatibility(Room room, Format format) {
+        if (format == null || room.getRoomType() == null) return;
+        
+        Set<Format> supported = room.getRoomType().getSupportedFormats();
+        if (supported == null || supported.isEmpty()) return; // Nếu chưa cấu hình thì tạm thời cho phép
+
+        if (!supported.contains(format)) {
+            throw new AppException("Phòng chiếu " + room.getName() + " không hỗ trợ định dạng " + format.getName());
+        }
     }
 
     @Override
@@ -183,7 +204,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         if (showtime.getRoom() != null) {
             res.setRoomId(showtime.getRoom().getId());
             res.setRoomName(showtime.getRoom().getName());
-            res.setRoomType(showtime.getRoom().getType().name());
+            res.setRoomType(showtime.getRoom().getRoomType().getId());
         }
         res.setStartTime(showtime.getStartTime());
         res.setEndTime(showtime.getEndTime());

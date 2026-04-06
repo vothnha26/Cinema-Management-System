@@ -1,6 +1,6 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.enums.RoomType;
+import com.example.cinema.model.entity.RoomType;
 
 import jakarta.persistence.*;
 
@@ -14,9 +14,9 @@ public class Room {
     @Column(nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private RoomType type;
+    @ManyToOne
+    @JoinColumn(name = "room_type_id", nullable = false)
+    private RoomType roomType;
 
     @Column(nullable = false)
     private Integer capacity;
@@ -48,12 +48,22 @@ public class Room {
         this.name = name;
     }
 
-    public RoomType getType() {
-        return type;
+    public RoomType getRoomType() {
+        return roomType;
     }
 
-    public void setType(RoomType type) {
-        this.type = type;
+    public void setRoomType(RoomType roomType) {
+        this.roomType = roomType;
+    }
+
+    public void setType(String typeId) {
+        if (typeId != null) {
+            this.roomType = new RoomType(typeId, null);
+        }
+    }
+
+    public String getType() {
+        return roomType != null ? roomType.getId() : null;
     }
 
     public Integer getCapacity() {

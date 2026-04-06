@@ -1,7 +1,6 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.DiscountType;
-import com.example.cinema.model.enums.MembershipTier;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -61,50 +60,125 @@ public class Promotion {
     public Promotion() {
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public String getCode() {
+        return code;
+    }
 
-    public DiscountType getDiscountType() { return discountType; }
-    public void setDiscountType(DiscountType discountType) { this.discountType = discountType; }
+    public void setCode(String code) {
+        this.code = code;
+    }
 
-    public BigDecimal getDiscountValue() { return discountValue; }
-    public void setDiscountValue(BigDecimal discountValue) { this.discountValue = discountValue; }
+    public String getName() {
+        return name;
+    }
 
-    public MembershipBenefit getMinTier() { return minTier; }
-    public void setMinTier(MembershipBenefit minTier) { this.minTier = minTier; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public LocalDate getStartDate() { return startDate; }
-    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    public DiscountType getDiscountType() {
+        return discountType;
+    }
 
-    public LocalDate getEndDate() { return endDate; }
-    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+    public void setDiscountType(DiscountType discountType) {
+        this.discountType = discountType;
+    }
 
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+    public BigDecimal getDiscountValue() {
+        return discountValue;
+    }
 
-    public BigDecimal getMaxDiscountAmount() { return maxDiscountAmount; }
-    public void setMaxDiscountAmount(BigDecimal maxDiscountAmount) { this.maxDiscountAmount = maxDiscountAmount; }
+    public void setDiscountValue(BigDecimal discountValue) {
+        this.discountValue = discountValue;
+    }
 
-    public Integer getUsageLimit() { return usageLimit; }
-    public void setUsageLimit(Integer usageLimit) { this.usageLimit = usageLimit; }
+    public MembershipBenefit getMinTier() {
+        return minTier;
+    }
 
-    public Integer getUsedCount() { return usedCount; }
-    public void setUsedCount(Integer usedCount) { this.usedCount = usedCount; }
+    public void setMinTier(MembershipBenefit minTier) {
+        this.minTier = minTier;
+    }
 
-    public BigDecimal getMinOrderAmount() { return minOrderAmount; }
-    public void setMinOrderAmount(BigDecimal minOrderAmount) { this.minOrderAmount = minOrderAmount; }
+    public LocalDate getStartDate() {
+        return startDate;
+    }
 
-    public Integer getRequiredPoints() { return requiredPoints; }
-    public void setRequiredPoints(Integer requiredPoints) { this.requiredPoints = requiredPoints; }
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
 
-    public Boolean getIsRedeemable() { return isRedeemable; }
-    public void setIsRedeemable(Boolean redeemable) { isRedeemable = redeemable; }
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public BigDecimal getMaxDiscountAmount() {
+        return maxDiscountAmount;
+    }
+
+    public void setMaxDiscountAmount(BigDecimal maxDiscountAmount) {
+        this.maxDiscountAmount = maxDiscountAmount;
+    }
+
+    public Integer getUsageLimit() {
+        return usageLimit;
+    }
+
+    public void setUsageLimit(Integer usageLimit) {
+        this.usageLimit = usageLimit;
+    }
+
+    public Integer getUsedCount() {
+        return usedCount;
+    }
+
+    public void setUsedCount(Integer usedCount) {
+        this.usedCount = usedCount;
+    }
+
+    public BigDecimal getMinOrderAmount() {
+        return minOrderAmount;
+    }
+
+    public void setMinOrderAmount(BigDecimal minOrderAmount) {
+        this.minOrderAmount = minOrderAmount;
+    }
+
+    public Integer getRequiredPoints() {
+        return requiredPoints;
+    }
+
+    public void setRequiredPoints(Integer requiredPoints) {
+        this.requiredPoints = requiredPoints;
+    }
+
+    public Boolean getIsRedeemable() {
+        return isRedeemable;
+    }
+
+    public void setIsRedeemable(Boolean redeemable) {
+        isRedeemable = redeemable;
+    }
 
     public static class Builder {
         private String code;

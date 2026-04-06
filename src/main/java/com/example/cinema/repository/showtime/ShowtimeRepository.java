@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
+    boolean existsByRoomId(Long roomId);
     List<Showtime> findAllByStartTimeBetween(LocalDateTime start, LocalDateTime end);
     List<Showtime> findByMovieId(Long movieId);
     void deleteByStartTimeBetween(LocalDateTime start, LocalDateTime end);

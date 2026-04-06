@@ -1,0 +1,26 @@
+{
+  "templateName": "Elite Diamond",
+  "roomTypeId": "GOLD_CLASS",
+  "rows": 5,
+  "cols": 7,
+  "seats": [
+    {"rowChar": "A", "colNum": 4, "seatTypeId": "VIP", "status": true},
+
+    {"rowChar": "B", "colNum": 3, "seatTypeId": "VIP", "status": true},
+    {"rowChar": "B", "colNum": 4, "seatTypeId": "VIP", "status": true},
+    {"rowChar": "B", "colNum": 5, "seatTypeId": "VIP", "status": true},
+
+    {"rowChar": "C", "colNum": 2, "seatTypeId": "DELUXE", "status": true},
+    {"rowChar": "C", "colNum": 3, "seatTypeId": "DELUXE", "status": true},
+    {"rowChar": "C", "colNum": 4, "seatTypeId": "DELUXE", "status": true},
+    {"rowChar": "C", "colNum": 5, "seatTypeId": "DELUXE", "status": true},
+    {"rowChar": "C", "colNum": 6, "seatTypeId": "DELUXE", "status": true},
+
+    {"rowChar": "D", "colNum": 3, "seatTypeId": "VIP", "status": true},
+    {"rowChar": "D", "colNum": 4, "seatTypeId": "VIP", "status": true},
+    {"rowChar": "D", "colNum": 5, "seatTypeId": "VIP", "status": true},
+
+    {"rowChar": "E", "colNum": 1, "seatTypeId": "COUPLE", "status": true},
+    {"rowChar": "E", "colNum": 7, "seatTypeId": "COUPLE", "status": true}
+  ]
+}

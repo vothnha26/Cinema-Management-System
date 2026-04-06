@@ -10,35 +10,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
     <link rel="icon" type="image/png" href="/favicon.png?v=2">
-    <script src="/js/auth-guard.js"></script>
-    <script>
-        if (!AuthGuard.requireRole(['ADMIN', 'MANAGER'])) {}
-    </script>
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
           --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
           --gradient: linear-gradient(135deg, #E5133A, #8B0020);
-          --sidebar-width: 260px;
         }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
         
-        .sidebar {
-          width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border);
-          height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px;
-          display: flex; flex-direction: column;
-        }
-        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; }
-        .brand span { color: var(--accent); }
-        .nav-link-admin {
-          display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted);
-          text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500; margin-bottom: 8px;
-        }
-        .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
-        .nav-link-admin.active { background: var(--gradient); color: #fff; }
-
-        .main-content { margin-left: var(--sidebar-width); padding: 40px; }
+        .main-content { padding: 40px; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
@@ -65,21 +46,11 @@
         .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
         .form-control-custom { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 16px; }
         .form-control-custom:focus { border-color: var(--accent); background: var(--surface); color: var(--text); box-shadow: none; }
-        .form-control-custom:disabled { background: var(--bg); opacity: 0.6; }
     </style>
 </head>
 <body>
 
-<aside class="sidebar">
-    <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-    <ul class="nav-menu list-unstyled">
-        <li><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li><a href="manage-users.html" class="nav-link-admin active"><i class="bi bi-people"></i> Nhân viên</a></li>
-    </ul>
-    <div class="mt-auto">
-        <button class="btn btn-outline-secondary w-100" onclick="AuthGuard.logout()">Đăng xuất</button>
-    </div>
-</aside>
+<aside class=\"sidebar\"></aside>
 
 <main class="main-content">
     <div class="header-section">
@@ -99,96 +70,108 @@
                     <th>Email liên hệ</th>
                     <th>Vai trò</th>
                     <th>Trạng thái</th>
-                    <th>Ngày tạo</th>
                     <th class="text-end">Hành động</th>
                 </tr>
             </thead>
-            <tbody id="userList">
-                <tr><td colspan="5" class="text-center py-5">Đang tải danh sách nhân sự...</td></tr>
+            <tbody id="userTableBody">
+                <!-- Data will be loaded via JS -->
             </tbody>
         </table>
     </div>
 </main>
 
-<!-- USER MODAL (Create & Edit) -->
+<!-- Modals and Scripts -->
 <div class="modal fade" id="userModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0">
-            <div class="modal-header border-0 p-4">
-                <h5 class="modal-title fw-bold" id="modalTitle" style="font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;">Tài khoản nhân viên</h5>
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Thêm nhân viên mới</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4 pt-0">
-                <input type="hidden" id="userId">
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Email (Gmail công việc)</label>
-                    <input type="email" id="email" class="form-control form-control-custom">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Username định danh</label>
-                    <input type="text" id="username" class="form-control form-control-custom" placeholder="Vd: nva_staff">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Vai trò</label>
-                    <select id="role" class="form-select form-control-custom">
-                        <option value="STAFF">Nhân viên bán vé (STAFF)</option>
-                        <option value="MANAGER">Quản lý rạp (MANAGER)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer border-0 p-4">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-danger px-4" id="saveBtn" onclick="saveUser()">LƯU THÔNG TIN</button>
+            <div class="modal-body pt-4">
+                <form id="userForm">
+                    <div class="mb-3">
+                        <label class="form-label">Tên đăng nhập</label>
+                        <input type="text" id="username" class="form-control form-control-custom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email làm việc</label>
+                        <input type="email" id="email" class="form-control form-control-custom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Vai trò</label>
+                        <select id="role" class="form-select form-control-custom" required>
+                            <option value="STAFF">Nhân viên</option>
+                            <option value="MANAGER">Quản lý rạp</option>
+                        </select>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-danger py-2 fw-bold">XÁC NHẬN THỰC THI</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+<script src="js/sidebar.js"></script>
 <script>
-    const userModal = new bootstrap.Modal(document.getElementById('userModal'));
-    let currentStaff = [];
+    if (!AuthGuard.requireRole(['ADMIN', 'MANAGER'])) {}
 
-    document.addEventListener('DOMContentLoaded', loadUsers);
+    let userModal;
+    let editUserId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        userModal = new bootstrap.Modal(document.getElementById('userModal'));
+        loadUsers();
+
+        document.getElementById('userForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                role: document.getElementById('role').value
+            };
+
+            const response = await api.post('/admin/users/staff', data);
+            if (response.success) {
+                userModal.hide();
+                loadUsers();
+            }
+        });
+    });
 
     async function loadUsers() {
-        try {
-            const res = await api.get('/admin/users');
-            if (res.success) {
-                currentStaff = res.data.filter(u => u.role === 'STAFF' || u.role === 'MANAGER');
-                renderUsers(currentStaff);
-            }
-        } catch (err) { console.error(err); }
+        const response = await api.get('/admin/users');
+        if (response.success) {
+            renderUsers(response.data);
+        }
     }
 
     function renderUsers(users) {
-        const list = document.getElementById('userList');
-        if (users.length === 0) {
-            list.innerHTML = '<tr><td colspan="5" class="text-center py-4">Chưa có nhân viên nào.</td></tr>';
-            return;
-        }
-        list.innerHTML = users.map(u => `
+        const tbody = document.getElementById('userTableBody');
+        tbody.innerHTML = users.map(user => `
             <tr>
-                <td><div class="fw-bold">${u.email}</div><div class="small text-muted">${u.username}</div></td>
-                <td><span class="role-badge ${u.role === 'MANAGER' ? 'badge-manager' : 'badge-staff'}">${u.role}</span></td>
                 <td>
-                    <span class="status-indicator ${u.status ? 'status-active' : 'status-locked'}"></span>
-                    ${u.status ? 'Hoạt động' : 'Đã khóa'}
+                    <div class="fw-bold">${user.username}</div>
+                    <div class="text-muted small">${user.email}</div>
                 </td>
-                <td>${new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
+                <td>
+                    <span class="role-badge badge-${user.role.toLowerCase()}">${user.role}</span>
+                </td>
+                <td>
+                    <span class="status-indicator ${user.status ? 'status-active' : 'status-locked'}"></span>
+                    <span class="small">${user.status ? 'Hoạt động' : 'Đã khóa'}</span>
+                </td>
                 <td class="text-end">
-                    <button class="action-btn btn-reset me-1" onclick="sendResetMail(${u.id}, '${u.email}')" title="Gửi link đổi mật khẩu">
+                    <button class="action-btn btn-status-toggle me-2" onclick="toggleStatus(${user.id})" title="Khóa/Mở khóa">
+                        <i class="bi bi-power"></i>
+                    </button>
+                    <button class="action-btn btn-reset" onclick="sendReset(${user.id})" title="Gửi mail Onboarding">
                         <i class="bi bi-envelope-at"></i>
-                    </button>
-                    <button class="action-btn me-1" onclick="showEditModal(${u.id})" title="Chỉnh sửa thông tin">
-                        <i class="bi bi-pencil-square"></i>
-                    </button>
-                    <button class="action-btn btn-status-toggle me-1" onclick="toggleStatus(${u.id})" title="${u.status ? 'Khóa tài khoản' : 'Mở khóa'}">
-                        <i class="bi ${u.status ? 'bi-shield-check' : 'bi-shield-lock-fill text-danger'}"></i>
-                    </button>
-                    <button class="action-btn" onclick="deleteUser(${u.id})" title="Xóa vĩnh viễn">
-                        <i class="bi bi-trash"></i>
                     </button>
                 </td>
             </tr>
@@ -196,74 +179,25 @@
     }
 
     function showCreateModal() {
-        document.getElementById('modalTitle').textContent = 'Tạo tài khoản nhân viên';
-        document.getElementById('userId').value = '';
-        document.getElementById('username').value = '';
+        editUserId = null;
+        document.getElementById('modalTitle').innerText = 'Thêm nhân viên mới';
+        document.getElementById('userForm').reset();
         document.getElementById('username').disabled = false;
-        document.getElementById('email').value = '';
-        document.getElementById('role').value = 'STAFF';
         userModal.show();
-    }
-
-    function showEditModal(id) {
-        const u = currentStaff.find(user => user.id === id);
-        if (!u) return;
-
-        document.getElementById('modalTitle').textContent = 'Chỉnh sửa nhân viên';
-        document.getElementById('userId').value = u.id;
-        document.getElementById('username').value = u.username;
-        document.getElementById('username').disabled = true; // Read-only
-        document.getElementById('email').value = u.email;
-        document.getElementById('role').value = u.role;
-        userModal.show();
-    }
-
-    async function saveUser() {
-        const id = document.getElementById('userId').value;
-        const data = {
-            username: document.getElementById('username').value,
-            email: document.getElementById('email').value,
-            role: document.getElementById('role').value
-        };
-
-        try {
-            let res;
-            if (id) {
-                // Update
-                res = await api.put(`/admin/users/${id}`, { email: data.email, role: data.role });
-            } else {
-                // Create
-                if (!data.username || !data.email) return alert('Vui lòng điền đủ thông tin!');
-                res = await api.post('/admin/users/staff', data);
-            }
-
-            if (res.success) {
-                userModal.hide();
-                loadUsers();
-                alert('Thao tác thành công!');
-            } else alert('Lỗi: ' + res.message);
-        } catch (err) { alert('Lỗi kết nối máy chủ.'); }
     }
 
     async function toggleStatus(id) {
-        try {
-            const res = await api.patch(`/admin/users/${id}/status`, {});
-            if (res.success) loadUsers();
-        } catch (err) { alert('Lỗi khi thay đổi trạng thái.'); }
+        if (confirm('Xác nhận thay đổi trạng thái hoạt động của người dùng này?')) {
+            const response = await api.put(`/admin/users/${id}/status`);
+            if (response.success) loadUsers();
+        }
     }
 
-    async function sendResetMail(id, email) {
-        if (!confirm(`Gửi link đặt lại mật khẩu đến Gmail: ${email}?`)) return;
-        try {
-            const res = await api.post(`/admin/users/${id}/reset-password`, {});
-            if (res.success) alert('Đã gửi thành công!');
-        } catch (err) { alert('Lỗi gửi mail.'); }
-    }
-
-    async function deleteUser(id) {
-        if (!confirm('Xóa vĩnh viễn tài khoản này?')) return;
-        const res = await api.delete(`/admin/users/${id}`);
-        if (res.success) loadUsers();
+    async function sendReset(id) {
+        if (confirm('Gửi email yêu cầu đặt lại mật khẩu (Onboarding) cho nhân viên này?')) {
+            const response = await api.post(`/admin/users/${id}/reset-password-email`);
+            if (response.success) alert('Đã gửi email thành công!');
+        }
     }
 </script>
 </body>

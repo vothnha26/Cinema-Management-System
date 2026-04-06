@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Khuyến Mãi | StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg: #080B14; --surface: #0F121F; --card: #161B2E; --border: #252A3D; --accent: #E5133A; --text: #E8EAF0; --text-muted: #7B82A0; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .main-content { flex: 1; overflow-y: auto; padding: 40px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; height: 100%; transition: 0.3s; }
+        .stat-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 16px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .analytics-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; height: 100%; }
+        .chart-title { font-weight: 700; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+        .filter-bar { background: var(--surface); border: 1px solid var(--border); padding: 15px 25px; border-radius: 16px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .form-control-dark { background: #080a14; border: 1px solid var(--border); color: #fff; border-radius: 10px; }
+
+        /* Campaign card */
+        .campaign-card { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 22px; transition: 0.3s; }
+        .campaign-card:hover { border-color: var(--accent); }
+        .campaign-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+        .campaign-name { font-weight: 700; color: #fff; font-size: 0.95rem; margin-bottom: 4px; }
+        .campaign-period { color: var(--text-muted); font-size: 0.78rem; }
+        .campaign-status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+        .status-active { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+        .status-ended { background: rgba(107,114,128,0.15); color: #9ca3af; border: 1px solid rgba(107,114,128,0.3); }
+        .status-upcoming { background: rgba(59,130,246,0.15); color: #3b82f6; border: 1px solid rgba(59,130,246,0.3); }
+        
+        .campaign-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .c-metric-label { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; }
+        .c-metric-val { font-weight: 800; color: #fff; font-size: 0.9rem; }
+
+        .voucher-progress { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+        .voucher-fill { height: 100%; border-radius: 3px; transition: width 1s; }
+        
+        /* ROI card */
+        .roi-card { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 16px; text-align: center; }
+        .roi-value { font-size: 1.5rem; font-weight: 800; }
+        .roi-positive { color: #22c55e; }
+        .roi-negative { color: var(--accent); }
+
+        .table-dark-custom { color: var(--text); }
+        .table-dark-custom thead th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); font-weight: 600; padding: 12px 16px; }
+        .table-dark-custom tbody tr { border-bottom: 1px solid rgba(37,42,61,0.5); transition: 0.2s; }
+        .table-dark-custom tbody tr:hover { background: rgba(229,19,58,0.05); }
+        .table-dark-custom tbody td { padding: 14px 16px; font-size: 0.88rem; vertical-align: middle; border: none; }
+
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+<aside class="sidebar"></aside>
+<main class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-800 m-0">BÁO CÁO KHUYẾN MÃI & VOUCHER</h2>
+            <p class="text-muted m-0">Hiệu quả chiến dịch, sử dụng voucher và phân tích ROI</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-danger" onclick="loadStats()"><i class="bi bi-arrow-clockwise me-2"></i>LÀM MỚI</button>
+            <button class="btn btn-danger" onclick="window.print()"><i class="bi bi-download me-2"></i>XUẤT BÁO CÁO</button>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">TỪ:</label>
+                <input type="date" id="startDate" class="form-control form-control-sm form-control-dark">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">ĐẾN:</label>
+                <input type="date" id="endDate" class="form-control form-control-sm form-control-dark">
+            </div>
+            <button class="btn btn-sm btn-danger px-3 fw-bold" onclick="loadStats()">LỌC DỮ LIỆU</button>
+        </div>
+        <div class="text-muted small fw-bold"><i class="bi bi-clock-history me-1"></i> Cập nhật: <span id="lastUpdate">--:--</span></div>
+    </div>
+
+    <!-- KPI -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-tags-fill"></i></div>
+                <div class="stat-value" id="totalVouchers">0</div>
+                <div class="stat-label">Voucher đã phát</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-check2-circle"></i></div>
+                <div class="stat-value" id="usedVouchers">0</div>
+                <div class="stat-label">Đã sử dụng</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-value" id="discountAmount">0đ</div>
+                <div class="stat-label">Tổng giảm giá</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="stat-value" id="avgROI">0%</div>
+                <div class="stat-label">ROI trung bình</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Chiến dịch đang chạy -->
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-megaphone text-danger"></i>CHIẾN DỊCH KHUYẾN MÃI</div>
+                <div class="row g-3" id="campaignGrid"></div>
+            </div>
+        </div>
+
+        <!-- Voucher usage doughnut -->
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-pie-chart text-warning"></i>TÌNH TRẠNG VOUCHER</div>
+                <div style="height: 200px; position: relative; margin-bottom: 16px;">
+                    <canvas id="voucherStatusChart"></canvas>
+                </div>
+                <div id="voucherStatusLegend" class="d-flex flex-column gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Discount trend -->
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-graph-down text-danger"></i>DOANH THU GIẢM GIÁ THEO NGÀY</div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="discountTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voucher type breakdown -->
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-bar-chart text-info"></i>PHÂN BỔ THEO LOẠI VOUCHER</div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="voucherTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voucher detail table -->
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-table text-primary"></i>CHI TIẾT VOUCHER & HIỆU QUẢ</div>
+                <div class="table-responsive">
+                    <table class="table table-dark-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>MÃ VOUCHER</th>
+                                <th>CHIẾN DỊCH</th>
+                                <th>LOẠI</th>
+                                <th>GIÁ TRỊ GIẢM</th>
+                                <th>ĐÃ PHÁT</th>
+                                <th>ĐÃ DÙNG</th>
+                                <th>TỶ LỆ DÙNG</th>
+                                <th>DOANH THU TẠO RA</th>
+                                <th>ROI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="voucherTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/js/auth-guard.js"></script>
+<script>AuthGuard.requireRole(['ADMIN', 'MANAGER']);</script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    let voucherStatusChart, discountTrendChart, voucherTypeChart;
+
+    async function init() {
+        const now = new Date(), monthAgo = new Date();
+        monthAgo.setDate(now.getDate() - 30);
+        document.getElementById('startDate').value = monthAgo.toISOString().split('T')[0];
+        document.getElementById('endDate').value = now.toISOString().split('T')[0];
+        loadStats();
+    }
+
+    async function loadStats() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        try {
+            const res = await api.get(`/statistics/promotions?startDate=${start}&endDate=${end}`);
+            if (res.success) { renderAll(res.data); document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString(); }
+        } catch (e) { mockRender(); }
+    }
+
+    function renderAll(d) {
+        document.getElementById('totalVouchers').innerText = (d.totalIssued || 0).toLocaleString();
+        document.getElementById('usedVouchers').innerText = (d.totalUsed || 0).toLocaleString();
+        document.getElementById('discountAmount').innerText = ((d.totalDiscount || 0) / 1000000).toFixed(1) + 'M';
+        document.getElementById('avgROI').innerText = (d.avgROI || 0) + '%';
+        renderCampaigns(d.campaigns || []);
+        renderVoucherStatus(d.voucherStatus || {});
+        renderDiscountTrend(d.discountByDay || {});
+        renderVoucherTypeChart(d.voucherTypes || {});
+        renderVoucherTable(d.voucherDetails || []);
+    }
+
+    function renderCampaigns(campaigns) {
+        const grid = document.getElementById('campaignGrid');
+        const statusClass = s => ({ 'active': 'status-active', 'ended': 'status-ended', 'upcoming': 'status-upcoming' }[s] || 'status-ended');
+        const statusLabel = s => ({ 'active': 'Đang chạy', 'ended': 'Đã kết thúc', 'upcoming': 'Sắp diễn ra' }[s] || s);
+        const barColors = ['#E5133A', '#3b82f6', '#10b981', '#f59e0b', '#a855f7', '#06b6d4'];
+        grid.innerHTML = campaigns.map((c, i) => {
+            const usedPct = Math.round((c.used / c.issued) * 100);
+            return `
+            <div class="col-md-6">
+                <div class="campaign-card">
+                    <div class="campaign-header">
+                        <div>
+                            <div class="campaign-name">${c.name}</div>
+                            <div class="campaign-period"><i class="bi bi-calendar2 me-1"></i>${c.startDate} — ${c.endDate}</div>
+                        </div>
+                        <span class="campaign-status-badge ${statusClass(c.status)}">${statusLabel(c.status)}</span>
+                    </div>
+                    <div class="campaign-metrics">
+                        <div><div class="c-metric-label">Đã phát</div><div class="c-metric-val">${c.issued.toLocaleString()}</div></div>
+                        <div><div class="c-metric-label">Đã dùng</div><div class="c-metric-val">${c.used.toLocaleString()}</div></div>
+                        <div><div class="c-metric-label">Doanh thu</div><div class="c-metric-val" style="color:#22c55e">${(c.revenue / 1000000).toFixed(1)}M</div></div>
+                        <div><div class="c-metric-label">ROI</div><div class="c-metric-val" style="color:${c.roi >= 0 ? '#22c55e' : '#E5133A'}">${c.roi > 0 ? '+' : ''}${c.roi}%</div></div>
+                    </div>
+                    <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Tỷ lệ sử dụng</span><span class="fw-bold text-white">${usedPct}%</span></div>
+                    <div class="voucher-progress"><div class="voucher-fill" style="width:${usedPct}%; background:${barColors[i % barColors.length]}"></div></div>
+                </div>
+            </div>`;
+        }).join('') || '<div class="col-12 text-center text-muted py-4">Không có chiến dịch nào</div>';
+    }
+
+    function renderVoucherStatus(data) {
+        const ctx = document.getElementById('voucherStatusChart').getContext('2d');
+        if (voucherStatusChart) voucherStatusChart.destroy();
+        const colors = ['#22c55e', '#E5133A', '#eab308', '#9ca3af'];
+        const labels = Object.keys(data), values = Object.values(data);
+        voucherStatusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+        });
+        document.getElementById('voucherStatusLegend').innerHTML = labels.map((l, i) => `
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width:10px;height:10px;border-radius:3px;background:${colors[i]}"></div>
+                    <span class="small">${l}</span>
+                </div>
+                <span class="small fw-bold">${values[i]}%</span>
+            </div>`).join('');
+    }
+
+    function renderDiscountTrend(data) {
+        const ctx = document.getElementById('discountTrendChart').getContext('2d');
+        if (discountTrendChart) discountTrendChart.destroy();
+        discountTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: Object.keys(data), datasets: [
+                { label: 'Chi phí giảm giá', data: Object.values(data).map(v => v.discount || v), borderColor: '#E5133A', backgroundColor: 'rgba(229,19,58,0.1)', fill: true, tension: 0.4, pointRadius: 4 },
+                { label: 'Doanh thu phát sinh', data: Object.values(data).map(v => v.revenue || 0), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.4, pointRadius: 4 }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#7B82A0', font: { family: 'Outfit' } } } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0', callback: v => (v/1000000).toFixed(1) + 'M' } }, x: { grid: { display: false }, ticks: { color: '#7B82A0' } } } }
+        });
+    }
+
+    function renderVoucherTypeChart(data) {
+        const ctx = document.getElementById('voucherTypeChart').getContext('2d');
+        if (voucherTypeChart) voucherTypeChart.destroy();
+        voucherTypeChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: Object.keys(data), datasets: [{ label: 'Số lần dùng', data: Object.values(data), backgroundColor: ['#E5133A','#3b82f6','#f59e0b','#10b981','#a855f7'], borderRadius: 8, borderSkipped: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0' } }, x: { grid: { display: false }, ticks: { color: '#7B82A0' } } } }
+        });
+    }
+
+    function renderVoucherTable(vouchers) {
+        const tbody = document.getElementById('voucherTableBody');
+        tbody.innerHTML = vouchers.map(v => {
+            const usePct = v.issued ? Math.round((v.used / v.issued) * 100) : 0;
+            const roiColor = v.roi >= 100 ? '#22c55e' : v.roi >= 50 ? '#eab308' : '#E5133A';
+            return `<tr>
+                <td><code style="color:#3b82f6">${v.code}</code></td>
+                <td class="fw-600">${v.campaign}</td>
+                <td><span style="color:#a855f7" class="fw-600">${v.type}</span></td>
+                <td class="fw-bold" style="color:#E5133A">-${v.discountValue.toLocaleString()}${v.isPercent ? '%' : 'đ'}</td>
+                <td>${v.issued.toLocaleString()}</td>
+                <td>${v.used.toLocaleString()}</td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:60px;height:4px;background:rgba(255,255,255,0.05);border-radius:2px">
+                            <div style="width:${usePct}%;height:100%;background:#3b82f6;border-radius:2px"></div>
+                        </div>
+                        <span class="small fw-bold">${usePct}%</span>
+                    </div>
+                </td>
+                <td class="fw-bold" style="color:#22c55e">${(v.revenueGenerated / 1000000).toFixed(1)}M</td>
+                <td class="fw-bold" style="color:${roiColor}">${v.roi}%</td>
+            </tr>`;
+        }).join('') || '<tr><td colspan="9" class="text-center text-muted py-4">Không có dữ liệu</td></tr>';
+    }
+
+    function mockRender() {
+        renderAll({
+            totalIssued: 4800, totalUsed: 3120, totalDiscount: 28600000, avgROI: 320,
+            campaigns: [
+                { name: 'Mừng Giỗ Tổ Hùng Vương', startDate: '01/04', endDate: '10/04', status: 'active', issued: 1000, used: 680, revenue: 52000000, roi: 285 },
+                { name: 'Happy Hour 17h-19h', startDate: '01/03', endDate: '31/03', status: 'ended', issued: 2400, used: 1890, revenue: 94000000, roi: 412 },
+                { name: 'Siêu Sale Thứ 4', startDate: '01/04', endDate: '30/04', status: 'active', issued: 800, used: 420, revenue: 31000000, roi: 198 },
+                { name: 'Combo Sinh Nhật', startDate: '15/04', endDate: '15/05', status: 'upcoming', issued: 600, used: 0, revenue: 0, roi: 0 },
+            ],
+            voucherStatus: { 'Đã sử dụng': 65, 'Chưa dùng': 22, 'Hết hạn': 10, 'Đã hủy': 3 },
+            discountByDay: { '01/04': { discount: 2800000, revenue: 12000000 }, '02/04': { discount: 3200000, revenue: 14500000 }, '03/04': { discount: 2100000, revenue: 9800000 }, '04/04': { discount: 4800000, revenue: 22000000 }, '05/04': { discount: 3600000, revenue: 16200000 }, '06/04': { discount: 5200000, revenue: 24800000 } },
+            voucherTypes: { 'Giảm %': 1820, 'Giảm tiền cố định': 680, 'Mua 1 tặng 1': 340, 'Combo ưu đãi': 220, 'Sinh nhật': 60 },
+            voucherDetails: [
+                { code: 'STAR30', campaign: 'Giỗ Tổ Hùng Vương', type: 'Giảm %', discountValue: 30, isPercent: true, issued: 500, used: 380, revenueGenerated: 28500000, roi: 342 },
+                { code: 'HAPPY50K', campaign: 'Happy Hour', type: 'Giảm tiền', discountValue: 50000, isPercent: false, issued: 1200, used: 960, revenueGenerated: 57600000, roi: 480 },
+                { code: 'WED20', campaign: 'Siêu Sale Thứ 4', type: 'Giảm %', discountValue: 20, isPercent: true, issued: 800, used: 420, revenueGenerated: 19800000, roi: 198 },
+                { code: 'BDAY2025', campaign: 'Sinh nhật VIP', type: 'Mua 1 tặng 1', discountValue: 100, isPercent: true, issued: 150, used: 98, revenueGenerated: 7350000, roi: 245 },
+            ]
+        });
+        document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
+    }
+    init();
+</script>
+</body>
+</html>

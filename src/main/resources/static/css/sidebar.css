@@ -1,0 +1,136 @@
+/* 
+ * StarCinema Common Sidebar Styles
+ */
+
+:root {
+  --sidebar-w: 260px;
+  --bg: #080B14; 
+  --surface: #0F121F; 
+  --card: #161B2E; 
+  --border: #252A3D;
+  --accent: #E5133A; 
+  --text: #E8EAF0; 
+  --text-muted: #7B82A0;
+}
+
+.sidebar { 
+    width: var(--sidebar-w); 
+    background: var(--surface); 
+    border-right: 1px solid var(--border); 
+    height: 100vh; 
+    position: fixed; 
+    top: 0; 
+    left: 0; 
+    z-index: 1000; 
+    padding: 24px; 
+    display: flex; 
+    flex-direction: column; 
+}
+
+.sidebar-header { 
+    padding: 0 0 30px 0; 
+    border-bottom: 1px solid var(--border); 
+    margin-bottom: 20px;
+}
+
+.sidebar .brand { 
+    font-family: 'Bebas Neue', 'Outfit', sans-serif; 
+    font-size: 1.8rem; 
+    font-weight: 800;
+    letter-spacing: 3px; 
+    color: var(--text); 
+    text-decoration: none; 
+    display: block;
+    margin-bottom: 20px;
+}
+
+.sidebar .brand span { color: var(--accent); }
+
+.nav-menu { 
+    list-style: none; 
+    padding: 0; 
+    margin: 0; 
+    flex: 1; 
+    overflow-y: auto;
+}
+
+.nav-link-admin { 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    padding: 12px 16px; 
+    color: var(--text-muted); 
+    text-decoration: none; 
+    border-radius: 10px;
+    transition: all 0.2s; 
+    font-weight: 500; 
+    margin-bottom: 8px; 
+    font-size: 0.95rem;
+}
+
+.nav-link-admin i {
+    font-size: 1.1rem;
+}
+
+.nav-section-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    padding: 24px 16px 12px 16px;
+    opacity: 0.7;
+}
+
+.nav-link-admin:hover, .nav-link-admin.active { 
+    background: rgba(229,19,58,0.1); 
+    color: var(--accent); 
+}
+
+.nav-link-admin.active { 
+    background: linear-gradient(135deg, #E5133A, #8B0020); 
+    color: #fff !important; 
+}
+
+.user-panel { 
+    border-top: 1px solid var(--border); 
+    padding-top: 20px; 
+    margin-top: auto; 
+}
+
+.admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.admin-avatar {
+    width: 38px;
+    height: 38px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+/* Fix main content margin if sidebar is present */
+.main-content, main {
+    margin-left: var(--sidebar-w) !important;
+}
+
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    .main-content, main {
+        margin-left: 0 !important;
+    }
+}

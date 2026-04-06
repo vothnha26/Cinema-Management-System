@@ -1,6 +1,6 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.enums.SeatType;
+import com.example.cinema.model.entity.SeatType;
 
 import jakarta.persistence.*;
 
@@ -21,9 +21,9 @@ public class Seat {
     @Column(name = "col_num", nullable = false)
     private Integer colNum;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private SeatType type;
+    @ManyToOne
+    @JoinColumn(name = "seat_type_id", nullable = false)
+    private SeatType seatType;
 
     private Boolean status = true;
 
@@ -62,12 +62,22 @@ public class Seat {
         this.colNum = colNum;
     }
 
-    public SeatType getType() {
-        return type;
+    public SeatType getSeatType() {
+        return seatType;
     }
 
-    public void setType(SeatType type) {
-        this.type = type;
+    public void setSeatType(SeatType seatType) {
+        this.seatType = seatType;
+    }
+
+    public void setType(String typeId) {
+        if (typeId != null) {
+            this.seatType = new SeatType(typeId, null);
+        }
+    }
+
+    public String getType() {
+        return seatType != null ? seatType.getId() : null;
     }
 
     public Boolean getStatus() {

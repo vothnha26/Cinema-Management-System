@@ -1,8 +1,8 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.PricingRuleType;
-import com.example.cinema.model.enums.RoomType;
-import com.example.cinema.model.enums.SeatType;
+import com.example.cinema.model.entity.RoomType;
+import com.example.cinema.model.entity.SeatType;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
@@ -34,10 +34,12 @@ public class PricingRule {
     private LocalTime startTime;
     private LocalTime endTime;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne
+    @JoinColumn(name = "room_type_id")
     private RoomType applicableRoomType;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne
+    @JoinColumn(name = "seat_type_id")
     private SeatType applicableSeatType;
 
     private String applicableFormat; // 2D, 3D, IMAX

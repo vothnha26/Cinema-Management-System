@@ -15,31 +15,13 @@
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
           --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
           --gradient: linear-gradient(135deg, #E5133A, #8B0020);
-          --sidebar-width: 260px;
+          --seat-available: #252A3D; --seat-vip: #F5A623; --seat-couple: #9B59B6;
         }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
-        
-        /* ── SIDEBAR ── */
-        .sidebar {
-          width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border);
-          height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px;
-          display: flex; flex-direction: column;
-        }
-        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; }
-        .brand span { color: var(--accent); }
-        .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
-        .nav-item { margin-bottom: 8px; }
-        .nav-link-admin {
-          display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted);
-          text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500;
-        }
-        .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
-        .nav-link-admin.active { background: var(--gradient); color: #fff; }
-        .user-panel { border-top: 1px solid var(--border); padding-top: 20px; margin-top: auto; }
 
         /* ── MAIN CONTENT ── */
-        .main-content { margin-left: var(--sidebar-width); padding: 40px; min-height: 100vh; }
+        .main-content { padding: 40px; min-height: 100vh; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
@@ -48,26 +30,38 @@
 
         /* ── ROOM GRID ── */
         .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
-        .room-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; transition: all 0.3s; position: relative; overflow: hidden; }
+        .room-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; transition: all 0.3s; position: relative; overflow: hidden; display: flex; flex-direction: column; }
         .room-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         
-        .room-type-tag { position: absolute; top: 20px; right: 20px; padding: 4px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+        .room-type-tag { position: absolute; top: 20px; right: 20px; padding: 4px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; z-index: 10; }
         .tag-imax { background: rgba(245,166,35,0.15); color: var(--accent-gold); border: 1px solid rgba(245,166,35,0.3); }
         .tag-4dx { background: rgba(229,19,58,0.15); color: var(--accent); border: 1px solid rgba(229,19,58,0.3); }
         .tag-std { background: rgba(100,180,255,0.15); color: #64B4FF; border: 1px solid rgba(100,180,255,0.3); }
 
-        .room-icon-box { width: 56px; height: 56px; border-radius: 14px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: var(--text-muted); margin-bottom: 20px; transition: 0.3s; }
+        .room-icon-box { width: 44px; height: 44px; border-radius: 12px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-muted); margin-bottom: 16px; transition: 0.3s; }
         .room-card:hover .room-icon-box { background: var(--accent); color: #fff; }
 
-        .room-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
-        .room-stats { display: flex; gap: 16px; margin-bottom: 24px; }
-        .stat-item { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); }
+        .room-name { font-size: 1.25rem; font-weight: 700; margin-bottom: 4px; }
+        .room-stats { display: flex; gap: 12px; margin-bottom: 16px; }
+        .stat-item { display: flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--text-muted); }
         .stat-item i { color: var(--accent); }
 
-        .room-actions { display: flex; gap: 10px; border-top: 1px solid var(--border); pt: 20px; margin-top: 20px; padding-top: 20px; }
-        .action-btn-outline { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text); font-size: 0.85rem; font-weight: 600; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+        /* ── MINI PREVIEW ── */
+        .mini-preview {
+            background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px;
+            padding: 12px; height: 120px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; pointer-events: none;
+        }
+        .mini-grid { display: grid; gap: 2px; }
+        .mini-seat { width: 6px; height: 6px; border-radius: 1px; background: #3a4060; }
+        .mini-seat.VIP { background: var(--seat-vip); }
+        .mini-seat.COUPLE { background: var(--seat-couple); width: 13px; }
+        .mini-seat.DISABLED { background: transparent; }
+
+        .room-actions { display: flex; gap: 10px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: auto; }
+        .action-btn-outline { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text); font-size: 0.8rem; font-weight: 600; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
         .action-btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(229,19,58,0.05); }
-        .action-btn-danger { width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text-muted); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .action-btn-danger { width: 40px; height: 40px; border-radius: 10px; border: 1.5px solid var(--border); background: transparent; color: var(--text-muted); transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         .action-btn-danger:hover { border-color: var(--accent); color: var(--accent); background: rgba(229,19,58,0.1); }
 
         /* ── MODAL ── */
@@ -83,9 +77,7 @@
 </head>
 <body>
 
-<aside class="sidebar">
-    <!-- Rendered by sidebar.js -->
-</aside>
+<aside class="sidebar"></aside>
 
 <main class="main-content">
     <div class="header-section">
@@ -99,7 +91,6 @@
     </div>
 
     <div class="room-grid" id="roomGrid">
-        <!-- Room cards will be rendered here -->
         <div class="col-12 text-center py-5">
             <div class="spinner-border text-danger" role="status"></div>
             <p class="mt-3 text-muted">Đang đồng bộ dữ liệu phòng chiếu...</p>
@@ -107,8 +98,7 @@
     </div>
 </main>
 
-<!-- ROOM MODAL -->
-<div class="modal fade" id="roomModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="roomModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -125,20 +115,23 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted text-uppercase">Loại phòng</label>
-                            <select name="type" class="form-select">
-                                <option value="HALL_2D">HALL 2D</option>
-                                <option value="HALL_3D">HALL 3D</option>
-                                <option value="IMAX">IMAX LASER</option>
-                                <option value="HALL_4DX">PREMIUM 4DX</option>
+                            <select name="type" id="roomTypeSelect" class="form-select"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase">Template (Tùy chọn)</label>
+                            <select name="templateFileName" id="templateSelect" class="form-select" onchange="toggleManualGrid()">
+                                <option value="">-- Tạo trống --</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
+                    </div>
+                    <div id="manualGridInputs" class="row g-3 mb-4">
+                        <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted text-uppercase">Số hàng</label>
-                            <input type="number" name="rows" class="form-control" value="10" min="1" required>
+                            <input type="number" name="rows" class="form-control" value="10">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted text-uppercase">Số cột</label>
-                            <input type="number" name="cols" class="form-control" value="10" min="1" required>
+                            <input type="number" name="cols" class="form-control" value="10">
                         </div>
                     </div>
                 </form>
@@ -160,50 +153,75 @@
     const roomModal = new bootstrap.Modal(document.getElementById('roomModal'));
     let allRooms = [];
 
-    document.addEventListener('DOMContentLoaded', loadRooms);
+    document.addEventListener('DOMContentLoaded', () => {
+        loadRooms();
+        loadMetadata();
+    });
+
+    async function loadMetadata() {
+        const typeRes = await api.get('/public/room-types');
+        if (typeRes.success) {
+            document.getElementById('roomTypeSelect').innerHTML = typeRes.data.map(t => 
+                `<option value="${t.id}">${t.name}</option>`).join('');
+        }
+        const tempRes = await api.get('/admin/room-templates');
+        if (tempRes.success) {
+            document.getElementById('templateSelect').innerHTML = '<option value="">-- Tạo trống --</option>' + 
+                tempRes.data.map(name => `<option value="${name}">${name.replace('.json', '').replace(/_/g, ' ')}</option>`).join('');
+        }
+    }
+
+    function toggleManualGrid() {
+        const hasTemplate = document.getElementById('templateSelect').value !== '';
+        document.getElementById('manualGridInputs').style.display = hasTemplate ? 'none' : 'flex';
+    }
 
     async function loadRooms() {
-        try {
-            const res = await api.get('/rooms');
-            if (res.success) {
-                allRooms = res.data;
-                renderRooms(allRooms);
-            }
-        } catch (e) { console.error(e); }
+        const res = await api.get('/rooms');
+        if (res.success) {
+            allRooms = res.data;
+            renderRooms(allRooms);
+        }
     }
 
     function renderRooms(rooms) {
         const grid = document.getElementById('roomGrid');
         if (!rooms.length) {
-            grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Chưa có phòng chiếu nào được tạo.</div>';
+            grid.innerHTML = '<div class="col-12 text-center text-muted py-5">Chưa có phòng chiếu nào.</div>';
             return;
         }
 
         grid.innerHTML = rooms.map(r => {
             const typeClass = r.type === 'IMAX' ? 'tag-imax' : (r.type === 'HALL_4DX' ? 'tag-4dx' : 'tag-std');
-            const typeLabel = r.type.replace('HALL_', '');
+            const typeLabel = (r.type || 'STD').replace('HALL_', '');
             
+            // Generate Mini Layout
+            const rows = [...new Set(r.seats.map(s => s.rowChar))].sort();
+            const maxCol = Math.max(...r.seats.map(s => s.colNum));
+            const miniLayoutHtml = `
+                <div class="mini-grid" style="grid-template-columns: repeat(${maxCol}, auto)">
+                    ${r.seats.sort((a,b) => (a.rowChar+a.colNum).localeCompare(b.rowChar+b.colNum)).map(s => `
+                        <div class="mini-seat ${s.type} ${!s.status ? 'DISABLED' : ''}"></div>
+                    `).join('')}
+                </div>
+            `;
+
             return `
                 <div class="room-card">
                     <span class="room-type-tag ${typeClass}">${typeLabel}</span>
-                    <div class="room-icon-box">
-                        <i class="bi bi-display"></i>
-                    </div>
+                    <div class="room-icon-box"><i class="bi bi-display"></i></div>
                     <div class="room-name">${r.name}</div>
                     <div class="room-stats">
                         <div class="stat-item"><i class="bi bi-person-workspace"></i> ${r.capacity} ghế</div>
                         <div class="stat-item"><i class="bi bi-grid-3x3"></i> ${r.rows}x${r.cols}</div>
                     </div>
+                    
+                    <div class="mini-preview">${miniLayoutHtml}</div>
+
                     <div class="room-actions">
-                        <a href="design-room.html?id=${r.id}" class="action-btn-outline">
-                            <i class="bi bi-grid-3x3-gap"></i> THIẾT KẾ GHẾ
-                        </a>
-                        <button class="action-btn-outline" style="flex:0 0 44px" onclick="editRoom(${r.id})">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button class="action-btn-danger" onclick="deleteRoom(${r.id})">
-                            <i class="bi bi-trash"></i>
-                        </button>
+                        <a href="design-room.html?id=${r.id}" class="action-btn-outline"><i class="bi bi-grid-3x3-gap"></i> THIẾT KẾ</a>
+                        <button class="action-btn-outline" style="flex:0 0 40px" onclick="editRoom(${r.id})"><i class="bi bi-pencil-square"></i></button>
+                        <button class="action-btn-danger" onclick="deleteRoom(${r.id})"><i class="bi bi-trash"></i></button>
                     </div>
                 </div>
             `;
@@ -214,21 +232,22 @@
         document.getElementById('roomForm').reset();
         document.getElementById('roomId').value = '';
         document.getElementById('modalTitle').innerText = 'THÊM PHÒNG CHIẾU MỚI';
+        toggleManualGrid();
         roomModal.show();
     }
 
     function editRoom(id) {
         const r = allRooms.find(x => x.id === id);
         if (!r) return;
-        
         const f = document.getElementById('roomForm');
         document.getElementById('roomId').value = r.id;
         f.querySelector('[name="name"]').value = r.name;
         f.querySelector('[name="type"]').value = r.type;
-        f.querySelector('[name="rows"]').value = r.rows || 10;
-        f.querySelector('[name="cols"]').value = r.cols || 10;
-        
+        f.querySelector('[name="rows"]').value = r.rows;
+        f.querySelector('[name="cols"]').value = r.cols;
+        f.querySelector('[name="templateFileName"]').value = '';
         document.getElementById('modalTitle').innerText = 'CẬP NHẬT PHÒNG CHIẾU';
+        toggleManualGrid();
         roomModal.show();
     }
 
@@ -237,23 +256,20 @@
         const f = document.getElementById('roomForm');
         const data = {
             name: f.querySelector('[name="name"]').value,
-            type: f.querySelector('[name="type"]').value,
-            rows: parseInt(f.querySelector('[name="rows"]').value),
-            cols: parseInt(f.querySelector('[name="cols"]').value)
+            roomTypeId: f.querySelector('[name="type"]').value,
+            templateFileName: f.querySelector('[name="templateFileName"]').value
         };
-
-        if (!data.name || isNaN(data.rows) || isNaN(data.cols)) return alert('Vui lòng nhập đủ thông tin!');
-
+        if (!data.templateFileName) {
+            data.rows = parseInt(f.querySelector('[name="rows"]').value);
+            data.cols = parseInt(f.querySelector('[name="cols"]').value);
+        }
         const res = await (id ? api.put(`/rooms/${id}`, data) : api.post('/rooms', data));
-        if (res.success) {
-            roomModal.hide();
-            loadRooms();
-            alert('Lưu phòng thành công!');
-        } else alert('Lỗi: ' + res.message);
+        if (res.success) { roomModal.hide(); loadRooms(); alert('Lưu thành công!'); }
+        else alert('Lỗi: ' + res.message);
     }
 
     async function deleteRoom(id) {
-        if (!confirm('Xóa phòng này sẽ xóa toàn bộ dữ liệu liên quan (Suất chiếu, vé...). Bạn chắc chắn chứ?')) return;
+        if (!confirm('Xóa phòng này?')) return;
         const res = await api.delete(`/rooms/${id}`);
         if (res.success) loadRooms();
         else alert('Lỗi: ' + res.message);

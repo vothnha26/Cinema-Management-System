@@ -70,7 +70,7 @@ public class SchedulingServiceImpl implements SchedulingService {
 
         for (Room room : rooms) {
             final Long currentRoomId = room.getId();
-            final String rType = room.getType().name();
+            final String rType = room.getType();
 
             // 1. Xác định thời điểm bắt đầu thực tế cho phòng này (Kiểm tra suất cuối ngày hôm trước)
             LocalDateTime actualStartTime = workingStartDateTime.plusMinutes(staggeredOffset);
@@ -121,7 +121,14 @@ public class SchedulingServiceImpl implements SchedulingService {
                 // Tính trọng số phim
                 final LocalTime evalTime = cursor.toLocalTime();
                 List<Movie> candidates = activeMovies.stream()
-                    .filter(m -> m.getFormats().stream().anyMatch(f -> f.getName().equals(rType)))
+                    .filter(m -> {
+                        if (room.getRoomType() == null) return !m.getFormats().isEmpty();
+                        Set<Format> supported = room.getRoomType().getSupportedFormats();
+                        if (supported == null || supported.isEmpty()) return !m.getFormats().isEmpty();
+                        
+                        // Kiểm tra xem phim có định dạng nào mà phòng hỗ trợ không
+                        return m.getFormats().stream().anyMatch(supported::contains);
+                    })
                     .sorted((m1, m2) -> {
                         double w1 = calculateAdvancedWeight(m1, evalTime, buzzScores, request, movieUsageCount);
                         double w2 = calculateAdvancedWeight(m2, evalTime, buzzScores, request, movieUsageCount);
@@ -156,7 +163,16 @@ public class SchedulingServiceImpl implements SchedulingService {
                     res.setRoomId(room.getId());
                     res.setRoomName(room.getName());
                     res.setRoomType(rType);
-                    selectedMovie.getFormats().stream().filter(f -> f.getName().equals(rType)).findFirst().ifPresent(f -> res.setFormatName(f.getName()));
+                    
+                    // Gán định dạng phù hợp nhất cho suất chiếu AI (ưu tiên theo phòng hỗ trợ)
+                    Set<Format> supported = room.getRoomType().getSupportedFormats();
+                    Format selectedFormat = selectedMovie.getFormats().stream()
+                            .filter(f -> supported == null || supported.isEmpty() || supported.contains(f))
+                            .max(Comparator.comparing(Format::getId)) // Ưu tiên ID cao (thường là IMAX/4DX)
+                            .orElse(selectedMovie.getFormats().isEmpty() ? null : selectedMovie.getFormats().iterator().next());
+                    
+                    res.setFormatName(selectedFormat.getName());
+                    
                     res.setStartTime(cursor);
                     res.setEndTime(expectedEndTime);
                     suggestions.add(res);

@@ -13,19 +13,10 @@
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
           --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
           --gradient: linear-gradient(135deg, #E5133A, #8B0020);
-          --sidebar-width: 260px;
         }
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; margin: 0; }
-        .sidebar { width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border); height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; padding: 24px; display: flex; flex-direction: column; }
-        .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); margin-bottom: 40px; text-decoration: none; }
-        .brand span { color: var(--accent); }
-        .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
-        .nav-item { margin-bottom: 8px; }
-        .nav-link-admin { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--text-muted); text-decoration: none; border-radius: 10px; transition: all 0.2s; font-weight: 500; }
-        .nav-link-admin i { font-size: 1.2rem; }
-        .nav-link-admin:hover, .nav-link-admin.active { background: rgba(229,19,58,0.1); color: var(--accent); }
-        .nav-link-admin.active { background: var(--gradient); color: #fff; }
-        .main-content { margin-left: var(--sidebar-width); padding: 40px; }
+        
+        .main-content { padding: 40px; }
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
         .audit-table-container { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
         .table { margin: 0; color: var(--text); border-color: var(--border); }
@@ -40,19 +31,7 @@
 </head>
 <body>
 
-<aside class="sidebar">
-    <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
-    <ul class="nav-menu">
-        <li class="nav-item"><a href="dashboard.html" class="nav-link-admin"><i class="bi bi-grid-1x2-fill"></i> Bảng điều khiển</a></li>
-        <li class="nav-item"><a href="manage-movies.html" class="nav-link-admin"><i class="bi bi-film"></i> Quản lý phim</a></li>
-        <li class="nav-item"><a href="manage-showtimes.html" class="nav-link-admin"><i class="bi bi-calendar-event"></i> Suất chiếu</a></li>
-        <li class="nav-item"><a href="manage-rooms.html" class="nav-link-admin"><i class="bi bi-door-open"></i> Phòng chiếu</a></li>
-        <li class="nav-item"><a href="manage-combos.html" class="nav-link-admin"><i class="bi bi-cup-straw"></i> Combo & F&B</a></li>
-        <li class="nav-item"><a href="manage-pricing.html" class="nav-link-admin"><i class="bi bi-tags"></i> Bảng giá</a></li>
-        <li class="nav-item"><a href="manage-promotions.html" class="nav-link-admin"><i class="bi bi-percent"></i> Khuyến mãi</a></li>
-        <li class="nav-item"><a href="manage-audit.html" class="nav-link-admin active"><i class="bi bi-shield-check"></i> Nhật ký hệ thống</a></li>
-    </ul>
-</aside>
+<aside class=\"sidebar\"></aside>
 
 <main class="main-content">
     <div class="header-section mb-4">
@@ -78,7 +57,9 @@
     </div>
 </main>
 
-<script src="/js/api.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+<script src="js/sidebar.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', loadLogs);
 
@@ -91,24 +72,31 @@
 
     function renderLogs(logs) {
         const container = document.getElementById('auditList');
-        if (logs.length === 0) {
+        if (!logs || logs.length === 0) {
             container.innerHTML = '<tr><td colspan="5" class="text-center p-5 text-muted">Chưa có nhật ký hoạt động nào</td></tr>';
             return;
         }
 
         container.innerHTML = logs.map(log => {
             const time = new Date(log.timestamp).toLocaleString('vi-VN');
-            const actionClass = log.action.includes('CREATE') ? 'bg-create' : (log.action.includes('DELETE') ? 'bg-delete' : 'bg-update');
+            const actionClass = getActionClass(log.action);
             return `
                 <tr>
                     <td class="text-muted">${time}</td>
                     <td class="fw-bold">${log.username}</td>
                     <td><span class="action-badge ${actionClass}">${log.action}</span></td>
-                    <td class="text-info">${log.target}</td>
-                    <td class="small text-muted">${log.details}</td>
+                    <td class="text-muted">${log.target}</td>
+                    <td style="font-size: 0.8rem; font-family: monospace;">${log.detail}</td>
                 </tr>
             `;
         }).join('');
+    }
+
+    function getActionClass(action) {
+        if (action.includes('CREATE')) return 'bg-create';
+        if (action.includes('UPDATE')) return 'bg-update';
+        if (action.includes('DELETE')) return 'bg-delete';
+        return 'bg-secondary bg-opacity-10 text-muted';
     }
 </script>
 </body>

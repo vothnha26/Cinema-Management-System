@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarCinema – Chi Tiết Phòng Chiếu</title>
+    <title>Thiết kế Chi Tiết Phòng – StarCinema</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -14,39 +14,29 @@
           --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
           --gradient: linear-gradient(135deg, #E5133A, #8B0020);
           --seat-available: #252A3D; --seat-vip: #F5A623; --seat-couple: #9B59B6;
-          --sidebar-width: 340px;
+          --sidebar-width: 320px;
         }
-        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; margin: 0; display: flex; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; margin: 0; display: flex; overflow: hidden; }
         
-        /* ── LEFT SIDEBAR: SCHEDULE ── */
-        .schedule-sidebar {
+        /* ── SIDEBARS ── */
+        .setup-sidebar {
             width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border);
-            height: 100vh; position: fixed; left: 0; top: 0; padding: 32px 24px;
-            display: flex; flex-direction: column; overflow-y: auto;
+            height: 100vh; padding: 32px 24px; display: flex; flex-direction: column; z-index: 100;
         }
-        .schedule-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 1px; margin-bottom: 24px; color: var(--accent-gold); }
-        .schedule-card {
-            background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-            padding: 16px; margin-bottom: 12px; transition: all 0.2s;
-        }
-        .schedule-card:hover { border-color: var(--accent); background: rgba(229,19,58,0.05); }
-        .movie-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; display: block; }
-        .time-info { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-        .status-tag { font-size: 0.65rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; margin-top: 8px; display: inline-block; }
-        .tag-upcoming { background: rgba(100,200,255,0.1); color: #64C8FF; }
-        .tag-active { background: rgba(80,200,100,0.1); color: #50C864; }
-
-        /* ── MAIN AREA: SEAT CANVAS ── */
-        .canvas-area { flex: 1; margin-left: var(--sidebar-width); margin-right: var(--sidebar-width); padding: 60px; display: flex; flex-direction: column; align-items: center; overflow: auto; }
-        .screen {
-          width: 70%; height: 8px; background: var(--accent); border-radius: 4px;
-          box-shadow: 0 4px 20px rgba(229,19,58,0.4); margin-bottom: 60px; position: relative;
-        }
-        .screen::after {
-          content: 'MÀN HÌNH'; position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-          font-size: 0.7rem; letter-spacing: 4px; color: var(--text-muted);
+        .toolbar-sidebar {
+            width: var(--sidebar-width); background: var(--surface); border-left: 1px solid var(--border);
+            height: 100vh; padding: 32px 24px; display: flex; flex-direction: column; z-index: 100;
         }
 
+        /* ── CANVAS AREA ── */
+        .canvas-area { flex: 1; height: 100vh; overflow: auto; display: flex; flex-direction: column; align-items: center; padding: 60px; position: relative; background: radial-gradient(circle at center, #111526 0%, #080b14 100%); }
+        .canvas-container { padding: 40px; background: rgba(255,255,255,0.02); border-radius: 24px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; min-width: min-content; }
+        
+        .screen { width: 80%; height: 6px; background: var(--accent); border-radius: 10px; box-shadow: 0 4px 25px rgba(229,19,58,0.5); margin-bottom: 80px; position: relative; }
+        .screen::after { content: 'MÀN HÌNH CHÍNH'; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; color: var(--text-muted); letter-spacing: 4px; font-weight: 700; white-space: nowrap; }
+
+        /* ── SEAT GRID ── */
         .seat-grid { display: grid; gap: 8px; user-select: none; }
         .seat {
           width: 36px; height: 34px; border-radius: 6px; background: var(--seat-available);
@@ -54,82 +44,100 @@
           justify-content: center; font-size: 0.65rem; font-weight: 700; color: var(--text-muted);
           transition: all 0.15s;
         }
-        .seat:hover { transform: scale(1.1); border-color: var(--accent); }
-        .seat.selected { border-color: #fff; border-width: 2px; box-shadow: 0 0 10px rgba(255,255,255,0.3); }
-        .seat.VIP { background: rgba(245,166,35,0.2); border-color: var(--accent-gold); color: var(--accent-gold); }
-        .seat.COUPLE { background: rgba(155,89,182,0.2); border-color: var(--seat-couple); color: var(--seat-couple); width: 80px; }
-        .seat.DISABLED { background: #000; border-color: #111; color: transparent; opacity: 0.3; }
-        .row-label { width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-muted); }
+        .seat:hover { transform: scale(1.1); border-color: #fff; }
+        .seat.selected { border-color: #fff; border-width: 2px; box-shadow: 0 0 15px rgba(255,255,255,0.4); z-index: 2; }
+        .seat.STANDARD { background: var(--seat-available); }
+        .seat.VIP { background: rgba(245,166,35,0.15); border-color: var(--accent-gold); color: var(--accent-gold); }
+        .seat.COUPLE { background: rgba(155,89,182,0.15); border-color: var(--seat-couple); color: var(--seat-couple); width: 80px; }
+        .seat.EMPTY { background: transparent; border: 1.5px dashed var(--border); color: transparent; }
+        .row-label { width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-muted); font-size: 0.8rem; }
 
-        /* ── RIGHT SIDEBAR: TOOLBAR ── */
-        .toolbar-sidebar {
-          width: var(--sidebar-width); background: var(--surface); border-left: 1px solid var(--border);
-          height: 100vh; position: fixed; right: 0; top: 0; padding: 32px 24px;
-          display: flex; flex-direction: column; z-index: 100;
-        }
-        .tool-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-        .selection-info { background: rgba(229,19,58,0.1); border: 1px solid var(--accent); padding: 16px; border-radius: 12px; margin-bottom: 20px; }
+        /* ── UI COMPONENTS ── */
+        .section-title { font-family: 'Bebas Neue'; font-size: 1.8rem; color: var(--accent-gold); margin-bottom: 24px; letter-spacing: 1px; }
+        .tool-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block; }
+        
         .type-opt {
-          display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px;
-          border: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
+          display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px;
+          border: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; transition: 0.2s;
+          background: var(--card);
         }
         .type-opt:hover { background: rgba(255,255,255,0.05); }
         .type-opt.active { border-color: var(--accent); background: rgba(229,19,58,0.05); }
-        .btn-save { background: var(--gradient); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 700; width: 100%; margin-top: auto; }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .btn-save { background: var(--gradient); color: #fff; border: none; padding: 16px; border-radius: 14px; font-weight: 700; margin-top: auto; transition: 0.3s; box-shadow: 0 4px 15px rgba(229,19,58,0.3); }
+        .btn-save:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        .form-control, .form-select { background: var(--card); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 10px; font-size: 0.9rem; }
+        .form-control:focus { background: var(--card); border-color: var(--accent); color: #fff; box-shadow: none; }
+
+        .back-btn { display: flex; align-items: center; gap: 8px; color: var(--text-muted); text-decoration: none; font-size: 0.9rem; margin-bottom: 24px; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<!-- LEFT: SHOWTIMES -->
-<aside class="schedule-sidebar">
-    <div class="schedule-title">Suất chiếu hôm nay</div>
-    <div id="scheduleList">
-        <div class="text-center py-4 text-muted small">Đang tải lịch chiếu...</div>
+<aside class="setup-sidebar">
+    <a href="manage-rooms.html" class="back-btn"><i class="bi bi-arrow-left"></i> QUẢN LÝ PHÒNG</a>
+    <h2 class="section-title" id="roomNameLabel">Phòng chiếu</h2>
+    
+    <div class="mb-4">
+        <label class="tool-label">Kích thước lưới</label>
+        <div class="row g-2">
+            <div class="col-6">
+                <input type="number" id="rowsInput" class="form-control" placeholder="Hàng">
+            </div>
+            <div class="col-6">
+                <input type="number" id="colsInput" class="form-control" placeholder="Cột">
+            </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm w-100 mt-2" onclick="adjustGrid()">CẬP NHẬT LƯỚI</button>
+    </div>
+
+    <div class="tool-label mb-3">Thư viện mẫu</div>
+    <select id="templateSelect" class="form-select mb-2">
+        <option value="">-- Chọn Template --</option>
+    </select>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-info btn-sm w-100" onclick="applyTemplate()">TẢI MẪU</button>
+        <button class="btn btn-outline-warning btn-sm w-100" onclick="exportAsTemplate()">LƯU THÀNH MẪU</button>
+    </div>
+
+    <div class="mt-auto p-3 rounded-4" style="background:rgba(255,255,255,0.03); border:1px solid var(--border)">
+        <div id="selectionStatus" class="fw-bold text-accent-gold mb-1">0 ghế được chọn</div>
+        <p class="small text-muted mb-0">Nhấp hoặc kéo chuột để chọn vùng ghế cần chỉnh sửa.</p>
     </div>
 </aside>
 
-<!-- CENTER: CANVAS -->
 <div class="canvas-area">
-    <div class="d-flex align-items-center gap-3 mb-5" style="width: 100%; max-width: 800px;">
-        <a href="manage-rooms.html" class="btn btn-outline-secondary border-0"><i class="bi bi-arrow-left"></i></a>
-        <h2 id="roomTitle" style="font-family:'Bebas Neue'; letter-spacing: 1px; margin: 0;">Đang tải phòng...</h2>
+    <div class="canvas-container">
+        <div class="screen"></div>
+        <div id="seatGrid" class="seat-grid"></div>
     </div>
-    <div class="screen"></div>
-    <div id="seatGrid" class="seat-grid"></div>
 </div>
 
-<!-- RIGHT: TOOLS -->
 <aside class="toolbar-sidebar">
-    <div class="tool-label">Thiết kế sơ đồ</div>
-    
-    <div class="selection-info">
-        <div style="font-size: 1.2rem; font-weight: 700;" id="selectCount">0 ghế</div>
-        <div style="font-size: 0.75rem; opacity: 0.7; max-height: 60px; overflow-y: auto;" id="selectNames">Vui lòng nhấp chọn ghế</div>
-    </div>
-
-    <div class="tool-label mt-4">Loại ghế</div>
-    <div class="type-opt" onclick="setSeatType('STANDARD')">
-        <div style="width:12px; height:12px; border-radius:3px; background: var(--seat-available); border: 1px solid #3a4060;"></div>
+    <div class="tool-label mb-3">Loại ghế áp dụng</div>
+    <div class="type-opt" onclick="applyType('STANDARD')">
+        <div style="width:16px; height:16px; border-radius:4px; background: var(--seat-available); border: 1px solid #3a4060;"></div>
         <span>Ghế Thường</span>
     </div>
-    <div class="type-opt" onclick="setSeatType('VIP')">
-        <div style="width:12px; height:12px; border-radius:3px; background: var(--seat-vip);"></div>
-        <span>Ghế VIP</span>
+    <div class="type-opt" onclick="applyType('VIP')">
+        <div style="width:16px; height:16px; border-radius:4px; background: var(--seat-vip);"></div>
+        <span class="text-warning">Ghế VIP</span>
     </div>
-    <div class="type-opt" onclick="setSeatType('COUPLE')">
-        <div style="width:24px; height:12px; border-radius:3px; background: var(--seat-couple);"></div>
-        <span>Ghế Đôi</span>
+    <div class="type-opt" onclick="applyType('COUPLE')">
+        <div style="width:32px; height:16px; border-radius:4px; background: var(--seat-couple);"></div>
+        <span class="text-info">Ghế Đôi</span>
     </div>
-    <div class="type-opt" onclick="setSeatType('DISABLED')">
-        <div style="width:12px; height:12px; border-radius:3px; background: #000; border: 1px solid #222;"></div>
-        <span>Lối đi / Hỏng</span>
+    <div class="type-opt" onclick="applyType('EMPTY')">
+        <div style="width:16px; height:16px; border-radius:4px; border: 1.5px dashed #444;"></div>
+        <span>Ô Trống (Lối đi)</span>
     </div>
 
-    <button class="btn-save" onclick="saveDesign()">
-        <i class="bi bi-cloud-check me-2"></i> LƯU THAY ĐỔI
+    <button class="btn-save" onclick="saveLayout()">
+        <i class="bi bi-cloud-check me-2"></i> LƯU SƠ ĐỒ PHÒNG
     </button>
 </aside>
 
@@ -138,118 +146,180 @@
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get('id');
     let roomData = null;
-    let selectedSeats = new Set();
+    let selectedIndices = new Set();
+    let isMouseDown = false;
 
     document.addEventListener('DOMContentLoaded', () => {
         loadRoomDetail();
-        loadRoomSchedule();
+        loadTemplates();
+        document.addEventListener('mousedown', () => isMouseDown = true);
+        document.addEventListener('mouseup', () => isMouseDown = false);
     });
 
     async function loadRoomDetail() {
-        if (!roomId) { window.location.href = 'manage-rooms.html'; return; }
-        const response = await api.get(`/rooms/${roomId}`);
-        if (response.success) {
-            roomData = response.data;
-            document.getElementById('roomTitle').textContent = roomData.name;
+        const res = await api.get(`/rooms/${roomId}`);
+        if (res.success) {
+            roomData = res.data;
+            document.getElementById('roomNameLabel').textContent = roomData.name;
+            document.getElementById('rowsInput').value = roomData.rows;
+            document.getElementById('colsInput').value = roomData.cols;
             renderGrid();
         }
     }
 
-    async function loadRoomSchedule() {
-        const today = new Date().toISOString().split('T')[0];
-        const res = await api.get(`/showtimes?date=${today}`);
-        const container = document.getElementById('scheduleList');
-        
+    async function loadTemplates() {
+        const res = await api.get('/admin/room-templates');
         if (res.success) {
-            const myShowtimes = res.data.filter(s => s.roomId == roomId)
-                .sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
-            
-            if (myShowtimes.length === 0) {
-                container.innerHTML = '<div class="text-center py-5 text-muted small">Không có suất chiếu nào trong hôm nay.</div>';
-                return;
-            }
-
-            container.innerHTML = myShowtimes.map(s => {
-                const start = new Date(s.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const end = new Date(s.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const isNow = new Date() >= new Date(s.startTime) && new Date() <= new Date(s.endTime);
-
-                return `
-                    <div class="schedule-card">
-                        <span class="movie-title">${s.movieTitle}</span>
-                        <div class="time-info">
-                            <i class="bi bi-clock"></i> ${start} - ${end}
-                        </div>
-                        <span class="status-tag ${isNow ? 'tag-active' : 'tag-upcoming'}">
-                            ${isNow ? 'Đang chiếu' : 'Sắp chiếu'}
-                        </span>
-                    </div>
-                `;
-            }).join('');
+            document.getElementById('templateSelect').innerHTML = '<option value="">-- Chọn Template --</option>' + 
+                res.data.map(name => `<option value="${name}">${name.replace('.json','').replace(/_/g,' ')}</option>`).join('');
         }
     }
 
     function renderGrid() {
         const grid = document.getElementById('seatGrid');
-        const rows = [...new Set(roomData.seats.map(s => s.rowChar))].sort();
-        const maxCol = Math.max(...roomData.seats.map(s => s.colNum));
+        const rows = roomData.rows;
+        const cols = roomData.cols;
         
-        grid.style.gridTemplateColumns = `30px repeat(${maxCol}, auto)`;
+        grid.style.gridTemplateColumns = `30px repeat(${cols}, auto)`;
         grid.innerHTML = '';
+        selectedIndices.clear();
+        updateUI();
 
-        rows.forEach(row => {
+        for (let r = 0; r < rows; r++) {
+            const rowChar = String.fromCharCode(65 + r);
             const label = document.createElement('div');
             label.className = 'row-label';
-            label.textContent = row;
+            label.textContent = rowChar;
             grid.appendChild(label);
 
-            const rowSeats = roomData.seats.filter(s => s.rowChar === row).sort((a,b) => a.colNum - b.colNum);
-            rowSeats.forEach(seat => {
-                const seatEl = document.createElement('div');
-                const seatId = `${seat.rowChar}${seat.colNum}`;
-                seatEl.className = `seat ${seat.type} ${selectedSeats.has(seatId) ? 'selected' : ''}`;
-                seatEl.id = `seat-${seatId}`;
-                seatEl.textContent = seat.type === 'DISABLED' ? '' : seatId;
-                seatEl.style.gridColumn = seat.colNum + 1;
-                seatEl.onclick = () => toggleSeat(seatId);
-                grid.appendChild(seatEl);
-            });
-        });
-    }
-
-    function toggleSeat(id) {
-        if (selectedSeats.has(id)) selectedSeats.delete(id);
-        else selectedSeats.add(id);
-        updateSelectionUI();
-        renderGrid();
-    }
-
-    function updateSelectionUI() {
-        document.getElementById('selectCount').textContent = `${selectedSeats.size} ghế`;
-        document.getElementById('selectNames').textContent = selectedSeats.size > 0 
-            ? Array.from(selectedSeats).join(', ') : 'Vui lòng nhấp chọn ghế';
-    }
-
-    function setSeatType(type) {
-        if (selectedSeats.size === 0) return alert('Vui lòng chọn ít nhất 1 ghế!');
-        roomData.seats.forEach(seat => {
-            if (selectedSeats.has(`${seat.rowChar}${seat.colNum}`)) {
-                seat.type = type;
-                seat.status = (type !== 'DISABLED');
+            for (let c = 1; c <= cols; c++) {
+                const seat = roomData.seats.find(s => s.rowChar === rowChar && s.colNum === c);
+                // CHÚ Ý: Sử dụng seatTypeId thay vì type
+                const type = seat ? seat.seatTypeId : 'EMPTY';
+                const index = `${rowChar}-${c}`;
+                
+                const el = document.createElement('div');
+                el.className = `seat ${type}`;
+                el.id = `cell-${index}`;
+                el.textContent = type === 'EMPTY' ? '' : `${rowChar}${c}`;
+                
+                el.onmousedown = (e) => { e.preventDefault(); toggleSelect(index); };
+                el.onmouseenter = () => { if(isMouseDown) toggleSelect(index); };
+                
+                grid.appendChild(el);
             }
+        }
+    }
+
+    function toggleSelect(idx) {
+        if (selectedIndices.has(idx)) {
+            selectedIndices.delete(idx);
+            document.getElementById(`cell-${idx}`).classList.remove('selected');
+        } else {
+            selectedIndices.add(idx);
+            document.getElementById(`cell-${idx}`).classList.add('selected');
+        }
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('selectionStatus').textContent = `${selectedIndices.size} ghế được chọn`;
+    }
+
+    function applyType(type) {
+        if (selectedIndices.size === 0) return alert('Vui lòng chọn ghế!');
+        selectedIndices.forEach(idx => {
+            const [r, c] = idx.split('-');
+            let seat = roomData.seats.find(s => s.rowChar === r && s.colNum == c);
+            if (!seat) {
+                seat = { rowChar: r, colNum: parseInt(c) };
+                roomData.seats.push(seat);
+            }
+            // Đảm bảo cập nhật seatTypeId
+            seat.seatTypeId = type;
+            seat.status = (type !== 'EMPTY');
+            
+            const el = document.getElementById(`cell-${idx}`);
+            el.className = `seat ${type}`;
+            el.textContent = type === 'EMPTY' ? '' : `${r}${c}`;
         });
+        selectedIndices.clear();
+        document.querySelectorAll('.seat.selected').forEach(el => el.classList.remove('selected'));
+        updateUI();
+    }
+
+    function adjustGrid() {
+        const newRows = parseInt(document.getElementById('rowsInput').value);
+        const newCols = parseInt(document.getElementById('colsInput').value);
+        if (newRows > 26 || newCols > 30) return alert('Kích thước tối đa 26x30');
+        
+        roomData.rows = newRows;
+        roomData.cols = newCols;
         renderGrid();
     }
 
-    async function saveDesign() {
-        const updateRequests = roomData.seats.map(s => ({
-            rowChar: s.rowChar, colNum: s.colNum, type: s.type, status: s.status
-        }));
-        const res = await api.put(`/rooms/${roomId}/layout`, { seats: updateRequests });
+    async function applyTemplate() {
+        const file = document.getElementById('templateSelect').value;
+        if (!file) return;
+        const res = await api.get(`/admin/room-templates/${file}`);
         if (res.success) {
-            alert('Lưu thành công!');
-            selectedSeats.clear();
-            updateSelectionUI();
+            const temp = res.data;
+            roomData.rows = temp.rows;
+            roomData.cols = temp.cols;
+            roomData.seats = temp.seats.map(s => ({
+                rowChar: s.rowChar, colNum: s.colNum, seatTypeId: s.seatTypeId, status: s.status
+            }));
+            document.getElementById('rowsInput').value = temp.rows;
+            document.getElementById('colsInput').value = temp.cols;
+            renderGrid();
+        }
+    }
+
+    async function exportAsTemplate() {
+        const name = prompt('Tên template mới:');
+        if (!name) return;
+        const activeSeats = roomData.seats.filter(s => s.seatTypeId !== 'EMPTY');
+        const data = {
+            templateName: name,
+            roomTypeId: roomData.roomType ? roomData.roomType.id : (roomData.roomTypeId || 'HALL_2D'),
+            rows: roomData.rows, cols: roomData.cols,
+            seats: activeSeats.map(s => ({
+                rowChar: s.rowChar, colNum: s.colNum, seatTypeId: s.seatTypeId, status: s.status
+            }))
+        };
+        const res = await api.post('/admin/room-templates', data);
+        if (res.success) { alert('Đã lưu mẫu thành công!'); loadTemplates(); }
+    }
+
+    async function saveLayout() {
+        const allSeatsForGrid = [];
+        const rows = roomData.rows;
+        const cols = roomData.cols;
+        
+        for (let r = 0; r < rows; r++) {
+            const rowChar = String.fromCharCode(65 + r);
+            for (let c = 1; c <= cols; c++) {
+                const seat = roomData.seats.find(s => s.rowChar === rowChar && s.colNum === c);
+                allSeatsForGrid.push({
+                    rowChar: rowChar,
+                    colNum: c,
+                    seatTypeId: seat ? seat.seatTypeId : 'EMPTY',
+                    status: seat ? (seat.seatTypeId !== 'EMPTY') : false
+                });
+            }
+        }
+
+        const res = await api.put(`/rooms/${roomId}/layout`, {
+            rows: rows,
+            cols: cols,
+            seats: allSeatsForGrid
+        });
+        
+        if (res.success) {
+            alert('Đã lưu sơ đồ phòng và cập nhật kích thước thành công!');
+            loadRoomDetail(); // Reload to sync with server IDs
+        } else {
+            alert('Lỗi: ' + res.message);
         }
     }
 </script>

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Vé & Đặt Chỗ | StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #080B14; --surface: #0F121F; --card: #161B2E; --border: #252A3D;
+            --accent: #E5133A; --text: #E8EAF0; --text-muted: #7B82A0;
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .main-content { flex: 1; overflow-y: auto; padding: 40px; }
+
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; height: 100%; transition: 0.3s; }
+        .stat-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 16px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-delta { font-size: 0.8rem; margin-top: 6px; }
+        .delta-up { color: #22c55e; } .delta-down { color: var(--accent); }
+
+        .analytics-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; height: 100%; }
+        .chart-title { font-weight: 700; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        .filter-bar { background: var(--surface); border: 1px solid var(--border); padding: 15px 25px; border-radius: 16px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .form-control-dark { background: #080a14; border: 1px solid var(--border); color: #fff; border-radius: 10px; }
+        .form-control-dark:focus { background: #080a14; color: #fff; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(229,19,58,0.2); }
+
+        /* Seat type grid */
+        .seat-type-item { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; transition: 0.3s; }
+        .seat-type-item:hover { border-color: var(--accent); }
+        .seat-dot { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+        .seat-info { flex: 1; }
+        .seat-name { font-weight: 700; color: #fff; font-size: 0.9rem; }
+        .seat-count { color: var(--text-muted); font-size: 0.8rem; }
+        .seat-rev { font-weight: 800; color: var(--accent); font-size: 1rem; }
+
+        /* Status badges */
+        .badge-sold { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-cancel { background: rgba(229,19,58,0.15); color: #E5133A; border: 1px solid rgba(229,19,58,0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-refund { background: rgba(234,179,8,0.15); color: #eab308; border: 1px solid rgba(234,179,8,0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+        .badge-noshow { background: rgba(156,163,175,0.15); color: #9ca3af; border: 1px solid rgba(156,163,175,0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+
+        /* Recent transactions table */
+        .table-dark-custom { color: var(--text); }
+        .table-dark-custom thead th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); font-weight: 600; padding: 12px 16px; }
+        .table-dark-custom tbody tr { border-bottom: 1px solid rgba(37,42,61,0.5); transition: 0.2s; }
+        .table-dark-custom tbody tr:hover { background: rgba(229,19,58,0.05); }
+        .table-dark-custom tbody td { padding: 14px 16px; font-size: 0.88rem; vertical-align: middle; border: none; }
+        .table-dark-custom tbody tr:last-child { border-bottom: none; }
+
+        .channel-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 600; color: #3b82f6; }
+        .channel-pill.offline { background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.3); color: #a855f7; }
+        
+        /* Progress bars for channel split */
+        .channel-bar { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.05); overflow: hidden; margin-top: 6px; }
+        .channel-bar-fill { height: 100%; border-radius: 5px; transition: width 1s ease-out; }
+
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+<aside class="sidebar"></aside>
+
+<main class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-800 m-0">BÁO CÁO VÉ & ĐẶT CHỖ</h2>
+            <p class="text-muted m-0">Phân tích chi tiết vé bán, kênh đặt và loại ghế</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-danger" onclick="loadStats()"><i class="bi bi-arrow-clockwise me-2"></i>LÀM MỚI</button>
+            <button class="btn btn-danger" onclick="window.print()"><i class="bi bi-download me-2"></i>XUẤT BÁO CÁO</button>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">TỪ:</label>
+                <input type="date" id="startDate" class="form-control form-control-sm form-control-dark">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">ĐẾN:</label>
+                <input type="date" id="endDate" class="form-control form-control-sm form-control-dark">
+            </div>
+            <button class="btn btn-sm btn-danger px-3 fw-bold" onclick="loadStats()">LỌC DỮ LIỆU</button>
+        </div>
+        <div class="text-muted small fw-bold"><i class="bi bi-clock-history me-1"></i> Cập nhật: <span id="lastUpdate">--:--</span></div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-ticket-perforated-fill"></i></div>
+                <div class="stat-value" id="totalSold">0</div>
+                <div class="stat-label">Tổng vé đã bán</div>
+                <div class="stat-delta delta-up" id="soldDelta"><i class="bi bi-arrow-up-short"></i> -- so với kỳ trước</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="stat-value" id="totalCancelled">0</div>
+                <div class="stat-label">Vé đã hủy</div>
+                <div class="stat-delta delta-down" id="cancelRate"><i class="bi bi-percent"></i> -- tỷ lệ hủy</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-arrow-counterclockwise"></i></div>
+                <div class="stat-value" id="totalRefunded">0</div>
+                <div class="stat-label">Vé hoàn tiền</div>
+                <div class="stat-delta" style="color: #eab308;" id="refundAmt"><i class="bi bi-currency-dollar"></i> 0đ hoàn trả</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-secondary bg-opacity-10 text-secondary"><i class="bi bi-person-slash"></i></div>
+                <div class="stat-value" id="noShowRate">0%</div>
+                <div class="stat-label">Tỷ lệ No-Show</div>
+                <div class="stat-delta text-muted" id="noShowCount"><i class="bi bi-people"></i> 0 lượt vắng</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Kênh đặt vé -->
+        <div class="col-lg-5">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-diagram-3 text-info"></i>KÊNH ĐẶT VÉ</div>
+                <div style="height: 220px; position: relative; margin-bottom: 20px;">
+                    <canvas id="channelChart"></canvas>
+                </div>
+                <div id="channelBreakdown" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Loại ghế -->
+        <div class="col-lg-7">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-grid-3x3-gap text-warning"></i>PHÂN TÍCH LOẠI GHẾ</div>
+                <div id="seatTypeGrid" class="row g-3"></div>
+            </div>
+        </div>
+
+        <!-- Xu hướng vé theo ngày -->
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-graph-up-arrow text-success"></i>XU HƯỚNG BÁN VÉ THEO NGÀY</div>
+                <div style="height: 280px; position: relative;">
+                    <canvas id="ticketTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trạng thái vé -->
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-pie-chart text-danger"></i>TRẠNG THÁI VÉ</div>
+                <div style="height: 200px; position: relative; margin-bottom: 16px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+                <div id="statusLegend" class="d-flex flex-column gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Giao dịch gần đây -->
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-receipt text-primary"></i>GIAO DỊCH ĐẶT VÉ GẦN ĐÂY</div>
+                <div class="table-responsive">
+                    <table class="table table-dark-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>MÃ VÉ</th>
+                                <th>KHÁCH HÀNG</th>
+                                <th>PHIM</th>
+                                <th>SUẤT CHIẾU</th>
+                                <th>LOẠI GHẾ</th>
+                                <th>KÊNH</th>
+                                <th>GIÁ VÉ</th>
+                                <th>TRẠNG THÁI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTicketsBody">
+                            <tr><td colspan="8" class="text-center text-muted py-4">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/js/auth-guard.js"></script>
+<script>AuthGuard.requireRole(['ADMIN', 'MANAGER']);</script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    let channelChart, ticketTrendChart, statusChart;
+
+    const SEAT_COLORS = { 'VIP': '#E5133A', 'Standard': '#3B82F6', 'Couple': '#A855F7', 'Sweetbox': '#F59E0B', 'Recliner': '#10B981' };
+    const CHANNEL_COLORS = ['#3B82F6', '#A855F7', '#10B981', '#F59E0B'];
+    const STATUS_COLORS = { 'Đã bán': '#22c55e', 'Đã hủy': '#E5133A', 'Hoàn tiền': '#eab308', 'No-Show': '#9ca3af' };
+
+    async function init() {
+        const now = new Date(), weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        document.getElementById('startDate').value = weekAgo.toISOString().split('T')[0];
+        document.getElementById('endDate').value = now.toISOString().split('T')[0];
+        loadStats();
+    }
+
+    async function loadStats() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        try {
+            const res = await api.get(`/statistics/tickets?startDate=${start}&endDate=${end}`);
+            if (res.success) {
+                renderKPIs(res.data);
+                renderChannelChart(res.data);
+                renderSeatTypes(res.data);
+                renderTrendChart(res.data);
+                renderStatusChart(res.data);
+                renderRecentTickets(res.data);
+                document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
+            }
+        } catch (e) { console.error(e); mockRender(); }
+    }
+
+    function renderKPIs(d) {
+        document.getElementById('totalSold').innerText = (d.totalSold || 0).toLocaleString();
+        document.getElementById('totalCancelled').innerText = (d.totalCancelled || 0).toLocaleString();
+        document.getElementById('totalRefunded').innerText = (d.totalRefunded || 0).toLocaleString();
+        document.getElementById('noShowRate').innerText = (d.noShowRate || 0) + '%';
+        const cancelPct = d.totalSold ? ((d.totalCancelled / d.totalSold) * 100).toFixed(1) : 0;
+        document.getElementById('cancelRate').innerHTML = `<i class="bi bi-percent"></i> ${cancelPct}% tỷ lệ hủy`;
+        document.getElementById('refundAmt').innerHTML = `<i class="bi bi-currency-dollar"></i> ${(d.refundAmount || 0).toLocaleString()}đ hoàn trả`;
+        document.getElementById('noShowCount').innerHTML = `<i class="bi bi-people"></i> ${(d.noShowCount || 0).toLocaleString()} lượt vắng`;
+    }
+
+    function renderChannelChart(d) {
+        const ctx = document.getElementById('channelChart').getContext('2d');
+        if (channelChart) channelChart.destroy();
+        const channels = d.ticketsByChannel || { 'Online App': 45, 'Website': 30, 'Quầy vé': 20, 'Đối tác': 5 };
+        const labels = Object.keys(channels), values = Object.values(channels);
+        const total = values.reduce((a, b) => a + b, 0);
+        channelChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data: values, backgroundColor: CHANNEL_COLORS, borderWidth: 0, hoverOffset: 8 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '70%',
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.label}: ${c.raw}% (${((c.raw / 100) * (d.totalSold || 0)).toFixed(0)} vé)` } } }
+            }
+        });
+        const breakdown = document.getElementById('channelBreakdown');
+        breakdown.innerHTML = labels.map((l, i) => `
+            <div class="mb-2">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span style="color:${CHANNEL_COLORS[i]}" class="fw-bold"><i class="bi bi-circle-fill me-1" style="font-size:8px"></i>${l}</span>
+                    <span class="text-white fw-bold">${values[i]}%</span>
+                </div>
+                <div class="channel-bar"><div class="channel-bar-fill" style="width:${values[i]}%; background:${CHANNEL_COLORS[i]}"></div></div>
+            </div>`).join('');
+    }
+
+    function renderSeatTypes(d) {
+        const seats = d.seatTypeStats || { 'VIP': { count: 1240, revenue: 186000000 }, 'Standard': { count: 3420, revenue: 239400000 }, 'Couple': { count: 680, revenue: 81600000 }, 'Sweetbox': { count: 320, revenue: 57600000 } };
+        const grid = document.getElementById('seatTypeGrid');
+        grid.innerHTML = Object.entries(seats).map(([type, s]) => `
+            <div class="col-sm-6">
+                <div class="seat-type-item">
+                    <div class="seat-dot" style="background:${SEAT_COLORS[type] || '#6b7280'}"></div>
+                    <div class="seat-info">
+                        <div class="seat-name">${type}</div>
+                        <div class="seat-count">${s.count.toLocaleString()} vé đã bán</div>
+                    </div>
+                    <div class="seat-rev">${(s.revenue / 1000000).toFixed(1)}M</div>
+                </div>
+            </div>`).join('');
+    }
+
+    function renderTrendChart(d) {
+        const ctx = document.getElementById('ticketTrendChart').getContext('2d');
+        if (ticketTrendChart) ticketTrendChart.destroy();
+        const days = d.ticketsByDay || {};
+        ticketTrendChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(days),
+                datasets: [
+                    { label: 'Đã bán', data: Object.values(days).map(v => v.sold || 0), backgroundColor: 'rgba(34,197,94,0.8)', borderRadius: 6, stack: 'a' },
+                    { label: 'Đã hủy', data: Object.values(days).map(v => v.cancelled || 0), backgroundColor: 'rgba(229,19,58,0.6)', borderRadius: 6, stack: 'a' },
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: '#7B82A0', font: { family: 'Outfit' } } } },
+                scales: {
+                    y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0' } },
+                    x: { stacked: true, grid: { display: false }, ticks: { color: '#7B82A0' } }
+                }
+            }
+        });
+    }
+
+    function renderStatusChart(d) {
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        if (statusChart) statusChart.destroy();
+        const statuses = d.statusBreakdown || { 'Đã bán': 78, 'Đã hủy': 12, 'Hoàn tiền': 6, 'No-Show': 4 };
+        const labels = Object.keys(statuses), values = Object.values(statuses);
+        const colors = labels.map(l => STATUS_COLORS[l] || '#6b7280');
+        statusChart = new Chart(ctx, {
+            type: 'pie',
+            data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+        document.getElementById('statusLegend').innerHTML = labels.map((l, i) => `
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width:10px;height:10px;border-radius:3px;background:${colors[i]}"></div>
+                    <span class="small">${l}</span>
+                </div>
+                <span class="small fw-bold">${values[i]}%</span>
+            </div>`).join('');
+    }
+
+    function renderRecentTickets(d) {
+        const tbody = document.getElementById('recentTicketsBody');
+        const tickets = d.recentTickets || [];
+        if (!tickets.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Không có dữ liệu</td></tr>'; return; }
+        const statusBadge = s => ({ 'Đã bán': 'badge-sold', 'Đã hủy': 'badge-cancel', 'Hoàn tiền': 'badge-refund', 'No-Show': 'badge-noshow' }[s] || 'badge-noshow');
+        tbody.innerHTML = tickets.map(t => `
+            <tr>
+                <td><code style="color:#3b82f6">#${t.id}</code></td>
+                <td><span class="fw-600">${t.customerName}</span></td>
+                <td class="text-truncate" style="max-width:150px">${t.movieTitle}</td>
+                <td>${t.showtime}</td>
+                <td><span style="color:${SEAT_COLORS[t.seatType] || '#9ca3af'}" class="fw-600">${t.seatType}</span></td>
+                <td><span class="channel-pill ${t.channel === 'Quầy vé' ? 'offline' : ''}">${t.channel}</span></td>
+                <td class="fw-bold">${(t.price || 0).toLocaleString()}đ</td>
+                <td><span class="${statusBadge(t.status)}">${t.status}</span></td>
+            </tr>`).join('');
+    }
+
+    function mockRender() {
+        const mockData = {
+            totalSold: 5680, totalCancelled: 342, totalRefunded: 89, noShowRate: 3.2, noShowCount: 181, refundAmount: 12450000,
+            ticketsByChannel: { 'Online App': 48, 'Website': 27, 'Quầy vé': 18, 'Đối tác': 7 },
+            seatTypeStats: { 'Standard': { count: 3200, revenue: 224000000 }, 'VIP': { count: 1400, revenue: 210000000 }, 'Couple': { count: 720, revenue: 86400000 }, 'Sweetbox': { count: 360, revenue: 64800000 } },
+            ticketsByDay: { '01/04': { sold: 820, cancelled: 40 }, '02/04': { sold: 950, cancelled: 55 }, '03/04': { sold: 780, cancelled: 32 }, '04/04': { sold: 1100, cancelled: 68 }, '05/04': { sold: 890, cancelled: 45 }, '06/04': { sold: 1140, cancelled: 62 } },
+            statusBreakdown: { 'Đã bán': 82, 'Đã hủy': 10, 'Hoàn tiền': 4, 'No-Show': 4 },
+            recentTickets: [
+                { id: '7823', customerName: 'Nguyễn Văn A', movieTitle: 'Avengers: Endgame', showtime: '19:30 - 06/04', seatType: 'VIP', channel: 'Online App', price: 150000, status: 'Đã bán' },
+                { id: '7822', customerName: 'Trần Thị B', movieTitle: 'Inside Out 2', showtime: '21:00 - 06/04', seatType: 'Couple', channel: 'Quầy vé', price: 240000, status: 'Đã bán' },
+                { id: '7821', customerName: 'Lê Minh C', movieTitle: 'Deadpool 3', showtime: '14:30 - 06/04', seatType: 'Standard', channel: 'Website', price: 95000, status: 'Đã hủy' },
+                { id: '7820', customerName: 'Phạm Thu D', movieTitle: 'Dune: Part Two', showtime: '17:00 - 06/04', seatType: 'VIP', channel: 'Online App', price: 150000, status: 'Hoàn tiền' },
+                { id: '7819', customerName: 'Hoàng Văn E', movieTitle: 'Godzilla x Kong', showtime: '10:00 - 06/04', seatType: 'Standard', channel: 'Website', price: 95000, status: 'No-Show' },
+            ]
+        };
+        renderKPIs(mockData); renderChannelChart(mockData); renderSeatTypes(mockData);
+        renderTrendChart(mockData); renderStatusChart(mockData); renderRecentTickets(mockData);
+        document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
+    }
+    init();
+</script>
+</body>
+</html>

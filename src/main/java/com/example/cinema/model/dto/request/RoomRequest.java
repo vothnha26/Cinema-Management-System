@@ -1,8 +1,5 @@
 package com.example.cinema.model.dto.request;
 
-import com.example.cinema.model.enums.RoomType;
-
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -10,48 +7,26 @@ public class RoomRequest {
     @NotBlank(message = "Tên phòng không được để trống")
     private String name;
 
-    @NotNull(message = "Loại phòng không được để trống")
-    private RoomType type;
+    @NotBlank(message = "Room Type không được để trống")
+    private String roomTypeId;
 
-    @Min(value = 1, message = "Số hàng tối thiểu là 1")
     private Integer rows;
 
-    @Min(value = 1, message = "Số cột tối thiểu là 1")
     private Integer cols;
+
+    private String templateFileName;
 
     public RoomRequest() {
     }
 
-    // Getters and Setters
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public RoomType getType() {
-        return type;
-    }
-
-    public void setType(RoomType type) {
-        this.type = type;
-    }
-
-    public Integer getRows() {
-        return rows;
-    }
-
-    public void setRows(Integer rows) {
-        this.rows = rows;
-    }
-
-    public Integer getCols() {
-        return cols;
-    }
-
-    public void setCols(Integer cols) {
-        this.cols = cols;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getRoomTypeId() { return roomTypeId; }
+    public void setRoomTypeId(String roomTypeId) { this.roomTypeId = roomTypeId; }
+    public Integer getRows() { return rows; }
+    public void setRows(Integer rows) { this.rows = rows; }
+    public Integer getCols() { return cols; }
+    public void setCols(Integer cols) { this.cols = cols; }
+    public String getTemplateFileName() { return templateFileName; }
+    public void setTemplateFileName(String templateFileName) { this.templateFileName = templateFileName; }
 }

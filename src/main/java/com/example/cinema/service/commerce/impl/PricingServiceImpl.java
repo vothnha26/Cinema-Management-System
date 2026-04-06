@@ -6,8 +6,12 @@ import com.example.cinema.model.dto.response.SeatPriceResponse;
 import com.example.cinema.model.dto.response.PriceCalculationResult;
 import com.example.cinema.model.entity.SeatPrice;
 import com.example.cinema.model.entity.PricingRule;
+import com.example.cinema.model.entity.RoomType;
+import com.example.cinema.model.entity.SeatType;
 import com.example.cinema.model.enums.PricingRuleType;
 import com.example.cinema.repository.room.SeatPriceRepository;
+import com.example.cinema.repository.room.RoomTypeRepository;
+import com.example.cinema.repository.room.SeatTypeRepository;
 import com.example.cinema.service.commerce.PricingService;
 import com.example.cinema.service.commerce.pricing.*;
 import org.modelmapper.ModelMapper;
@@ -24,13 +28,19 @@ public class PricingServiceImpl implements PricingService {
 
         private final SeatPriceRepository seatPriceRepository;
         private final com.example.cinema.repository.commerce.PricingRuleRepository pricingRuleRepository;
+        private final RoomTypeRepository roomTypeRepository;
+        private final SeatTypeRepository seatTypeRepository;
         private final ModelMapper modelMapper;
 
         public PricingServiceImpl(SeatPriceRepository seatPriceRepository, 
                                   com.example.cinema.repository.commerce.PricingRuleRepository pricingRuleRepository,
+                                  RoomTypeRepository roomTypeRepository,
+                                  SeatTypeRepository seatTypeRepository,
                                   ModelMapper modelMapper) {
                 this.seatPriceRepository = seatPriceRepository;
                 this.pricingRuleRepository = pricingRuleRepository;
+                this.roomTypeRepository = roomTypeRepository;
+                this.seatTypeRepository = seatTypeRepository;
                 this.modelMapper = modelMapper;
         }
 
@@ -45,9 +55,13 @@ public class PricingServiceImpl implements PricingService {
         @Transactional
         @LogAction(action = "UPDATE", target = "PRICING")
         public SeatPriceResponse updateSeatPrice(SeatPriceRequest request) {
+                RoomType roomType = roomTypeRepository.findById(request.getRoomTypeId())
+                        .orElseThrow(() -> new RuntimeException("RoomType not found: " + request.getRoomTypeId()));
+                SeatType seatType = seatTypeRepository.findById(request.getSeatTypeId())
+                        .orElseThrow(() -> new RuntimeException("SeatType not found: " + request.getSeatTypeId()));
+
                 List<SeatPrice> oldPrices = seatPriceRepository
-                                .findAllByRoomTypeAndSeatTypeAndIsActiveTrue(request.getRoomType(),
-                                                request.getSeatType());
+                                .findAllByRoomTypeAndSeatTypeAndIsActiveTrue(roomType, seatType);
 
                 for (SeatPrice old : oldPrices) {
                         old.setIsActive(false);
@@ -55,12 +69,12 @@ public class PricingServiceImpl implements PricingService {
                 seatPriceRepository.saveAll(oldPrices);
 
                 SeatPrice seatPrice = seatPriceRepository
-                                .findByRoomTypeAndSeatTypeAndEffectiveDate(request.getRoomType(), request.getSeatType(),
+                                .findByRoomTypeAndSeatTypeAndEffectiveDate(roomType, seatType,
                                                 request.getEffectiveDate())
                                 .orElse(new SeatPrice());
 
-                seatPrice.setRoomType(request.getRoomType());
-                seatPrice.setSeatType(request.getSeatType());
+                seatPrice.setRoomType(roomType);
+                seatPrice.setSeatType(seatType);
                 seatPrice.setPrice(request.getPrice());
                 seatPrice.setEffectiveDate(request.getEffectiveDate());
                 seatPrice.setIsActive(true);
@@ -73,7 +87,7 @@ public class PricingServiceImpl implements PricingService {
         public PriceCalculationResult calculateTicketPrice(com.example.cinema.model.entity.Showtime showtime,
                         com.example.cinema.model.entity.Seat seat) {
                 BigDecimal basePrice = seatPriceRepository
-                                .findByRoomTypeAndSeatTypeAndIsActiveTrue(showtime.getRoom().getType(), seat.getType())
+                                .findByRoomTypeAndSeatTypeAndIsActiveTrue(showtime.getRoom().getRoomType(), seat.getSeatType())
                                 .map(SeatPrice::getPrice)
                                 .orElse(new BigDecimal("80000.00"));
 
@@ -83,8 +97,8 @@ public class PricingServiceImpl implements PricingService {
 
                 String format = showtime.getFormat() != null ? showtime.getFormat().getName() : "2D";
                 List<PricingRule> rules = pricingRuleRepository.findActiveRulesByContext(
-                        showtime.getRoom().getType(),
-                        seat.getType(),
+                        showtime.getRoom().getRoomType(),
+                        seat.getSeatType(),
                         format
                 );
 

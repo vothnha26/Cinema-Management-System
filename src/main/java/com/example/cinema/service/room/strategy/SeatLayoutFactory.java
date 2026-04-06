@@ -1,28 +1,27 @@
 package com.example.cinema.service.room.strategy;
 
-import com.example.cinema.model.enums.RoomType;
 import org.springframework.stereotype.Component;
-
 import java.util.Map;
 
 @Component
 public class SeatLayoutFactory {
-    private final Map<RoomType, SeatLayoutStrategy> strategies;
-    private final StandardLayoutStrategy standardStrategy;
 
-    public SeatLayoutFactory(
-            StandardLayoutStrategy standardStrategy,
-            ImaxLayoutStrategy imaxStrategy) {
-        this.standardStrategy = standardStrategy;
-        this.strategies = Map.of(
-                RoomType.HALL_2D, standardStrategy,
-                RoomType.HALL_3D, standardStrategy,
-                RoomType.IMAX, imaxStrategy
-        // Có thể thêm 4DX, LUXURY vào đây sau này
-        );
+    private final Map<String, SeatLayoutStrategy> strategies;
+
+    public SeatLayoutFactory(Map<String, SeatLayoutStrategy> strategies) {
+        this.strategies = strategies;
     }
 
-    public SeatLayoutStrategy getStrategy(RoomType type) {
-        return strategies.getOrDefault(type, standardStrategy);
+    public SeatLayoutStrategy getStrategy(String roomTypeId) {
+        if (roomTypeId == null) {
+            return strategies.get("standardLayoutStrategy");
+        }
+
+        switch (roomTypeId) {
+            case "IMAX":
+                return strategies.get("imaxLayoutStrategy");
+            default:
+                return strategies.get("standardLayoutStrategy");
+        }
     }
 }

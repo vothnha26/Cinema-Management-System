@@ -30,6 +30,11 @@
         .seat.locked{background:var(--seat-locked) !important;border-color:var(--seat-locked) !important;color:#fff !important;cursor:not-allowed !important;animation: pulse 2s infinite;}
         .seat.booked{background:var(--seat-booked) !important;cursor:not-allowed !important;pointer-events:none;color:transparent !important}
         .seat.booked::after{content:'✕';color:#2a2a3a;position:absolute;font-size:0.75rem}
+        
+        /* Seat Types Styling */
+        .seat.vip { border-color: var(--seat-vip); color: var(--seat-vip); }
+        .seat.couple, .seat.sweetbox { border-color: var(--seat-couple); color: var(--seat-couple); width: 68px; } /* Couple seats are double width */
+        
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         .info-input { background: var(--surface) !important; border: 1px solid var(--border) !important; color: #fff !important; padding: 12px; border-radius: 10px; }
         .info-input:focus { border-color: var(--accent) !important; box-shadow: none; }
@@ -183,7 +188,8 @@
                 if(!s) { grid.insertAdjacentHTML('beforeend', '<div></div>'); continue; }
                 const isMySelected = selectedSeats.some(x => Number(x.id) === Number(s.id));
                 const isLockedByOthers = !s.available && !isMySelected;
-                const cls = `seat ${s.seatType.toLowerCase()} ${isMySelected ? 'selected' : (isLockedByOthers ? 'locked' : (!s.available ? 'booked' : ''))}`;
+                const typeCls = (s.seatType || s.seatTypeId || 'normal').toLowerCase();
+                const cls = `seat ${typeCls} ${isMySelected ? 'selected' : (isLockedByOthers ? 'locked' : (!s.available ? 'booked' : ''))}`;
                 const el = document.createElement('div');
                 el.className = cls;
                 el.textContent = s.available || isMySelected || isLockedByOthers ? s.seatCode : '';

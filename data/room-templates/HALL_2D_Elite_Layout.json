@@ -1,0 +1,18 @@
+{
+  "templateName": "Elite Layout",
+  "roomTypeId": "HALL_2D",
+  "rows": 3,
+  "cols": 5,
+  "seats": [
+    {"rowChar": "A", "colNum": 1, "seatTypeId": "STANDARD", "status": true},
+    {"rowChar": "A", "colNum": 2, "seatTypeId": "STANDARD", "status": true},
+    {"rowChar": "A", "colNum": 3, "seatTypeId": "STANDARD", "status": true},
+    {"rowChar": "A", "colNum": 4, "seatTypeId": "STANDARD", "status": true},
+    {"rowChar": "A", "colNum": 5, "seatTypeId": "STANDARD", "status": true},
+    {"rowChar": "B", "colNum": 2, "seatTypeId": "VIP", "status": true},
+    {"rowChar": "B", "colNum": 3, "seatTypeId": "VIP", "status": true},
+    {"rowChar": "B", "colNum": 4, "seatTypeId": "VIP", "status": true},
+    {"rowChar": "C", "colNum": 1, "seatTypeId": "COUPLE", "status": true},
+    {"rowChar": "C", "colNum": 5, "seatTypeId": "COUPLE", "status": true}
+  ]
+}

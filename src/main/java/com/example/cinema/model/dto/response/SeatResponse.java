@@ -1,6 +1,5 @@
 package com.example.cinema.model.dto.response;
 
-import com.example.cinema.model.enums.SeatType;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -9,10 +8,12 @@ public class SeatResponse {
     private String rowChar;
     private Integer colNum;
     private String seatCode;
-    private SeatType seatType;
+    private String seatTypeId;
+    private String seatTypeName;
+    private String seatType;
     private BigDecimal price;
     private boolean available;
-    private List<String> priceBreakdown; // Danh sách tên các rule đã áp dụng
+    private List<String> priceBreakdown;
 
     public SeatResponse() {}
 
@@ -24,8 +25,12 @@ public class SeatResponse {
     public void setColNum(Integer colNum) { this.colNum = colNum; }
     public String getSeatCode() { return seatCode; }
     public void setSeatCode(String seatCode) { this.seatCode = seatCode; }
-    public SeatType getSeatType() { return seatType; }
-    public void setSeatType(SeatType seatType) { this.seatType = seatType; }
+    public String getSeatTypeId() { return seatTypeId; }
+    public void setSeatTypeId(String seatTypeId) { this.seatTypeId = seatTypeId; }
+    public String getSeatTypeName() { return seatTypeName; }
+    public void setSeatTypeName(String seatTypeName) { this.seatTypeName = seatTypeName; }
+    public String getSeatType() { return seatType; }
+    public void setSeatType(String seatType) { this.seatType = seatType; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
     public boolean isAvailable() { return available; }

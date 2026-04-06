@@ -40,12 +40,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/verify-otp", "/api/auth/reset-password", "/api/auth/forgot-password").permitAll()
                         .requestMatchers("/api/auth/**").authenticated()
+                        .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/movies", "/api/movies/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/showtimes", "/api/showtimes/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/combos", "/api/combos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/promotions", "/api/promotions/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
-                        .requestMatchers("/static/**", "/", "/*.html", "/favicon.ico", "/error", "/payment/**",
+                        .requestMatchers("/static/**", "/", "/*.html", "/dashboard/**", "/favicon.ico", "/error", "/payment/**",
                                 "/js/**", "/css/**", "/images/**")
                         .permitAll()
 
@@ -53,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/tmdb/**").hasAuthority("ROLE_MANAGER")
 
                         // Manager features (Movies, Showtimes, Rooms, Combos, Promotions, Statistics, Audit)
+                        .requestMatchers(HttpMethod.GET, "/api/rooms", "/api/rooms/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_STAFF")
                         .requestMatchers(HttpMethod.POST, "/api/movies", "/api/showtimes", "/api/rooms", "/api/combos", "/api/promotions").hasAuthority("ROLE_MANAGER")
                         .requestMatchers(HttpMethod.PUT, "/api/movies/**", "/api/showtimes/**", "/api/rooms/**", "/api/combos/**", "/api/promotions/**").hasAuthority("ROLE_MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/api/movies/**", "/api/showtimes/**", "/api/rooms/**", "/api/combos/**", "/api/promotions/**").hasAuthority("ROLE_MANAGER")

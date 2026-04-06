@@ -37,12 +37,12 @@ public class MovieDirector {
         this.role = role;
     }
 
-    public MovieDirectorId getId() {
-        return id;
+    public DirectorRole getRole() {
+        return role;
     }
 
-    public void setId(MovieDirectorId id) {
-        this.id = id;
+    public void setRole(DirectorRole role) {
+        this.role = role;
     }
 
     public Movie getMovie() {
@@ -59,14 +59,6 @@ public class MovieDirector {
 
     public void setDirector(Director director) {
         this.director = director;
-    }
-
-    public DirectorRole getRole() {
-        return role;
-    }
-
-    public void setRole(DirectorRole role) {
-        this.role = role;
     }
 
     @Embeddable
