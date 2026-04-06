@@ -157,7 +157,10 @@
         <div id="showtimeArea" class="mb-5">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div class="section-title small fw-bold text-muted text-uppercase">Suất chiếu <span id="activeMovieName" class="text-white ms-2"></span></div>
-                <div class="small text-muted"><i class="bi bi-calendar3 me-1"></i> Hôm nay, <span id="currentDate"></span></div>
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-calendar3 text-muted small"></i>
+                    <input type="date" id="posDateSelector" class="form-control form-control-sm bg-dark border-secondary text-white" style="width: 150px; font-size: 0.8rem;" onchange="handleDateChange()">
+                </div>
             </div>
             <div id="showtimeGroups">
                 <div class="text-center py-5 rounded-4" style="background: rgba(255,255,255,0.02); border: 1px dashed var(--border);">
@@ -262,6 +265,7 @@
 <script>
     let allMovies = [], allShowtimes = [], allCombos = [];
     let selectedMovieId = null, selectedShowtime = null, selectedSeats = [], selectedCombos = {}, currentMember = null, appliedVoucher = null;
+    const posSessionId = 'POS-' + Math.random().toString(36).substring(2, 15);
 
     function showNotify(title, msg, type='success') {
         const container = document.getElementById('toastContainer');
@@ -289,12 +293,17 @@
         const token = localStorage.getItem('cinemaToken');
         if(!token) window.location.href = 'auth.html';
         document.getElementById('staffNameDisplay').textContent = localStorage.getItem('cinemaUsername') || 'Nhân viên';
-        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('vi-VN');
+        
+        const now = new Date();
+        const localDateStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        
+        const dateInput = document.getElementById('posDateSelector');
+        if (dateInput) dateInput.value = localDateStr;
         
         try {
             const [mRes, stRes, cRes] = await Promise.all([
                 api.get('/movies/showing'), 
-                api.get('/showtimes?date=' + new Date().toISOString().split('T')[0]), 
+                api.get('/showtimes?date=' + localDateStr), 
                 api.get('/combos')
             ]);
             allMovies = mRes.data || []; 
@@ -302,7 +311,22 @@
             allCombos = cRes.data || [];
             renderMovies(); 
             renderCombos();
-        } catch(e) { showNotify('Lỗi hệ thống', 'Không thể kết nối đến máy chủ.', 'error'); }
+        } catch(e) { 
+            console.error(e);
+            showNotify('Lỗi hệ thống', 'Không thể kết nối đến máy chủ.', 'error'); 
+        }
+    }
+
+    async function handleDateChange() {
+        const date = document.getElementById('posDateSelector').value;
+        try {
+            const res = await api.get('/showtimes?date=' + date);
+            allShowtimes = res.data || [];
+            if (selectedMovieId) renderShowtimeGroups(selectedMovieId);
+            showNotify('Cập nhật', 'Đã tải suất chiếu ngày ' + date, 'info');
+        } catch(e) {
+            showNotify('Lỗi', 'Không thể tải suất chiếu ngày mới', 'error');
+        }
     }
 
     function renderMovies() {
@@ -354,28 +378,44 @@
 
     function renderShowtimeGroups(movieId) {
         const movieST = allShowtimes.filter(s => s.movieId === movieId);
-        const futureST = movieST.filter(s => new Date(s.startTime) > new Date());
+        const now = new Date();
         
-        if(!futureST.length) { 
+        // Hiển thị các suất chiếu chưa kết thúc (hoặc kết thúc chưa quá 10 phút)
+        const displayST = movieST.filter(s => {
+            const endTime = new Date(s.endTime);
+            return endTime > now;
+        });
+        
+        if(!displayST.length) { 
             document.getElementById('showtimeGroups').innerHTML = '<div class="text-center py-5 text-muted small">Không còn suất chiếu nào trong hôm nay</div>'; 
             return; 
         }
         
-        const grouped = futureST.reduce((acc, s) => { 
-            const k = s.roomType || '2D'; 
+        // Nhóm theo Format + Room Type
+        const grouped = displayST.reduce((acc, s) => { 
+            const fmt = s.formatName || '2D';
+            const roomType = (s.roomType || 'STANDARD').replace('HALL_', '').replace('_', ' ');
+            const k = `${fmt} ${roomType}`; 
             if(!acc[k]) acc[k] = []; 
             acc[k].push(s); 
             return acc; 
         }, {});
 
-        document.getElementById('showtimeGroups').innerHTML = Object.entries(grouped).map(([fmt, list]) => `
+        document.getElementById('showtimeGroups').innerHTML = Object.entries(grouped).map(([label, list]) => `
             <div class="st-group">
-                <div class="st-group-title">${fmt.replace('HALL_','')}</div>
-                <div class="st-grid">${list.map(s => `
-                    <div class="st-btn ${selectedShowtime?.id === s.id ? 'active' : ''}" onclick="selectShowtime(${s.id})">
-                        <div class="st-time">${new Date(s.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                <div class="st-group-title">${label}</div>
+                <div class="st-grid">${list.sort((a,b) => new Date(a.startTime) - new Date(b.startTime)).map(s => {
+                    const startTime = new Date(s.startTime);
+                    const isStarted = startTime < now;
+                    return `
+                    <div class="st-btn ${selectedShowtime?.id === s.id ? 'active' : ''} ${isStarted ? 'opacity-50' : ''}" 
+                         onclick="selectShowtime(${s.id})"
+                         title="${isStarted ? 'Suất chiếu đã bắt đầu' : ''}">
+                        <div class="st-time">${startTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
                         <div class="st-room">${s.roomName}</div>
-                    </div>`).join('')}</div>
+                        ${isStarted ? '<div style="font-size:0.5rem; color:var(--accent-gold); font-weight:800">ĐANG CHIẾU</div>' : ''}
+                    </div>`;
+                }).join('')}</div>
             </div>`).join('');
     }
 
@@ -403,7 +443,14 @@
         document.getElementById('seatOverlay').classList.remove('active');
     }
 
-    function cancelSeatMap() {
+    async function cancelSeatMap() {
+        if (selectedSeats.length > 0) {
+            for (const s of selectedSeats) {
+                try {
+                    await api.post(`/bookings/release-seat?showtimeId=${selectedShowtime.id}&seatId=${s.id}&sessionId=${posSessionId}`);
+                } catch(e) {}
+            }
+        }
         selectedSeats = [];
         updateOrder();
         closeSeatMap();
@@ -435,15 +482,32 @@
         });
     }
 
-    function toggleSeat(s) {
+    async function toggleSeat(s) {
         const idx = selectedSeats.findIndex(x => x.id === s.id);
-        if(idx > -1) selectedSeats.splice(idx, 1); 
-        else selectedSeats.push(s);
-        
-        updateOrder();
-        document.querySelectorAll('.seat-pos').forEach(el => { 
-            if(el.textContent === s.seatCode) el.classList.toggle('selected'); 
-        });
+        const isSelecting = idx === -1;
+
+        try {
+            if (isSelecting) {
+                const res = await api.post(`/bookings/hold-seat?showtimeId=${selectedShowtime.id}&seatId=${s.id}&sessionId=${posSessionId}`);
+                if (res.success) {
+                    selectedSeats.push(s);
+                    document.querySelectorAll('.seat-pos').forEach(el => { 
+                        if(el.textContent === s.seatCode) el.classList.add('selected'); 
+                    });
+                } else {
+                    showNotify('Lỗi', res.message || 'Ghế này đang được người khác chọn', 'error');
+                }
+            } else {
+                await api.post(`/bookings/release-seat?showtimeId=${selectedShowtime.id}&seatId=${s.id}&sessionId=${posSessionId}`);
+                selectedSeats.splice(idx, 1);
+                document.querySelectorAll('.seat-pos').forEach(el => { 
+                    if(el.textContent === s.seatCode) el.classList.remove('selected'); 
+                });
+            }
+            updateOrder();
+        } catch (e) {
+            showNotify('Lỗi', e.message || 'Không thể thực hiện thao tác này', 'error');
+        }
     }
 
     function calculateSubtotal() {

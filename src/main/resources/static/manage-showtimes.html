@@ -393,7 +393,7 @@
 
     function renderTimeHeader() {
         let html = '';
-        for(let h=8; h<=24; h++) {
+        for(let h=0; h<=23; h++) {
             html += `<div class="time-slot">${h < 10 ? '0'+h : h}:00</div>`;
         }
         document.getElementById('timeHeader').innerHTML = html;
@@ -430,8 +430,8 @@
                 const startHour = startTime.getHours() + (startTime.getMinutes() / 60);
                 const durationHours = (s.duration || 120) / 60;
                 
-                // Tính toán vị trí (8:00 là điểm 0)
-                const left = (startHour - 8) * 120;
+                // Tính toán vị trí (0:00 là điểm 0)
+                const left = startHour * 120;
                 const width = durationHours * 120;
                 
                 const occupancy = s.totalSeats > 0 ? Math.round((s.soldSeats || 0) / s.totalSeats * 100) : 0;

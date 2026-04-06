@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ cá nhân | StarCinema Elite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+      --accent: #E5133A; --gold: #F5A623; --text: #E8EAF0; --muted: #7B82A0;
+      --success: #50C864; --info: #64B4FF;
+      --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; }
+    a { text-decoration: none; color: inherit; }
+
+    .navbar-star { background: rgba(8, 11, 20, 0.95); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 14px 0; position: sticky; top: 0; z-index: 100; }
+    .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; }
+    .brand span { color: var(--accent); }
+    .nav-link-star { color: var(--muted); font-size: 0.9rem; font-weight: 500; padding: 6px 16px; border-radius: 6px; transition: 0.2s; }
+    .nav-link-star:hover, .nav-link-star.active { color: var(--accent); background: rgba(255, 255, 255, 0.04); }
+
+    .page { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+    .cardx { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 32px; height: 100%; }
+    
+    .profile-header { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; }
+    .avatar-large { width: 100px; height: 100px; border-radius: 30px; background: var(--gradient); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; box-shadow: 0 10px 20px rgba(229, 19, 58, 0.3); }
+    .profile-info h1 { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
+    .tier-label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; background: rgba(245, 166, 35, 0.1); color: var(--gold); border: 1px solid rgba(245, 166, 35, 0.2); margin-top: 8px; }
+
+    .nav-pills-star { display: flex; flex-direction: column; gap: 8px; }
+    .nav-pills-star .nav-link { color: var(--muted); text-align: left; padding: 14px 20px; border-radius: 12px; font-weight: 600; transition: 0.2s; border: 1px solid transparent; }
+    .nav-pills-star .nav-link:hover { background: rgba(255, 255, 255, 0.03); color: var(--text); }
+    .nav-pills-star .nav-link.active { background: rgba(229, 19, 58, 0.1); color: var(--accent); border-color: rgba(229, 19, 58, 0.2); }
+    .nav-pills-star i { margin-right: 12px; font-size: 1.1rem; }
+
+    .form-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; }
+    .field { background: var(--surface); border: 1.5px solid var(--border); color: var(--text); padding: 12px 16px; border-radius: 14px; font-size: 0.95rem; width: 100%; transition: 0.2s; }
+    .field:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(229, 19, 58, 0.1); }
+    .field:disabled { opacity: 0.6; cursor: not-allowed; background: rgba(0,0,0,0.2); }
+
+    .btn-save { background: var(--gradient); border: none; color: #fff; padding: 14px 32px; border-radius: 14px; font-weight: 700; letter-spacing: 1px; transition: 0.3s; box-shadow: 0 4px 15px rgba(229, 19, 58, 0.3); }
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(229, 19, 58, 0.4); }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
+    .stat-item { background: var(--surface); padding: 16px; border-radius: 16px; text-align: center; border: 1px solid var(--border); }
+    .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--gold); display: block; }
+    .stat-lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+
+    .toast-star { position: fixed; bottom: 30px; right: 30px; background: #1a1f35; border: 1px solid var(--border); padding: 16px 24px; border-radius: 16px; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; border-left: 4px solid var(--accent); }
+
+    @media (max-width: 768px) {
+      .profile-header { flex-direction: column; text-align: center; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar-star">
+  <div class="container">
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-4">
+        <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
+        <div class="d-none d-lg-flex gap-1">
+          <a href="index.html" class="nav-link-star">Phim</a>
+          <a href="history.html" class="nav-link-star">Vé của tôi</a>
+          <a href="#" class="nav-link-star">Ưu đãi</a>
+        </div>
+      </div>
+      <button class="btn btn-outline-light btn-sm rounded-pill px-3" onclick="logout()">Đăng xuất</button>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="row g-4">
+    <!-- CỘT TRÁI: NAV & STATS -->
+    <div class="col-md-4">
+      <div class="cardx mb-4">
+        <div class="profile-header">
+          <div id="pAvatar" class="avatar-large">A</div>
+          <div class="profile-info">
+            <h1 id="pName">NGUYỄN VĂN A</h1>
+            <div id="pTier" class="tier-label">★ Gold Member</div>
+          </div>
+        </div>
+        
+        <div class="nav-pills-star">
+          <a href="profile.html" class="nav-link active"><i class="bi bi-person-circle"></i> Thông tin cá nhân</a>
+          <a href="history.html?tab=tickets" class="nav-link"><i class="bi bi-ticket-perforated"></i> Lịch sử đặt vé</a>
+          <a href="history.html?tab=points" class="nav-link"><i class="bi bi-gem"></i> Điểm thưởng & Hạng</a>
+          <a href="history.html?tab=notifications" class="nav-link"><i class="bi bi-bell"></i> Thông báo</a>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-item"><span id="sPoints" class="stat-val">0</span><span class="stat-lbl">Điểm</span></div>
+          <div class="stat-item"><span id="sBookings" class="stat-val">0</span><span class="stat-lbl">Vé đặt</span></div>
+          <div class="stat-item"><span id="sSpending" class="stat-val">0đ</span><span class="stat-lbl">Chi tiêu</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CỘT PHẢI: FORM CHỈNH SỬA -->
+    <div class="col-md-8">
+      <div class="cardx">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h3 class="fw-800 m-0" style="letter-spacing: 1px;">HỒ SƠ CỦA TÔI</h3>
+          <span class="text-muted small">Cập nhật thông tin để nhận ưu đãi tốt hơn</span>
+        </div>
+
+        <form id="profileForm">
+          <div class="row g-4">
+            <div class="col-md-12">
+              <label class="form-label">Họ và tên</label>
+              <input type="text" id="fullName" class="field" placeholder="Nhập họ tên đầy đủ">
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label">Tên đăng nhập</label>
+              <input type="text" id="username" class="field" disabled>
+            </div>
+            
+            <div class="col-md-6">
+              <label class="form-label">Hạng thành viên</label>
+              <input type="text" id="tierDisplay" class="field" disabled>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Địa chỉ Email</label>
+              <input type="email" id="email" class="field" placeholder="email@example.com">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Số điện thoại</label>
+              <input type="tel" id="phone" class="field" placeholder="Số điện thoại của bạn">
+            </div>
+
+            <div class="col-md-12 mt-5">
+              <div class="p-4 rounded-4" style="background: rgba(255,255,255,0.02); border: 1px dashed var(--border);">
+                <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock me-2 text-accent"></i>BẢO MẬT</h6>
+                <p class="text-muted small mb-3">Bạn có thể thay đổi mật khẩu định kỳ để bảo vệ tài khoản tốt hơn.</p>
+                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Đổi mật khẩu truy cập →</button>
+              </div>
+            </div>
+
+            <div class="col-md-12 text-end mt-4">
+              <button type="button" class="btn-save" onclick="updateProfile()">LƯU THAY ĐỔI</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Đổi mật khẩu -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="background: var(--card); border-radius: 24px;">
+      <div class="modal-header border-0 p-4 pb-0">
+        <h5 class="modal-title fw-800" style="letter-spacing: 1px;">THAY ĐỔI MẬT KHẨU</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="mb-3">
+          <label class="form-label">Mật khẩu hiện tại</label>
+          <input type="password" id="oldPassword" class="field" placeholder="••••••••">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Mật khẩu mới</label>
+          <input type="password" id="newPassword" class="field" placeholder="Tối thiểu 6 ký tự">
+        </div>
+        <div class="mb-4">
+          <label class="form-label">Xác nhận mật khẩu mới</label>
+          <input type="password" id="confirmPassword" class="field" placeholder="••••••••">
+        </div>
+        <button type="button" class="btn-save w-100" onclick="changePassword()">CẬP NHẬT MẬT KHẨU</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const token = localStorage.getItem('cinemaToken');
+  if (!token) window.location.href = 'auth.html';
+
+  async function loadProfile() {
+    try {
+      const res = await api.get('/customers/me');
+      if (res.success || res.id) { // CustomerResponse doesn't wrap in ApiResponse in some versions
+        const p = res.success ? res.data : res;
+        document.getElementById('pName').innerText = p.fullName?.toUpperCase() || p.username.toUpperCase();
+        document.getElementById('pAvatar').innerText = (p.fullName || p.username).charAt(0).toUpperCase();
+        document.getElementById('pTier').innerText = `★ ${p.membershipTier || 'STANDARD'} Member`;
+        
+        document.getElementById('fullName').value = p.fullName || '';
+        document.getElementById('username').value = p.username || '';
+        document.getElementById('email').value = p.email || '';
+        document.getElementById('phone').value = p.phone || '';
+        document.getElementById('tierDisplay').value = p.membershipTier || 'STANDARD';
+        
+        document.getElementById('sPoints').innerText = (p.points || 0).toLocaleString();
+        document.getElementById('sSpending').innerText = Number(p.totalSpending || 0).toLocaleString() + 'đ';
+        
+        // Load bookings count
+        try {
+            const bRes = await api.get('/bookings/me');
+            if (bRes && Array.isArray(bRes)) {
+                document.getElementById('sBookings').innerText = bRes.length;
+            } else if (bRes.success) {
+                document.getElementById('sBookings').innerText = bRes.data.length;
+            }
+        } catch(e) {}
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function updateProfile() {
+    const data = {
+      fullName: document.getElementById('fullName').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value
+    };
+
+    try {
+      const res = await api.put('/customers/me', data);
+      // The controller returns CustomerResponse directly or wrapped in ApiResponse
+      if (res.id || res.success) {
+        showNotify('Thành công', 'Thông tin cá nhân đã được cập nhật!');
+        loadProfile();
+      } else {
+        showNotify('Lỗi', res.message || 'Cập nhật thất bại', 'danger');
+      }
+    } catch (e) {
+      showNotify('Lỗi', e.message || 'Không thể kết nối máy chủ', 'danger');
+    }
+  }
+
+  async function changePassword() {
+    const oldPassword = document.getElementById('oldPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (!oldPassword || !newPassword) {
+      showNotify('Lỗi', 'Vui lòng nhập đầy đủ thông tin', 'danger');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showNotify('Lỗi', 'Mật khẩu xác nhận không khớp', 'danger');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showNotify('Lỗi', 'Mật khẩu mới phải có ít nhất 6 ký tự', 'danger');
+      return;
+    }
+
+    try {
+      const res = await api.post('/auth/change-password', { oldPassword, newPassword });
+      if (res.success) {
+        showNotify('Thành công', 'Mật khẩu đã được thay đổi!');
+        bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+        // Clear inputs
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      } else {
+        showNotify('Lỗi', res.message || 'Mật khẩu cũ không chính xác', 'danger');
+      }
+    } catch (e) {
+      showNotify('Lỗi', e.message || 'Mật khẩu cũ không chính xác', 'danger');
+    }
+  }
+
+  function showNotify(title, msg, type='success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast-star animate__animated animate__fadeInUp';
+    toast.innerHTML = `<i class="bi ${type==='success'?'bi-check-circle-fill text-success':'bi-exclamation-triangle-fill text-danger'} fs-4"></i>
+                       <div><div class="fw-bold">${title}</div><div class="small text-muted">${msg}</div></div>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = 'index.html';
+  }
+
+  loadProfile();
+</script>
+</body>
+</html>

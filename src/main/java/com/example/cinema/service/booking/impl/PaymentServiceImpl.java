@@ -106,7 +106,21 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PaymentResponse confirmMyPayment(String bookingCode) {
-        Payment payment = getOwnedPayment(bookingCode);
+        Payment payment = paymentRepository.findByBookingBookingCode(bookingCode)
+                .orElseThrow(() -> new AppException("Payment not found"));
+
+        // Nếu khách hàng đã đăng nhập, kiểm tra quyền sở hữu
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails userDetails) {
+            Customer customer = customerRepository.findByUserUsername(userDetails.getUsername())
+                    .orElseThrow(() -> new AppException("Customer not found"));
+
+            if (payment.getBooking().getCustomer() != null &&
+                !payment.getBooking().getCustomer().getId().equals(customer.getId())) {
+                throw new AppException("Unauthorized");
+            }
+        }
+
         return mapToResponse(confirmPaymentInternal(payment, null, false));
     }
 
@@ -210,11 +224,16 @@ public class PaymentServiceImpl implements PaymentService {
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
 
-        customerService.addLoyaltyPoints(booking.getCustomer(), payment.getAmount());
-        createNotification(booking.getCustomer().getUser(),
-                "Thanh toan thanh cong",
-                "Booking " + booking.getBookingCode() + " da duoc thanh toan thanh cong" + (autoSource ? " va xac nhan tu dong." : "."),
-                NotificationType.BOOKING);
+        // Xử lý điểm thưởng và thông báo chỉ khi có Customer
+        if (booking.getCustomer() != null) {
+            customerService.addLoyaltyPoints(booking.getCustomer(), payment.getAmount());
+            if (booking.getCustomer().getUser() != null) {
+                createNotification(booking.getCustomer().getUser(),
+                        "Thanh toan thanh cong",
+                        "Booking " + booking.getBookingCode() + " da duoc thanh toan thanh cong" + (autoSource ? " va xac nhan tu dong." : "."),
+                        NotificationType.BOOKING);
+            }
+        }
 
         return payment;
     }
