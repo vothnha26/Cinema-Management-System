@@ -1,25 +1,31 @@
 package com.example.cinema.repository.showtime;
 
 import com.example.cinema.model.entity.Showtime;
-import com.example.cinema.model.enums.ShowtimeStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
-    boolean existsByRoomId(Long roomId);
-    List<Showtime> findAllByStartTimeBetween(LocalDateTime start, LocalDateTime end);
     List<Showtime> findByMovieId(Long movieId);
-    void deleteByStartTimeBetween(LocalDateTime start, LocalDateTime end);
-    void deleteByStartTimeBetweenAndIdNotIn(LocalDateTime start, LocalDateTime end, List<Long> ids);
     
+    @Query("SELECT s FROM Showtime s WHERE s.startTime BETWEEN :start AND :end " +
+           "AND (:branchId IS NULL OR s.room.branch.id = :branchId)")
+    List<Showtime> findAllByStartTimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, @Param("branchId") Long branchId);
+
+    @Query("SELECT s FROM Showtime s WHERE s.room.branch.id = :branchId")
+    List<Showtime> findByBranchId(@Param("branchId") Long branchId);
+
+    @Query("SELECT s FROM Showtime s WHERE s.room.branch.id = :branchId AND s.startTime BETWEEN :start AND :end")
+    List<Showtime> findByBranchIdAndStartTimeBetween(@Param("branchId") Long branchId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    boolean existsByRoomId(Long roomId);
+
     @org.springframework.data.jpa.repository.Modifying
-    @org.springframework.data.jpa.repository.Query("DELETE FROM Showtime s WHERE s.startTime >= :start AND s.startTime <= :end AND s.soldSeats = :soldSeats")
-    void deleteByStartTimeBetweenAndSoldSeats(LocalDateTime start, LocalDateTime end, Integer soldSeats);
-
-    List<Showtime> findByMovieIdAndStatus(Long movieId, ShowtimeStatus status);
-
-    @org.springframework.data.jpa.repository.Query("SELECT s FROM Showtime s WHERE s.room.id = :roomId " +
-            "AND ((s.startTime < :endTime AND s.endTime > :startTime))")
-    List<Showtime> findOverlappingShowtimes(Long roomId, LocalDateTime startTime, LocalDateTime endTime);
+    @org.springframework.transaction.annotation.Transactional
+    void deleteByStartTimeBetweenAndSoldSeats(LocalDateTime start, LocalDateTime end, int soldSeats);
 }

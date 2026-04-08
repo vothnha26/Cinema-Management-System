@@ -27,8 +27,8 @@ public class Promotion {
     private BigDecimal discountValue;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "min_benefit_id")
-    private MembershipBenefit minTier;
+    @JoinColumn(name = "min_level_id")
+    private MembershipLevel minLevel;
 
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
@@ -100,12 +100,12 @@ public class Promotion {
         this.discountValue = discountValue;
     }
 
-    public MembershipBenefit getMinTier() {
-        return minTier;
+    public MembershipLevel getMinLevel() {
+        return minLevel;
     }
 
-    public void setMinTier(MembershipBenefit minTier) {
-        this.minTier = minTier;
+    public void setMinLevel(MembershipLevel minLevel) {
+        this.minLevel = minLevel;
     }
 
     public LocalDate getStartDate() {
@@ -190,7 +190,7 @@ public class Promotion {
         private BigDecimal minOrderAmount;
         private BigDecimal maxDiscountAmount;
         private Integer usageLimit;
-        private MembershipBenefit minTier;
+        private MembershipLevel minLevel;
         private Integer requiredPoints;
         private Boolean isRedeemable;
 
@@ -232,8 +232,8 @@ public class Promotion {
             return this;
         }
 
-        public Builder minTier(MembershipBenefit minTier) {
-            this.minTier = minTier;
+        public Builder minLevel(MembershipLevel minLevel) {
+            this.minLevel = minLevel;
             return this;
         }
 
@@ -248,7 +248,7 @@ public class Promotion {
             p.setMinOrderAmount(this.minOrderAmount);
             p.setMaxDiscountAmount(this.maxDiscountAmount);
             p.setUsageLimit(this.usageLimit);
-            p.setMinTier(this.minTier);
+            p.setMinLevel(this.minLevel);
             p.setRequiredPoints(this.requiredPoints != null ? this.requiredPoints : 0);
             p.setIsRedeemable(this.isRedeemable != null ? this.isRedeemable : false);
             p.setIsActive(true);

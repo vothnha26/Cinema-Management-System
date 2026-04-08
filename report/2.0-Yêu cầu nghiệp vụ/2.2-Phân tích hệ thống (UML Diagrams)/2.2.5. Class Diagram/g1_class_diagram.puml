@@ -1,0 +1,102 @@
+@startuml G1_ClassDiagram_Users
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam classFontSize 13
+skinparam packageStyle rectangle
+skinparam ArrowColor #333333
+skinparam ClassBorderColor #2980B9
+skinparam ClassBackgroundColor #EBF5FB
+skinparam ClassHeaderBackgroundColor #2980B9
+skinparam NoteBackgroundColor #FFFDE7
+
+title <b>CLASS DIAGRAM — Nhóm 1: Người dùng & Phân quyền</b>
+
+class User <<Entity>> {
+  + id         : BIGINT <<PK>>
+  --
+  # username   : VARCHAR(255)
+  # password   : VARCHAR(255)
+  # email      : VARCHAR(255)
+  # role       : ENUM(ADMIN, MANAGER, STAFF, CUSTOMER)
+  # status     : BOOLEAN
+  # created_at : DATETIME
+}
+
+class Customer <<Entity>> {
+  + id             : BIGINT <<PK>>
+  --
+  # full_name      : VARCHAR(255)
+  # phone          : VARCHAR(20)
+  # points         : INT
+  # total_spending  : DECIMAL(15,2)
+}
+
+class MembershipLevel <<Master>> {
+  + id           : BIGINT <<PK>>
+  --
+  # name         : VARCHAR(255)
+  # min_spending  : DECIMAL(15,2)
+  # priority      : INT
+}
+
+class MembershipBenefit <<Detail>> {
+  + id            : BIGINT <<PK>>
+  --
+  # benefit_type  : ENUM(DISCOUNT, POINT_MULTIPLIER)
+  # benefit_value : VARCHAR(255)
+}
+
+class Staff <<Entity>> {
+  + id         : BIGINT <<PK>>
+  --
+  # staff_code : VARCHAR(50)
+  # full_name  : VARCHAR(255)
+  # position   : VARCHAR(100)
+}
+
+class AuditLog <<Log>> {
+  + id        : BIGINT <<PK>>
+  --
+  # username  : VARCHAR(255)
+  # action    : ENUM(CREATE, UPDATE, DELETE)
+  # target    : VARCHAR(100)
+  # target_id : BIGINT
+  # details   : TEXT
+  # timestamp : DATETIME
+}
+
+class Notification <<Entity>> {
+  + id         : BIGINT <<PK>>
+  --
+  # title      : VARCHAR(255)
+  # message    : TEXT
+  # type       : ENUM(SYSTEM, BOOKING, PROMOTION)
+  # is_read    : BOOLEAN
+  # created_at : DATETIME
+}
+
+note right of User
+  role = ADMIN | MANAGER
+    → được ghi vào AuditLog
+  role = CUSTOMER
+    → có bản ghi Customer
+  role = STAFF
+    → có bản ghi Staff
+end note
+
+note bottom of MembershipBenefit
+  benefit_type = DISCOUNT
+    → benefit_value = "10" (%)
+  benefit_type = POINT_MULTIPLIER
+    → benefit_value = "1.2" (nhân hệ số)
+end note
+
+User         "1" --o "0..1" Customer     : "extends >"
+User         "1" --o "0..1" Staff        : "extends >"
+User         "1" --o "*"    Notification : "receives >"
+Customer     "*" --o "1"    MembershipLevel  : "belongs to >"
+MembershipLevel "1" *--     "*" MembershipBenefit : "has >"
+
+@enduml

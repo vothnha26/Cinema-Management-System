@@ -17,6 +17,7 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     @Query("SELECT p.name, p.startDate, p.endDate, COUNT(b), SUM(b.totalPrice) FROM Promotion p " +
            "LEFT JOIN Booking b ON p.id = b.promotion.id " +
            "WHERE b.status IN ('CONFIRMED', 'CHECKED_IN') AND b.createdAt BETWEEN :start AND :end " +
+           "AND (:branchId IS NULL OR b.showtime.room.branch.id = :branchId) " +
            "GROUP BY p.name, p.startDate, p.endDate")
-    List<Object[]> calculatePromotionStats(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    List<Object[]> calculatePromotionStats(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, @Param("branchId") Long branchId);
 }

@@ -1,112 +1,51 @@
-# 🏗️ Kiến trúc hệ thống – Cinema Management System (Elite Version)
+# 🏗️ Kiến trúc hệ thống – Cinema Management System
 
-## 1. Kiểu kiến trúc
+## 1. Mô hình phân tầng (Layered Architecture)
 
-**Monolithic Application** – Một ứng dụng Spring Boot duy nhất, backend cung cấp REST API JSON, frontend là HTML/CSS/JS tĩnh tích hợp trong cùng project. Hệ thống được thiết kế theo hướng **Modulith** (Modular Monolith) để dễ dàng tách thành Microservices sau này.
+Hệ thống tuân thủ mô hình phân tầng tiêu chuẩn của Spring Boot để đảm bảo tính SRP (Single Responsibility Principle) và dễ bảo trì:
 
----
-
-## 2. Elite Patterns áp dụng (SOLID Compliance)
-
-Hệ thống tuân thủ nghiêm ngặt nguyên tắc SOLID và áp dụng các mẫu thiết kế linh hoạt:
-
-| Pattern | Vị trí áp dụng | Mục tiêu SOLID |
-|---------|--------------|----------------|
-| **Strategy Pattern** | `SeatLayoutStrategy` | **OCP**: Cho phép thêm thuật toán tạo ghế cho loại phòng mới (4DX, ScreenX) mà không sửa code cũ. |
-| **Decorator Pattern** | `PriceCalculator` | **OCP**: Bọc thêm các lớp phụ phí (IMAX, VIP, Happy Hour, Weekend) vào giá vé một cách linh hoạt. |
-| **Builder Pattern** | `Promotion`, `StatisticsResponse` | **SRP**: Tách biệt việc xây dựng các đối tượng phức tạp có nhiều thuộc tính tùy chọn. |
-| **Facade Pattern** | `MovieServiceImpl` | **SRP**: Đóng vai trò bộ điều phối, gom nhóm các service chuyên trách (Media, Metadata). |
-| **Aspect Oriented (AOP)** | `AuditLogAspect` | **SRP**: Tách biệt logic ghi nhật ký (Cross-cutting concern) ra khỏi logic nghiệp vụ chính. |
-| **Factory Pattern** | `SeatLayoutFactory` | **DIP**: Quản lý việc khởi tạo các Strategy dựa trên loại thực thể. |
+1.  **Presentation Layer (Controller)**: Tiếp nhận Request, điều phối dữ liệu qua DTO và trả về ResponseEntity.
+2.  **Domain/Business Layer (Service)**: Xử lý logic nghiệp vụ. Tại đây áp dụng các Design Pattern để giải quyết các bài toán phức tạp (Tính giá, Khuyến mãi).
+3.  **Persistence Layer (Repository)**: Sử dụng Spring Data JPA để tương tác với MySQL.
+4.  **Database/External Layer**: MySQL, Redis (Caching), Cloudinary (Media), SePay/VietQR (Payment).
 
 ---
 
-## 3. Sơ đồ kiến trúc tổng thể
+## 2. Các Design Pattern đã áp dụng (Bản đồ thực tế)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        CLIENT SIDE                          │
-│   Browser (HTML/CSS/JS + Bootstrap 5 + Chart.js)            │
-│   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│   │ Customer │  │  Staff   │  │ Manager  │  │  Admin   │    │
-│   │  Pages   │  │  POS UI  │  │Dashboard │  │  Panel   │    │
-│   └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-└────────┼─────────────┼─────────────┼─────────────┼──────────┘
-         │             │   HTTP/S (REST API)       │
-         └─────────────┴─────────────┴─────────────┴────────────┐
-                                │                               │
-┌───────────────────────────────▼───────────────────────────────┐
-│                    SPRING BOOT APPLICATION                    │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │              SECURITY LAYER (Spring Security + JWT)     │  │
-│  │  JwtFilter → Authentication → Authorization by Role     │  │
-│  └─────────────────────────────────────────────────────────┘  │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │              ASPECT LAYER (Audit & Logging)             │  │
-│  │  @AuditAction Interceptor → Async Database Logging      │  │
-│  └─────────────────────────────────────────────────────────┘  │
-│                                                               │
-│  ┌─────────────────────────────────────────────────────────┐  │
-│  │                PRESENTATION LAYER                       │  │
-│  │  @RestController: Movie, Showtime, Scheduling, Pricing  │  │
-│  │  Combo, Promotion, Statistics, AuditLog                 │  │
-│  └─────────────────────────────────────────────────────────┘  │
-│                           │                                   │
-│  ┌────────────────────────▼────────────────────────────────┐  │
-│  │              BUSINESS LOGIC LAYER (Service)             │  │
-│  │  Elite Patterns: Strategy, Decorator, Builder, Facade   │  │
-│  │  Logic: AI Scheduling, Conflict Detection, Price Engine │  │
-│  └─────────────────────────────────────────────────────────┘  │
-│                           │                                   │
-│  ┌────────────────────────▼────────────────────────────────┐  │
-│  │                DATA ACCESS LAYER (Repository)           │  │
-│  │  Spring Data JPA / Hibernate ORM                        │  │
-│  │  20+ Entity Mappings, Custom Native Queries             │  │
-│  └─────────────────────────────────────────────────────────┘  │
-└───────────────────────────────┬───────────────────────────────┘
-                                │ JDBC
-┌───────────────────────────────▼───────────────────────────────┐
-│                      MySQL 8 Database                         │
-│            Elite Cinema Schema (Normalized & Indexed)         │
-└───────────────────────────────────────────────────────────────┘
-```
+Dự án này ưu tiên áp dụng Design Pattern thay cho logic `if-else` phức tạp để đảm bảo tính mở rộng (OCP - Open/Closed Principle).
+
+### 2.1. Strategy Pattern
+Dùng để xử lý các thuật toán có nhiều biến thể có thể thay thế cho nhau.
+- **`DiscountStrategy`**: Xử lý các loại khuyến mãi khác nhau (Giảm % hoặc Giảm tiền mặt).
+    - *Triển khai thực tế*: `PercentageDiscountStrategy`, `FixedDiscountStrategy`.
+- **`AIWeightingStrategy`**: Xử lý các quy tắc tính trọng số cho phim trong AI Scheduling.
+    - *Yếu tố trọng số*: `OriginCountryWeight` (VN film boost), `BuzzScoreWeight` (TMDB), `PriorityWeight`.
+
+### 2.2. Decorator Pattern
+Dùng để "gắn thêm" các quy tắc tính toán lên một đối tượng cơ sở mà không làm thay đổi cấu trúc của nó.
+- **`PriceDecorator`**: Tính toán giá vé cuối cùng động dựa trên `PricingRule`.
+    - *Quy trình*: Khởi tạo `BasePriceCalculator` -> Wrap qua các Decorator tương ứng với các `PricingRule` thỏa mãn điều kiện (`Additive`, `Percentage`, `Fixed`).
+
+### 2.3. Factory Pattern
+Dùng để quản lý việc khởi tạo các Strategy một cách tập trung.
+- **`DiscountStrategyFactory`**: Dựa vào mã khuyến mãi (`PromotionType`) để trả về class Strategy phù hợp (`Percentage` hoặc `Fixed`).
+
+### 2.4. Facade Pattern
+Dùng để cung cấp một interface đơn giản cho một hệ thống con (subsystem) phức tạp.
+- **`CustomerBookingFacade`**: Đóng gói quy trình phức tạp: `Lock ghế` -> `Tính giá` -> `Áp khuyến mãi` -> `Tạo Booking` -> `Sinh QR Thanh toán`.
+- **`NotificationFacade`**: Đóng gói việc gửi thông báo đa kênh (`System Notification`, `Email Confirmation`) khi có sự kiện `Booking Success` hoặc `Member Level Up`.
+
+### 2.5. AOP (Aspect-Oriented Programming)
+Dùng để xử lý các logic xuyên suốt (cross-cutting concerns).
+- **`AuditLogAspect`**: Tự động bắt các phương thức được đánh dấu `@LogAction` để ghi lại lịch sử thao tác của Admin/Manager vào bảng `audit_log`.
 
 ---
 
-## 4. Các thành phần chính
+## 3. Quản lý tính trạng (State Management)
 
-### Core Logic (Elite Implementation)
-- **AI Scheduling Engine**: Tích hợp **TMDB API** để lấy chỉ số `popularity`. Thuật toán tự động phân bổ 70% giờ vàng cho phim Hot và đảm bảo dãn cách giờ bắt đầu giữa các phòng.
-- **Advanced Pricing**: Hệ thống tính giá cộng dồn sử dụng Decorators (Base + Room + Seat + Day + Time).
-- **Automated Audit**: Ghi lại mọi hành động CREATE/UPDATE/DELETE của Manager một cách tự động thông qua AOP.
+Hệ thống sử dụng các Enums và quy trình chuyển đổi trạng thái nghiêm ngặt cho Booking và Payment:
+- **BookingStatus**: `PENDING` -> `PAID` / `EXPIRED` -> `COMPLETED` / `CANCELLED`.
+- **PaymentStatus**: `UNPAID` -> `SUCCESS` / `FAILED`.
 
-### External Services
-| Service | Mục đích | Trạng thái |
-|---------|---------|------------|
-| **TMDB API** | Lấy dữ liệu xu hướng phim (Buzz Score) toàn cầu | Đã tích hợp |
-| **Cloudinary** | Lưu trữ & tối ưu hóa hình ảnh (Poster, Avatar) | Đã tích hợp |
-| **Gmail SMTP** | Gửi thông báo và mật khẩu ứng dụng | Đã cấu hình |
-| **Chart.js** | Hiển thị biểu đồ doanh thu thực tế trên Dashboard | Đã tích hợp |
-
----
-
-## 5. Phân quyền API
-
-```
-PUBLIC:
-  GET /api/movies, /api/showtimes, /api/combos, /api/actors/search
-
-CUSTOMER + STAFF:
-  POST /api/bookings, GET /api/bookings/{code}
-
-MANAGER:
-  Full CRUD: /api/movies, /api/rooms, /api/showtimes, /api/pricing
-  AI: /api/scheduling/suggest, /api/scheduling/apply
-  Stats: /api/statistics/overview
-  Audit: /api/audit-logs (View only)
-
-ADMIN:
-  Full System Access + User Management (/api/users)
-```
+Cơ chế **Transaction Management** được sử dụng triệt để trong các tác vụ `BookingServiceImpl` để đảm bảo tính toàn vẹn dữ liệu (không có tình trạng đặt trùng ghế).

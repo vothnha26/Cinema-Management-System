@@ -1,0 +1,32 @@
+@startuml admin_use_case
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam usecase {
+    BackgroundColor #F8F9FA
+    BorderColor #9B59B6
+    ArrowColor #333333
+}
+
+actor "Quản trị viên" as Admin
+
+rectangle "Phân hệ Quản trị (StarCinema)" {
+    usecase "Quản lý Chi nhánh rạp phim" as UC_Branch
+    usecase "Quản lý Tài khoản & Phân quyền" as UC_User
+    usecase "Quản lý dữ liệu nền hệ thống" as UC_MasterData
+    note right of UC_MasterData
+      Bao gồm: định dạng phim (2D/3D),
+      loại phòng, loại ghế (VIP/Thường)...
+    end note
+    usecase "Quản lý Phòng chiếu & Suất chiếu" as UC_Rooms
+    usecase "Thiết lập quyền lợi Membership" as UC_Membership
+    usecase "Xem nhật ký hệ thống (Audit Logs)" as UC_Audit
+}
+
+Admin --> UC_Branch
+Admin --> UC_User
+Admin --> UC_MasterData
+Admin --> UC_Rooms
+Admin --> UC_Membership
+Admin --> UC_Audit
+
+@enduml

@@ -15,4 +15,8 @@ public interface ComboService {
     ComboResponse updateStock(Long id, Integer quantity);
 
     void deleteCombo(Long id);
+
+    List<ComboResponse> getCombosByBranch(Long branchId);
+
+    ComboResponse updateBranchStock(Long branchId, Long comboId, Integer newStock);
 }

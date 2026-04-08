@@ -15,24 +15,24 @@ import com.example.cinema.repository.user.CustomerRepository;
 import com.example.cinema.service.booking.PaymentService;
 import com.example.cinema.service.infrastructure.vietqr.IVietQRService;
 import com.example.cinema.service.user.CustomerService;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
 
-    private static final Pattern BOOKING_CODE_PATTERN = Pattern.compile("BKG-[A-Z0-9]{8}");
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PaymentServiceImpl.class);
+    private static final Pattern BOOKING_CODE_PATTERN = Pattern.compile("BKG-?[A-Z0-9]+");
+    private static final String LOCK_KEY_PREFIX = "seat_lock:";
 
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
@@ -41,6 +41,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final CustomerService customerService;
     private final IVietQRService vietQRService;
     private final SePayProperties sePayProperties;
+    private final StringRedisTemplate redisTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public PaymentServiceImpl(PaymentRepository paymentRepository,
                               BookingRepository bookingRepository,
@@ -48,7 +50,9 @@ public class PaymentServiceImpl implements PaymentService {
                               NotificationRepository notificationRepository,
                               CustomerService customerService,
                               IVietQRService vietQRService,
-                              SePayProperties sePayProperties) {
+                              SePayProperties sePayProperties,
+                              StringRedisTemplate redisTemplate,
+                              SimpMessagingTemplate messagingTemplate) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.customerRepository = customerRepository;
@@ -56,6 +60,8 @@ public class PaymentServiceImpl implements PaymentService {
         this.customerService = customerService;
         this.vietQRService = vietQRService;
         this.sePayProperties = sePayProperties;
+        this.redisTemplate = redisTemplate;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -152,33 +158,55 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public void handleWebhook(Map<String, Object> payload, String signatureHeader) {
-        validateWebhookSignature(signatureHeader);
+        log.info("--- [Service] Start processing payment webhook ---");
+        
+        // 1. Kiểm tra bảo mật (nếu có signature)
+        if (signatureHeader != null) {
+            log.info("Checking webhook signature...");
+            validateWebhookSignature(signatureHeader);
+        }
 
+        // 2. Trích xuất mã đặt vé từ nội dung chuyển khoản (content)
         String bookingCode = extractBookingCode(payload);
+        log.info("Extracted Booking Code: {}", bookingCode);
+        
         if (bookingCode == null) {
-            throw new AppException("Booking code not found in payment payload");
+            log.warn("SePay Webhook: No booking code found in content '{}'. Payload: {}", 
+                payload.get("content"), payload);
+            return; 
         }
 
         Payment payment = paymentRepository.findByBookingBookingCode(bookingCode)
-                .orElseThrow(() -> new AppException("Payment not found"));
+                .orElseThrow(() -> new AppException("Payment not found for code: " + bookingCode));
+        log.info("Found corresponding payment in DB. Total required: {}", payment.getAmount());
 
-        if ("FAILED".equals(normalizeStatus(payload))) {
-            if (payment.getPaymentStatus() == PaymentStatus.SUCCESS) {
-                return;
-            }
-            payment.setPaymentStatus(PaymentStatus.FAILED);
-            payment.setTransactionId(null);
-            payment.setPaidAt(null);
-            payment.getBooking().setStatus(BookingStatus.CANCELLED);
-            bookingRepository.save(payment.getBooking());
-            createNotification(payment.getBooking().getCustomer().getUser(),
-                    "Thanh toan that bai",
-                    "Booking " + bookingCode + " thanh toan that bai tu cong thanh toan.",
-                    NotificationType.SYSTEM);
+        // 3. Kiểm tra loại giao dịch (Chỉ xử lý tiền vào 'in')
+        String transferType = Objects.toString(payload.get("transferType"), "").toLowerCase();
+        log.info("Transaction Type: {}", transferType);
+        
+        if (!"in".equals(transferType)) {
+            log.info("SePay Webhook: Ignored non-income transaction type: {}", transferType);
             return;
         }
 
-        confirmPaymentInternal(payment, extractTransactionId(payload), true);
+        // 4. Kiểm tra số tiền (Phải chuyển đủ hoặc thừa mới xác nhận)
+        Object amountObj = payload.get("transferAmount");
+        double receivedAmount = amountObj != null ? Double.parseDouble(amountObj.toString()) : 0;
+        double requiredAmount = payment.getAmount().doubleValue();
+        log.info("Received Amount: {}, Required Amount: {}", receivedAmount, requiredAmount);
+
+        if (receivedAmount < requiredAmount) {
+            log.warn("SePay Webhook: UNDERPAYMENT for {}. Required: {}, Received: {}", 
+                bookingCode, requiredAmount, receivedAmount);
+            return;
+        }
+
+        // 5. Xác nhận thanh toán thành công
+        String transactionId = Objects.toString(payload.get("id"), "SP-" + System.currentTimeMillis());
+        log.info("Confirming payment with Transaction ID: {}", transactionId);
+        
+        confirmPaymentInternal(payment, transactionId, true);
+        log.info("--- [Service] Webhook processed SUCCESSFULLY for booking {} ---", bookingCode);
     }
 
     private Customer getCurrentCustomer() {
@@ -192,14 +220,20 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private Payment getOwnedPayment(String bookingCode) {
-        Customer customer = getCurrentCustomer();
         Payment payment = paymentRepository.findByBookingBookingCode(bookingCode)
                 .orElseThrow(() -> new AppException("Payment not found"));
 
-        if (!payment.getBooking().getCustomer().getId().equals(customer.getId())) {
-            throw new AppException("Unauthorized");
+        Customer bookingCustomer = payment.getBooking().getCustomer();
+        
+        // Nếu booking này thuộc về một Hội viên (có user_id)
+        if (bookingCustomer != null && bookingCustomer.getUser() != null) {
+            Customer currentCustomer = getCurrentCustomer();
+            if (!bookingCustomer.getId().equals(currentCustomer.getId())) {
+                throw new AppException("Unauthorized: This booking belongs to another member");
+            }
         }
-
+        // Nếu là khách vãng lai (không có user_id), cho phép truy cập qua bookingCode (đã pass qua URL)
+        
         return payment;
     }
 
@@ -219,10 +253,31 @@ public class PaymentServiceImpl implements PaymentService {
                 ? transactionId
                 : "TXN-" + UUID.randomUUID().toString().substring(0, 10).toUpperCase());
         payment.setPaidAt(LocalDateTime.now());
+        
+        // LƯU PAYMENT VÀO CSDL
+        paymentRepository.save(payment);
 
         Booking booking = payment.getBooking();
         booking.setStatus(BookingStatus.CONFIRMED);
         bookingRepository.save(booking);
+
+        // Báo cho các client khác qua WebSocket về ghế
+        if (booking.getShowtime() != null && booking.getDetails() != null) {
+            Long showtimeId = booking.getShowtime().getId();
+            for (BookingDetail detail : booking.getDetails()) {
+                if (detail.getSeat() != null) {
+                    broadcastSeatStatus(showtimeId, detail.getSeat().getId(), "BOOKED");
+                }
+            }
+        }
+
+        // THÊM: Báo cho trang payment.html của khách hàng này
+        try {
+            log.info("Broadcasting payment success to /topic/payment/{}", booking.getBookingCode());
+            messagingTemplate.convertAndSend("/topic/payment/" + booking.getBookingCode(), Map.of("status", "SUCCESS"));
+        } catch (Exception e) {
+            log.error("Failed to broadcast payment success: {}", e.getMessage());
+        }
 
         // Xử lý điểm thưởng và thông báo chỉ khi có Customer
         if (booking.getCustomer() != null) {
@@ -236,6 +291,18 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         return payment;
+    }
+
+    private void broadcastSeatStatus(Long showtimeId, Long seatId, String action) {
+        Map<String, Object> message = new HashMap<>();
+        message.put("seatId", seatId);
+        message.put("action", action);
+        message.put("sessionId", "SYSTEM-PAYMENT");
+        try {
+            messagingTemplate.convertAndSend("/topic/showtime/" + showtimeId + "/seats", message);
+        } catch (Exception e) {
+            // Log error but don't break payment transaction
+        }
     }
 
     private PaymentResponse mapToResponse(Payment payment) {
@@ -252,6 +319,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private void createNotification(User user, String title, String message, NotificationType type) {
+        if (user == null) return;
         Notification notification = new Notification();
         notification.setUser(user);
         notification.setTitle(title);
@@ -266,6 +334,10 @@ public class PaymentServiceImpl implements PaymentService {
             return;
         }
         if (signatureHeader == null || !expected.equals(signatureHeader)) {
+            // Chấp nhận cả trường hợp Header Authorization kiểu 'Apikey ...'
+            String expectedAuth = "Apikey " + expected;
+            if (signatureHeader.equals(expectedAuth)) return;
+            
             throw new AppException("Invalid payment webhook signature");
         }
     }
@@ -298,24 +370,31 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     private String extractBookingCode(Map<String, Object> payload) {
-        List<String> candidates = List.of(
-                Objects.toString(payload.get("bookingCode"), ""),
-                Objects.toString(payload.get("orderCode"), ""),
-                Objects.toString(payload.get("order_code"), ""),
-                Objects.toString(payload.get("orderId"), ""),
-                Objects.toString(payload.get("content"), ""),
-                Objects.toString(payload.get("description"), ""),
-                Objects.toString(payload.get("addInfo"), ""),
-                Objects.toString(payload.get("transferContent"), ""),
-                Objects.toString(payload.get("transaction_content"), ""));
-
-        for (String candidate : candidates) {
-            if (candidate == null || candidate.isBlank()) {
-                continue;
+        String content = Objects.toString(payload.get("content"), "");
+        System.out.println(">>> Analyzing content for Booking Code: " + content);
+        
+        // Sử dụng Pattern đã định nghĩa (linh hoạt BKG-?...)
+        Matcher matcher = BOOKING_CODE_PATTERN.matcher(content.toUpperCase());
+        if (matcher.find()) {
+            String code = matcher.group();
+            // CHUẨN HÓA: Nếu mã bị dính liền (BKG123), thêm lại dấu gạch ngang (BKG-123) để khớp database
+            if (!code.contains("-")) {
+                code = "BKG-" + code.substring(3);
             }
-            Matcher matcher = BOOKING_CODE_PATTERN.matcher(candidate.toUpperCase());
+            System.out.println(">>> FOUND AND NORMALIZED CODE: " + code);
+            return code;
+        }
+        
+        // Kiểm tra thêm các trường khác nếu có (addInfo, bookingCode...)
+        List<String> fields = List.of("bookingCode", "addInfo", "description");
+        for (String field : fields) {
+            String val = Objects.toString(payload.get(field), "");
+            if (val.isEmpty()) continue;
+            matcher = BOOKING_CODE_PATTERN.matcher(val.toUpperCase());
             if (matcher.find()) {
-                return matcher.group();
+                String code = matcher.group();
+                if (!code.contains("-")) code = "BKG-" + code.substring(3);
+                return code;
             }
         }
         return null;

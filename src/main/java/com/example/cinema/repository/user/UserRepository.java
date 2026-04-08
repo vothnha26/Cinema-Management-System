@@ -18,4 +18,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.role = :role AND u.status = true")
     List<User> findAllByRoleAndStatusTrue(@Param("role") Role role);
+
+    @Query("SELECT u FROM User u JOIN Staff s ON u.id = s.user.id " +
+           "WHERE u.role = :role AND u.status = true " +
+           "AND (:branchId IS NULL OR s.branch.id = :branchId)")
+    List<User> findAllByRoleAndBranchAndStatusTrue(@Param("role") Role role, @Param("branchId") Long branchId);
 }

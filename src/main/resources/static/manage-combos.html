@@ -9,7 +9,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-    <link rel="icon" type="image/png" href="/favicon.png?v=2">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
@@ -24,88 +23,79 @@
         .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
 
         .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; transition: opacity 0.2s; }
-        .combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
-        .combo-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: 0.3s; }
-        .combo-card:hover { border-color: var(--accent); transform: translateY(-5px); }
-        .combo-img { width: 100%; height: 180px; object-fit: cover; background: var(--surface); }
-        .combo-body { padding: 20px; }
-        .combo-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
-        .combo-price { color: var(--accent-gold); font-weight: 700; font-size: 1.1rem; }
         
-        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
-        .form-control { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 10px; }
-        .form-control:focus { border-color: var(--accent); background: var(--surface); color: #fff; outline: none; box-shadow: none; }
-
-        .image-preview-box { width: 100%; height: 180px; border: 2px dashed var(--border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
-        .image-preview-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+        .combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+        .combo-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: 0.3s; display: flex; flex-direction: column; }
+        .combo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        .combo-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--surface); }
+        .combo-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        .combo-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .combo-price { color: var(--accent-gold); font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; }
         
-        .stock-badge { font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; font-weight: 600; }
-        .stock-low { background: rgba(229,19,58,0.1); color: var(--accent); }
+        .stock-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
         .stock-ok { background: rgba(80,200,100,0.1); color: #50C864; }
+        .stock-low { background: rgba(229,19,58,0.1); color: var(--accent); }
+
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 24px; color: var(--text); }
+        .form-control, .form-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 12px; }
+        .form-control:focus { border-color: var(--accent); background: var(--surface); color: #fff; outline: none; box-shadow: none; }
+        
+        #imagePreview { width: 100%; border-radius: 12px; margin-top: 10px; border: 1px solid var(--border); display: none; }
     </style>
 </head>
 <body>
 
-<aside class=\"sidebar\"></aside>
+<aside class="sidebar"></aside>
 
 <main class="main-content">
     <div class="header-section">
         <div>
-            <h1 class="page-title">Quản lý Combo</h1>
-            <p class="text-muted m-0">Bắp nước và các gói dịch vụ đi kèm.</p>
+            <h1 class="page-title">Quản lý Combo & Bắp nước</h1>
+            <p class="text-muted m-0" id="pageSubtitle">Danh mục bắp nước toàn hệ thống.</p>
         </div>
-        <button class="btn-add" onclick="openAddModal()">
+        <button class="btn-add" id="btnAddCombo" onclick="openAddModal()">
             <i class="bi bi-plus-lg me-2"></i> THÊM COMBO MỚI
         </button>
     </div>
 
     <div class="combo-grid" id="comboGrid">
-        <div class="col-12 text-center py-5">Đang tải dữ liệu...</div>
+        <!-- Loaded via JS -->
     </div>
 </main>
 
-<!-- MODAL -->
-<div class="modal fade" id="comboModal" tabindex="-1" aria-hidden="true">
+<!-- ADMIN MODAL: CREATE/EDIT COMBO -->
+<div class="modal fade" id="comboModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalTitle">THÔNG TIN COMBO</h5>
+        <div class="modal-content p-2">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">THÔNG TIN COMBO</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body">
                 <form id="comboForm">
                     <input type="hidden" id="comboId">
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold text-muted">Hình ảnh Combo</label>
-                        <div class="image-preview-box" onclick="document.getElementById('imageInput').click()">
-                            <i class="bi bi-image fs-1 text-muted"></i>
-                            <span class="text-muted small">Nhấp để chọn ảnh</span>
-                            <img id="imagePreview" style="display: none;">
-                        </div>
-                        <input type="file" id="imageInput" class="d-none" accept="image/*" onchange="previewImage(this)">
-                        <input type="hidden" id="imageUrl">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Tên Combo *</label>
+                        <input type="text" name="name" class="form-control" required placeholder="VD: Combo Bắp 2 ngăn">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Tên combo</label>
-                        <input type="text" name="name" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Mô tả</label>
+                        <label class="form-label small fw-bold text-muted">Mô tả chi tiết</label>
                         <textarea name="description" class="form-control" rows="2"></textarea>
                     </div>
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <label class="form-label small fw-bold text-muted">Giá bán (VNĐ)</label>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label small fw-bold text-muted">Giá bán (VNĐ) *</label>
                             <input type="number" name="price" class="form-control" required>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label small fw-bold text-muted">Số lượng tồn kho</label>
-                            <input type="number" name="stockQuantity" class="form-control" value="100" required>
-                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Ảnh minh họa</label>
+                        <input type="file" id="imageInput" class="form-control" accept="image/*" onchange="previewImage(this)">
+                        <img id="imagePreview">
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer border-0">
                 <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
                 <button type="button" class="btn btn-danger px-4 fw-bold" onclick="saveCombo()">LƯU COMBO</button>
             </div>
@@ -113,28 +103,69 @@
     </div>
 </div>
 
+<!-- MANAGER MODAL: UPDATE STOCK -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">NHẬP TỒN KHO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="stockComboName" class="text-info fw-bold mb-3"></p>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted">Số lượng tồn kho mới</label>
+                    <input type="number" id="newStockInput" class="form-control fs-4 text-center fw-bold" value="0">
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-danger w-100 py-2 fw-bold" onclick="saveStock()">CẬP NHẬT</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="/js/auth-guard.js"></script>
-<script>AuthGuard.requireRole(['MANAGER']);</script>
+<script>AuthGuard.requireRole(['ADMIN', 'MANAGER']);</script>
 <script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const comboModal = new bootstrap.Modal(document.getElementById('comboModal'));
+    const stockModal = new bootstrap.Modal(document.getElementById('stockModal'));
     let allCombos = [];
+    let currentStockingComboId = null;
 
-    document.addEventListener('DOMContentLoaded', loadCombos);
+    document.addEventListener('DOMContentLoaded', init);
+
+    async function init() {
+        const role = localStorage.getItem('cinemaRole');
+        if (role === 'MANAGER') {
+            document.getElementById('btnAddCombo').style.display = 'none';
+            document.getElementById('pageSubtitle').innerText = 'Quản lý tồn kho bắp nước tại chi nhánh.';
+        }
+        loadCombos();
+    }
 
     async function loadCombos() {
-        try {
-            const res = await api.get('/combos');
-            if (res.success) {
-                allCombos = res.data;
-                renderCombos(allCombos);
-            }
-        } catch (e) { console.error(e); }
+        const role = localStorage.getItem('cinemaRole');
+        const branchId = localStorage.getItem('cinemaBranchId');
+        let res;
+        
+        if (role === 'MANAGER' && branchId) {
+            res = await api.get(`/combos/branch/${branchId}`);
+        } else {
+            res = await api.get('/combos');
+        }
+
+        if (res.success) {
+            allCombos = res.data;
+            renderCombos(allCombos);
+        }
     }
 
     function renderCombos(combos) {
+        const role = localStorage.getItem('cinemaRole');
         document.getElementById('comboGrid').innerHTML = combos.map(c => {
             const stockClass = (c.stockQuantity || 0) < 10 ? 'stock-low' : 'stock-ok';
             return `
@@ -143,14 +174,20 @@
                     <div class="combo-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div class="combo-name">${c.name}</div>
-                            <span class="stock-badge ${stockClass}">Kho: ${c.stockQuantity || 0}</span>
+                            <span class="stock-badge ${stockClass}">Tồn: ${c.stockQuantity || 0}</span>
                         </div>
-                        <div class="text-muted small mb-3">${c.description || 'Không có mô tả'}</div>
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="text-muted small mb-3" style="font-size: 0.8rem">${c.description || 'Không có mô tả'}</div>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
                             <span class="combo-price">${new Intl.NumberFormat('vi-VN').format(c.price)}đ</span>
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-light" onclick="editCombo(${c.id})"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCombo(${c.id})"><i class="bi bi-trash"></i></button>
+                                ${role === 'ADMIN' ? `
+                                    <button class="btn btn-sm btn-outline-light" onclick="editCombo(${c.id})"><i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCombo(${c.id})"><i class="bi bi-trash"></i></button>
+                                ` : `
+                                    <button class="btn btn-sm btn-outline-info fw-bold" onclick="openStockModal(${c.id}, '${c.name}', ${c.stockQuantity})">
+                                        <i class="bi bi-box-seam me-1"></i> KHO
+                                    </button>
+                                `}
                             </div>
                         </div>
                     </div>
@@ -159,6 +196,7 @@
         }).join('');
     }
 
+    // --- ADMIN ACTIONS ---
     function openAddModal() {
         document.getElementById('comboForm').reset();
         document.getElementById('comboId').value = '';
@@ -173,18 +211,12 @@
         const f = document.getElementById('comboForm');
         document.getElementById('comboId').value = c.id;
         f.querySelector('[name="name"]').value = c.name;
-        f.querySelector('[name="description"]').value = c.description || '';
+        f.querySelector('[name="description"]').value = c.description;
         f.querySelector('[name="price"]').value = c.price;
-        f.querySelector('[name="stockQuantity"]').value = c.stockQuantity || 0;
-        document.getElementById('imageUrl').value = c.imageUrl || '';
-        
         if (c.imageUrl) {
             const prev = document.getElementById('imagePreview');
             prev.src = c.imageUrl; prev.style.display = 'block';
-        } else {
-            document.getElementById('imagePreview').style.display = 'none';
         }
-        
         document.getElementById('modalTitle').innerText = 'CẬP NHẬT COMBO';
         comboModal.show();
     }
@@ -192,33 +224,21 @@
     async function saveCombo() {
         const id = document.getElementById('comboId').value;
         const f = document.getElementById('comboForm');
-        
         const data = {
-            name: f.querySelector('[name="name"]').value.trim(),
-            description: f.querySelector('[name="description"]').value.trim(),
+            name: f.querySelector('[name="name"]').value,
+            description: f.querySelector('[name="description"]').value,
             price: parseFloat(f.querySelector('[name="price"]').value),
-            stockQuantity: parseInt(f.querySelector('[name="stockQuantity"]').value) || 0,
-            imageUrl: document.getElementById('imageUrl').value
+            stockQuantity: 0 // Default for admin creation
         };
-
-        if (!data.name || isNaN(data.price)) return alert('Vui lòng nhập đủ thông tin!');
 
         const fd = new FormData();
         fd.append('combo', new Blob([JSON.stringify(data)], { type: 'application/json' }));
-        
-        const fileInput = document.getElementById('imageInput');
-        if (fileInput.files.length > 0) {
-            fd.append('image', fileInput.files[0]);
-        }
+        const imgFile = document.getElementById('imageInput').files[0];
+        if (imgFile) fd.append('image', imgFile);
 
-        try {
-            const res = await (id ? api.put(`/combos/${id}`, fd, true) : api.post('/combos', fd, true));
-            if (res.success) {
-                comboModal.hide();
-                loadCombos();
-                alert('Lưu combo thành công!');
-            } else alert('Lỗi: ' + res.message);
-        } catch (e) { alert('Lỗi máy chủ khi lưu combo.'); }
+        const res = await (id ? api.put(`/combos/${id}`, fd, true) : api.post('/combos', fd, true));
+        if (res.success) { comboModal.hide(); loadCombos(); }
+        else alert(res.message);
     }
 
     async function deleteCombo(id) {
@@ -226,6 +246,27 @@
             const res = await api.delete(`/combos/${id}`);
             if (res.success) loadCombos();
         }
+    }
+
+    // --- MANAGER ACTIONS ---
+    function openStockModal(id, name, currentStock) {
+        currentStockingComboId = id;
+        document.getElementById('stockComboName').innerText = name;
+        document.getElementById('newStockInput').value = currentStock || 0;
+        stockModal.show();
+    }
+
+    async function saveStock() {
+        const branchId = localStorage.getItem('cinemaBranchId');
+        const quantity = parseInt(document.getElementById('newStockInput').value);
+        if (isNaN(quantity)) return;
+
+        const res = await api.patch(`/combos/branch/${branchId}/combo/${currentStockingComboId}/stock?quantity=${quantity}`);
+        if (res.success) {
+            stockModal.hide();
+            loadCombos();
+            alert('Cập nhật tồn kho thành công!');
+        } else alert(res.message);
     }
 
     function previewImage(input) {

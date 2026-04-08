@@ -1,133 +1,84 @@
-# 🔄 Flow xử lý – Data Flow / Business Flow
+# 🔄 Luồng dữ liệu chính – Cinema Management System
 
-## 1. Request Flow tổng quát
+Tài liệu này sử dụng sơ đồ Sequence và Step để mô phỏng các tương tác quan trọng giữa Actors và Hệ thống.
 
-```
-Client (Browser)
-  │
-  │  HTTP Request (GET/POST/PUT/DELETE)
-  ▼
-JwtFilter (Spring Security)
-  │  Xác thực token → Lấy UserDetails → Set SecurityContext
-  ▼
-@RestController
-  │  Nhận request → @Valid DTO → Gọi Service
-  ▼
-Service (Interface)
-  │  Xử lý nghiệp vụ → Gọi Repository
-  ▼
-Repository (JpaRepository)
-  │  Truy vấn CSDL qua Hibernate
-  ▼
-MySQL Database
-  │  Trả kết quả
-  ▼
-Service → Entity → DTO (ModelMapper)
-  ▼
-Controller → ResponseEntity<ApiResponse<DTO>>
-  ▼
-Client nhận JSON response
-```
+## 1. Luồng Đặt vé Online (Customer)
 
----
+Mô phỏng quy trình đặt vé tích hợp thanh toán tự động qua `CustomerBookingFacade`.
 
-## 2. Flow đặt vé online (Luồng quan trọng nhất)
+```mermaid
+sequenceDiagram
+    actor C as Khách hàng
+    participant F as BookingFacade
+    participant P as PricingService
+    participant BK as BookingService
+    participant Pay as PaymentService
+    participant W as SePay Webhook
 
-```
-CUSTOMER gửi POST /api/bookings
-{
-  "showtimeId": 10,
-  "seatIds": [101, 102],
-  "comboOrders": [{"comboId": 1, "quantity": 2}],
-  "promotionCode": "GOLD10",
-  "paymentMethod": "MOMO"
-}
-
-─────────────────────────────────────────────
-STEP 1: BookingController
-  ✅ @Valid BookingRequest (kiểm tra ràng buộc @NotNull, @NotEmpty)
-  ✅ Gọi bookingService.createBooking(request)
-
-─────────────────────────────────────────────
-STEP 2: BookingService.createBooking()
-  ✅ [Kiểm tra 1] Suất chiếu tồn tại & status = UPCOMING
-     → ShowtimeRepository.findById()
-     → Throw AppException nếu không hợp lệ
-
-  ✅ [Kiểm tra 2] Ghế chưa bị đặt trong suất chiếu này
-     → BookingDetailRepository.findBookedSeatIdsByShowtime()
-     → Throw AppException nếu ghế đã bị đặt
-
-  ✅ [Kiểm tra 3] Áp promotion code (nếu có)
-     → PromotionRepository.findByCode()
-     → Kiểm tra hạn sử dụng, hạng thành viên tối thiểu
-
-  ✅ [Tính giá]
-     price = Σ(seat_price) + Σ(combo_price × qty) − discount
-
-  ✅ [Lưu DB - @Transactional]
-     → Tạo Booking entity (booking_code = UUID)
-     → Tạo List<BookingDetail> (1 record / ghế)
-     → Tạo List<BookingCombo> (1 record / combo)
-     → BookingRepository.save(booking) [cascade ALL]
-
-─────────────────────────────────────────────
-STEP 3: PaymentService.processPayment()
-  ✅ Tạo Payment entity
-  ✅ Gọi payment gateway (mock / thật)
-  ✅ Cập nhật payment_status = SUCCESS / FAILED
-
-─────────────────────────────────────────────
-STEP 4: CustomerService.rewardPoints()
-  ✅ Cộng điểm tích lũy = total_price / 10000
-  ✅ Cập nhật total_spent
-  ✅ Kiểm tra nâng hạng thành viên tự động
-
-─────────────────────────────────────────────
-STEP 5: NotificationService.sendBookingConfirmation()
-  ✅ Tạo Notification entity (type = BOOKING)
-  ✅ [Tùy chọn] Gửi email xác nhận
-
-─────────────────────────────────────────────
-STEP 6: Response
-  → BookingResponse {
-      bookingCode, totalPrice,
-      seatCodes, showtimeInfo,
-      paymentStatus, pointsEarned
-    }
+    C->>F: Chọn Suất chiếu & Ghế & Combo
+    F->>P: Tính toán giá vé (áp Decorator)
+    P-->>F: Giá cuối cùng & Mã ưu đãi
+    F->>BK: Tạo Booking (Trạng thái PENDING)
+    BK->>Pay: Tạo dữ liệu thanh toán VietQR
+    BK-->>C: Trả về QR Code chuyển khoản
+    
+    Note over C,W: Chuyển khoản thành công qua Ngân hàng
+    
+    W->>Pay: Gửi POST Webhook (Xác nhận giao dịch)
+    Pay->>BK: Cập nhật trạng thái Booking (PAID)
+    BK->>BK: Sinh mã QR Check-in
+    BK-->>C: Hiển thị thông báo Thành công & QR Code
 ```
 
 ---
 
-## 3. Flow bán vé tại quầy (Staff - POS)
+## 2. Luồng Tính giá vé và Ưu đãi (Business Layer)
 
-```
-STAFF → Tìm suất chiếu theo ngày/phim
-       → Xem sơ đồ ghế còn trống (GET /api/showtimes/{id}/seats)
-       → Chọn ghế
-       → POST /api/bookings (paymentMethod = CASH)
-       → In vé / hiển thị booking_code
-```
+Mô phỏng cách hệ thống xử lý giá linh hoạt với `Strategy` và `Decorator`.
 
-## 4. Flow Check-in vé
-
-```
-STAFF nhập / quét booking_code
-  → PUT /api/bookings/{code}/checkin
-  → BookingService.checkIn()
-     ✅ Kiểm tra booking tồn tại & status = CONFIRMED
-     ✅ Kiểm tra đúng suất chiếu & ngày hôm nay
-     ✅ Cập nhật status = CHECKED_IN
-  → Trả xác nhận check-in thành công
+```mermaid
+graph TD
+    B[Base Price] --> S{Seat Surcharge}
+    S -- VIP --> S1[+ Phụ phí VIP]
+    S -- Thường --> S2[+0 VNĐ]
+    S1 --> R{Room Surcharge}
+    S2 --> R
+    R -- IMAX/3D --> R1[+ Phụ phí định dạng]
+    R -- 2D --> R2[+0 VNĐ]
+    R1 --> T{Time Surcharge}
+    R2 --> T
+    T -- Weekend/Holiday --> T1[+ Phụ phí khung giờ]
+    T -- Weekday --> T2[+0 VNĐ]
+    T1 --> D{Discount Applied?}
+    T2 --> D
+    D -- Yes --> D1[Apply Discount Strategy]
+    D -- No --> D2[Final Price]
+    D1 --> D2
 ```
 
 ---
 
-## 5. Xử lý lỗi tập trung
+## 3. Luồng Quản trị (Admin/Manager Flow)
 
-```
-Bất kỳ tầng nào throw AppException
-  → GlobalExceptionHandler (@ControllerAdvice)
-      @ExceptionHandler(AppException.class)
-      → Trả JSON: { "success": false, "message": "...", "code": 400 }
-```
+Mô tả cách hệ thống lắng nghe các thay đổi cấu hình quan trọng.
+
+1.  **Thay đổi Lịch chiếu**:
+    - Manager tạo `Showtime` mới.
+    - `SchedulingStrategy` kiểm tra xung đột phòng và thời gian dọn dẹp giữa các suất chiếu.
+    - Cập nhật Redis Caching để cập diện lịch chiếu mới cho Khách hàng tức thì.
+
+2.  **Quản lý Phim**:
+    - Admin tìm kiếm phim qua **TMDB integration**.
+    - Hệ thống map dữ liệu TMDB (Poster, Trailer, Nội dung) sang Entity của hệ thống.
+    - `CloudinaryFacade` tải ảnh Poster lên Cloudinary và lưu URL vào DB.
+
+---
+
+## 4. Đặc điểm Luồng Thanh toán Webhook (SePay)
+
+Cơ chế xử lý **Stateless Callback**:
+- SePay POST dữ liệu đến `/api/webhook/sepay`.
+- Hệ thống giải mã và kiểm tra ID Booking trong nội dung giao dịch.
+- So khớp giá trị chuyển khoản với tổng tiền Booking.
+- Nếu khớp: Chuyển trạng thái Booking sang `PAID`.
+- Nếu lệch: Ghi log cảnh báo và giữ nguyên trạng thái `PENDING`.

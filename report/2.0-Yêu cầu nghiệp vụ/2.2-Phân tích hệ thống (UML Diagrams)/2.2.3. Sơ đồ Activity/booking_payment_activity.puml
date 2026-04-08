@@ -1,0 +1,53 @@
+@startuml booking_payment_activity
+skinparam backgroundColor #FFFFFF
+skinparam activity {
+  BackgroundColor #1A1A1A
+  BorderColor #E5133A
+  FontColor #FFFFFF
+  ArrowColor #E5133A
+}
+
+title Activity Diagram: Quy trình Đặt vé & Thanh toán (StarCinema)
+
+start
+:Người dùng chọn Suất chiếu & Ghế;
+:Chọn Combo (Bắp, Nước);
+:Nhập thông tin liên hệ (nếu là khách vãng lai);
+
+partition "Xử lý đặt vé" {
+  :Xác thực danh tính (Thành viên/Khách);
+  :Tính tiền vé và dịch vụ kèm theo;
+  note right
+    Tính toán dựa trên:
+    - Loại ghế (Vip/Thường)
+    - Đối tượng khách hàng
+    - Thời điểm suất chiếu
+    - Chi nhánh rạp (Quy tắc giá riêng)
+  end note
+  
+  :Áp dụng giảm giá (nếu có);
+  :Tạo hồ sơ Đặt vé;
+  :Tạo yêu cầu Thanh toán;
+}
+
+:Chuyển hướng Cổng thanh toán (MOMO/VietQR)\nhoặc thanh toán tại quầy (Tiền mặt/Thẻ);
+
+if (Thanh toán hoàn tất?) then (Có)
+  :Cập nhật trạng thái Đặt vé (SUCCESS/CHECKED_IN);
+  :Ghi nhận giao dịch thành công;
+  
+  partition "Gửi thông báo & Email" {
+    :Phát tín hiệu đặt vé thành công;
+    :Gửi Email xác nhận kèm mã đặt vé;
+    note right: Gồm phim, suất chiếu, ghế, tổng tiền
+  }
+  
+  #Green:Hiển thị mã QR vé;
+  stop
+else (Không)
+  :Tự động hủy hồ sơ Đặt vé;
+  #Red:Thông báo "Thanh toán thất bại";
+  stop
+endif
+
+@enduml

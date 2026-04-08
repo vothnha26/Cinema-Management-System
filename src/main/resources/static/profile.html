@@ -201,13 +201,13 @@
         const p = res.success ? res.data : res;
         document.getElementById('pName').innerText = p.fullName?.toUpperCase() || p.username.toUpperCase();
         document.getElementById('pAvatar').innerText = (p.fullName || p.username).charAt(0).toUpperCase();
-        document.getElementById('pTier').innerText = `★ ${p.membershipTier || 'STANDARD'} Member`;
+        document.getElementById('pTier').innerText = `★ ${p.membershipLevel || 'STANDARD'} Member`;
         
         document.getElementById('fullName').value = p.fullName || '';
         document.getElementById('username').value = p.username || '';
         document.getElementById('email').value = p.email || '';
         document.getElementById('phone').value = p.phone || '';
-        document.getElementById('tierDisplay').value = p.membershipTier || 'STANDARD';
+        document.getElementById('tierDisplay').value = p.membershipLevel || 'STANDARD';
         
         document.getElementById('sPoints').innerText = (p.points || 0).toLocaleString();
         document.getElementById('sSpending').innerText = Number(p.totalSpending || 0).toLocaleString() + 'đ';

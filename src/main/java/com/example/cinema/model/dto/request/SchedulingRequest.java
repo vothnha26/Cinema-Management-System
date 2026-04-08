@@ -2,17 +2,18 @@ package com.example.cinema.model.dto.request;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.List;
 
 public class SchedulingRequest {
     private LocalDate date;
-    private String mode; // OVERWRITE, FILL
+    private String mode; // OVERWRITE, ADD
     private Double ratio;
     private LocalTime startTime;
     private LocalTime endTime;
     private String strategy; // BALANCED, REVENUE, CUSTOM
-    private List<SchedulingRule> rules;
+    private Integer cleanupTime;
     private String customDirectives;
+    private Long branchId;
+    private java.util.List<SchedulingRule> rules;
 
     public SchedulingRequest() {}
 
@@ -28,8 +29,12 @@ public class SchedulingRequest {
     public void setEndTime(LocalTime endTime) { this.endTime = endTime; }
     public String getStrategy() { return strategy; }
     public void setStrategy(String strategy) { this.strategy = strategy; }
-    public List<SchedulingRule> getRules() { return rules; }
-    public void setRules(List<SchedulingRule> rules) { this.rules = rules; }
+    public Integer getCleanupTime() { return cleanupTime; }
+    public void setCleanupTime(Integer cleanupTime) { this.cleanupTime = cleanupTime; }
     public String getCustomDirectives() { return customDirectives; }
     public void setCustomDirectives(String customDirectives) { this.customDirectives = customDirectives; }
+    public Long getBranchId() { return branchId; }
+    public void setBranchId(Long branchId) { this.branchId = branchId; }
+    public java.util.List<SchedulingRule> getRules() { return rules; }
+    public void setRules(java.util.List<SchedulingRule> rules) { this.rules = rules; }
 }

@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface ShowtimeService {
     List<ShowtimeResponse> getAllShowtimes(LocalDate date);
+    List<ShowtimeResponse> getShowtimesByBranch(Long branchId, LocalDate date);
     List<ShowtimeResponse> getShowtimesByMovie(Long movieId);
     List<SeatResponse> getSeatStatusForShowtime(Long showtimeId);
     ShowtimeResponse createShowtime(ShowtimeRequest request);

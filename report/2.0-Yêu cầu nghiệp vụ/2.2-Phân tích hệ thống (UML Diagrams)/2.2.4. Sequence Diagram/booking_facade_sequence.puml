@@ -1,0 +1,48 @@
+@startuml booking_facade_sequence
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #3498DB
+    ActorBorderColor #3498DB
+    LifeLineBorderColor #1A1A1A
+    ParticipantBackgroundColor #1A1A1A
+    ParticipantBorderColor #3498DB
+    ParticipantFontColor #FFFFFF
+}
+
+actor Customer
+participant "CustomerBookingFacade" as CBF
+participant "PricingService" as PS
+participant "BookingRepo" as BR
+participant "PaymentRepo" as PR
+participant "EventPublisher" as EP
+
+Customer -> CBF: processOnlineBooking(request)
+activate CBF
+
+CBF -> CBF: Identify Customer/Guest info
+
+CBF -> PS: calculateTicketPrice(showtime, seats)
+activate PS
+PS --> CBF: totalPrice
+deactivate PS
+
+CBF -> BR: save(pendingBooking)
+activate BR
+BR --> CBF: savedBooking
+deactivate BR
+
+CBF -> PR: save(pendingPayment)
+activate PR
+PR --> CBF: savedPayment
+deactivate PR
+
+CBF -> EP: publishEvent(TicketBookedEvent)
+activate EP
+note right: Trigger notification asynchronously
+EP --> CBF: void
+deactivate EP
+
+CBF --> Customer: BookingResponse (Confirmed/Pending)
+deactivate CBF
+
+@enduml

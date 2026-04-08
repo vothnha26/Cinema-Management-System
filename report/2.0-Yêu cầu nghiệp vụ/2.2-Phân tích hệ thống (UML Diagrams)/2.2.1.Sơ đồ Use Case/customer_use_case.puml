@@ -1,0 +1,48 @@
+@startuml customer_use_case
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam usecase {
+    BackgroundColor #F8F9FA
+    BorderColor #1877F2
+    ArrowColor #333333
+}
+
+actor "Khách hàng" as Customer
+actor "Hệ thống Thanh toán" as PaymentSystem <<External>>
+actor "Dịch vụ Email" as EmailService <<External>>
+
+rectangle "Phân hệ Khách hàng (StarCinema)" {
+    usecase "Đăng ký tài khoản" as UC_Register
+    usecase "Xác thực OTP qua Email" as UC_OTP
+    usecase "Đăng nhập" as UC_Login
+    usecase "Xem thông tin phim" as UC_MovieDetail
+    usecase "Tìm kiếm phim" as UC_Search
+    
+    usecase "Đặt vé trực tuyến" as UC_Booking
+    usecase "Chọn ghế ngồi" as UC_Seat
+    usecase "Chọn Combo bắp nước" as UC_Combo
+    usecase "Thanh toán trực tuyến" as UC_Payment
+    
+    usecase "Xem lịch sử giao dịch" as UC_History
+    usecase "Nhận thông báo đặt vé" as UC_Notify
+    usecase "Quản lý hồ sơ cá nhân" as UC_Profile
+
+    UC_Register ..> UC_OTP : <<include>>
+    UC_Booking ..> UC_Seat : <<include>>
+    UC_Booking ..> UC_Combo : <<include>>
+    UC_Booking ..> UC_Payment : <<include>>
+}
+
+Customer --> UC_Register
+Customer --> UC_Login
+Customer --> UC_Search
+Customer --> UC_MovieDetail
+Customer --> UC_Booking
+Customer --> UC_History
+Customer --> UC_Profile
+
+UC_OTP -- EmailService
+UC_Payment -- PaymentSystem
+UC_Notify -- EmailService
+
+@enduml

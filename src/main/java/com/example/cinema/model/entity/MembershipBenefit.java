@@ -1,6 +1,5 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.enums.MembershipTier;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,22 +9,23 @@ public class MembershipBenefit {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(unique = true, nullable = false)
-    private MembershipTier tier;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "membership_level_id", nullable = false)
+    private MembershipLevel membershipLevel;
 
-    @Column(name = "discount_percent", nullable = false)
-    private Double discountPercent; // Ví dụ: 5.0, 10.0
+    @Column(name = "benefit_type", nullable = false)
+    private String benefitType; // 'DISCOUNT', 'POINT_MULTIPLIER', 'GIFT', etc.
 
-    @Column(name = "point_multiplier")
-    private Double pointMultiplier = 1.0; // Hệ số tích điểm (Ví dụ hạng cao tích điểm nhanh hơn)
+    @Column(name = "benefit_value", nullable = false)
+    private String benefitValue;
 
     public MembershipBenefit() {
     }
 
-    public MembershipBenefit(MembershipTier tier, Double discountPercent) {
-        this.tier = tier;
-        this.discountPercent = discountPercent;
+    public MembershipBenefit(MembershipLevel level, String type, String value) {
+        this.membershipLevel = level;
+        this.benefitType = type;
+        this.benefitValue = value;
     }
 
     public Long getId() {
@@ -36,27 +36,42 @@ public class MembershipBenefit {
         this.id = id;
     }
 
-    public MembershipTier getTier() {
-        return tier;
+    public MembershipLevel getMembershipLevel() {
+        return membershipLevel;
     }
 
-    public void setTier(MembershipTier tier) {
-        this.tier = tier;
+    public void setMembershipLevel(MembershipLevel membershipLevel) {
+        this.membershipLevel = membershipLevel;
     }
 
+    public String getBenefitType() {
+        return benefitType;
+    }
+
+    public void setBenefitType(String benefitType) {
+        this.benefitType = benefitType;
+    }
+
+    public String getBenefitValue() {
+        return benefitValue;
+    }
+
+    public void setBenefitValue(String benefitValue) {
+        this.benefitValue = benefitValue;
+    }
+
+    // Helper methods for common benefits (backward compatibility or convenience)
     public Double getDiscountPercent() {
-        return discountPercent;
-    }
-
-    public void setDiscountPercent(Double discountPercent) {
-        this.discountPercent = discountPercent;
+        if ("DISCOUNT".equals(benefitType)) {
+            return Double.valueOf(benefitValue);
+        }
+        return 0.0;
     }
 
     public Double getPointMultiplier() {
-        return pointMultiplier;
-    }
-
-    public void setPointMultiplier(Double pointMultiplier) {
-        this.pointMultiplier = pointMultiplier;
+        if ("POINT_MULTIPLIER".equals(benefitType)) {
+            return Double.valueOf(benefitValue);
+        }
+        return 1.0;
     }
 }

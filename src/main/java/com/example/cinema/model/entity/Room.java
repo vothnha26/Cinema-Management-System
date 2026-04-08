@@ -14,6 +14,10 @@ public class Room {
     private String name;
 
     @ManyToOne
+    @JoinColumn(name = "branch_id", nullable = false)
+    private Branch branch;
+
+    @ManyToOne
     @JoinColumn(name = "room_type_id", nullable = false)
     private RoomType roomType;
 
@@ -46,6 +50,14 @@ public class Room {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Branch getBranch() {
+        return branch;
+    }
+
+    public void setBranch(Branch branch) {
+        this.branch = branch;
     }
 
     public RoomType getRoomType() {

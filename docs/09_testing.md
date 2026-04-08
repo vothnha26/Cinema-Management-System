@@ -1,83 +1,55 @@
-# 🧪 Testing – Cinema Management System (Elite Standard)
+# 🧪 Chiến lược Kiểm thử (Testing Strategy) – Cinema Management System
 
-## 1. Chiến lược kiểm thử (Elite Pipeline)
+Để đảm bảo hệ thống vận hành ổn định với các logic nghiệp vụ phức tạp, dự án áp dụng chiến lược kiểm thử đa tầng (Multi-tier Testing Strategy).
 
-Hệ thống áp dụng quy trình kiểm thử 3 lớp để đảm bảo tính đúng đắn của logic nghiệp vụ và giao diện, tập trung vào **luồng nghiệp vụ thực tế (Real-world Flows)**:
+## 1. Kiểm thử Đơn vị (Unit Testing)
 
-```
-Elite Testing Pyramid:
-         / \
-        /E2E\         ← Selenium: Kiểm tra luồng thực tế (End-to-End Flow)
-       /─────\
-      / Integ \       ← SpringBootTest + MockMvc: Kiểm tra API, Webhook & DB
-     /─────────\
-    / Unit Tests \    ← JUnit 5 + Mockito: Kiểm tra thuật toán (Pricing, AI, Strategy)
-   /───────────────\
-```
+Tập trung vào kiểm tra logic nghiệp vụ cô lập trong tầng **Service**.
+- **Công cụ**: JUnit 5, Mockito.
+- **Phạm vi**:
+    - Kiểm tra các thuật toán tính giá trong `PricingService`.
+    - Kiểm tra các điều kiện áp dụng khuyến mãi trong `PromotionService`.
+    - Kiểm tra logic băm mật khẩu và giải mã JWT.
+- **Mục tiêu**: Đảm bảo từng hàm xử lý đúng các trường hợp biên (Edge Cases) mà không cần phụ thuộc vào Database thật.
 
 ---
 
-## 2. Các luồng nghiệp vụ trọng tâm (Core Business Flows)
+## 2. Kiểm thử Tích hợp (Integration Testing)
 
-### 2.1. Luồng Khách hàng (Customer Booking Flow)
-**Mục tiêu:** Xác thực từ bước chọn ghế đến khi nhận vé thành công.
-1.  **Selection:** Chọn Phim -> Suất chiếu -> Ghế (Kiểm tra trạng thái ghế `AVAILABLE`).
-2.  **Pricing:** Tính toán tổng tiền qua `PricingService` (áp dụng Decorators cho loại ghế/phòng và Strategy cho khuyến mãi/thành viên).
-3.  **Booking:** Tạo Booking code duy nhất qua `CustomerBookingFacade`.
-4.  **Payment:** Sinh QR Code (VietQR) -> Xử lý Webhook từ cổng thanh toán (SePay) -> Cập nhật trạng thái `CONFIRMED`.
-5.  **Completion:** Tự động cộng điểm tích lũy -> Gửi Email thông báo (Observer Pattern).
-
-### 2.2. Luồng Quản lý (Managerial Flow)
-**Mục tiêu:** Xác thực nghiệp vụ vận hành rạp.
-1.  **Movie & Layout:** Quản lý kho phim và sơ đồ ghế (theo `SeatLayoutStrategy`).
-2.  **Scheduling:** Sắp xếp suất chiếu (Kiểm tra xung đột lịch và quy tắc AI 70/30).
-3.  **Pricing Policy:** Thiết lập các Decorators giá vé theo khung giờ và ngày trong tuần.
-4.  **Audit Control:** Tự động ghi log mọi thao tác nhạy cảm qua `AuditLogAspect`.
+Kiểm tra sự tương tác giữa các tầng và tính chính xác của API.
+- **Công cụ**: Spring Boot Test, **MockMvc**.
+- **Phạm vi**:
+    - Gửi request giả lập đến các Controller (Admin, Customer, Staff).
+    - Kiểm tra tính đúng đắn của mã lỗi HTTP (200 OK, 400 Bad Request, 403 Forbidden).
+    - Kiểm tra tính toàn vẹn của dữ liệu DTO trả về.
+- **Mục tiêu**: Đảm bảo luồng đi từ API -> Service -> Repository hoạt động chính xác.
 
 ---
 
-## 3. Các loại hình kiểm thử chi tiết
+## 3. Kiểm thử Giao diện Tự động (End-to-End Testing)
 
-### 3.1. Unit & Integration Tests (MockTest)
-- **Pricing Engine:** Kiểm tra Decorator Pattern tính đúng giá cộng dồn và Strategy Pattern áp dụng mã giảm giá.
-- **AI Scheduling:** Kiểm tra thuật toán phân bổ giờ vàng và dãn cách thời gian.
-- **Webhook Integration:** Giả lập payload từ SePay/VietQR để kiểm tra logic cập nhật trạng thái thanh toán.
-
-### 3.2. End-to-End (E2E) UI Testing
-**Công cụ:** Selenium WebDriver + WebDriverManager.
-- **Manager Dashboard:** Đăng nhập Staff -> Thêm phim -> Tạo suất chiếu -> Kiểm tra hiển thị trên Website.
-- **Customer Portal:** Chọn ghế -> Thanh toán giả lập -> Kiểm tra thông báo thành công.
+Kiểm tra luồng nghiệp vụ hoàn chỉnh từ góc nhìn người dùng trên trình duyệt.
+- **Công cụ**: **Selenium Java**, WebDriverManager.
+- **Phạm vi**:
+    - Luồng đặt vé: Chọn phim -> Chọn ghế -> Thanh toán -> Nhận QR.
+    - Luồng quản trị: Admin đăng nhập -> Quản lý phim -> Thêm suất chiếu.
+- **Mục tiêu**: Đảm bảo hệ thống hoạt động đồng bộ giữa Backend và UI, không có lỗi hiển thị hoặc lỗi luồng logic (Logic flows).
 
 ---
 
-## 4. Quyết định kỹ thuật cho Testing
+## 4. Kiểm thử Chịu tải & Dữ liệu lớn (Big Data Testing)
 
-> [!IMPORTANT]
-> - **Test Database:** Sử dụng H2 In-Memory cho Unit/Integ tests để tách biệt môi trường.
-> - **External Services:** Mock `IVietQRService` và `INotificationAutomationService` để đảm bảo test có thể chạy offline và không tốn chi phí/gửi mail rác.
-> - **Transactional:** Mọi Integration Test phải có `@Transactional` để rollback dữ liệu sau khi chạy.
-
----
-
-## 5. Lệnh thực hiện
-
-```bash
-# Chạy toàn bộ suite (Bao gồm Unit + Integration)
-mvn clean test
-
-# Chạy riêng luồng E2E (Yêu cầu Chrome Browser)
-mvn test -Dtest=*E2ETest
-```
+Đặc thù của rạp phim là lượng dữ liệu suất chiếu và booking (lịch sử) rất lớn.
+- **Cơ chế**: Sử dụng `BigDataSeeder.java` để sinh hàng triệu bản ghi giả lập trong môi trường kiểm thử.
+- **Phạm vi**:
+    - Kiểm tra hiệu năng load sơ đồ ghế khi phòng chiếu đạt tối đa lượt đặt.
+    - Kiểm tra tốc độ truy vấn báo cáo doanh thu khi database đạt ngưỡng triệu bản ghi.
+- **Công cụ**: Spring Seeder + SQL Profiler.
 
 ---
 
-## 6. Danh sách Test Case Ưu tiên (Elite Checklist)
+## 5. Kiểm thử Bảo mật (Security Testing)
 
-| STT | Luồng nghiệp vụ | Loại Test | Trạng thái |
-|:---:|:----------------|:---------:|:----------:|
-| 1 | Tính giá vé qua chuỗi Decorators (VIP, Weekend, Evening) | Unit | 🔄 |
-| 2 | Chặn tạo suất chiếu trùng lịch/không đủ giờ dọn dẹp | Integration | 🔄 |
-| 3 | Xử lý Webhook thanh toán thành công/thất bại | MockMvc | 🔄 |
-| 4 | Tự động sinh sơ đồ ghế Standard/IMAX | Unit | 🔄 |
-| 5 | Luồng mua vé trọn gói (Phim + Ghế + Combo + Member) | E2E | 🔄 |
-| 6 | Ghi Audit Log cho hành động xóa suất chiếu | Integration | 🔄 |
+- **JWT Validation**: Kiểm tra khả năng từ chối Token hết hạn hoặc chữ ký bị sửa đổi.
+- **Role Scoping**: Chắc chắn rằng tài khoản `Staff` không thể truy cập các API của `Admin` (với `@PreAuthorize` test).
+- **Audit Trace**: Kiểm tra sau khi thực hiện hành động, log có được ghi chính xác vào bảng `audit_log` không.

@@ -1,7 +1,5 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.entity.SeatType;
-
 import jakarta.persistence.*;
 
 @Entity

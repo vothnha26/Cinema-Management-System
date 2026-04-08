@@ -42,11 +42,14 @@ public class Movie {
     @Column(name = "trailer_url")
     private String trailerUrl;
 
-    @Column(name = "priority_level")
-    private Integer priorityLevel = 1;
-
     @Column(name = "tmdb_id", unique = true)
     private Long tmdbId;
+
+    @Column(name = "origin_country")
+    private String originCountry;
+
+    @Column(name = "priority_level")
+    private Integer priorityLevel = 1;
 
     @ManyToMany
     @JoinTable(name = "movie_formats", joinColumns = @JoinColumn(name = "movie_id"), inverseJoinColumns = @JoinColumn(name = "format_id"))
@@ -145,20 +148,20 @@ public class Movie {
         this.trailerUrl = trailerUrl;
     }
 
-    public Integer getPriorityLevel() {
-        return priorityLevel;
-    }
-
-    public void setPriorityLevel(Integer priorityLevel) {
-        this.priorityLevel = priorityLevel;
-    }
-
     public Long getTmdbId() {
         return tmdbId;
     }
 
     public void setTmdbId(Long tmdbId) {
         this.tmdbId = tmdbId;
+    }
+
+    public String getOriginCountry() {
+        return originCountry;
+    }
+
+    public void setOriginCountry(String originCountry) {
+        this.originCountry = originCountry;
     }
 
     public Set<Format> getFormats() {
@@ -191,5 +194,13 @@ public class Movie {
 
     public void setMovieDirectors(Set<MovieDirector> movieDirectors) {
         this.movieDirectors = movieDirectors;
+    }
+
+    public Integer getPriorityLevel() {
+        return priorityLevel;
+    }
+
+    public void setPriorityLevel(Integer priorityLevel) {
+        this.priorityLevel = priorityLevel;
     }
 }

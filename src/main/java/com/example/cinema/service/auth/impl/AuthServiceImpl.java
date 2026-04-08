@@ -7,10 +7,12 @@ import com.example.cinema.model.dto.request.RegisterRequest;
 import com.example.cinema.model.dto.request.VerifyOtpRequest;
 import com.example.cinema.model.dto.response.AuthResponse;
 import com.example.cinema.model.entity.Customer;
+import com.example.cinema.model.entity.Staff;
 import com.example.cinema.model.entity.User;
-import com.example.cinema.model.enums.MembershipTier;
 import com.example.cinema.model.enums.Role;
+import com.example.cinema.repository.user.MembershipLevelRepository;
 import com.example.cinema.repository.user.CustomerRepository;
+import com.example.cinema.repository.user.StaffRepository;
 import com.example.cinema.repository.user.UserRepository;
 import com.example.cinema.security.JwtUtil;
 import com.example.cinema.security.UserDetailsServiceImpl;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -35,6 +38,8 @@ public class AuthServiceImpl implements IAuthService {
 
     private final UserRepository userRepository;
     private final CustomerRepository customerRepository;
+    private final MembershipLevelRepository membershipLevelRepository;
+    private final StaffRepository staffRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -45,12 +50,20 @@ public class AuthServiceImpl implements IAuthService {
     private static final String RESET_TOKEN_PREFIX = "reset_token:";
     private static final String OTP_PREFIX = "otp:";
 
-    public AuthServiceImpl(UserRepository userRepository, CustomerRepository customerRepository,
-            PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager,
-            JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService,
-            StringRedisTemplate redisTemplate, INotificationService notificationService) {
+    public AuthServiceImpl(UserRepository userRepository, 
+            CustomerRepository customerRepository,
+            MembershipLevelRepository membershipLevelRepository,
+            StaffRepository staffRepository,
+            PasswordEncoder passwordEncoder, 
+            AuthenticationManager authenticationManager,
+            JwtUtil jwtUtil, 
+            UserDetailsServiceImpl userDetailsService,
+            StringRedisTemplate redisTemplate, 
+            INotificationService notificationService) {
         this.userRepository = userRepository;
         this.customerRepository = customerRepository;
+        this.membershipLevelRepository = membershipLevelRepository;
+        this.staffRepository = staffRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
@@ -85,7 +98,9 @@ public class AuthServiceImpl implements IAuthService {
         customer.setFullName(request.getFullName());
         customer.setPhone(request.getPhone());
         customer.setPoints(0);
-        customer.setMembershipTier(MembershipTier.STANDARD);
+        
+        membershipLevelRepository.findByName("STANDARD").ifPresent(customer::setMembershipLevel);
+        
         customer.setTotalSpending(BigDecimal.ZERO);
         customerRepository.save(customer);
 
@@ -147,14 +162,21 @@ public class AuthServiceImpl implements IAuthService {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUsername());
         String jwt = jwtUtil.generateToken(userDetails, user.getRole().name());
         String fullName = user.getUsername();
+        Long branchId = null;
 
         if (user.getRole() == Role.CUSTOMER) {
             Customer customer = customerRepository.findByUserId(user.getId()).orElse(null);
             if (customer != null)
                 fullName = customer.getFullName();
+        } else if (user.getRole() == Role.MANAGER || user.getRole() == Role.STAFF) {
+            Optional<Staff> staff = staffRepository.findByUserId(user.getId());
+            if (staff.isPresent()) {
+                branchId = staff.get().getBranch().getId();
+                fullName = staff.get().getFullName();
+            }
         }
 
-        return new AuthResponse(jwt, user.getUsername(), user.getRole().name(), fullName);
+        return new AuthResponse(jwt, user.getUsername(), user.getRole().name(), fullName, branchId);
     }
 
     @Override

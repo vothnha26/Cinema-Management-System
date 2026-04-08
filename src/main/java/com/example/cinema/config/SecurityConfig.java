@@ -38,43 +38,40 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        // 1. PUBLIC ENDPOINTS
                         .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/verify-otp", "/api/auth/reset-password", "/api/auth/forgot-password").permitAll()
-                        .requestMatchers("/api/auth/**").authenticated()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/movies", "/api/movies/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/showtimes", "/api/showtimes/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/combos", "/api/combos/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/promotions", "/api/promotions/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
-                        .requestMatchers("/static/**", "/", "/*.html", "/dashboard/**", "/favicon.ico", "/error", "/payment/**",
-                                "/js/**", "/css/**", "/images/**")
-                        .permitAll()
+                        .requestMatchers("/api/public/**", "/api/payments/**", "/ws-cinema/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/showtimes/**", "/api/combos/**", "/api/promotions/**").permitAll()
+                        .requestMatchers("/api/bookings/**").permitAll()
+                        .requestMatchers("/static/**", "/", "/*.html", "/dashboard/**", "/favicon.ico", "/error", "/payment/**", "/js/**", "/css/**", "/images/**").permitAll()
 
-                        // TMDB API (Dành cho Manager tìm phim)
-                        .requestMatchers("/api/tmdb/**").hasAuthority("ROLE_MANAGER")
+                        // 2. SHARED MANAGER & ADMIN (Operation)
+                        .requestMatchers("/api/tmdb/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/audit/**", "/api/statistics/**", "/api/scheduling/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        
+                        // 3. MOVIE & COMBO CATALOG (Admin edits, Manager updates priority)
+                        .requestMatchers(HttpMethod.POST, "/api/movies", "/api/combos").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/movies/**", "/api/combos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/movies/*/priority").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/movies/**", "/api/combos/**").hasAuthority("ROLE_ADMIN")
+                        
+                        // 4. BRANCH OPS (Showtimes, Rooms, Promotions, Branch Movie Priority)
+                        .requestMatchers("/api/showtimes/**", "/api/rooms/**", "/api/promotions/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/movies/branch/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/combos/branch/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
 
-                        // Manager features (Movies, Showtimes, Rooms, Combos, Promotions, Statistics, Audit)
-                        .requestMatchers(HttpMethod.GET, "/api/rooms", "/api/rooms/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_STAFF")
-                        .requestMatchers(HttpMethod.POST, "/api/movies", "/api/showtimes", "/api/rooms", "/api/combos", "/api/promotions").hasAuthority("ROLE_MANAGER")
-                        .requestMatchers(HttpMethod.PUT, "/api/movies/**", "/api/showtimes/**", "/api/rooms/**", "/api/combos/**", "/api/promotions/**").hasAuthority("ROLE_MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/movies/**", "/api/showtimes/**", "/api/rooms/**", "/api/combos/**", "/api/promotions/**").hasAuthority("ROLE_MANAGER")
-                        .requestMatchers("/api/statistics/**", "/api/audit/**", "/api/scheduling/**").hasAuthority("ROLE_MANAGER")
-                        .requestMatchers("/api/manager/**").hasAuthority("ROLE_MANAGER")
-
-                        // Staff features
-                        .requestMatchers("/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER")
-
-                        // Customer / staff booking flow
-                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/hold-seat", "/api/bookings/release-seat").permitAll()
+                        // 5. STAFF & POS FLOW
+                        .requestMatchers("/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/bookings/hold-seat", "/api/bookings/release-seat").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/bookings/my-locked-seats").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/bookings/{code}").hasAnyAuthority("ROLE_CUSTOMER", "ROLE_STAFF", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/{code}").permitAll() // Cho phép public để khách vãng lai check trạng thái thanh toán
                         .requestMatchers(HttpMethod.GET, "/api/bookings/me").hasAuthority("ROLE_CUSTOMER")
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").hasAuthority("ROLE_CUSTOMER")
-                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/checkin").hasAuthority("ROLE_STAFF")
+                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/checkin").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER", "ROLE_ADMIN")
 
-                        // Admin, Manager & Staff (Lookup customers at POS)
-                        .requestMatchers("/api/admin/customers/lookup").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER", "ROLE_STAFF")
-                        .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        // 6. ADMIN ONLY (System & Users)
+                        .requestMatchers("/api/admin/branches/**", "/api/admin/branches", "/api/admin/pricing/**", "/api/admin/pricing").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/admin/pricing-rules/**", "/api/admin/pricing-rules").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
                         .requestMatchers("/api/users/**").hasAuthority("ROLE_ADMIN")
 
                         .anyRequest().authenticated());

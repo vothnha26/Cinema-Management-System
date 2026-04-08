@@ -16,7 +16,6 @@ public class ComboRequest {
     @Positive(message = "Giá phải lớn hơn 0")
     private BigDecimal price;
 
-    @NotNull(message = "Số lượng kho không được để trống")
     @PositiveOrZero(message = "Số lượng không được âm")
     private Integer stockQuantity;
 

@@ -1,0 +1,129 @@
+@startuml system_class_diagram
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam class {
+    BackgroundColor #F8F9FA
+    BorderColor #343A40
+    HeaderBackgroundColor #E5133A
+    FontColor #333333
+}
+
+title Class Diagram: StarCinema Core Entities Architecture
+
+package "User Module" {
+    class User {
+        +Long id
+        +String username
+        +String email
+        +Role role
+        +Boolean status
+    }
+    class Customer {
+        +Long id
+        +String fullName
+        +Integer points
+        +BigDecimal totalSpending
+        +MembershipLevel membershipLevel
+    }
+    class MembershipLevel {
+        +Long id
+        +String name
+        +BigDecimal minSpending
+        +Integer priority
+    }
+    class MembershipBenefit {
+        +Long id
+        +String benefitType
+        +String benefitValue
+    }
+    User "1" -- "0..1" Customer
+    User "1" -- "0..1" Staff
+    Customer "many" -- "1" MembershipLevel
+    MembershipLevel "1" *-- "many" MembershipBenefit
+}
+
+package "Movie & Showtime Module" {
+    class Movie {
+        +String title
+        +Integer duration
+        +MovieStatus status
+        +String originCountry
+        +Integer priorityLevel
+    }
+    class Showtime {
+        +LocalDateTime startTime
+        +LocalDateTime endTime
+        +ShowtimeStatus status
+        +Format format
+    }
+    class Room {
+        +String name
+        +RoomType roomType
+    }
+    class Branch {
+        +String name
+        +String address
+    }
+
+    Branch "1" *-- "many" Room
+    Room "1" *-- "many" Showtime
+    Movie "1" *-- "many" Showtime
+}
+
+package "Booking & Payment Module" {
+    class Booking {
+        +String bookingCode
+        +BigDecimal totalPrice
+        +BookingStatus status
+    }
+    class BookingDetail {
+        +BigDecimal price
+    }
+    class Payment {
+        +BigDecimal amount
+        +PaymentMethod paymentMethod
+        +PaymentStatus paymentStatus
+    }
+    class Seat {
+        +String rowChar
+        +Integer colNum
+    }
+
+    Booking "1" *-- "1" Payment
+    Booking "1" *-- "many" BookingDetail
+    Showtime "1" -- "many" Booking
+    BookingDetail "many" -- "1" Seat
+    Room "1" *-- "many" Seat
+}
+
+    interface PriceCalculator {
+        +calculate(Booking): BigDecimal
+    }
+    class BasePriceCalculator implements PriceCalculator
+    abstract class PriceDecorator implements PriceCalculator {
+        -PriceCalculator inner
+    }
+    class AdditiveDecorator extends PriceDecorator {
+        -BigDecimal amount
+    }
+    class PercentageDecorator extends PriceDecorator {
+        -Double rate
+    }
+    
+    class PricingRule {
+        +String name
+        +PricingRuleCategory category
+        +PricingImpactType impactType
+    }
+    class PricingCondition {
+        +PricingConditionType type
+        +String value
+    }
+    
+    PricingRule "1" *-- "many" PricingCondition
+    Branch "1" *-- "many" BranchPricingRule
+    PricingRule "1" -- "many" BranchPricingRule
+    Booking "many" -- "0..1" Promotion
+}
+
+@enduml

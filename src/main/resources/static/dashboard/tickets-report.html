@@ -84,16 +84,22 @@
     <div class="filter-bar">
         <div class="d-flex align-items-center gap-3 flex-wrap">
             <div class="d-flex align-items-center gap-2">
-                <label class="small fw-bold text-muted">TỪ:</label>
+                <label class="small fw-bold text-muted">TỪ NGÀY:</label>
                 <input type="date" id="startDate" class="form-control form-control-sm form-control-dark">
             </div>
             <div class="d-flex align-items-center gap-2">
-                <label class="small fw-bold text-muted">ĐẾN:</label>
+                <label class="small fw-bold text-muted">ĐẾN NGÀY:</label>
                 <input type="date" id="endDate" class="form-control form-control-sm form-control-dark">
             </div>
-            <button class="btn btn-sm btn-danger px-3 fw-bold" onclick="loadStats()">LỌC DỮ LIỆU</button>
+            <div class="d-flex align-items-center gap-2 ms-2 border-start ps-3">
+                <label class="small fw-bold text-muted">KHUNG GIỜ:</label>
+                <input type="time" id="startTime" class="form-control form-control-sm form-control-dark" value="00:00">
+                <span class="text-muted">-</span>
+                <input type="time" id="endTime" class="form-control form-control-sm form-control-dark" value="23:59">
+            </div>
+            <button class="btn btn-sm btn-danger px-3 fw-bold ms-auto" onclick="loadStats()">LỌC DỮ LIỆU</button>
         </div>
-        <div class="text-muted small fw-bold"><i class="bi bi-clock-history me-1"></i> Cập nhật: <span id="lastUpdate">--:--</span></div>
+        <div class="text-muted small fw-bold mt-2"><i class="bi bi-clock-history me-1"></i> Cập nhật: <span id="lastUpdate">--:--</span></div>
     </div>
 
     <!-- KPI Row -->
@@ -223,8 +229,10 @@
     async function loadStats() {
         const start = document.getElementById('startDate').value;
         const end = document.getElementById('endDate').value;
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
         try {
-            const res = await api.get(`/statistics/tickets?startDate=${start}&endDate=${end}`);
+            const res = await api.get(`/statistics/tickets?startDate=${start}&endDate=${end}&startTime=${startTime}:00&endTime=${endTime}:59`);
             if (res.success) {
                 renderKPIs(res.data);
                 renderChannelChart(res.data);

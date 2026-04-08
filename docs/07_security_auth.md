@@ -1,155 +1,52 @@
-# 🔐 Security & Authentication – Cinema Management System
+# 🔐 Bảo mật & Xác thực – Cinema Management System
 
-## 1. Phương thức xác thực: JWT (Stateless)
+Hệ thống Cinema Management System sử dụng mô hình bảo mật mạnh mẽ dựa trên Spring Security và cơ chế Stateless Token (JWT) để bảo vệ tài nguyên và dữ liệu người dùng.
 
-```
-Client          Backend
-  │   POST /api/auth/login   │
-  │──────────────────────────►│
-  │   {username, password}    │ → Validate → UserDetailsService
-  │                           │ → BCrypt verify password
-  │◄──────────────────────────│
-  │   { token: "eyJ..." }     │ JWT (signed, expires: 24h)
-  │                           │
-  │   GET /api/bookings       │
-  │   Authorization: Bearer eyJ... │
-  │──────────────────────────►│
-  │                           │ JwtFilter: parse token → set SecurityContext
-  │◄──────────────────────────│
-  │   { data: [...] }         │
-```
+## 1. Cơ chế Xác thực (Authentication)
+
+Dự án áp dụng **JSON Web Token (JWT)** cho mọi giao dịch yêu cầu định danh:
+
+- **Luồng đăng nhập**: 
+    1.  Khách hàng gửi `username` + `password`.
+    2.  Hệ thống kiểm tra qua `UserDetailsService` và xác thực mật khẩu qua `BCryptPasswordEncoder`.
+    3.  Nếu thành công, `TokenProvider` sinh chuỗi JWT chứa thông tin: `Username`, `Expiration`, `Roles`.
+- **Luồng xác thực sau đó**:
+    - Mọi Request từ Frontend phải đính kèm Header: `Authorization: Bearer <token>`.
+    - `JwtAuthenticationFilter` chặn mọi request để giải mã Token, trích xuất quyền hạn (`GrantedAuthorities`) và lưu vào `SecurityContextHolder`.
 
 ---
 
-## 2. JWT Structure
+## 2. Phân quyền (Role-based Access Control - RBAC)
 
-```
-Header: { "alg": "HS256", "typ": "JWT" }
-Payload: {
-  "sub": "username",
-  "role": "CUSTOMER",
-  "userId": 42,
-  "exp": 1711234567
-}
-Signature: HMAC-SHA256(base64(header) + "." + base64(payload), secret)
-```
+Hệ thống phân chia quyền hạn nghiêm ngặt thông qua các Roles được cấu hình trong `SecurityConfig.java`:
 
-**Secret key** lưu trong `application.properties`:
-```properties
-jwt.secret=your-ultra-secret-key-min-256-bits
-jwt.expiration=86400000  # 24h in ms
-```
+| Role | Phạm vi truy cập (API Prefix) | Mô tả |
+|:---|:---|:---|
+| `PUBLIC` | `/api/public/**` | Chỉ xem: Lịch chiếu, Phim, Thông tin chi nhánh. |
+| `CUSTOMER` | `/api/customer/**` | Được phép: Đặt vé, Thanh toán, Quản lý tài khoản cá nhân. |
+| `STAFF` | `/api/staff/**` | Được phép: Thao tác POS, Check-in vé, Xem báo cáo bán vé ngày. |
+| `MANAGER` | `/api/manager/**` | Được phép: Lập lịch chiếu, quản lý phim tại chi nhánh, xem báo cáo doanh thu. |
+| `ADMIN` | `/api/admin/**` | Toàn quyền: Cấu hình hệ thống, quản lý tài khoản Staff, Chi nhánh, Quy tắc giá. |
 
 ---
 
-## 3. Spring Security Config
+## 3. Bảo vệ Dữ liệu & Integrity
 
-```java
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
-
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .authorizeHttpRequests(auth -> auth
-                // PUBLIC endpoints
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(GET, "/api/movies/**").permitAll()
-                .requestMatchers(GET, "/api/showtimes/**").permitAll()
-                .requestMatchers(GET, "/api/combos/**").permitAll()
-                .requestMatchers("/static/**", "/", "/*.html").permitAll()
-
-                // CUSTOMER + STAFF
-                .requestMatchers(POST, "/api/bookings").hasAnyRole("CUSTOMER","STAFF")
-                .requestMatchers(GET, "/api/bookings/{code}").hasAnyRole("CUSTOMER","STAFF")
-
-                // STAFF only
-                .requestMatchers(PUT, "/api/bookings/*/checkin").hasRole("STAFF")
-
-                // MANAGER + ADMIN
-                .requestMatchers("/api/movies/**").hasAnyRole("MANAGER","ADMIN")
-                .requestMatchers("/api/rooms/**").hasAnyRole("MANAGER","ADMIN")
-                .requestMatchers("/api/statistics/**").hasAnyRole("MANAGER","ADMIN")
-
-                // ADMIN only
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
-
-                .anyRequest().authenticated()
-            );
-        return http.build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);  // strength = 12
-    }
-}
-```
+- **Password Hashing**: Sử dụng **BCrypt** (hàm băm một chiều) để lưu trữ mật khẩu, đảm bảo ngay cả khi lộ database, mật khẩu gốc vẫn an toàn.
+- **CORS Configuration**: Hệ thống chỉ cho phép các Domain cụ thể (được cấu hình trong `.env`) truy cập API để tránh tấn công CORS.
+- **Stateless Session**: Không lưu Session trên Server, giúp hệ thống dễ dàng mở rộng theo chiều ngang (Scaling) và an toàn trước tấn công CSRF.
 
 ---
 
-## 4. JwtFilter (OncePerRequestFilter)
+## 4. Audit Logging (Theo dõi hành động)
 
-```java
-@Component
-public class JwtFilter extends OncePerRequestFilter {
-    @Override
-    protected void doFilterInternal(request, response, filterChain) {
-        String header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            if (jwtUtil.validateToken(token)) {
-                String username = jwtUtil.extractUsername(token);
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                    );
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
-        }
-        filterChain.doFilter(request, response);
-    }
-}
-```
+Đây là tầng bảo mật bổ sung để kiểm soát hành vi người dùng có đặc quyền (`Manager`, `Admin`):
+- **Cơ chế**: Sử dụng Spring AOP (`@Aspect`).
+- **Phạm vi**: Mọi hành động nhạy cảm (Sửa giá vé, Xóa phim, Thay đổi khuyến mãi) đều được tự động ghi lại vào bảng `audit_log`.
+- **Dữ liệu lưu trữ**: ID User, Hành động, Thời gian, Dữ liệu cũ (Old Data), Dữ liệu mới (New Data).
 
 ---
 
-## 5. Password Security
+## 5. Tích hợp thanh toán an toàn
 
-- Mật khẩu được hash bằng **BCrypt** (strength 12) trước khi lưu DB.
-- Không bao giờ trả password trong response.
-- DTO `UserResponse` exclude field `password`.
-
----
-
-## 6. CORS Config
-
-```java
-@Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOrigins(List.of("http://localhost:8080"));
-    config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
-    config.setAllowedHeaders(List.of("*"));
-    config.setAllowCredentials(true);
-    // ... register source
-}
-```
-
----
-
-## 7. Phân quyền tóm tắt
-
-| Endpoint | PUBLIC | CUSTOMER | STAFF | MANAGER | ADMIN |
-|----------|:------:|:--------:|:-----:|:-------:|:-----:|
-| GET /api/movies | ✅ | ✅ | ✅ | ✅ | ✅ |
-| POST /api/bookings | ❌ | ✅ | ✅ | ❌ | ✅ |
-| PUT /api/bookings/*/checkin | ❌ | ❌ | ✅ | ❌ | ✅ |
-| POST /api/movies | ❌ | ❌ | ❌ | ✅ | ✅ |
-| GET /api/statistics/** | ❌ | ❌ | ❌ | ✅ | ✅ |
-| /api/users/** | ❌ | ❌ | ❌ | ❌ | ✅ |
+- **Webhook Verification**: Khi nhận Callback từ SePay/VietQR, hệ thống luôn xác thực chữ ký (Signature) hoặc kiểm tra ID giao dịch duy nhất trong Database trước khi cập nhật trạng thái Booking, tránh tấn công "giả mạo thanh toán".

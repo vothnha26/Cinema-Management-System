@@ -1,0 +1,67 @@
+@startuml admin_navigation_flow
+' Giao diện sơ đồ điều hướng Quản trị FlashCinema - Đồng bộ 100% với danh mục màn hình thực tế
+' Đã loại bỏ các chú thích .html theo yêu cầu người dùng
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #DC3545
+    FontColor #000000
+    FontSize 14
+}
+
+skinparam arrow {
+    Color #007BFF
+    Thickness 1.5
+}
+
+rectangle "Hệ thống Quản trị FlashCinema" #FFFFFF {
+    rectangle "Đăng nhập" as Login
+    
+    ' Phân hệ Quản lý Phim & Phòng (Manager)
+    rectangle "Quản lý Phim" as M_Movie
+    rectangle "Đồng bộ TMDB" as E_TMDB
+    
+    ' Phân hệ Suất chiếu & AI
+    rectangle "Quản lý Suất chiếu" as M_Showtime
+    rectangle "Lập lịch AI" as E_AI
+
+    ' Phân hệ Phòng & Ghế
+    rectangle "Quản lý Phòng & Ghế" as M_Room
+    
+    ' Phân hệ Bán hàng & Vé (Staff)
+    rectangle "Bán vé POS" as M_POS
+    rectangle "Kiểm soát vé" as M_Checkin
+
+    ' Phân hệ Quản trị hệ thống (Admin)
+    rectangle "Quản lý Người dùng" as M_User
+    rectangle "Cấu hình Giá" as M_Price
+    rectangle "Hạng thành viên" as M_Member
+    rectangle "Nhật ký hệ thống" as M_Audit
+
+    rectangle "Dashboard" as Dashboard #FFFFFF
+
+    ' Thiết lập luồng điều hướng trục dọc và rẽ nhánh
+    Login -down-> M_Movie
+    M_Movie -down-> M_Showtime
+    M_Showtime -down-> M_Price
+    M_Price -down-> Dashboard
+
+    ' Kết nối các nhánh chức năng rẽ từ trục dọc
+    M_Movie -left-> E_TMDB
+    M_Movie -right-> M_Room
+    
+    M_Showtime -left-> E_AI
+    M_Showtime -right-> M_Checkin
+    
+    M_Price -left-> M_Member
+    M_Price -right-> M_POS
+    
+    Dashboard -left-> M_User
+    Dashboard -right-> M_Audit
+}
+
+center footer Sơ đồ luồng điều hướng dành cho Quản lý và Quản trị viên FlashCinema
+
+@enduml

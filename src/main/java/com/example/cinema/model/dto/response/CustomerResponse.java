@@ -1,7 +1,5 @@
 package com.example.cinema.model.dto.response;
 
-import com.example.cinema.model.enums.MembershipTier;
-
 import java.math.BigDecimal;
 
 public class CustomerResponse {
@@ -10,7 +8,7 @@ public class CustomerResponse {
     private String email;
     private String fullName;
     private String phone;
-    private MembershipTier membershipTier;
+    private String membershipLevel;
     private BigDecimal totalSpending;
     private Integer points;
 
@@ -54,12 +52,12 @@ public class CustomerResponse {
         this.phone = phone;
     }
 
-    public MembershipTier getMembershipTier() {
-        return membershipTier;
+    public String getMembershipLevel() {
+        return membershipLevel;
     }
 
-    public void setMembershipTier(MembershipTier membershipTier) {
-        this.membershipTier = membershipTier;
+    public void setMembershipLevel(String membershipLevel) {
+        this.membershipLevel = membershipLevel;
     }
 
     public BigDecimal getTotalSpending() {

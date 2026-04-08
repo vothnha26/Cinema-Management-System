@@ -1,49 +1,63 @@
 const API_BASE_URL = '/api';
 
 const api = {
+    getHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        const token = localStorage.getItem('cinemaToken');
+        if (token && token !== 'null' && token !== 'undefined') {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    },
+
     async get(endpoint) {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}`
-            }
+            headers: this.getHeaders()
         });
         return await response.json();
     },
 
-    async post(endpoint, data, isMultipart = false) {
-        const headers = {};
-        if (!isMultipart) {
-            headers['Content-Type'] = 'application/json';
-        }
-        
-        const token = localStorage.getItem('cinemaToken');
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
+    async post(endpoint, data) {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
-            headers: headers,
-            body: isMultipart ? data : JSON.stringify(data)
+            headers: this.getHeaders(),
+            body: JSON.stringify(data)
         });
         return await response.json();
     },
 
-    async put(endpoint, data, isMultipart = false) {
-        const headers = {};
-        if (!isMultipart) {
-            headers['Content-Type'] = 'application/json';
-        }
-        
-        const token = localStorage.getItem('cinemaToken');
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
+    async postMultipart(endpoint, formData) {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}`
+            },
+            body: formData
+        });
+        return await response.json();
+    },
 
+    async put(endpoint, data) {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'PUT',
-            headers: headers,
-            body: isMultipart ? data : JSON.stringify(data)
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}`
+            },
+            body: JSON.stringify(data)
+        });
+        return await response.json();
+    },
+
+    async putMultipart(endpoint, formData) {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}`
+            },
+            body: formData
         });
         return await response.json();
     },
@@ -65,7 +79,7 @@ const api = {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}`
             },
-            body: JSON.stringify(data)
+            body: data ? JSON.stringify(data) : null
         });
         return await response.json();
     }

@@ -1,8 +1,6 @@
 package com.example.cinema.model.dto.response;
 
 import com.example.cinema.model.enums.DiscountType;
-import com.example.cinema.model.enums.MembershipTier;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -12,13 +10,17 @@ public class PromotionResponse {
     private String name;
     private DiscountType discountType;
     private BigDecimal discountValue;
-    private MembershipTier minTier;
     private LocalDate startDate;
     private LocalDate endDate;
-    private Boolean isActive;
+    private BigDecimal minOrderAmount;
+    private BigDecimal maxDiscountAmount;
+    private Integer usageLimit;
+    private Integer usedCount;
+    private String minLevelName;
     private Integer requiredPoints;
     private Boolean isRedeemable;
-    private BigDecimal appliedDiscountAmount;
+    private Boolean isActive;
+    private BigDecimal appliedDiscountAmount; // Dùng cho response validate
 
     public Long getId() {
         return id;
@@ -60,14 +62,6 @@ public class PromotionResponse {
         this.discountValue = discountValue;
     }
 
-    public MembershipTier getMinTier() {
-        return minTier;
-    }
-
-    public void setMinTier(MembershipTier minTier) {
-        this.minTier = minTier;
-    }
-
     public LocalDate getStartDate() {
         return startDate;
     }
@@ -84,12 +78,44 @@ public class PromotionResponse {
         this.endDate = endDate;
     }
 
-    public Boolean getIsActive() {
-        return isActive;
+    public BigDecimal getMinOrderAmount() {
+        return minOrderAmount;
     }
 
-    public void setIsActive(Boolean active) {
-        isActive = active;
+    public void setMinOrderAmount(BigDecimal minOrderAmount) {
+        this.minOrderAmount = minOrderAmount;
+    }
+
+    public BigDecimal getMaxDiscountAmount() {
+        return maxDiscountAmount;
+    }
+
+    public void setMaxDiscountAmount(BigDecimal maxDiscountAmount) {
+        this.maxDiscountAmount = maxDiscountAmount;
+    }
+
+    public Integer getUsageLimit() {
+        return usageLimit;
+    }
+
+    public void setUsageLimit(Integer usageLimit) {
+        this.usageLimit = usageLimit;
+    }
+
+    public Integer getUsedCount() {
+        return usedCount;
+    }
+
+    public void setUsedCount(Integer usedCount) {
+        this.usedCount = usedCount;
+    }
+
+    public String getMinLevelName() {
+        return minLevelName;
+    }
+
+    public void setMinLevelName(String minLevelName) {
+        this.minLevelName = minLevelName;
     }
 
     public Integer getRequiredPoints() {
@@ -106,6 +132,14 @@ public class PromotionResponse {
 
     public void setIsRedeemable(Boolean redeemable) {
         isRedeemable = redeemable;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean active) {
+        isActive = active;
     }
 
     public BigDecimal getAppliedDiscountAmount() {

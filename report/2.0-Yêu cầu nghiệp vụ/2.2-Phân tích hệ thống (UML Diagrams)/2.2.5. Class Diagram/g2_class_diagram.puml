@@ -1,0 +1,86 @@
+@startuml G2_ClassDiagram_Facilities
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam classFontSize 13
+skinparam ArrowColor #333333
+skinparam ClassBorderColor #27AE60
+skinparam ClassBackgroundColor #EAFAF1
+skinparam ClassHeaderBackgroundColor #27AE60
+
+title <b>CLASS DIAGRAM — Nhóm 2: Cơ sở vật chất & Rạp</b>
+
+class Branch <<Entity>> {
+  + id        : BIGINT <<PK>>
+  --
+  # name      : VARCHAR(255)
+  # address   : VARCHAR(255)
+  # city      : VARCHAR(100)
+  # phone     : VARCHAR(20)
+  # is_active : BOOLEAN
+}
+
+class RoomType <<Master>> {
+  + id   : VARCHAR(50) <<PK>>
+  --
+  # name : VARCHAR(255)
+}
+
+class Room <<Entity>> {
+  + id       : BIGINT <<PK>>
+  --
+  # name     : VARCHAR(255)
+  # capacity : INT
+  # num_rows : INT
+  # num_cols : INT
+  # status   : ENUM(ACTIVE, INACTIVE)
+}
+
+class SeatType <<Master>> {
+  + id          : VARCHAR(50) <<PK>>
+  --
+  # name        : VARCHAR(255)
+  # description : TEXT
+}
+
+class Seat <<Entity>> {
+  + id       : BIGINT <<PK>>
+  --
+  # row_char : VARCHAR(10)
+  # col_num  : INT
+  # status   : BOOLEAN
+}
+
+class Format <<Master>> {
+  + id   : VARCHAR(50) <<PK>>
+  --
+  # name : VARCHAR(255)
+}
+
+class RoomTypeFormat <<Junction>> {
+  + room_type_id : VARCHAR(50) <<PK, FK>>
+  + format_id    : VARCHAR(50) <<PK, FK>>
+}
+
+note right of RoomTypeFormat
+  Bảng ràng buộc: quy định
+  loại phòng hỗ trợ những
+  định dạng chiếu nào.
+  Vd: IMAX → [IMAX_2D, IMAX_3D]
+end note
+
+note bottom of Seat
+  status = false → ghế đang hỏng
+  Tọa độ: row_char + col_num
+  Vd: "B", 5 → ghế B5
+end note
+
+Branch   "1" *--    "*" Room           : "contains >"
+Room     "*" --o    "1" RoomType       : "is of type >"
+Room     "1" *--    "*" Seat           : "has seats >"
+Seat     "*" --o    "1" SeatType       : "classified as >"
+RoomType "1" *--    "*" RoomTypeFormat : "constrains >"
+Format   "1" --o    "*" RoomTypeFormat : "< supported by"
+
+@enduml

@@ -3,7 +3,6 @@ package com.example.cinema.controller.admin;
 import com.example.cinema.model.dto.request.RoomTemplateRequest;
 import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.service.room.RoomTemplateService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 

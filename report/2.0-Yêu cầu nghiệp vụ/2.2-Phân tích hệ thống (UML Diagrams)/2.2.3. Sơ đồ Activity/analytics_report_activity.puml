@@ -1,0 +1,26 @@
+@startuml analytics_report_activity
+title Activity Diagram: Quy trình Thống kê & Báo cáo
+
+start
+:Người quản lý truy cập Dashboard;
+:Chọn khoảng thời gian & Loại báo cáo cần xem;
+
+partition "Xử lý dữ liệu" {
+  :Truy vấn doanh thu từ vé và dịch vụ;
+  :Thống kê tỷ lệ lấp đầy các phòng chiếu;
+  :Phân tích phim được xem nhiều nhất;
+  :Tổng hợp chi phí dịch vụ đi kèm;
+}
+
+if (Yêu cầu xuất file báo cáo?) then (Có)
+  :Khởi tạo dữ liệu báo cáo;
+  :Tạo file báo cáo từ mẫu (Excel/PDF);
+  :Trả về tập tin cho người dùng;
+  #Green:Tải file báo cáo thành công;
+else (Không)
+  :Gửi dữ liệu hiển thị trực tiếp lên Dashboard;
+  :Hiển thị thông tin qua biểu đồ trực quan (Chart.js);
+endif
+
+stop
+@enduml

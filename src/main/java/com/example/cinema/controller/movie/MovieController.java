@@ -24,8 +24,7 @@ public class MovieController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<MovieResponse>>> getAllMovies() {
-        List<MovieResponse> movies = movieService.getAllMovies();
-        return ResponseEntity.ok(ApiResponse.ok(movies));
+        return ResponseEntity.ok(ApiResponse.ok(movieService.getAllMovies()));
     }
 
     @GetMapping("/showing")
@@ -38,12 +37,24 @@ public class MovieController {
         return ResponseEntity.ok(ApiResponse.ok(movieService.getComingSoonMovies()));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<MovieResponse>> getMovieById(@PathVariable Long id) {
-        MovieResponse movie = movieService.getMovieById(id);
-        return ResponseEntity.ok(ApiResponse.ok(movie));
+    @GetMapping("/branch/{branchId}")
+    public ResponseEntity<ApiResponse<List<MovieResponse>>> getMoviesByBranch(@PathVariable Long branchId) {
+        return ResponseEntity.ok(ApiResponse.ok(movieService.getMoviesByBranch(branchId)));
     }
 
+    @PatchMapping("/branch/{branchId}/movie/{movieId}/priority")
+    public ResponseEntity<ApiResponse<Void>> updateMoviePriority(
+            @PathVariable Long branchId, @PathVariable Long movieId, @RequestParam Integer priority) {
+        ((com.example.cinema.service.movie.impl.MovieServiceImpl)movieService).updateMoviePriority(branchId, movieId, priority);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<MovieResponse>> getMovieById(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(movieService.getMovieById(id)));
+    }
+
+    // CREATE MOVIE (Chấp nhận cả có và không có file)
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<ApiResponse<MovieResponse>> createMovie(
             @RequestPart("movie") @Valid MovieRequest request,
@@ -52,6 +63,7 @@ public class MovieController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(movie));
     }
 
+    // UPDATE MOVIE (Sử dụng Multipart duy nhất để tránh lỗi Content-Type)
     @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
     public ResponseEntity<ApiResponse<MovieResponse>> updateMovie(
             @PathVariable Long id,
@@ -64,6 +76,12 @@ public class MovieController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteMovie(@PathVariable Long id) {
         movieService.deleteMovie(id);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PatchMapping("/{id}/priority")
+    public ResponseEntity<ApiResponse<Void>> updatePriority(@PathVariable Long id, @RequestParam Integer priority) {
+        movieService.updatePriority(id, priority);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 }

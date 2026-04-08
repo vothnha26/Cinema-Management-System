@@ -28,6 +28,11 @@ public class ComboController {
         return ResponseEntity.ok(ApiResponse.ok(comboService.getAllCombos()));
     }
 
+    @GetMapping("/branch/{branchId}")
+    public ResponseEntity<ApiResponse<List<ComboResponse>>> getCombosByBranch(@PathVariable Long branchId) {
+        return ResponseEntity.ok(ApiResponse.ok(comboService.getCombosByBranch(branchId)));
+    }
+
     @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ComboResponse>> createCombo(
             @RequestPart("combo") @Valid ComboRequest request,
@@ -49,6 +54,14 @@ public class ComboController {
     @PatchMapping("/{id}/stock")
     public ResponseEntity<ApiResponse<ComboResponse>> updateStock(@PathVariable Long id, @RequestParam Integer quantity) {
         return ResponseEntity.ok(ApiResponse.ok(comboService.updateStock(id, quantity)));
+    }
+
+    @PatchMapping("/branch/{branchId}/combo/{comboId}/stock")
+    public ResponseEntity<ApiResponse<ComboResponse>> updateBranchStock(
+            @PathVariable Long branchId, 
+            @PathVariable Long comboId, 
+            @RequestParam Integer quantity) {
+        return ResponseEntity.ok(ApiResponse.ok(comboService.updateBranchStock(branchId, comboId, quantity)));
     }
 
     @DeleteMapping("/{id}")

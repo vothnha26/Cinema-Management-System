@@ -1,10 +1,15 @@
 package com.example.cinema.service.user;
 
 import com.example.cinema.model.entity.MembershipBenefit;
-import com.example.cinema.model.enums.MembershipTier;
+import com.example.cinema.model.entity.MembershipLevel;
 import java.util.List;
 
 public interface MembershipService {
+    List<MembershipLevel> getAllLevels();
+    MembershipLevel getLevelByName(String name);
+    
     List<MembershipBenefit> getAllBenefits();
-    MembershipBenefit updateBenefit(MembershipTier tier, Double discountPercent, Double pointMultiplier);
+    List<MembershipBenefit> getBenefitsByLevel(Long levelId);
+    
+    MembershipBenefit updateBenefit(Long levelId, String type, String value);
 }

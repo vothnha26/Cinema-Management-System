@@ -16,11 +16,13 @@ public class MovieResponse {
     private Double rating;
     private Integer priorityLevel;
     private Long tmdbId;
+    private String originCountry;
     private java.time.LocalDate releaseDate;
     private List<FormatResponse> formats;
     private List<String> genres;
     private List<PersonResponse> actors;
     private List<PersonResponse> directors;
+    private List<Long> branchIds;
 
     public MovieResponse() {
     }
@@ -113,6 +115,14 @@ public class MovieResponse {
         this.tmdbId = tmdbId;
     }
 
+    public String getOriginCountry() {
+        return originCountry;
+    }
+
+    public void setOriginCountry(String originCountry) {
+        this.originCountry = originCountry;
+    }
+
     public java.time.LocalDate getReleaseDate() {
         return releaseDate;
     }
@@ -151,5 +161,13 @@ public class MovieResponse {
 
     public void setDirectors(List<PersonResponse> directors) {
         this.directors = directors;
+    }
+
+    public List<Long> getBranchIds() {
+        return branchIds;
+    }
+
+    public void setBranchIds(List<Long> branchIds) {
+        this.branchIds = branchIds;
     }
 }

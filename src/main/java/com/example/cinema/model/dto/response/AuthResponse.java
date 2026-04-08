@@ -5,6 +5,7 @@ public class AuthResponse {
     private String username;
     private String role;
     private String fullName;
+    private Long branchId;
 
     public AuthResponse() {
     }
@@ -14,6 +15,14 @@ public class AuthResponse {
         this.username = username;
         this.role = role;
         this.fullName = fullName;
+    }
+
+    public AuthResponse(String token, String username, String role, String fullName, Long branchId) {
+        this.token = token;
+        this.username = username;
+        this.role = role;
+        this.fullName = fullName;
+        this.branchId = branchId;
     }
 
     public AuthResponse(String token, String role, String username) {
@@ -52,5 +61,13 @@ public class AuthResponse {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public Long getBranchId() {
+        return branchId;
+    }
+
+    public void setBranchId(Long branchId) {
+        this.branchId = branchId;
     }
 }

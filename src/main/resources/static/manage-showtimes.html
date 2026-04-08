@@ -270,10 +270,30 @@
                                 <div class="input-group input-group-sm"><input type="time" id="aiStartTime" class="form-control" value="08:00"><span class="input-group-text bg-dark border-secondary">-</span><input type="time" id="aiEndTime" class="form-control" value="23:55"></div>
                             </div>
                             <div class="col-md-4"><label class="form-label">Dọn phòng (phút)</label><input type="number" id="aiCleanupTime" class="form-control form-control-sm" value="20"></div>
-                            <div class="col-md-4"><label class="form-label">Chiến lược tối ưu</label><select id="aiStrategy" class="form-select form-select-sm"><option value="REVENUE">Ưu tiên Phim Hot</option><option value="BALANCED">Cân bằng các phim</option></select></div>
+                            <div class="col-md-4"><label class="form-label">Chiến lược tối ưu</label>
+                                <select id="aiStrategy" class="form-select form-select-sm">
+                                    <option value="BALANCED">Cân bằng (Mặc định)</option>
+                                    <option value="REVENUE">Tối ưu doanh thu (Giờ vàng)</option>
+                                    <option value="FAMILY">Phim gia đình (Sáng/Chiều)</option>
+                                    <option value="LATE_NIGHT">Phim ban đêm (Hành động/Kinh dị)</option>
+                                    <option value="VIETNAMESE">Ưu tiên Phim Việt Nam</option>
+                                </select>
+                            </div>
                             <div class="col-md-4"><label class="form-label">Mật độ kỳ vọng: <span id="ratioVal" class="text-danger">75%</span></label><input type="range" id="aiRatio" class="form-range" min="30" max="95" step="5" value="75" oninput="ratioVal.innerText=this.value+'%'"></div>
                         </div>
-                        <button id="btnRunAI" class="btn btn-primary w-100 mt-4 py-3 fw-bold" onclick="generateAI()"><i class="bi bi-magic me-2"></i>BẮT ĐẦU ĐIỀU PHỐI AI</button>
+                        
+                        <div class="mt-4 p-3 bg-black bg-opacity-25 rounded-4 border border-secondary border-opacity-10">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="m-0 fw-800 text-muted small"><i class="bi bi-filter-square me-2"></i>QUY TẮC NÂNG CAO (ADVANCED RULES)</h6>
+                                <button class="btn btn-sm btn-outline-danger py-1" onclick="addRuleRow()"><i class="bi bi-plus-lg me-1"></i>Thêm quy tắc</button>
+                            </div>
+                            <div id="aiRulesContainer" class="d-flex flex-column gap-2">
+                                <!-- Rules will be added here -->
+                                <div class="text-center py-3 text-muted small opacity-50">Chưa có quy tắc tùy chỉnh nào</div>
+                            </div>
+                        </div>
+
+                        <button id="btnRunAI" class="btn btn-primary w-100 mt-4 py-3 fw-bold shadow" onclick="generateAI()"><i class="bi bi-magic me-2"></i>BẮT ĐẦU ĐIỀU PHỐI AI</button>
                     </div>
                     <div class="tab-pane fade" id="tabDirectives">
                         <label class="form-label">Lời nhắn gửi mô hình AI (Prompting)</label>
@@ -293,11 +313,14 @@
 
 <script src="/js/auth-guard.js"></script>
 <script src="/js/sidebar.js"></script>
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let allMovies = [], allRooms = [], currentShowtimes = [], currentAIResult = [], isAILoading = false;
     let selectedMovieId = null;
+    let currentBranchId = null; // Store identified branch
     const detailModal = new bootstrap.Modal(document.getElementById('showtimeDetailModal'));
     const addModal = new bootstrap.Modal(document.getElementById('addModal'));
     const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
@@ -306,12 +329,27 @@
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('filterDate').value = today;
         
+        await identifyBranch();
+
         const [mRes, rRes, fRes] = await Promise.all([
-            api.get('/movies'), 
+            currentBranchId ? api.get(`/admin/branch-movies/branch/${currentBranchId}`) : api.get('/movies'), 
             api.get('/rooms'),
-            api.get('/admin/master-data/formats')
+            api.get('/public/master-data/formats')
         ]);
-        allMovies = mRes.data || []; allRooms = rRes.data || [];
+        
+        // Handle movies (check if it's BranchMovie list or Movie list)
+        if (currentBranchId) {
+            allMovies = (mRes.data || []).map(bm => bm.movie);
+        } else {
+            allMovies = mRes.data || [];
+        }
+        
+        // Handle rooms (filter by branch if Manager)
+        if (currentBranchId) {
+            allRooms = (rRes.data || []).filter(r => r.branchId === currentBranchId);
+        } else {
+            allRooms = rRes.data || [];
+        }
         
         if (fRes.success) {
             document.getElementById('filterFormat').innerHTML += fRes.data.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
@@ -329,6 +367,17 @@
         document.getElementById('editRoomId').innerHTML = roomOptions;
         document.getElementById('addMovieId').innerHTML = movieOptions;
         document.getElementById('addRoomId').innerHTML = roomOptions;
+    }
+
+    async function identifyBranch() {
+        const username = localStorage.getItem('cinemaUsername');
+        const assignmentsRes = await api.get('/admin/staffs/assignments');
+        if (assignmentsRes.success) {
+            const staff = Object.values(assignmentsRes.data).find(s => s.user.username === username);
+            if (staff) {
+                currentBranchId = staff.branch.id;
+            }
+        }
     }
 
     function applyFilters() {
@@ -613,15 +662,40 @@
     async function generateAI() {
         if (isAILoading) return;
         const mode = document.querySelector('input[name="aiMode"]:checked').value;
+        
+        // Thu thập các quy tắc nâng cao
+        const rules = [];
+        document.querySelectorAll('.rule-row').forEach(row => {
+            const startTime = row.querySelector('.rule-start').value;
+            const endTime = row.querySelector('.rule-end').value;
+            const type = row.querySelector('.rule-type').value;
+            const val = row.querySelector('.rule-val').value;
+            const boost = row.querySelector('.rule-boost').value;
+            
+            if (startTime && endTime && val) {
+                rules.push({
+                    startTime: startTime + ":00",
+                    endTime: endTime + ":00",
+                    priorityType: type,
+                    targetValue: val,
+                    weightBoost: parseFloat(boost)
+                });
+            }
+        });
+
         const req = {
             date: document.getElementById('filterDate').value,
-            mode, ratio: parseFloat(document.getElementById('aiRatio').value)/100,
+            mode, 
+            ratio: parseFloat(document.getElementById('aiRatio').value)/100,
             strategy: document.getElementById('aiStrategy').value,
             cleanupTime: parseInt(document.getElementById('aiCleanupTime').value),
             customDirectives: document.getElementById('customDirectives').value,
             startTime: document.getElementById('aiStartTime').value + ":00",
-            endTime: document.getElementById('aiEndTime').value + ":00"
+            endTime: document.getElementById('aiEndTime').value + ":00",
+            branchId: currentBranchId,
+            rules: rules
         };
+        
         try {
             isAILoading = true;
             document.getElementById('btnRunAI').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> ĐANG TỐI ƯU HÓA...';
@@ -632,12 +706,42 @@
                 document.getElementById('aiActions').classList.remove('d-none');
                 document.getElementById('aiStatusBadge').classList.remove('d-none');
                 aiModal.hide();
-                showNotify('Hoàn tất', 'AI đã lập lịch chiếu tối ưu!');
+                showNotify('Hoàn tất', 'AI đã dựa trên các quy tắc và chiến lược của bạn để lập lịch tối ưu!');
+            } else {
+                showNotify('Lỗi', res.message, 'danger');
             }
+        } catch (err) {
+            showNotify('Lỗi kết nối', 'Không thể liên lạc với máy chủ AI', 'danger');
         } finally {
             isAILoading = false;
             document.getElementById('btnRunAI').innerHTML = '<i class="bi bi-magic me-2"></i>BẮT ĐẦU ĐIỀU PHỐI AI';
         }
+    }
+
+    function addRuleRow() {
+        const container = document.getElementById('aiRulesContainer');
+        // Xóa thông báo "Chưa có quy tắc" nếu có
+        if (container.querySelector('.text-muted')) container.innerHTML = '';
+        
+        const row = document.createElement('div');
+        row.className = 'rule-row d-flex gap-2 align-items-center animate__animated animate__fadeInDown';
+        row.innerHTML = `
+            <input type="time" class="form-control form-control-sm rule-start" value="08:00" style="width: 100px;">
+            <input type="time" class="form-control form-control-sm rule-end" value="23:55" style="width: 100px;">
+            <select class="form-select form-select-sm rule-type" style="width: 120px;">
+                <option value="GENRE">Thể loại</option>
+                <option value="MOVIE">Phim cụ thể</option>
+                <option value="RATING">Đánh giá >=</option>
+            </select>
+            <input type="text" class="form-control form-control-sm rule-val" placeholder="Giá trị..." style="flex: 1;">
+            <select class="form-select form-select-sm rule-boost" style="width: 100px;">
+                <option value="1.5">Ưu tiên (x1.5)</option>
+                <option value="2.5">Cao (x2.5)</option>
+                <option value="5.0">Tối đa (x5.0)</option>
+            </select>
+            <button class="btn btn-sm btn-link text-danger p-0" onclick="this.parentElement.remove()"><i class="bi bi-trash"></i></button>
+        `;
+        container.appendChild(row);
     }
 
     async function saveAI() {

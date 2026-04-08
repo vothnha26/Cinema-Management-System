@@ -26,6 +26,9 @@ public class TMDBMovieDto {
     @JsonProperty("genre_ids")
     private List<Integer> genreIds;
 
+    @JsonProperty("origin_country")
+    private List<String> originCountry;
+
     @JsonProperty("genres")
     private List<Genre> genres;
 
@@ -179,6 +182,14 @@ public class TMDBMovieDto {
     public void setRuntime(Integer runtime) { this.runtime = runtime; }
     public List<Integer> getGenreIds() { return genreIds; }
     public void setGenreIds(List<Integer> genreIds) { this.genreIds = genreIds; }
+    public List<String> getOriginCountry() { return originCountry; }
+    public void setOriginCountry(List<String> originCountry) { this.originCountry = originCountry; }
+    
+    public String getOriginCountryString() {
+        if (originCountry == null || originCountry.isEmpty()) return "";
+        return String.join(", ", originCountry);
+    }
+
     public List<Genre> getGenres() { return genres; }
     public void setGenres(List<Genre> genres) { this.genres = genres; }
     public Credits getCredits() { return credits; }

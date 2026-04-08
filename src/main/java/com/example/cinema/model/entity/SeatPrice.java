@@ -1,20 +1,21 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.entity.RoomType;
-import com.example.cinema.model.entity.SeatType;
-
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "seat_prices", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "room_type_id", "seat_type_id", "effective_date" })
+        @UniqueConstraint(columnNames = { "branch_id", "room_type_id", "seat_type_id", "effective_date" })
 })
 public class SeatPrice {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "branch_id", nullable = false)
+    private Branch branch;
 
     @ManyToOne
     @JoinColumn(name = "room_type_id", nullable = false)
@@ -36,8 +37,9 @@ public class SeatPrice {
     public SeatPrice() {
     }
 
-    public SeatPrice(Long id, RoomType roomType, SeatType seatType, BigDecimal price, LocalDate effectiveDate) {
+    public SeatPrice(Long id, Branch branch, RoomType roomType, SeatType seatType, BigDecimal price, LocalDate effectiveDate) {
         this.id = id;
+        this.branch = branch;
         this.roomType = roomType;
         this.seatType = seatType;
         this.price = price;
@@ -51,6 +53,14 @@ public class SeatPrice {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Branch getBranch() {
+        return branch;
+    }
+
+    public void setBranch(Branch branch) {
+        this.branch = branch;
     }
 
     public RoomType getRoomType() {

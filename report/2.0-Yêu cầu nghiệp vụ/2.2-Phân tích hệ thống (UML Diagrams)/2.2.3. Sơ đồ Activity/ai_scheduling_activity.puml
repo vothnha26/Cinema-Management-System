@@ -1,0 +1,42 @@
+@startuml ai_scheduling_activity
+title Activity Diagram: Quy trình Xếp lịch chiếu (Tối ưu tự động)
+
+start
+:Nhận yêu cầu xếp lịch từ Quản lý;
+note right: Phim, Phòng, Khoảng thời gian
+
+partition "Phân tích số liệu" {
+  :Quét thị trường và các từ khóa được quan tâm;
+  :Tính toán mức độ thu hút của phim;
+  :Phân tích lịch sử lấp đầy của các phòng chiếu;
+}
+
+partition "Xử lý xếp lịch" {
+  :Xây dựng bản đồ trọng số cho các khung giờ;
+  note left
+    Phân bổ điểm dựa trên:
+    - Trọng số Thể loại (GenreWeighting)
+    - Trọng số Khung giờ (TimeSlotWeighting)
+    - Trọng số Xu hướng/Rating (OriginWeighting)
+  end note
+  
+  :Tìm các khoảng thời gian trống hiện có;
+  
+  while (Còn khung giờ trống?) is (Có)
+    :Tính điểm ưu tiên cho phim tại khung giờ đó;
+    if (Điểm đạt yêu cầu?) then (Đạt)
+      :Thêm vào danh sách đề xuất;
+      :Đánh dấu thời gian đã sử dụng;
+    endif
+  endwhile (Không)
+}
+
+:Hiển thị danh sách Suất chiếu đề xuất;
+if (Quản lý phê duyệt?) then (Có)
+  :Lưu hàng loạt Suất chiếu vào hệ thống;
+  #Green:Hoàn tất quy trình;
+else (Không)
+  :Điều chỉnh thủ công hoặc Hủy bỏ;
+endif
+stop
+@enduml

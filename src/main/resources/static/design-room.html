@@ -105,12 +105,32 @@
     </div>
 
     <div class="mt-auto p-3 rounded-4" style="background:rgba(255,255,255,0.03); border:1px solid var(--border)">
+        <div class="tool-label mb-2">Thống kê ghế</div>
+        <div class="d-flex justify-content-between small mb-1">
+            <span>Tổng số ghế:</span>
+            <span id="stat-total" class="fw-bold">0</span>
+        </div>
+        <div class="d-flex justify-content-between small mb-1 text-warning">
+            <span>Ghế VIP:</span>
+            <span id="stat-vip" class="fw-bold">0</span>
+        </div>
+        <div class="d-flex justify-content-between small mb-1 text-info">
+            <span>Ghế Đôi:</span>
+            <span id="stat-couple" class="fw-bold">0</span>
+        </div>
+        <hr class="my-2 border-border">
         <div id="selectionStatus" class="fw-bold text-accent-gold mb-1">0 ghế được chọn</div>
         <p class="small text-muted mb-0">Nhấp hoặc kéo chuột để chọn vùng ghế cần chỉnh sửa.</p>
     </div>
 </aside>
 
 <div class="canvas-area">
+    <div class="d-flex gap-2 mb-4">
+        <button class="btn btn-dark btn-sm border-border" onclick="selectRowPrompt()"><i class="bi bi-distribute-horizontal me-1"></i> Chọn Hàng</button>
+        <button class="btn btn-dark btn-sm border-border" onclick="selectColPrompt()"><i class="bi bi-distribute-vertical me-1"></i> Chọn Cột</button>
+        <button class="btn btn-dark btn-sm border-border" onclick="selectAllSeats()"><i class="bi bi-check-all me-1"></i> Chọn tất cả</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="clearAllSeats()"><i class="bi bi-eraser me-1"></i> Xóa trắng</button>
+    </div>
     <div class="canvas-container">
         <div class="screen"></div>
         <div id="seatGrid" class="seat-grid"></div>
@@ -194,7 +214,6 @@
 
             for (let c = 1; c <= cols; c++) {
                 const seat = roomData.seats.find(s => s.rowChar === rowChar && s.colNum === c);
-                // CHÚ Ý: Sử dụng seatTypeId thay vì type
                 const type = seat ? seat.seatTypeId : 'EMPTY';
                 const index = `${rowChar}-${c}`;
                 
@@ -211,8 +230,8 @@
         }
     }
 
-    function toggleSelect(idx) {
-        if (selectedIndices.has(idx)) {
+    function toggleSelect(idx, forceAdd = false) {
+        if (!forceAdd && selectedIndices.has(idx)) {
             selectedIndices.delete(idx);
             document.getElementById(`cell-${idx}`).classList.remove('selected');
         } else {
@@ -224,6 +243,51 @@
 
     function updateUI() {
         document.getElementById('selectionStatus').textContent = `${selectedIndices.size} ghế được chọn`;
+        
+        // Update stats
+        const total = roomData.seats.filter(s => s.seatTypeId !== 'EMPTY').length;
+        const vip = roomData.seats.filter(s => s.seatTypeId === 'VIP').length;
+        const couple = roomData.seats.filter(s => s.seatTypeId === 'COUPLE').length;
+        
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-vip').textContent = vip;
+        document.getElementById('stat-couple').textContent = couple;
+    }
+
+    function selectRowPrompt() {
+        const row = prompt('Nhập tên hàng (A, B, C...):');
+        if (!row) return;
+        const rowChar = row.toUpperCase();
+        for (let c = 1; c <= roomData.cols; c++) {
+            const idx = `${rowChar}-${c}`;
+            if (document.getElementById(`cell-${idx}`)) toggleSelect(idx, true);
+        }
+    }
+
+    function selectColPrompt() {
+        const col = prompt(`Nhập số cột (1 - ${roomData.cols}):`);
+        if (!col) return;
+        const colNum = parseInt(col);
+        for (let r = 0; r < roomData.rows; r++) {
+            const rowChar = String.fromCharCode(65 + r);
+            const idx = `${rowChar}-${colNum}`;
+            if (document.getElementById(`cell-${idx}`)) toggleSelect(idx, true);
+        }
+    }
+
+    function selectAllSeats() {
+        for (let r = 0; r < roomData.rows; r++) {
+            const rowChar = String.fromCharCode(65 + r);
+            for (let c = 1; c <= roomData.cols; c++) {
+                toggleSelect(`${rowChar}-${c}`, true);
+            }
+        }
+    }
+
+    function clearAllSeats() {
+        if (!confirm('Bạn có chắc muốn xóa trắng toàn bộ ghế?')) return;
+        roomData.seats = [];
+        renderGrid();
     }
 
     function applyType(type) {
@@ -235,7 +299,6 @@
                 seat = { rowChar: r, colNum: parseInt(c) };
                 roomData.seats.push(seat);
             }
-            // Đảm bảo cập nhật seatTypeId
             seat.seatTypeId = type;
             seat.status = (type !== 'EMPTY');
             
@@ -317,7 +380,7 @@
         
         if (res.success) {
             alert('Đã lưu sơ đồ phòng và cập nhật kích thước thành công!');
-            loadRoomDetail(); // Reload to sync with server IDs
+            loadRoomDetail();
         } else {
             alert('Lỗi: ' + res.message);
         }

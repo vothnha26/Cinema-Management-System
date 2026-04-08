@@ -1,7 +1,6 @@
 package com.example.cinema.model.dto.request;
 
 import com.example.cinema.model.enums.DiscountType;
-import com.example.cinema.model.enums.MembershipTier;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -23,7 +22,7 @@ public class PromotionRequest {
     @Positive(message = "Giá trị giảm phải lớn hơn 0")
     private BigDecimal discountValue;
 
-    private MembershipTier minTier;
+    private String minLevelName;
 
     @NotNull(message = "Ngày bắt đầu không được để trống")
     private LocalDate startDate;
@@ -75,12 +74,12 @@ public class PromotionRequest {
         this.discountValue = discountValue;
     }
 
-    public MembershipTier getMinTier() {
-        return minTier;
+    public String getMinLevelName() {
+        return minLevelName;
     }
 
-    public void setMinTier(MembershipTier minTier) {
-        this.minTier = minTier;
+    public void setMinLevelName(String minLevelName) {
+        this.minLevelName = minLevelName;
     }
 
     public LocalDate getStartDate() {

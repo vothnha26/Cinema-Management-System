@@ -1,0 +1,41 @@
+@startuml manager_use_case
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam usecase {
+    BackgroundColor #F8F9FA
+    BorderColor #E67E22
+    ArrowColor #333333
+}
+
+actor "Quản lý" as Manager
+actor "TMDB API" as TMDB <<External>>
+
+rectangle "Phân hệ Quản lý (StarCinema)" {
+    usecase "Quản lý danh mục Phim" as UC_Movies
+    usecase "Tìm kiếm & Nhập phim từ TMDB" as UC_TMDB
+    
+    usecase "Quản lý Lịch chiếu" as UC_Showtimes
+    usecase "Xếp lịch tự động bằng AI" as UC_AI_Showtime
+    
+    usecase "Thiết lập Quy tắc Giá vé" as UC_Pricing
+    usecase "Quản lý chương trình Khuyến mãi" as UC_Promotions
+    
+    usecase "Quản lý Combo Bắp nước" as UC_Combos
+    usecase "Theo dõi Báo cáo Doanh thu" as UC_Revenue
+    usecase "Thống kê tỷ lệ lấp đầy phòng" as UC_Stats
+    
+    UC_Movies <|-- UC_TMDB
+    UC_Showtimes <|-- UC_AI_Showtime
+}
+
+Manager --> UC_Movies
+Manager --> UC_Showtimes
+Manager --> UC_Pricing
+Manager --> UC_Promotions
+Manager --> UC_Combos
+Manager --> UC_Revenue
+Manager --> UC_Stats
+
+UC_TMDB -- TMDB
+
+@enduml

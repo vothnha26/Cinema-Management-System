@@ -13,6 +13,8 @@ public class RoomResponse {
     private Integer cols;
     private com.example.cinema.model.enums.RoomStatus status;
     private List<SeatResponse> seats;
+    private Boolean hasShowtime;
+    private Long branchId;
 
     public static class SeatResponse {
         private Long id;
@@ -60,4 +62,8 @@ public class RoomResponse {
     public void setStatus(com.example.cinema.model.enums.RoomStatus status) { this.status = status; }
     public List<SeatResponse> getSeats() { return seats; }
     public void setSeats(List<SeatResponse> seats) { this.seats = seats; }
+    public Boolean getHasShowtime() { return hasShowtime; }
+    public void setHasShowtime(Boolean hasShowtime) { this.hasShowtime = hasShowtime; }
+    public Long getBranchId() { return branchId; }
+    public void setBranchId(Long branchId) { this.branchId = branchId; }
 }

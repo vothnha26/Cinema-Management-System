@@ -22,7 +22,7 @@ public class Payment {
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false)
+    @Column(name = "payment_method", nullable = false, length = 50, columnDefinition = "VARCHAR(50)")
     private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)

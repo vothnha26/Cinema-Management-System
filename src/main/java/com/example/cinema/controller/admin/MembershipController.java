@@ -2,7 +2,7 @@ package com.example.cinema.controller.admin;
 
 import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.model.entity.MembershipBenefit;
-import com.example.cinema.model.enums.MembershipTier;
+import com.example.cinema.model.entity.MembershipLevel;
 import com.example.cinema.service.user.MembershipService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,24 +21,26 @@ public class MembershipController {
         this.membershipService = membershipService;
     }
 
+    @GetMapping("/levels")
+    public ResponseEntity<ApiResponse<List<MembershipLevel>>> getAllLevels() {
+        return ResponseEntity.ok(ApiResponse.ok(membershipService.getAllLevels()));
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<MembershipBenefit>>> getAllBenefits() {
         return ResponseEntity.ok(ApiResponse.ok(membershipService.getAllBenefits()));
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<MembershipBenefit>> createBenefit(
-            @RequestParam MembershipTier tier,
-            @RequestParam Double discountPercent,
-            @RequestParam Double pointMultiplier) {
-        return ResponseEntity.ok(ApiResponse.ok(membershipService.updateBenefit(tier, discountPercent, pointMultiplier)));
+    @GetMapping("/levels/{levelId}")
+    public ResponseEntity<ApiResponse<List<MembershipBenefit>>> getBenefitsByLevel(@PathVariable Long levelId) {
+        return ResponseEntity.ok(ApiResponse.ok(membershipService.getBenefitsByLevel(levelId)));
     }
 
-    @PutMapping("/{tier}")
-    public ResponseEntity<ApiResponse<MembershipBenefit>> updateBenefit(
-            @PathVariable MembershipTier tier,
-            @RequestParam Double discountPercent,
-            @RequestParam Double pointMultiplier) {
-        return ResponseEntity.ok(ApiResponse.ok(membershipService.updateBenefit(tier, discountPercent, pointMultiplier)));
+    @PostMapping("/update")
+    public ResponseEntity<ApiResponse<MembershipBenefit>> updateBenefitRule(
+            @RequestParam Long levelId,
+            @RequestParam String type,
+            @RequestParam String value) {
+        return ResponseEntity.ok(ApiResponse.ok(membershipService.updateBenefit(levelId, type, value)));
     }
 }

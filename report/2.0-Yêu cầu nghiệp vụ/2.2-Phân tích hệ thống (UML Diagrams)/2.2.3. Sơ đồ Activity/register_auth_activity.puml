@@ -1,0 +1,57 @@
+@startuml register_auth_activity
+skinparam backgroundColor #FFFFFF
+skinparam activity {
+  BackgroundColor #E5133A
+  BorderColor #333333
+  FontColor #FFFFFF
+  ArrowColor #E5133A
+}
+
+title Activity Diagram: Quy trình Đăng ký & Xác thực OTP (StarCinema)
+
+start
+:Người dùng nhập thông tin đăng ký;
+note right
+  - Tên đăng nhập, Email
+  - Mật khẩu, Họ tên
+  - Số điện thoại
+end note
+
+partition "Xử lý đăng ký" {
+  if (Thông tin nhập vào hợp lệ?) then (Có)
+    :Truy vấn kiểm tra tài khoản trong hệ thống;
+    if (Đã tồn tại và Đã kích hoạt?) then (Có)
+      #Red:Thông báo lỗi "Tài khoản đã tồn tại";
+      detach
+    else (Chưa tồn tại hoặc Chưa kích hoạt)
+      :Lưu thông tin đăng ký ở trạng thái chờ;
+      
+      :Sinh mã OTP (6 chữ số);
+      :Lưu mã OTP vào **Redis** (hết hạn sau 5p);
+      
+      :Gửi Email chứa mã OTP;
+      
+      :Yêu cầu người dùng nhập mã OTP từ Email;
+      
+      repeat
+        :Người dùng nhập mã OTP;
+        :Kiểm tra tính hợp lệ của mã OTP;
+        if (Mã chính xác và còn hiệu lực?) then (Thành công)
+          :Kích hoạt tài khoản (`status = true`);
+          :Xóa mã OTP khỏi Redis (One-time use);
+          #Green:Đăng ký thành công;
+          stop
+        else (Sai mã hoặc hết hạn)
+          :Thông báo lỗi xác thực;
+        endif
+      repeat while (Người dùng chọn thử lại?) is (Có)
+      ->Không;
+      stop
+    endif
+  else (Không)
+    #Red:Thông báo lỗi định dạng dữ liệu;
+    stop
+  endif
+}
+
+@enduml

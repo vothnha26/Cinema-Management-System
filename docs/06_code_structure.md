@@ -1,78 +1,53 @@
-# 📦 Cấu trúc Source Code – Cinema Management System (Elite Standard)
+# 🏗️ Cấu trúc mã nguồn – Cinema Management System
 
-## 1. Cấu trúc thư mục (Package Structure)
+Dự án được tổ chức theo cấu trúc tiêu chuẩn Maven/Spring Boot, phân chia rõ ràng theo Domain-Driven Design (DDD) ở tầng Service để dễ dàng mở rộng và bảo trì.
 
-Hệ thống được tổ chức theo kiến trúc phân tầng kết hợp với các mẫu thiết kế (Design Patterns) chuyên sâu:
+## 1. Cấu trúc Package chính
 
-```
-src/main/java/com/example/cinema/
-│
-├── config/                    # Cấu hình hệ thống & Elite Interceptors
-│   ├── SecurityConfig.java    # Spring Security & JWT
-│   ├── AppConfig.java         # ModelMapper & RestTemplate Beans
-│   ├── LogAction.java         # Custom Annotation cho Audit Log
-│   └── AuditLogAspect.java    # AOP Aspect xử lý ghi nhật ký
-│
-├── controller/                # REST Controllers (Presentation)
-│   ├── MovieController.java
-│   ├── SchedulingController.java # AI Scheduling API
-│   ├── PricingController.java    # Price Configuration API
-│   └── ...
-│
-├── model/
-│   ├── entity/                # JPA Entities (Database Mapping)
-│   │   ├── AuditLog.java      # Bảng nhật ký mới
-│   │   └── ...
-│   ├── dto/                   # Data Transfer Objects
-│   │   ├── request/           # Builder Pattern thường dùng cho Request
-│   │   └── response/          # Cấu trúc Response chuẩn hóa
-│   └── enums/                 # Elite Enums (AgeRating, RoomType, etc.)
-│
-├── service/                   # Business Logic Layer (Interface)
-│   ├── MovieService.java
-│   ├── SchedulingService.java # AI Algorithm Interface
-│   ├── BuzzAnalysisService.java # External Data Interface
-│   ├── pricing/               # 💎 Decorator Pattern Implementation
-│   │   ├── PriceCalculator.java
-│   │   ├── BasePriceCalculator.java
-│   │   ├── PriceDecorator.java
-│   │   ├── RoomTypeDecorator.java
-│   │   └── SeatTypeDecorator.java
-│   ├── strategy/              # 🎯 Strategy Pattern Implementation
-│   │   ├── SeatLayoutStrategy.java
-│   │   ├── StandardLayoutStrategy.java
-│   │   ├── ImaxLayoutStrategy.java
-│   │   └── SeatLayoutFactory.java
-│   └── impl/                  # Service Implementations
-│       ├── MovieServiceImpl.java (Facade Pattern)
-│       ├── SchedulingServiceImpl.java (AI Engine)
-│       └── ...
-│
-├── repository/                # Data Access Layer
-└── security/                  # Security Logic (JWT, UserDetails)
-```
+Toàn bộ code Java nằm trong package `com.example.cinema`:
+
+| Package | Nhiệm vụ |
+|:---|:---|
+| `config` | Chứa các file cấu hình: Security, Cloudinary, SePay, và các Seeder dữ liệu lớn. |
+| `controller` | Chứa các REST Controller, được phân chia theo đối tượng người dùng (Admin, Staff, Public API). |
+| `exception` | Quản lý xử lý lỗi tập trung (`GlobalExceptionHandler`) và các Custom Exception. |
+| `model` | Chứa các Định nghĩa dữ liệu: `entity` (Database), `dto` (Data Transfer Object), `enums` (Trạng thái). |
+| `repository` | Các interface Spring Data JPA thực hiện thao tác CRUD trên database. |
+| `security` | Triển khai **JWT Authentication**: Filter, Token Provider, UserDetailsService. |
+| `service` | Logic nghiệp vụ cốt lõi, được chia thành các Domain (Booking, Commerce, Showtime...). |
+| `util` | Các lớp tiện ích: Tạo QR Code, định dạng tiền tệ, xử lý ngày tháng. |
 
 ---
 
-## 2. Elite Coding Standards
+## 2. Chi tiết tầng Service (Business Domain)
 
-### 2.1. Naming Conventions
-- **Decorator:** Tên lớp kết thúc bằng `Decorator` (ví dụ: `RoomTypeDecorator`).
-- **Strategy:** Tên lớp kết thúc bằng `Strategy` (ví dụ: `ImaxLayoutStrategy`).
-- **Factory:** Tên lớp kết thúc bằng `Factory`.
-- **AOP:** Các phương thức ghi nhật ký sử dụng annotation `@LogAction`.
+Điểm đặc biệt của codebase này là việc chia nhỏ Service theo nghiệp vụ để áp dụng Design Patterns:
 
-### 2.2. Dependency Injection
-- **Bắt buộc:** Luôn sử dụng Constructor Injection.
-- **Quy tắc:** Phụ thuộc vào Interface thay vì Implementation cụ thể (DIP).
-
-### 2.3. DTO Mapping
-- Sử dụng **ModelMapper** trung tâm (cấu hình trong `AppConfig.java`) để chuyển đổi tự động giữa Entity và DTO, đảm bảo SRP cho Service.
+- **`service.showtime`**: 
+    - `strategy`: Chứa các thuật toán lập lịch chiếu khác nhau.
+- **`service.commerce.pricing`**:
+    - Chứa các `Decorator` (Additive, Percentage) để tính toán giá vé động.
+    - Chứa `PricingRuleMatcher` để tìm quy tắc giá phù hợp.
+- **`service.booking`**: 
+    - `impl`: Chứa `BookingServiceImpl` (Xử lý transactional) và `CustomerBookingFacade` (Đóng gói luồng khách hàng).
+- **`service.infrastructure`**: Xử lý các dịch vụ hạ tầng như Media (Cloudinary) và Email.
 
 ---
 
-## 3. Quản lý cấu hình nhạy cảm (DevOps)
+## 3. Quy trình phát triển (Backend Workflow)
 
-- **Tệp `.env`**: Lưu trữ các biến môi trường nhạy cảm (TMDB_API_KEY, GMAIL_USER, CLOUDINARY_SECRET).
-- **Placeholder**: `application.properties` sử dụng cú pháp `${VARIABLE_NAME}` để tham chiếu.
-- **Bảo mật**: Tệp `.env` được đưa vào `.gitignore` để tránh rò rỉ mã nguồn.
+Hệ thống tuân thủ quy trình xử lý dữ liệu nghiêm ngặt:
+1.  **Request**: Đi qua `JwtAuthenticationFilter` để xác thực quyền truy cập.
+2.  **Controller**: Nhận dữ liệu (DTO), gọi Service tương ứng qua Interface (DIP - Dependency Inversion).
+3.  **Service**: Thực thi logic. Nếu cần tính giá, gọi qua `PricingService`. Nếu đặt vé, thực hiện qua `CustomerBookingFacade`.
+4.  **Audit**: `AuditLogAspect` tự động bắt các thay đổi dữ liệu trái phép của Admin.
+5.  **Response**: Trả về dữ liệu DTO chuẩn hóa cho Frontend thông qua Wrapper thống nhất.
+
+---
+
+## 4. Quản lý Tài nguyên (Resources)
+
+- `src/main/resources`:
+    - `application.properties`: Cấu hình database, redis và logging.
+    - `templates/`: (Nếu có) Chứa các mẫu email thông báo.
+    - `logs/`: Lưu trữ file log hệ thống theo ngày.

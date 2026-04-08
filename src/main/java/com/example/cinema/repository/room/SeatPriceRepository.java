@@ -21,7 +21,11 @@ public interface SeatPriceRepository extends JpaRepository<SeatPrice, Long> {
 
     List<SeatPrice> findAllByRoomTypeAndSeatTypeAndIsActiveTrue(RoomType roomType, SeatType seatType);
 
+    List<SeatPrice> findAllByRoomTypeAndSeatTypeAndEffectiveDate(RoomType roomType, SeatType seatType, LocalDate effectiveDate);
+
     Optional<SeatPrice> findByRoomTypeAndSeatTypeAndEffectiveDate(RoomType roomType, SeatType seatType, LocalDate effectiveDate);
 
     Optional<SeatPrice> findByRoomTypeAndSeatTypeAndIsActiveTrue(RoomType roomType, SeatType seatType);
+
+    List<SeatPrice> findAllByRoomTypeAndIsActiveTrue(RoomType roomType);
 }

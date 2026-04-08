@@ -1,6 +1,5 @@
 package com.example.cinema.model.dto.request;
 
-import com.example.cinema.model.enums.MembershipTier;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -14,7 +13,7 @@ public class AdminUpdateCustomerRequest {
     private String email;
 
     @NotNull(message = "Hạng thành viên không được để trống")
-    private MembershipTier membershipTier;
+    private String membershipLevel;
 
     @NotNull(message = "Điểm thưởng không được để trống")
     private Integer points;
@@ -31,8 +30,8 @@ public class AdminUpdateCustomerRequest {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public MembershipTier getMembershipTier() { return membershipTier; }
-    public void setMembershipTier(MembershipTier membershipTier) { this.membershipTier = membershipTier; }
+    public String getMembershipLevel() { return membershipLevel; }
+    public void setMembershipLevel(String membershipLevel) { this.membershipLevel = membershipLevel; }
 
     public Integer getPoints() { return points; }
     public void setPoints(Integer points) { this.points = points; }

@@ -5,10 +5,15 @@ import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.ComboRequest;
 import com.example.cinema.model.dto.response.ComboResponse;
 import com.example.cinema.model.entity.Combo;
+import com.example.cinema.model.entity.Branch;
+import com.example.cinema.model.entity.BranchCombo;
 import com.example.cinema.repository.commerce.ComboRepository;
+import com.example.cinema.repository.commerce.BranchComboRepository;
+import com.example.cinema.repository.branch.BranchRepository;
 import com.example.cinema.service.commerce.ComboService;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,10 +24,18 @@ import java.util.stream.Collectors;
 public class ComboServiceImpl implements ComboService {
 
     private final ComboRepository comboRepository;
+    private final BranchComboRepository branchComboRepository;
+    private final BranchRepository branchRepository;
     private final ModelMapper modelMapper;
 
-    public ComboServiceImpl(ComboRepository comboRepository, ModelMapper modelMapper) {
+    @Autowired
+    public ComboServiceImpl(ComboRepository comboRepository, 
+                            BranchComboRepository branchComboRepository,
+                            BranchRepository branchRepository,
+                            ModelMapper modelMapper) {
         this.comboRepository = comboRepository;
+        this.branchComboRepository = branchComboRepository;
+        this.branchRepository = branchRepository;
         this.modelMapper = modelMapper;
     }
 
@@ -34,6 +47,29 @@ public class ComboServiceImpl implements ComboService {
     }
 
     @Override
+    public List<ComboResponse> getCombosByBranch(Long branchId) {
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new AppException("Không tìm thấy chi nhánh"));
+        
+        List<Combo> allCombos = comboRepository.findAll();
+        return allCombos.stream().map(c -> {
+            BranchCombo bc = branchComboRepository.findByBranchAndCombo(branch, c)
+                    .orElseGet(() -> {
+                        BranchCombo newBc = new BranchCombo();
+                        newBc.setBranch(branch);
+                        newBc.setCombo(c);
+                        newBc.setPrice(c.getPrice());
+                        newBc.setStockQuantity(0);
+                        return branchComboRepository.save(newBc);
+                    });
+            
+            ComboResponse resp = modelMapper.map(c, ComboResponse.class);
+            resp.setStockQuantity(bc.getStockQuantity());
+            return resp;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     @LogAction(action = "CREATE", target = "COMBO")
     public ComboResponse createCombo(ComboRequest request, String imageUrl) {
@@ -41,6 +77,18 @@ public class ComboServiceImpl implements ComboService {
         combo.setImageUrl(imageUrl);
         combo.setIsActive(true);
         Combo saved = comboRepository.save(combo);
+
+        // Khởi tạo tồn kho cho tất cả chi nhánh
+        List<Branch> branches = branchRepository.findAll();
+        for (Branch b : branches) {
+            BranchCombo bc = new BranchCombo();
+            bc.setBranch(b);
+            bc.setCombo(saved);
+            bc.setPrice(saved.getPrice());
+            bc.setStockQuantity(0);
+            branchComboRepository.save(bc);
+        }
+
         return modelMapper.map(saved, ComboResponse.class);
     }
 
@@ -57,6 +105,36 @@ public class ComboServiceImpl implements ComboService {
         }
         Combo updated = comboRepository.save(combo);
         return modelMapper.map(updated, ComboResponse.class);
+    }
+
+    @Override
+    @Transactional
+    @LogAction(action = "UPDATE_BRANCH_STOCK", target = "COMBO")
+    public ComboResponse updateBranchStock(Long branchId, Long comboId, Integer newStock) {
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new AppException("Không tìm thấy chi nhánh"));
+        Combo combo = comboRepository.findById(comboId)
+                .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
+
+        BranchCombo bc = branchComboRepository.findByBranchAndCombo(branch, combo)
+                .orElseGet(() -> {
+                    BranchCombo newBc = new BranchCombo();
+                    newBc.setBranch(branch);
+                    newBc.setCombo(combo);
+                    newBc.setPrice(combo.getPrice());
+                    return newBc;
+                });
+
+        bc.setStockQuantity(newStock);
+        if (bc.getStockQuantity() < 0) {
+            throw new AppException("Số lượng tồn kho không thể âm");
+        }
+
+        branchComboRepository.save(bc);
+        
+        ComboResponse resp = modelMapper.map(combo, ComboResponse.class);
+        resp.setStockQuantity(bc.getStockQuantity());
+        return resp;
     }
 
     @Override

@@ -6,84 +6,69 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "movie_actors")
+@IdClass(MovieActor.MovieActorId.class)
 public class MovieActor {
 
-    @EmbeddedId
-    private MovieActorId id;
-
+    @Id
     @ManyToOne
-    @MapsId("movieId")
     @JoinColumn(name = "movie_id")
     private Movie movie;
 
+    @Id
     @ManyToOne
-    @MapsId("actorId")
     @JoinColumn(name = "actor_id")
     private Actor actor;
 
-    @Column(name = "character_name")
-    private String characterName;
-
-    @Column(name = "display_order")
-    private Integer displayOrder;
-
-    public MovieActor() {}
-
-    public MovieActor(MovieActorId id, Movie movie, Actor actor, String characterName, Integer displayOrder) {
-        this.id = id;
-        this.movie = movie;
-        this.actor = actor;
-        this.characterName = characterName;
-        this.displayOrder = displayOrder;
+    public MovieActor() {
     }
 
-    public MovieActorId getId() { return id; }
-    public void setId(MovieActorId id) { this.id = id; }
+    public MovieActor(Movie movie, Actor actor) {
+        this.movie = movie;
+        this.actor = actor;
+    }
 
-    public Movie getMovie() { return movie; }
-    public void setMovie(Movie movie) { this.movie = movie; }
+    public Movie getMovie() {
+        return movie;
+    }
 
-    public Actor getActor() { return actor; }
-    public void setActor(Actor actor) { this.actor = actor; }
+    public void setMovie(Movie movie) {
+        this.movie = movie;
+    }
 
-    public String getCharacterName() { return characterName; }
-    public void setCharacterName(String characterName) { this.characterName = characterName; }
+    public Actor getActor() {
+        return actor;
+    }
 
-    public Integer getDisplayOrder() { return displayOrder; }
-    public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
+    public void setActor(Actor actor) {
+        this.actor = actor;
+    }
 
-    @Embeddable
     public static class MovieActorId implements Serializable {
-        @Column(name = "movie_id")
-        private Long movieId;
-
-        @Column(name = "actor_id")
-        private Long actorId;
+        private Long movie;
+        private Long actor;
 
         public MovieActorId() {}
-
-        public MovieActorId(Long movieId, Long actorId) {
-            this.movieId = movieId;
-            this.actorId = actorId;
+        public MovieActorId(Long movie, Long actor) {
+            this.movie = movie;
+            this.actor = actor;
         }
 
-        public Long getMovieId() { return movieId; }
-        public void setMovieId(Long movieId) { this.movieId = movieId; }
-
-        public Long getActorId() { return actorId; }
-        public void setActorId(Long actorId) { this.actorId = actorId; }
+        public Long getMovie() { return movie; }
+        public void setMovie(Long movie) { this.movie = movie; }
+        public Long getActor() { return actor; }
+        public void setActor(Long actor) { this.actor = actor; }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             MovieActorId that = (MovieActorId) o;
-            return Objects.equals(movieId, that.movieId) && Objects.equals(actorId, that.actorId);
+            return Objects.equals(movie, that.movie) && Objects.equals(actor, that.actor);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(movieId, actorId);
+            return Objects.hash(movie, actor);
         }
     }
 }

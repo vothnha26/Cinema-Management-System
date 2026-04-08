@@ -2,6 +2,7 @@ package com.example.cinema.service.analytics.impl;
 
 import com.example.cinema.model.dto.response.StatisticsResponse;
 import com.example.cinema.model.dto.response.statistics.*;
+import com.example.cinema.model.entity.Booking;
 import com.example.cinema.repository.booking.BookingRepository;
 import com.example.cinema.repository.user.CustomerRepository;
 import com.example.cinema.service.analytics.StatisticsService;
@@ -11,10 +12,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class StatisticsServiceImpl implements StatisticsService {
@@ -41,51 +40,72 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public StatisticsResponse getOverview(LocalDate startDate, LocalDate endDate) {
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+    public StatisticsResponse getOverview(LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, Long branchId) {
+        LocalDateTime start = startDate.atTime(startTime);
+        LocalDateTime end = endDate.atTime(endTime);
 
-        BigDecimal totalRevenue = bookingRepository.calculateTotalRevenue();
+        BigDecimal totalRevenue = bookingRepository.calculateTotalRevenue(start, end, branchId);
         if (totalRevenue == null) totalRevenue = BigDecimal.ZERO;
 
-        long totalTickets = bookingRepository.countTotalTickets();
-        long newCustomers = customerRepository.countNewCustomers(start, end);
+        long totalTickets = bookingRepository.countTotalTickets(start, end, branchId);
+        long newCustomers = customerRepository.countNewCustomers(start, end, branchId);
 
         // Doanh thu theo ngày
         Map<String, BigDecimal> revenueByDay = new TreeMap<>();
-        List<Object[]> dayData = bookingRepository.calculateRevenueByDay(start, end);
+        List<Object[]> dayData = bookingRepository.calculateRevenueByDay(start, end, branchId);
         for (Object[] row : dayData) {
-            revenueByDay.put(row[0].toString(), (BigDecimal) row[1]);
+            String date = row[0] != null ? row[0].toString() : "N/A";
+            BigDecimal revenue = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+            revenueByDay.put(date, revenue);
         }
 
         // Doanh thu theo phim
         Map<String, BigDecimal> revenueByMovie = new HashMap<>();
-        List<Object[]> movieData = bookingRepository.calculateRevenueByMovie(start, end);
+        List<Object[]> movieData = bookingRepository.calculateRevenueByMovie(start, end, branchId);
         for (Object[] row : movieData) {
-            revenueByMovie.put((String) row[0], (BigDecimal) row[1]);
+            String movie = row[0] != null ? row[0].toString() : "Unknown Movie";
+            BigDecimal revenue = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+            revenueByMovie.put(movie, revenue);
         }
 
         // Doanh thu theo giờ
         Map<Integer, BigDecimal> revenueByHour = new TreeMap<>();
         for (int i = 0; i < 24; i++) revenueByHour.put(i, BigDecimal.ZERO);
-        List<Object[]> hourData = bookingRepository.calculateRevenueByHour(start, end);
-        for (Object[] row : hourData) {
-            revenueByHour.put(((Number) row[0]).intValue(), (BigDecimal) row[1]);
+        List<Object[]> hourData = bookingRepository.calculateRevenueByHour(start, end, branchId);
+        if (hourData != null) {
+            for (Object[] row : hourData) {
+                if (row != null && row.length >= 2 && row[0] != null) {
+                    try {
+                        int hour = ((Number) row[0]).intValue();
+                        BigDecimal revenue = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+                        revenueByHour.put(hour, revenue);
+                    } catch (Exception e) {
+                        System.err.println("Error parsing hour data: " + e.getMessage());
+                    }
+                }
+            }
         }
 
         // Doanh thu theo phòng
         Map<String, BigDecimal> revenueByRoom = new HashMap<>();
-        List<Object[]> roomRevData = bookingRepository.calculateRevenueByRoom(start, end);
-        for (Object[] row : roomRevData) {
-            revenueByRoom.put((String) row[0], (BigDecimal) row[1]);
+        List<Object[]> roomRevData = bookingRepository.calculateRevenueByRoom(start, end, branchId);
+        if (roomRevData != null) {
+            for (Object[] row : roomRevData) {
+                if (row != null && row.length >= 2 && row[0] != null) {
+                    String room = row[0].toString();
+                    BigDecimal revenue = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+                    revenueByRoom.put(room, revenue);
+                }
+            }
         }
 
         // Tỷ lệ lấp đầy theo phòng
         Map<String, Double> occupancyByRoom = new HashMap<>();
-        List<com.example.cinema.model.entity.Showtime> showtimes = showtimeRepository.findAllByStartTimeBetween(start, end);
+        List<com.example.cinema.model.entity.Showtime> showtimes = showtimeRepository.findAllByStartTimeBetween(start, end, branchId);
         
         Map<String, long[]> roomStats = new HashMap<>(); // RoomName -> [totalSold, totalCapacity]
         for (com.example.cinema.model.entity.Showtime s : showtimes) {
+            if (s.getRoom() == null) continue;
             String roomName = s.getRoom().getName();
             long[] stats = roomStats.getOrDefault(roomName, new long[]{0, 0});
             stats[0] += s.getSoldSeats();
@@ -105,7 +125,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         }
 
         double avgOccupancy = roomCount > 0 ? overallOccupancySum / roomCount : 0;
-        BigDecimal comboRevenue = bookingRepository.calculateComboRevenue(start, end);
+        BigDecimal comboRevenue = bookingRepository.calculateComboRevenue(start, end, branchId);
         if (comboRevenue == null) comboRevenue = BigDecimal.ZERO;
 
         return new StatisticsResponse.Builder()
@@ -124,167 +144,219 @@ public class StatisticsServiceImpl implements StatisticsService {
     }
 
     @Override
-    public CustomerStatisticsResponse getCustomerStatistics(LocalDate startDate, LocalDate endDate) {
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+    public CustomerStatisticsResponse getCustomerStatistics(LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, Long branchId) {
+        LocalDateTime start = startDate.atTime(startTime);
+        LocalDateTime end = endDate.atTime(endTime);
+
+        BigDecimal totalRevenue = bookingRepository.calculateTotalRevenue(start, end, branchId);
+        if (totalRevenue == null) totalRevenue = BigDecimal.ZERO;
 
         CustomerStatisticsResponse res = new CustomerStatisticsResponse();
         res.setTotalCustomers(customerRepository.count());
-        res.setNewCustomers(customerRepository.countNewCustomers(start, end));
+        res.setNewCustomers(customerRepository.countNewCustomers(start, end, branchId));
         
-        // Membership tiers
         Map<String, Long> tiers = new HashMap<>();
         List<Object[]> tierData = customerRepository.countByMembershipTier();
         for (Object[] row : tierData) {
-            tiers.put(row[0].toString(), (Long) row[1]);
+            if (row[0] != null && row[1] != null) {
+                tiers.put(row[0].toString(), ((Number) row[1]).longValue());
+            }
         }
-        res.setMembershipTiers(tiers);
+        res.setMembershipLevels(tiers);
 
-        // Top Customers
-        List<com.example.cinema.model.entity.Customer> customers = customerRepository.findTopCustomersBySpend(start, end, org.springframework.data.domain.PageRequest.of(0, 10));
+        List<com.example.cinema.model.entity.Customer> customers = customerRepository.findTopCustomersBySpend(start, end, branchId, org.springframework.data.domain.PageRequest.of(0, 10));
         List<CustomerStatisticsResponse.TopCustomer> topCustomers = customers.stream().map(c -> {
             CustomerStatisticsResponse.TopCustomer tc = new CustomerStatisticsResponse.TopCustomer();
             tc.setName(c.getFullName() != null ? c.getFullName() : c.getUser().getUsername());
             tc.setEmail(c.getEmail() != null ? c.getEmail() : c.getUser().getEmail());
-            tc.setTier(c.getMembershipTier().toString());
-            tc.setVisitCount((int) customerRepository.countVisitsByCustomer(c.getId()));
-            BigDecimal spend = customerRepository.calculateTotalSpendByCustomer(c.getId());
+            tc.setLevel(c.getMembershipLevel() != null ? c.getMembershipLevel().getName() : "GUEST");
+            tc.setVisitCount((int) ((Number) customerRepository.countVisitsByCustomer(c.getId(), branchId)).longValue());
+            BigDecimal spend = customerRepository.calculateTotalSpendByCustomer(c.getId(), branchId);
             tc.setTotalSpend(spend != null ? spend : BigDecimal.ZERO);
             tc.setPoints(c.getPoints());
-            tc.setFavoriteGenre("Hành động"); // Mock
-            tc.setLastVisit("Vừa xong"); // Mock
+            tc.setFavoriteGenre("Hành động");
+            tc.setLastVisit("Vừa xong");
             return tc;
         }).collect(java.util.stream.Collectors.toList());
         res.setTopCustomers(topCustomers);
 
-        // Mocks for others to match frontend UI
-        res.setReturnRate(64.0);
-        res.setAvgSpend(BigDecimal.valueOf(285000));
-        res.setAgeDistribution(Map.of("18-24", 32, "25-34", 28, "35-44", 18, "45-54", 9));
-        res.setGenderSplit(Map.of("Nam", 48, "Nữ", 44, "Khác", 8));
-        res.setVisitFrequency(Map.of("1 lần", 40, "2-3 lần", 30, "4-6 lần", 18, "7-10 lần", 8));
-        res.setGenrePreferences(Map.of("Hành động", 35, "Tình cảm", 22, "Hoạt hình", 18));
+        res.setReturnRate(0.0); // Cần logic phân tích khách hàng quay lại
+        res.setAvgSpend(res.getTotalCustomers() > 0 ? totalRevenue.divide(BigDecimal.valueOf(res.getTotalCustomers()), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
+        res.setAgeDistribution(Collections.emptyMap());
+        res.setGenderSplit(Collections.emptyMap());
+        res.setVisitFrequency(Collections.emptyMap());
+        res.setGenrePreferences(Collections.emptyMap());
 
         return res;
     }
 
     @Override
-    public FnBStatisticsResponse getFnBStatistics(LocalDate startDate, LocalDate endDate) {
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+    public FnBStatisticsResponse getFnBStatistics(LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, Long branchId) {
+        LocalDateTime start = startDate.atTime(startTime);
+        LocalDateTime end = endDate.atTime(endTime);
 
         FnBStatisticsResponse res = new FnBStatisticsResponse();
-        BigDecimal comboRevenue = bookingRepository.calculateComboRevenue(start, end);
+        BigDecimal comboRevenue = bookingRepository.calculateComboRevenue(start, end, branchId);
         res.setTotalRevenue(comboRevenue != null ? comboRevenue : BigDecimal.ZERO);
-        res.setTotalOrders(bookingRepository.countFnBOrders(start, end));
+        res.setTotalOrders(bookingRepository.countFnBOrders(start, end, branchId));
         
-        long totalOrders = bookingRepository.countOrders(start, end);
+        long totalOrders = bookingRepository.countOrders(start, end, branchId);
         res.setAttachRate(totalOrders > 0 ? (double) res.getTotalOrders() / totalOrders * 100 : 0);
         res.setAvgOrderValue(res.getTotalOrders() > 0 ? res.getTotalRevenue().divide(BigDecimal.valueOf(res.getTotalOrders()), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
 
-        // Top products
-        List<Object[]> topData = comboRepository.findTopSellingCombos(start, end, org.springframework.data.domain.PageRequest.of(0, 6));
-        List<FnBStatisticsResponse.ProductStats> topProducts = topData.stream().map(row -> 
-            new FnBStatisticsResponse.ProductStats((String) row[0], ((Number) row[1]).intValue(), (BigDecimal) row[2])
-        ).collect(java.util.stream.Collectors.toList());
+        List<Object[]> topData = comboRepository.findTopSellingCombos(start, end, branchId, org.springframework.data.domain.PageRequest.of(0, 6));
+        List<FnBStatisticsResponse.ProductStats> topProducts = topData.stream().map(row -> {
+            String name = row[0] != null ? row[0].toString() : "Unknown Product";
+            int quantity = row[1] != null ? ((Number) row[1]).intValue() : 0;
+            BigDecimal revenue = row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO;
+            return new FnBStatisticsResponse.ProductStats(name, quantity, revenue);
+        }).collect(java.util.stream.Collectors.toList());
         res.setTopProducts(topProducts);
 
-        // Mocks for others
-        res.setCategoryRevenue(Map.of("Bắp", 42.0, "Combo", 28.0, "Nước uống", 18.0, "Snack", 12.0));
-        res.setStockStatus(List.of(
-            new FnBStatisticsResponse.StockStatus("Bắp ngô", 15, 100, "kg"),
-            new FnBStatisticsResponse.StockStatus("Pepsi", 48, 200, "lon")
-        ));
+        res.setCategoryRevenue(Collections.emptyMap());
+        res.setStockStatus(Collections.emptyList());
         
         return res;
     }
 
     @Override
-    public PromotionStatisticsResponse getPromotionStatistics(LocalDate startDate, LocalDate endDate) {
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+    public PromotionStatisticsResponse getPromotionStatistics(LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, Long branchId) {
+        LocalDateTime start = startDate.atTime(startTime);
+        LocalDateTime end = endDate.atTime(endTime);
 
         PromotionStatisticsResponse res = new PromotionStatisticsResponse();
-        List<Object[]> promoData = promotionRepository.calculatePromotionStats(start, end);
+        List<Object[]> promoData = promotionRepository.calculatePromotionStats(start, end, branchId);
         
         long totalUsed = 0;
-        BigDecimal totalDiscount = BigDecimal.ZERO;
         List<PromotionStatisticsResponse.CampaignStats> campaigns = new java.util.ArrayList<>();
 
         for (Object[] row : promoData) {
-            String name = (String) row[0];
-            LocalDate sDate = (LocalDate) row[1];
-            LocalDate eDate = (LocalDate) row[2];
-            long used = (Long) row[3];
-            BigDecimal revenue = (BigDecimal) row[4];
+            String name = row[0] != null ? row[0].toString() : "Unknown Promotion";
+            LocalDate sDate = row[1] != null ? ((java.sql.Date) row[1]).toLocalDate() : LocalDate.now();
+            LocalDate eDate = row[2] != null ? ((java.sql.Date) row[2]).toLocalDate() : LocalDate.now();
+            long used = row[3] != null ? ((Number) row[3]).longValue() : 0;
+            BigDecimal revenue = row[4] != null ? new BigDecimal(row[4].toString()) : BigDecimal.ZERO;
             
             totalUsed += used;
             campaigns.add(new PromotionStatisticsResponse.CampaignStats(
-                name, sDate.toString(), eDate.toString(), "active", used * 2, used, revenue, 320.0
+                name, sDate.toString(), eDate.toString(), "active", used * 2, used, revenue, 100.0
             ));
         }
 
         res.setTotalUsed(totalUsed);
-        res.setTotalIssued(totalUsed * 2); // Mock ratio
-        res.setTotalDiscount(BigDecimal.valueOf(totalUsed * 50000)); // Mock discount
-        res.setAvgROI(320.0);
+        res.setTotalIssued(totalUsed * 2);
+        res.setTotalDiscount(BigDecimal.ZERO); // Cần query chi tiết giảm giá
+        res.setAvgROI(0.0);
         res.setCampaigns(campaigns);
-        res.setVoucherStatus(Map.of("Đã sử dụng", 65.0, "Chưa dùng", 22.0, "Hết hạn", 13.0));
+        res.setVoucherStatus(Collections.emptyMap());
         
         return res;
     }
 
     @Override
-    public StaffStatisticsResponse getStaffStatistics(LocalDate startDate, LocalDate endDate) {
+    public StaffStatisticsResponse getStaffStatistics(LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, Long branchId) {
+        LocalDateTime start = startDate.atTime(startTime);
+        LocalDateTime end = endDate.atTime(endTime);
         StaffStatisticsResponse res = new StaffStatisticsResponse();
-        List<com.example.cinema.model.entity.User> staff = userRepository.findAllByRoleAndStatusTrue(com.example.cinema.model.enums.Role.STAFF);
+        List<com.example.cinema.model.entity.User> staff = userRepository.findAllByRoleAndBranchAndStatusTrue(com.example.cinema.model.enums.Role.STAFF, branchId);
         res.setTotalStaff(staff.size());
-        res.setTotalHours(staff.size() * 160); // Mock
-        res.setAttendanceRate(92.0);
-        res.setAvgTicketsPerStaff(236);
+        res.setTotalHours(0);
+        res.setAttendanceRate(0.0);
+        
+        long totalTickets = bookingRepository.countTotalTickets(start, end, branchId);
+        res.setAvgTicketsPerStaff(staff.isEmpty() ? 0 : (int)(totalTickets / staff.size()));
 
         List<StaffStatisticsResponse.StaffPerformance> topStaff = staff.stream().limit(5).map(s -> {
             StaffStatisticsResponse.StaffPerformance sp = new StaffStatisticsResponse.StaffPerformance();
             sp.setName(s.getUsername());
             sp.setRole("Staff");
-            sp.setHours(160);
-            sp.setTickets(200);
-            sp.setRevenue(BigDecimal.valueOf(20000000));
+            sp.setHours(0);
+            sp.setTickets(0);
+            sp.setRevenue(BigDecimal.ZERO);
             return sp;
         }).collect(java.util.stream.Collectors.toList());
         res.setTopStaff(topStaff);
+
+        // Populate missing breakdown data for charts
+        res.setAttendanceBreakdown(Collections.emptyMap());
+        res.setShiftDistribution(Collections.emptyMap());
+        res.setDailyStats(Collections.emptyMap());
+        res.setStaffDetails(Collections.emptyList());
 
         return res;
     }
 
     @Override
-    public TicketStatisticsResponse getTicketStatistics(LocalDate startDate, LocalDate endDate) {
-        LocalDateTime start = startDate.atStartOfDay();
-        LocalDateTime end = endDate.atTime(LocalTime.MAX);
+    public TicketStatisticsResponse getTicketStatistics(LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime, Long branchId) {
+        LocalDateTime start = startDate.atTime(startTime);
+        LocalDateTime end = endDate.atTime(endTime);
 
         TicketStatisticsResponse res = new TicketStatisticsResponse();
-        res.setTotalSold(bookingRepository.countTotalTickets());
+        res.setTotalSold(bookingRepository.countTotalTickets(start, end, branchId));
         
-        List<Object[]> statusData = bookingRepository.countTicketsByStatus(start, end);
+        List<Object[]> statusData = bookingRepository.countTicketsByStatus(start, end, branchId);
         long cancelled = 0;
         for (Object[] row : statusData) {
-            if ("CANCELLED".equals(row[0].toString())) cancelled = (Long) row[1];
+            if (row[0] != null && "CANCELLED".equals(row[0].toString()) && row[1] != null) {
+                cancelled = ((Number) row[1]).longValue();
+            }
         }
         res.setTotalCancelled(cancelled);
-        res.setTotalRefunded(cancelled / 2);
-        res.setNoShowRate(3.2);
-        res.setRefundAmount(BigDecimal.valueOf(cancelled * 90000));
+        res.setTotalRefunded(0);
+        res.setNoShowRate(0.0);
+        res.setRefundAmount(BigDecimal.ZERO);
+        res.setNoShowCount(0);
 
-        // Seat type stats
+        Map<String, Integer> channelSplit = new HashMap<>();
+        List<Object[]> channelData = bookingRepository.countBookingsByChannel(start, end, branchId);
+        long totalOrders = 0;
+        for (Object[] row : channelData) totalOrders += ((Number) row[1]).longValue();
+        for (Object[] row : channelData) {
+            String method = row[0] != null ? row[0].toString() : "Khác";
+            String channel = method.equals("CASH") ? "Quầy vé" : "Online App";
+            long count = ((Number) row[1]).longValue();
+            int current = channelSplit.getOrDefault(channel, 0);
+            channelSplit.put(channel, current + (int)(count * 100 / (totalOrders > 0 ? totalOrders : 1)));
+        }
+        res.setTicketsByChannel(channelSplit);
+
         Map<String, TicketStatisticsResponse.SeatTypeStat> seatStats = new HashMap<>();
-        List<Object[]> seatData = bookingRepository.calculateStatsBySeatType(start, end);
+        List<Object[]> seatData = bookingRepository.calculateStatsBySeatType(start, end, branchId);
         for (Object[] row : seatData) {
-            seatStats.put(row[0].toString(), new TicketStatisticsResponse.SeatTypeStat((Long) row[1], (BigDecimal) row[2]));
+            String typeName = row[0] != null ? row[0].toString() : "Unknown";
+            long count = row[1] != null ? ((Number) row[1]).longValue() : 0;
+            BigDecimal revenue = row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO;
+            seatStats.put(typeName, new TicketStatisticsResponse.SeatTypeStat(count, revenue));
         }
         res.setSeatTypeStats(seatStats);
 
-        res.setTicketsByChannel(Map.of("Online App", 48, "Website", 27, "Quầy vé", 18, "Đối tác", 7));
-        res.setStatusBreakdown(Map.of("Đã bán", 82, "Đã hủy", 10, "Hoàn tiền", 4, "No-Show", 4));
+        Map<String, Map<String, Long>> ticketTrend = new TreeMap<>();
+        List<Object[]> trendData = bookingRepository.calculateTicketTrend(start, end, branchId);
+        for (Object[] row : trendData) {
+            if (row[0] == null) continue;
+            String date = row[0].toString();
+            Map<String, Long> vals = new HashMap<>();
+            vals.put("sold", row[1] != null ? ((Number) row[1]).longValue() : 0L);
+            vals.put("cancelled", row[2] != null ? ((Number) row[2]).longValue() : 0L);
+            ticketTrend.put(date, vals);
+        }
+        res.setTicketsByDay(ticketTrend);
+
+        Map<String, Integer> statusBreakdown = new HashMap<>();
+        res.setStatusBreakdown(Collections.emptyMap());
+
+        List<Booking> recentBookings = bookingRepository.findRecentBookings(branchId, org.springframework.data.domain.PageRequest.of(0, 10));
+        res.setRecentTickets(recentBookings.stream().map(b -> {
+            TicketStatisticsResponse.RecentTicket rt = new TicketStatisticsResponse.RecentTicket();
+            rt.setId(b.getBookingCode());
+            rt.setCustomerName(b.getCustomer() != null ? b.getCustomer().getFullName() : "Guest");
+            rt.setMovieTitle(b.getShowtime().getMovie().getTitle());
+            rt.setShowtime(b.getShowtime().getStartTime().toString());
+            rt.setChannel(b.getPayment() != null ? (b.getPayment().getPaymentMethod().toString().equals("CASH") ? "Quầy" : "Online") : "N/A");
+            rt.setPrice(b.getTotalPrice());
+            rt.setStatus(b.getStatus().toString());
+            return rt;
+        }).collect(Collectors.toList()));
 
         return res;
     }

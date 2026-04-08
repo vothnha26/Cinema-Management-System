@@ -4,12 +4,12 @@ import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.PromotionRequest;
 import com.example.cinema.model.dto.response.PromotionResponse;
 import com.example.cinema.model.entity.Customer;
-import com.example.cinema.model.entity.MembershipBenefit;
+import com.example.cinema.model.entity.MembershipLevel;
 import com.example.cinema.model.entity.Promotion;
-import com.example.cinema.model.enums.MembershipTier;
 import com.example.cinema.repository.commerce.PromotionRepository;
 import com.example.cinema.repository.user.CustomerRepository;
 import com.example.cinema.repository.user.MembershipBenefitRepository;
+import com.example.cinema.repository.user.MembershipLevelRepository;
 import com.example.cinema.service.commerce.pricing.DiscountStrategy;
 import com.example.cinema.service.commerce.pricing.DiscountStrategyFactory;
 import com.example.cinema.service.commerce.PromotionService;
@@ -30,17 +30,20 @@ public class PromotionServiceImpl implements PromotionService {
 
     private final PromotionRepository promotionRepository;
     private final CustomerRepository customerRepository;
+    private final MembershipLevelRepository membershipLevelRepository;
     private final MembershipBenefitRepository benefitRepository;
     private final DiscountStrategyFactory strategyFactory;
     private final ModelMapper modelMapper;
 
     public PromotionServiceImpl(PromotionRepository promotionRepository,
             CustomerRepository customerRepository,
+            MembershipLevelRepository membershipLevelRepository,
             MembershipBenefitRepository benefitRepository,
             DiscountStrategyFactory strategyFactory,
             ModelMapper modelMapper) {
         this.promotionRepository = promotionRepository;
         this.customerRepository = customerRepository;
+        this.membershipLevelRepository = membershipLevelRepository;
         this.benefitRepository = benefitRepository;
         this.strategyFactory = strategyFactory;
         this.modelMapper = modelMapper;
@@ -49,7 +52,7 @@ public class PromotionServiceImpl implements PromotionService {
     @Override
     public List<PromotionResponse> getAllPromotions() {
         return promotionRepository.findAll().stream()
-                .map(p -> modelMapper.map(p, PromotionResponse.class))
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -61,7 +64,7 @@ public class PromotionServiceImpl implements PromotionService {
                             !now.isBefore(p.getStartDate()) && 
                             !now.isAfter(p.getEndDate()) &&
                             (p.getUsageLimit() == null || p.getUsedCount() < p.getUsageLimit()))
-                .map(p -> modelMapper.map(p, PromotionResponse.class))
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
@@ -73,8 +76,8 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException("Mã khuyến mãi đã tồn tại");
         }
 
-        MembershipBenefit benefit = benefitRepository.findByTier(request.getMinTier() != null ? request.getMinTier() : MembershipTier.STANDARD)
-                .orElseThrow(() -> new AppException("Không tìm thấy cấu hình hạng thành viên: " + request.getMinTier()));
+        MembershipLevel level = membershipLevelRepository.findByName(request.getMinLevelName() != null ? request.getMinLevelName() : "STANDARD")
+                .orElseThrow(() -> new AppException("Không tìm thấy hạng thành viên: " + request.getMinLevelName()));
 
         Promotion promotion = new Promotion.Builder(
                 request.getCode(),
@@ -85,13 +88,28 @@ public class PromotionServiceImpl implements PromotionService {
                 .minOrder(request.getMinOrderAmount())
                 .maxDiscount(request.getMaxDiscountAmount())
                 .limit(request.getUsageLimit())
-                .minTier(benefit)
+                .minLevel(level)
                 .requiredPoints(request.getRequiredPoints())
                 .redeemable(request.getIsRedeemable())
                 .build();
 
         Promotion saved = promotionRepository.save(promotion);
-        return modelMapper.map(saved, PromotionResponse.class);
+        return mapToResponse(saved);
+    }
+
+    private PromotionResponse mapToResponse(Promotion p) {
+        PromotionResponse res = modelMapper.map(p, PromotionResponse.class);
+        if (p.getMinLevel() != null) {
+            res.setMinLevelName(p.getMinLevel().getName());
+        }
+        return res;
+    }
+
+    @Override
+    public PromotionResponse getPromotionById(Long id) {
+        Promotion p = promotionRepository.findById(id)
+                .orElseThrow(() -> new AppException("Không tìm thấy chương trình khuyến mãi"));
+        return mapToResponse(p);
     }
 
     @Override
@@ -104,7 +122,7 @@ public class PromotionServiceImpl implements PromotionService {
         DiscountStrategy strategy = strategyFactory.getStrategy(promotion.getDiscountType());
         BigDecimal discountAmount = strategy.calculateDiscount(promotion, orderAmount);
 
-        PromotionResponse response = modelMapper.map(promotion, PromotionResponse.class);
+        PromotionResponse response = mapToResponse(promotion);
         response.setAppliedDiscountAmount(discountAmount);
 
         return response;
@@ -133,10 +151,11 @@ public class PromotionServiceImpl implements PromotionService {
             String username = ((UserDetails) principal).getUsername();
             Customer customer = customerRepository.findByUserUsername(username).orElse(null);
 
-            if (customer != null && promotion.getMinTier() != null) {
-                if (customer.getMembershipTier().ordinal() < promotion.getMinTier().getTier().ordinal()) {
-                    throw new AppException("Hạng thành viên của bạn (" + customer.getMembershipTier() +
-                            ") chưa đủ điều kiện áp dụng mã này (Yêu cầu tối thiểu: " + promotion.getMinTier().getTier() + ")");
+            if (customer != null && promotion.getMinLevel() != null) {
+                if (customer.getMembershipLevel() == null || 
+                    customer.getMembershipLevel().getPriority() < promotion.getMinLevel().getPriority()) {
+                    throw new AppException("Hạng thành viên của bạn (" + (customer.getMembershipLevel() != null ? customer.getMembershipLevel().getName() : "GUEST") +
+                            ") chưa đủ điều kiện áp dụng mã này (Yêu cầu tối thiểu: " + promotion.getMinLevel().getName() + ")");
                 }
             }
         }

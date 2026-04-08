@@ -1,6 +1,7 @@
 package com.example.cinema.model.entity;
 
 import jakarta.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "formats")
@@ -31,4 +32,17 @@ public class Format {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Format format = (Format) o;
+        return Objects.equals(id, format.id) && Objects.equals(name, format.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name);
+    }
 }

@@ -13,6 +13,7 @@ public interface ComboRepository extends JpaRepository<Combo, Long> {
 
     @Query("SELECT bc.combo.name, SUM(bc.quantity), SUM(bc.price * bc.quantity) FROM BookingCombo bc " +
            "WHERE bc.booking.status IN ('CONFIRMED', 'CHECKED_IN') AND bc.booking.createdAt BETWEEN :start AND :end " +
+           "AND (:branchId IS NULL OR bc.booking.showtime.room.branch.id = :branchId) " +
            "GROUP BY bc.combo.name ORDER BY SUM(bc.quantity) DESC")
-    List<Object[]> findTopSellingCombos(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, org.springframework.data.domain.Pageable pageable);
+    List<Object[]> findTopSellingCombos(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, @Param("branchId") Long branchId, org.springframework.data.domain.Pageable pageable);
 }

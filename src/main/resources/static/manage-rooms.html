@@ -99,6 +99,32 @@
         </button>
     </div>
 
+    <!-- Filter Bar -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text bg-surface border-border text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchInput" class="form-control" placeholder="Tìm tên phòng..." oninput="filterRooms()">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select id="typeFilter" class="form-select" onchange="filterRooms()">
+                <option value="">Tất cả loại phòng</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="statusFilter" class="form-select" onchange="filterRooms()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="ACTIVE">Hoạt động</option>
+                <option value="MAINTENANCE">Bảo trì</option>
+                <option value="INACTIVE">Ngừng hoạt động</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary w-100 h-100" onclick="resetFilters()">LÀM MỚI</button>
+        </div>
+    </div>
+
     <div class="room-grid" id="roomGrid">
         <div class="col-12 text-center py-5">
             <div class="spinner-border text-danger" role="status"></div>
@@ -178,14 +204,36 @@
     async function loadMetadata() {
         const typeRes = await api.get('/public/room-types');
         if (typeRes.success) {
-            document.getElementById('roomTypeSelect').innerHTML = typeRes.data.map(t => 
-                `<option value="${t.id}">${t.name}</option>`).join('');
+            const options = typeRes.data.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            document.getElementById('roomTypeSelect').innerHTML = options;
+            document.getElementById('typeFilter').innerHTML = '<option value="">Tất cả loại phòng</option>' + options;
         }
         const tempRes = await api.get('/admin/room-templates');
         if (tempRes.success) {
             document.getElementById('templateSelect').innerHTML = '<option value="">-- Tạo trống (Nhập tay kích thước) --</option>' + 
                 tempRes.data.map(name => `<option value="${name}">${name.replace('.json', '').replace(/_/g, ' ')}</option>`).join('');
         }
+    }
+
+    function filterRooms() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const type = document.getElementById('typeFilter').value;
+        const status = document.getElementById('statusFilter').value;
+
+        const filtered = allRooms.filter(r => {
+            const matchesSearch = r.name.toLowerCase().includes(search);
+            const matchesType = !type || r.roomTypeId === type;
+            const matchesStatus = !status || r.status === status;
+            return matchesSearch && matchesType && matchesStatus;
+        });
+        renderRooms(filtered);
+    }
+
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('typeFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        renderRooms(allRooms);
     }
 
     function toggleManualGrid() {
@@ -222,6 +270,12 @@
             if (r.status === 'MAINTENANCE') { statusClass = 'status-maintenance'; statusText = 'Bảo trì'; }
             else if (r.status === 'INACTIVE') { statusClass = 'status-inactive'; statusText = 'Ngừng'; }
 
+            // Showtime Badge
+            const showtimeBadge = r.hasShowtime ? 
+                `<div class="status-badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 ms-2">
+                    <i class="bi bi-calendar-event"></i> Có lịch chiếu
+                </div>` : '';
+
             // Mini Layout
             const rowsCount = r.rows || 1;
             const colsCount = r.cols || 1;
@@ -237,11 +291,18 @@
                 </div>
             `;
 
+            const designBtnAttr = r.hasShowtime ? 
+                `onclick="alert('Không thể thiết kế lại sơ đồ ghế cho phòng đang có lịch chiếu. Vui lòng xóa lịch chiếu trước!')" style="opacity: 0.5; cursor: not-allowed"` : 
+                `href="design-room.html?id=${r.id}"`;
+
             return `
                 <div class="room-card animate__animated animate__fadeIn">
                     <span class="room-type-tag ${typeClass}">${typeLabel}</span>
-                    <div class="status-badge ${statusClass}">
-                        <i class="bi bi-circle-fill" style="font-size: 0.5rem"></i> ${statusText}
+                    <div class="d-flex align-items-center mb-1">
+                        <div class="status-badge ${statusClass} mb-0">
+                            <i class="bi bi-circle-fill" style="font-size: 0.5rem"></i> ${statusText}
+                        </div>
+                        ${showtimeBadge}
                     </div>
                     <div class="room-icon-box"><i class="bi bi-display"></i></div>
                     <div class="room-name">${r.name}</div>
@@ -256,7 +317,7 @@
                     <div class="mini-preview">${miniLayoutHtml}</div>
 
                     <div class="room-actions">
-                        <a href="design-room.html?id=${r.id}" class="action-btn-outline"><i class="bi bi-grid-3x3-gap"></i> THIẾT KẾ GHẾ</a>
+                        <a ${designBtnAttr} class="action-btn-outline"><i class="bi bi-grid-3x3-gap"></i> THIẾT KẾ GHẾ</a>
                         <button class="action-btn-outline" style="flex:0 0 44px" onclick="editRoom(${r.id})"><i class="bi bi-pencil-square"></i></button>
                         <button class="action-btn-danger" onclick="deleteRoom(${r.id})"><i class="bi bi-trash"></i></button>
                     </div>
@@ -292,11 +353,14 @@
     async function saveRoom() {
         const id = document.getElementById('roomId').value;
         const f = document.getElementById('roomForm');
+        const branchId = localStorage.getItem('cinemaBranchId');
+        
         const data = {
             name: f.querySelector('[name="name"]').value,
             roomTypeId: f.querySelector('[name="type"]').value,
             status: f.querySelector('[name="status"]').value,
-            templateFileName: f.querySelector('[name="templateFileName"]').value
+            templateFileName: f.querySelector('[name="templateFileName"]').value,
+            branchId: branchId ? parseInt(branchId) : null
         };
         if (!data.templateFileName) {
             data.rows = parseInt(f.querySelector('[name="rows"]').value);

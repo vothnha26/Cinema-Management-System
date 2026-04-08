@@ -3,8 +3,6 @@ package com.example.cinema.service.user;
 import com.example.cinema.model.dto.request.UpdateProfileRequest;
 import com.example.cinema.model.dto.response.CustomerResponse;
 import com.example.cinema.model.entity.Customer;
-import com.example.cinema.model.enums.MembershipTier;
-
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -16,7 +14,7 @@ public interface CustomerService {
     List<CustomerResponse> getAllCustomers();
     CustomerResponse getCustomerByPhone(String phone);
     CustomerResponse updateCustomerByAdmin(Long id, com.example.cinema.model.dto.request.AdminUpdateCustomerRequest request);
-    BigDecimal getDiscountPercentage(MembershipTier tier);
+    BigDecimal getDiscountPercentage(String levelName);
 
     /**
      * Updates customer loyalty points and total spending after a successful

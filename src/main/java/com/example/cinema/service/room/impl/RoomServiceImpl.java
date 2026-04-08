@@ -16,10 +16,16 @@ import com.example.cinema.repository.room.SeatRepository;
 import com.example.cinema.repository.room.SeatTypeRepository;
 import com.example.cinema.repository.showtime.ShowtimeRepository;
 import com.example.cinema.repository.booking.BookingDetailRepository;
+import com.example.cinema.repository.user.StaffRepository;
+import com.example.cinema.repository.user.UserRepository;
+import com.example.cinema.model.entity.Staff;
+import com.example.cinema.model.enums.Role;
 import com.example.cinema.service.room.RoomService;
 import com.example.cinema.service.room.RoomTemplateService;
 import com.example.cinema.service.room.strategy.SeatLayoutFactory;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +45,8 @@ public class RoomServiceImpl implements RoomService {
     private final SeatLayoutFactory seatLayoutFactory;
     private final RoomTemplateService roomTemplateService;
     private final RoomTypeRepository roomTypeRepository;
+    private final StaffRepository staffRepository;
+    private final UserRepository userRepository;
 
     public RoomServiceImpl(RoomRepository roomRepository, SeatRepository seatRepository,
             SeatTypeRepository seatTypeRepository,
@@ -47,7 +55,9 @@ public class RoomServiceImpl implements RoomService {
             ModelMapper modelMapper,
             SeatLayoutFactory seatLayoutFactory,
             RoomTemplateService roomTemplateService,
-            RoomTypeRepository roomTypeRepository) {
+            RoomTypeRepository roomTypeRepository,
+            StaffRepository staffRepository,
+            UserRepository userRepository) {
         this.roomRepository = roomRepository;
         this.seatRepository = seatRepository;
         this.seatTypeRepository = seatTypeRepository;
@@ -57,10 +67,32 @@ public class RoomServiceImpl implements RoomService {
         this.seatLayoutFactory = seatLayoutFactory;
         this.roomTemplateService = roomTemplateService;
         this.roomTypeRepository = roomTypeRepository;
+        this.staffRepository = staffRepository;
+        this.userRepository = userRepository;
+    }
+
+    private Long getCurrentBranchId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            String username = ((UserDetails) principal).getUsername();
+            return userRepository.findByUsername(username)
+                    .flatMap(user -> staffRepository.findByUserId(user.getId()))
+                    .map(staff -> staff.getBranch().getId())
+                    .orElse(null);
+        }
+        return null;
+    }
+
+    private boolean isManager() {
+        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
     }
 
     private RoomResponse mapToResponse(Room room) {
         RoomResponse response = modelMapper.map(room, RoomResponse.class);
+        if (room.getBranch() != null) {
+            response.setBranchId(room.getBranch().getId());
+        }
         if (room.getRoomType() != null && room.getRoomType().getSupportedFormats() != null) {
             response.setSupportedFormats(room.getRoomType().getSupportedFormats().stream()
                     .map(Format::getName).collect(Collectors.toList()));
@@ -71,13 +103,19 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     public List<RoomResponse> getAllRooms() {
-        return roomRepository.findAll().stream()
+        Long branchId = getCurrentBranchId();
+        List<Room> rooms = (branchId != null && isManager()) 
+            ? roomRepository.findByBranchId(branchId)
+            : roomRepository.findAll();
+
+        return rooms.stream()
                 .map(room -> {
                     RoomResponse res = mapToResponse(room);
                     List<Seat> seats = seatRepository.findByRoomId(room.getId());
                     res.setSeats(seats.stream()
                             .map(seat -> modelMapper.map(seat, RoomResponse.SeatResponse.class))
                             .collect(Collectors.toList()));
+                    res.setHasShowtime(showtimeRepository.existsByRoomId(room.getId()));
                     return res;
                 })
                 .collect(Collectors.toList());
@@ -93,6 +131,7 @@ public class RoomServiceImpl implements RoomService {
         response.setSeats(seats.stream()
                 .map(seat -> modelMapper.map(seat, RoomResponse.SeatResponse.class))
                 .collect(Collectors.toList()));
+        response.setHasShowtime(showtimeRepository.existsByRoomId(id));
 
         return response;
     }
@@ -104,6 +143,20 @@ public class RoomServiceImpl implements RoomService {
         Room room = new Room();
         room.setName(request.getName());
         
+        // Auto-assign branch for Manager if not provided
+        Long branchId = request.getBranchId();
+        if (branchId == null && isManager()) {
+            branchId = getCurrentBranchId();
+        }
+        
+        if (branchId == null) {
+            throw new AppException("Branch ID is required for room creation");
+        }
+        
+        com.example.cinema.model.entity.Branch branch = new com.example.cinema.model.entity.Branch();
+        branch.setId(branchId);
+        room.setBranch(branch);
+
         com.example.cinema.model.entity.RoomType roomType = roomTypeRepository.findById(request.getRoomTypeId())
                 .orElseThrow(() -> new AppException("Room type not found: " + request.getRoomTypeId()));
         room.setRoomType(roomType);
@@ -186,22 +239,25 @@ public class RoomServiceImpl implements RoomService {
         int activeSeatsCount = 0;
 
         for (SeatUpdateRequest req : request.getSeats()) {
+            if ("EMPTY".equals(req.getSeatTypeId())) {
+                continue; // Lối đi, không lưu vào DB
+            }
+
             Seat seat = new Seat();
             seat.setRoom(room);
             seat.setRowChar(req.getRowChar());
             seat.setColNum(req.getColNum());
-            
+
             com.example.cinema.model.entity.SeatType st = seatTypeRepository.findById(req.getSeatTypeId())
                     .orElseThrow(() -> new AppException("Seat type not found: " + req.getSeatTypeId()));
             seat.setSeatType(st);
             seat.setStatus(req.getStatus());
-            
+
             newSeats.add(seat);
-            if (!"EMPTY".equals(req.getSeatTypeId()) && !"DISABLED".equals(req.getSeatTypeId()) && Boolean.TRUE.equals(req.getStatus())) {
+            if (!"DISABLED".equals(req.getSeatTypeId()) && Boolean.TRUE.equals(req.getStatus())) {
                 activeSeatsCount++;
             }
         }
-
         if (request.getRows() != null) room.setRows(request.getRows());
         if (request.getCols() != null) room.setCols(request.getCols());
         room.setCapacity(activeSeatsCount);

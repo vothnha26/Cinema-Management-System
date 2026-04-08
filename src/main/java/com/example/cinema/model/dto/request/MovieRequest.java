@@ -19,8 +19,10 @@ public class MovieRequest {
     private Double rating;
     private Integer priorityLevel;
     private Long tmdbId;
+    private String originCountry;
     private List<String> formats;
     private List<String> genres;
+    private List<Long> branchIds = new ArrayList<>();
     private String directorAvatarUrl;
     private String actorAvatarUrls;
 
@@ -134,6 +136,14 @@ public class MovieRequest {
         this.tmdbId = tmdbId;
     }
 
+    public String getOriginCountry() {
+        return originCountry;
+    }
+
+    public void setOriginCountry(String originCountry) {
+        this.originCountry = originCountry;
+    }
+
     public List<String> getFormats() {
         return formats;
     }
@@ -188,5 +198,13 @@ public class MovieRequest {
 
     public void setDirectorIds(List<Long> directorIds) {
         this.directorIds = directorIds;
+    }
+
+    public List<Long> getBranchIds() {
+        return branchIds;
+    }
+
+    public void setBranchIds(List<Long> branchIds) {
+        this.branchIds = branchIds;
     }
 }

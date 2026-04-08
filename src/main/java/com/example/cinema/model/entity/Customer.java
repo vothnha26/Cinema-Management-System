@@ -1,7 +1,5 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.enums.MembershipTier;
-
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -24,9 +22,9 @@ public class Customer {
 
     private String email;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "membership_tier")
-    private MembershipTier membershipTier = MembershipTier.STANDARD;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "membership_level_id")
+    private MembershipLevel membershipLevel;
 
     @Column(name = "total_spending", precision = 15, scale = 2)
     private BigDecimal totalSpending = BigDecimal.ZERO;
@@ -41,30 +39,75 @@ public class Customer {
     public Customer() {
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public User getUser() {
+        return user;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getFullName() {
+        return fullName;
+    }
 
-    public MembershipTier getMembershipTier() { return membershipTier; }
-    public void setMembershipTier(MembershipTier membershipTier) { this.membershipTier = membershipTier; }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
-    public BigDecimal getTotalSpending() { return totalSpending; }
-    public void setTotalSpending(BigDecimal totalSpending) { this.totalSpending = totalSpending; }
+    public String getPhone() {
+        return phone;
+    }
 
-    public Integer getPoints() { return points; }
-    public void setPoints(Integer points) { this.points = points; }
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 
-    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public MembershipLevel getMembershipLevel() {
+        return membershipLevel;
+    }
+
+    public void setMembershipLevel(MembershipLevel membershipLevel) {
+        this.membershipLevel = membershipLevel;
+    }
+
+    public BigDecimal getTotalSpending() {
+        return totalSpending;
+    }
+
+    public void setTotalSpending(BigDecimal totalSpending) {
+        this.totalSpending = totalSpending;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
+    }
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

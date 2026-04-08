@@ -6,14 +6,16 @@ import com.example.cinema.model.dto.response.CustomerResponse;
 import com.example.cinema.model.entity.Customer;
 import com.example.cinema.model.entity.MembershipBenefit;
 import com.example.cinema.model.entity.User;
-import com.example.cinema.model.enums.MembershipTier;
+import com.example.cinema.model.entity.MembershipLevel;
 import com.example.cinema.model.enums.NotificationType;
 import com.example.cinema.repository.user.CustomerRepository;
 import com.example.cinema.repository.user.MembershipBenefitRepository;
+import com.example.cinema.repository.user.MembershipLevelRepository;
 import com.example.cinema.repository.user.UserRepository;
 import com.example.cinema.service.notification.INotificationAutomationService;
 import com.example.cinema.service.user.CustomerService;
 import java.util.List;
+import java.util.Comparator;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,17 +29,20 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final UserRepository userRepository;
+    private final MembershipLevelRepository membershipLevelRepository;
     private final MembershipBenefitRepository membershipBenefitRepository;
     private final ModelMapper modelMapper;
     private final INotificationAutomationService notificationAutomationService;
 
     public CustomerServiceImpl(CustomerRepository customerRepository,
             UserRepository userRepository,
+            MembershipLevelRepository membershipLevelRepository,
             MembershipBenefitRepository membershipBenefitRepository,
             ModelMapper modelMapper,
             INotificationAutomationService notificationAutomationService) {
         this.customerRepository = customerRepository;
         this.userRepository = userRepository;
+        this.membershipLevelRepository = membershipLevelRepository;
         this.membershipBenefitRepository = membershipBenefitRepository;
         this.modelMapper = modelMapper;
         this.notificationAutomationService = notificationAutomationService;
@@ -54,6 +59,9 @@ public class CustomerServiceImpl implements CustomerService {
             CustomerResponse response = modelMapper.map(customer, CustomerResponse.class);
             response.setUsername(customer.getUser().getUsername());
             response.setEmail(customer.getUser().getEmail());
+            if (customer.getMembershipLevel() != null) {
+                response.setMembershipLevel(customer.getMembershipLevel().getName());
+            }
             return response;
         }
         throw new AppException("Unauthorized");
@@ -83,14 +91,30 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public List<CustomerResponse> getAllCustomers() {
         return customerRepository.findAll().stream()
-                .map(c -> modelMapper.map(c, CustomerResponse.class))
+                .map(c -> {
+                    CustomerResponse response = modelMapper.map(c, CustomerResponse.class);
+                    if (c.getUser() != null) {
+                        response.setUsername(c.getUser().getUsername());
+                        response.setEmail(c.getUser().getEmail());
+                    }
+                    if (c.getMembershipLevel() != null) {
+                        response.setMembershipLevel(c.getMembershipLevel().getName());
+                    }
+                    return response;
+                })
                 .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
     public CustomerResponse getCustomerByPhone(String phone) {
         return customerRepository.findByPhone(phone)
-                .map(c -> modelMapper.map(c, CustomerResponse.class))
+                .map(c -> {
+                    CustomerResponse response = modelMapper.map(c, CustomerResponse.class);
+                    if (c.getMembershipLevel() != null) {
+                        response.setMembershipLevel(c.getMembershipLevel().getName());
+                    }
+                    return response;
+                })
                 .orElse(null);
     }
 
@@ -103,7 +127,13 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setFullName(request.getFullName().trim());
         customer.setPhone(request.getPhone());
         customer.setEmail(request.getEmail());
-        customer.setMembershipTier(request.getMembershipTier());
+        
+        if (request.getMembershipLevel() != null) {
+            MembershipLevel level = membershipLevelRepository.findByName(request.getMembershipLevel())
+                .orElseThrow(() -> new AppException("Membership level not found: " + request.getMembershipLevel()));
+            customer.setMembershipLevel(level);
+        }
+        
         customer.setPoints(request.getPoints());
         customer.setTotalSpending(request.getTotalSpending());
 
@@ -126,11 +156,13 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public BigDecimal getDiscountPercentage(MembershipTier tier) {
-        if (tier == null)
+    public BigDecimal getDiscountPercentage(String levelName) {
+        if (levelName == null)
             return BigDecimal.ZERO;
-        return membershipBenefitRepository.findByTier(tier)
-                .map(b -> BigDecimal.valueOf(b.getDiscountPercent()))
+        
+        return membershipLevelRepository.findByName(levelName)
+                .flatMap(level -> membershipBenefitRepository.findByMembershipLevelAndBenefitType(level, "DISCOUNT"))
+                .map(b -> new BigDecimal(b.getBenefitValue()))
                 .orElse(BigDecimal.ZERO);
     }
 
@@ -144,10 +176,13 @@ public class CustomerServiceImpl implements CustomerService {
         BigDecimal newSpending = customer.getTotalSpending().add(amount);
         customer.setTotalSpending(newSpending);
 
-        // 2. Tính điểm thưởng dựa trên multiplier của hạng
-        double multiplier = membershipBenefitRepository.findByTier(customer.getMembershipTier())
-                .map(MembershipBenefit::getPointMultiplier)
-                .orElse(1.0);
+        // 2. Tính điểm thưởng dựa trên quy tắc của hạng
+        double multiplier = 1.0;
+        if (customer.getMembershipLevel() != null) {
+            multiplier = membershipBenefitRepository.findByMembershipLevelAndBenefitType(customer.getMembershipLevel(), "POINT_MULTIPLIER")
+                    .map(b -> Double.valueOf(b.getBenefitValue()))
+                    .orElse(1.0);
+        }
 
         int basePoints = amount.divide(BigDecimal.valueOf(10000), 0, java.math.RoundingMode.FLOOR).intValue();
         int additionalPoints = (int) (basePoints * multiplier);
@@ -155,32 +190,27 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setPoints(customer.getPoints() + additionalPoints);
 
         // 3. Cập nhật hạng thành viên
-        updateMembershipTier(customer);
+        updateMembershipLevel(customer);
 
         customerRepository.save(customer);
     }
 
-    private void updateMembershipTier(Customer customer) {
+    private void updateMembershipLevel(Customer customer) {
         BigDecimal spent = customer.getTotalSpending();
-        MembershipTier currentTier = customer.getMembershipTier();
-        MembershipTier newTier;
+        MembershipLevel currentLevel = customer.getMembershipLevel();
+        
+        List<MembershipLevel> allLevels = membershipLevelRepository.findAll();
+        MembershipLevel newLevel = allLevels.stream()
+                .filter(l -> spent.compareTo(l.getMinSpending()) >= 0)
+                .max(Comparator.comparingInt(MembershipLevel::getPriority))
+                .orElse(currentLevel);
 
-        if (spent.compareTo(BigDecimal.valueOf(5000000)) >= 0) {
-            newTier = MembershipTier.PLATINUM;
-        } else if (spent.compareTo(BigDecimal.valueOf(2000000)) >= 0) {
-            newTier = MembershipTier.GOLD;
-        } else if (spent.compareTo(BigDecimal.valueOf(500000)) >= 0) {
-            newTier = MembershipTier.SILVER;
-        } else {
-            newTier = MembershipTier.STANDARD;
-        }
-
-        if (newTier != currentTier) {
-            customer.setMembershipTier(newTier);
+        if (newLevel != null && (currentLevel == null || !newLevel.getId().equals(currentLevel.getId()))) {
+            customer.setMembershipLevel(newLevel);
             notificationAutomationService.notifyUser(
                     customer.getUser(),
                     "Nang hang thanh vien",
-                    "Chuc mung ban da duoc nang hang tu " + currentTier + " len " + newTier + ".",
+                    "Chuc mung ban da duoc nang hang tu " + (currentLevel != null ? currentLevel.getName() : "GUEST") + " len " + newLevel.getName() + ".",
                     NotificationType.SYSTEM);
         }
     }

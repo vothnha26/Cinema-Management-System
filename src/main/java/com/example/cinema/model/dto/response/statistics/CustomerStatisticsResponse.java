@@ -9,7 +9,7 @@ public class CustomerStatisticsResponse {
     private long newCustomers;
     private double returnRate;
     private BigDecimal avgSpend;
-    private Map<String, Long> membershipTiers;
+    private Map<String, Long> membershipLevels;
     private Map<String, Integer> ageDistribution;
     private Map<String, Integer> genderSplit;
     private Map<String, Integer> visitFrequency;
@@ -20,7 +20,7 @@ public class CustomerStatisticsResponse {
     public static class TopCustomer {
         private String name;
         private String email;
-        private String tier;
+        private String level;
         private int visitCount;
         private BigDecimal totalSpend;
         private String favoriteGenre;
@@ -29,10 +29,10 @@ public class CustomerStatisticsResponse {
 
         public TopCustomer() {}
 
-        public TopCustomer(String name, String email, String tier, int visitCount, BigDecimal totalSpend, String favoriteGenre, int points, String lastVisit) {
+        public TopCustomer(String name, String email, String level, int visitCount, BigDecimal totalSpend, String favoriteGenre, int points, String lastVisit) {
             this.name = name;
             this.email = email;
-            this.tier = tier;
+            this.level = level;
             this.visitCount = visitCount;
             this.totalSpend = totalSpend;
             this.favoriteGenre = favoriteGenre;
@@ -45,8 +45,8 @@ public class CustomerStatisticsResponse {
         public void setName(String name) { this.name = name; }
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
-        public String getTier() { return tier; }
-        public void setTier(String tier) { this.tier = tier; }
+        public String getLevel() { return level; }
+        public void setLevel(String level) { this.level = level; }
         public int getVisitCount() { return visitCount; }
         public void setVisitCount(int visitCount) { this.visitCount = visitCount; }
         public BigDecimal getTotalSpend() { return totalSpend; }
@@ -68,8 +68,8 @@ public class CustomerStatisticsResponse {
     public void setReturnRate(double returnRate) { this.returnRate = returnRate; }
     public BigDecimal getAvgSpend() { return avgSpend; }
     public void setAvgSpend(BigDecimal avgSpend) { this.avgSpend = avgSpend; }
-    public Map<String, Long> getMembershipTiers() { return membershipTiers; }
-    public void setMembershipTiers(Map<String, Long> membershipTiers) { this.membershipTiers = membershipTiers; }
+    public Map<String, Long> getMembershipLevels() { return membershipLevels; }
+    public void setMembershipLevels(Map<String, Long> membershipLevels) { this.membershipLevels = membershipLevels; }
     public Map<String, Integer> getAgeDistribution() { return ageDistribution; }
     public void setAgeDistribution(Map<String, Integer> ageDistribution) { this.ageDistribution = ageDistribution; }
     public Map<String, Integer> getGenderSplit() { return genderSplit; }

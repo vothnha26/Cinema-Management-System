@@ -11,75 +11,78 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
     <style>
         :root {
-          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
-          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --bg: #06080F; --surface: #0B0E19; --card: #121626; --border: #1F2437;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #FFFFFF; --text-muted: #B0B7C3;
           --gradient: linear-gradient(135deg, #E5133A, #8B0020);
         }
         * { box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; -webkit-font-smoothing: antialiased; }
         a { text-decoration: none; color: inherit; }
 
         /* ── NAVBAR ── */
-        .navbar-star { background: rgba(8,11,20,0.8); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); padding: 14px 0; position: fixed; top: 0; width: 100%; z-index: 1000; }
+        .navbar-star { background: rgba(6,8,15,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); padding: 14px 0; position: fixed; top: 0; width: 100%; z-index: 1000; }
         .brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 3px; color: var(--text); }
         .brand span { color: var(--accent); }
 
         /* ── MOVIE HEADER ── */
         .movie-header { position: relative; height: 600px; overflow: hidden; display: flex; align-items: flex-end; padding-bottom: 60px; }
         .backdrop-wrap { position: absolute; inset: 0; z-index: -1; }
-        .backdrop-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.4) blur(2px); }
-        .backdrop-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--bg) 0%, rgba(8,11,20,0.4) 50%, transparent 100%), linear-gradient(to right, var(--bg) 0%, transparent 60%); }
+        .backdrop-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.35) contrast(1.1); }
+        .backdrop-overlay { position: absolute; inset: 0; background: linear-gradient(to top, var(--bg) 0%, rgba(6,8,15,0.5) 40%, transparent 100%), linear-gradient(to right, var(--bg) 0%, transparent 70%); }
         .header-content { display: flex; gap: 40px; align-items: flex-end; width: 100%; }
-        .header-poster { width: 260px; aspect-ratio: 2/3; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+        .header-poster { width: 260px; aspect-ratio: 2/3; border-radius: 16px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0; }
         .header-poster img { width: 100%; height: 100%; object-fit: cover; }
-        .movie-title { font-family: 'Bebas Neue', sans-serif; font-size: 4.2rem; line-height: 0.9; margin-bottom: 15px; letter-spacing: 2px; }
+        .movie-title { font-family: 'Bebas Neue', sans-serif; font-size: 4.8rem; line-height: 0.85; margin-bottom: 15px; letter-spacing: 1px; color: #fff; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .header-meta { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 25px; }
-        .rating-box { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--accent-gold); font-size: 1.2rem; }
-        .age-badge { padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 0.9rem; }
-        .age-c18 { background: rgba(229,19,58,0.2); color: var(--accent); border: 1px solid var(--accent); }
-        .age-c13 { background: rgba(100,180,255,0.2); color: #64B4FF; border: 1px solid #64B4FF; }
+        .rating-box { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--accent-gold); font-size: 1.3rem; }
+        .age-badge { padding: 5px 14px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; text-transform: uppercase; }
+        .age-c18 { background: rgba(229,19,58,0.25); color: #FF4D6D; border: 1px solid rgba(255,77,109,0.3); }
+        .age-c13 { background: rgba(100,180,255,0.25); color: #70C1FF; border: 1px solid rgba(112,193,255,0.3); }
+        .age-p { background: rgba(80,200,100,0.25); color: #6CF08B; border: 1px solid rgba(108,240,139,0.3); }
 
         /* ── INFO SECTION ── */
-        .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 32px; margin-bottom: 30px; }
-        .section-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 1px; color: var(--accent); margin-bottom: 20px; display: block; }
-        .movie-desc { line-height: 1.8; color: var(--text-muted); margin-bottom: 35px; font-size: 1.05rem; }
+        .info-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 40px; margin-bottom: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.2); }
+        .section-label { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 2px; color: var(--accent); margin-bottom: 24px; display: block; }
+        .movie-desc { line-height: 1.9; color: #D1D5DB; margin-bottom: 40px; font-size: 1.15rem; font-weight: 400; text-align: justify; }
         
-        /* ── CAST & CREW ROW (FIXED) ── */
-        .people-container { display: flex; flex-direction: column; gap: 30px; border-top: 1px solid var(--border); padding-top: 30px; }
-        .people-group { display: flex; flex-direction: column; gap: 15px; }
-        .people-group-label { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 1.5px; margin-bottom: 5px; }
-        .people-list { display: flex; flex-wrap: wrap; gap: 20px; }
-        .person-item { text-align: center; width: 90px; }
-        .person-avatar { width: 75px; height: 75px; border-radius: 50%; border: 2px solid var(--border); margin: 0 auto 10px; overflow: hidden; background: var(--card); transition: 0.2s; }
-        .person-avatar:hover { border-color: var(--accent); transform: scale(1.05); }
+        /* ── CAST & CREW ROW ── */
+        .people-container { display: flex; flex-direction: column; gap: 35px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 35px; }
+        .people-group { display: flex; flex-direction: column; gap: 18px; }
+        .people-group-label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--accent); letter-spacing: 2px; margin-bottom: 5px; }
+        .people-list { display: flex; flex-wrap: wrap; gap: 24px; }
+        .person-item { text-align: center; width: 100px; }
+        .person-avatar { width: 85px; height: 85px; border-radius: 50%; border: 2px solid var(--border); margin: 0 auto 12px; overflow: hidden; background: var(--card); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .person-avatar:hover { border-color: var(--accent); transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 30px rgba(229,19,58,0.2); }
         .person-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .person-name { font-size: 0.75rem; font-weight: 600; color: #fff; line-height: 1.2; display: block; }
+        .person-name { font-size: 0.85rem; font-weight: 700; color: #F3F4F6; line-height: 1.3; display: block; }
 
         /* ── BOOKING ── */
-        .booking-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; position: sticky; top: 100px; }
-        .date-selector { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 24px; scrollbar-width: none; }
+        .booking-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 35px; position: sticky; top: 110px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        .date-selector { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 18px; margin-bottom: 28px; scrollbar-width: none; }
         .date-item {
-          flex-shrink: 0; width: 60px; height: 75px; border-radius: 12px; border: 1px solid var(--border);
+          flex-shrink: 0; width: 64px; height: 80px; border-radius: 14px; border: 1px solid var(--border);
           display: flex; flex-direction: column; align-items: center; justify-content: center;
-          cursor: pointer; transition: all 0.2s; background: var(--surface);
+          cursor: pointer; transition: all 0.2s; background: var(--surface); color: var(--text-muted);
         }
-        .date-item:hover { border-color: var(--accent); }
-        .date-item.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 8px 20px rgba(229,19,58,0.3); }
+        .date-item:hover { border-color: var(--accent); color: #fff; }
+        .date-item.active { background: var(--gradient); border-color: transparent; color: #fff; box-shadow: 0 10px 25px rgba(229,19,58,0.4); transform: scale(1.05); }
+        .date-item .day { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; }
+        .date-item .num { font-size: 1.25rem; font-weight: 800; margin-top: 2px; }
         
-        .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .time-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; text-align: center; transition: all 0.2s; }
-        .time-btn:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
+        .time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .time-btn { background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: #E5E7EB; padding: 12px; border-radius: 12px; font-size: 0.95rem; font-weight: 700; text-align: center; transition: all 0.3s; }
+        .time-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; transform: translateY(-4px); box-shadow: 0 8px 15px rgba(229,19,58,0.3); }
 
-        .video-container { position: relative; padding-bottom: 56.25%; height: 0; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; border-radius: 16px; overflow: hidden; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        .modal-content { background: #000; border: 1px solid var(--border); }
-        .footer { background: var(--surface); border-top: 1px solid var(--border); padding: 40px 0 20px; margin-top: 80px; }
+        .modal-content { background: #000; border: 1px solid var(--border); border-radius: 20px; }
+        .footer { background: #04060B; border-top: 1px solid var(--border); padding: 50px 0 30px; margin-top: 80px; }
     </style>
 </head>
 <body>
 
 <nav class="navbar-star">
-    <div class="container-xxl"><div class="d-flex align-items-center justify-content-between"><a href="index.html" class="brand">STAR<span>CINEMA</span></a><div id="navUser"><button class="btn btn-danger btn-sm px-4" onclick="window.location.href='auth.html'">Đăng nhập</button></div></div></div>
+    <div class="container-xxl"><div class="d-flex align-items-center justify-content-between"><a href="index.html" class="brand">STAR<span>CINEMA</span></a><div id="navUser"><button class="btn btn-danger btn-sm px-4 fw-bold rounded-pill" onclick="window.location.href='auth.html'">Đăng nhập</button></div></div></div>
 </nav>
 
 <section class="movie-header">
@@ -91,13 +94,13 @@
                 <div class="header-meta">
                     <span class="rating-box" id="ratingBox">⭐ 0.0</span>
                     <span class="age-badge" id="ageBadge">P</span>
-                    <span id="duration">⏱ 0 phút</span>
+                    <span id="duration" class="fw-700 opacity-90"><i class="bi bi-clock me-2 text-danger"></i>0 phút</span>
                 </div>
                 <h1 class="movie-title" id="movieTitle">Đang tải...</h1>
                 <div class="d-flex gap-2 mb-4" id="genreList"></div>
                 <div class="d-flex gap-3">
-                    <button class="btn btn-danger px-4 py-2 fw-bold" onclick="document.getElementById('bookingSection').scrollIntoView({behavior:'smooth'})"><i class="bi bi-ticket-perforated me-2"></i> ĐẶT VÉ NGAY</button>
-                    <button class="btn btn-outline-light px-4 py-2 fw-bold" id="btnTrailer" style="display:none"><i class="bi bi-play-circle me-2"></i> XEM TRAILER</button>
+                    <button class="btn btn-danger px-5 py-3 fw-800 rounded-pill shadow-lg" onclick="document.getElementById('bookingSection').scrollIntoView({behavior:'smooth'})"><i class="bi bi-ticket-perforated me-2"></i> ĐẶT VÉ NGAY</button>
+                    <button class="btn btn-outline-light px-4 py-3 fw-800 rounded-pill" id="btnTrailer" style="display:none"><i class="bi bi-play-circle me-2"></i> XEM TRAILER</button>
                 </div>
             </div>
         </div>
@@ -124,14 +127,20 @@
             </div>
         </div>
         <div class="col-lg-4" id="bookingSection">
-            <div class="booking-card"><span class="section-label">Lịch chiếu</span><div class="date-selector" id="dateSelector"></div><div id="showtimeContainer"><div class="text-center py-4 text-muted small">Đang tải lịch chiếu...</div></div></div>
+            <div class="booking-card">
+                <span class="section-label">Lịch chiếu</span>
+                <div class="date-selector" id="dateSelector"></div>
+                <div id="showtimeContainer">
+                    <div class="text-center py-5 text-muted small"><div class="spinner-border spinner-border-sm text-danger mb-3"></div><br>Đang đồng bộ suất chiếu...</div>
+                </div>
+            </div>
         </div>
     </div>
 </main>
 
-<div class="modal fade" id="trailerModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0 pb-0"><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div class="video-container" id="videoContainer"></div></div></div></div></div>
+<div class="modal fade" id="trailerModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content"><div class="modal-header border-0 pb-0"><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><div class="video-container" id="videoContainer"></div></div></div></div></div>
 
-<footer class="footer"><div class="container-xxl text-center text-muted small">© 2024 StarCinema. Toàn bộ bản quyền được bảo lưu.</div></footer>
+<footer class="footer"><div class="container-xxl text-center text-muted small fw-600">© 2026 StarCinema Elite. Powered by AI Technology.</div></footer>
 
 <script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -140,11 +149,22 @@
     let selectedDate = new Date().toISOString().split('T')[0];
     const trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
 
+    /**
+     * Thông minh hóa việc xử lý URL ảnh: Cloudinary, TMDB, hoặc Local
+     */
     function getFullImageUrl(path) {
-        if (!path) return 'https://placehold.co/300x450?text=No+Img';
+        if (!path || path === 'null') return 'https://placehold.co/300x450?text=StarCinema';
+        
+        // Nếu là URL đầy đủ (Cloudinary, v.v.)
         if (path.startsWith('http')) return path;
-        const cleanPath = path.startsWith('/') ? path : '/' + path;
-        return `https://image.tmdb.org/t/p/w500${cleanPath}`;
+        
+        // Nếu là path TMDB (thường bắt đầu bằng /)
+        if (path.startsWith('/')) {
+            return `https://image.tmdb.org/t/p/w500${path}`;
+        }
+        
+        // Fallback cho local hoặc TMDB thiếu /
+        return `https://image.tmdb.org/t/p/w500/${path}`;
     }
 
     async function init() {
@@ -153,33 +173,37 @@
         if(res.success) renderMovie(res.data);
         renderDates(); loadShowtimes();
         const user = localStorage.getItem('cinemaUsername');
-        if(user) document.getElementById('navUser').innerHTML = `<span class="fw-bold">${user}</span>`;
+        if(user) document.getElementById('navUser').innerHTML = `<span class="fw-800 me-3 text-danger"><i class="bi bi-person-circle me-2"></i>${user}</span>`;
     }
 
     function renderMovie(m) {
         document.getElementById('movieTitle').textContent = m.title;
-        document.getElementById('description').textContent = m.description || 'Chưa có mô tả.';
-        document.getElementById('duration').textContent = `⏱ ${m.duration} phút`;
-        document.getElementById('ratingBox').innerHTML = `⭐ ${m.rating || 0}`;
-        document.getElementById('ageBadge').textContent = m.ageRating;
-        document.getElementById('ageBadge').className = `age-badge age-${m.ageRating.toLowerCase()}`;
+        document.getElementById('description').textContent = m.description || 'Chưa có mô tả chi tiết cho bộ phim này.';
+        document.getElementById('duration').innerHTML = `<i class="bi bi-clock me-2 text-danger"></i>${m.duration} phút`;
+        document.getElementById('ratingBox').innerHTML = `⭐ ${m.rating ? m.rating.toFixed(1) : '0.0'}`;
+        
+        const age = m.ageRating || 'P';
+        document.getElementById('ageBadge').textContent = age;
+        document.getElementById('ageBadge').className = `age-badge age-${age.toLowerCase()}`;
         
         const posterUrl = getFullImageUrl(m.posterUrl);
-        document.getElementById('posterContainer').innerHTML = `<img src="${posterUrl}" class="w-100 h-100">`;
+        document.getElementById('posterContainer').innerHTML = `<img src="${posterUrl}" class="w-100 h-100 shadow-lg">`;
         document.getElementById('backdropContainer').innerHTML = `<img src="${posterUrl}" class="backdrop-img"><div class="backdrop-overlay"></div>`;
-        document.getElementById('genreList').innerHTML = (m.genres || []).map(g => `<span class="badge bg-dark border border-secondary px-3 py-2">${g}</span>`).join('');
+        document.getElementById('genreList').innerHTML = (m.genres || []).map(g => `<span class="badge bg-dark border border-secondary px-3 py-2 fw-700">${g}</span>`).join('');
         
+        // Render Đạo diễn
         document.getElementById('directorList').innerHTML = (m.directors || []).map(d => `
             <div class="person-item">
                 <div class="person-avatar"><img src="${getFullImageUrl(d.avatarUrl)}" onerror="this.src='https://placehold.co/100?text=Dir'"></div>
                 <span class="person-name">${d.name}</span>
-            </div>`).join('') || '<span class="text-muted small">Đang cập nhật</span>';
+            </div>`).join('') || '<span class="text-muted small">Đang cập nhật đạo diễn...</span>';
 
+        // Render Diễn viên
         document.getElementById('castList').innerHTML = (m.actors || []).map(a => `
             <div class="person-item">
                 <div class="person-avatar"><img src="${getFullImageUrl(a.avatarUrl)}" onerror="this.src='https://placehold.co/100?text=Actor'"></div>
                 <span class="person-name">${a.name}</span>
-            </div>`).join('') || '<span class="text-muted small">Đang cập nhật</span>';
+            </div>`).join('') || '<span class="text-muted small">Đang cập nhật dàn diễn viên...</span>';
 
         if (m.trailerUrl) {
             const btnT = document.getElementById('btnTrailer');
@@ -219,19 +243,44 @@
         const container = document.getElementById('showtimeContainer');
         container.innerHTML = '<div class="text-center py-4 text-muted small"><div class="spinner-border spinner-border-sm mb-2"></div><br>Tìm suất chiếu...</div>';
         try {
+            // Backend hiện đã hỗ trợ lọc theo movieId
             const res = await api.get(`/showtimes?movieId=${movieId}&date=${selectedDate}`);
             if(res.success && res.data.length > 0) {
-                const nowPlus1H = new Date(); nowPlus1H.setHours(nowPlus1H.getHours() + 1);
-                const filtered = res.data.filter(s => new Date(s.startTime) > nowPlus1H);
-                if(!filtered.length) { container.innerHTML = '<div class="text-center py-4 text-muted small">Không còn suất chiếu khả dụng hôm nay.</div>'; return; }
-                const grouped = filtered.reduce((acc, s) => { const k = s.formatName || '2D'; if(!acc[k]) acc[k] = []; acc[k].push(s); return acc; }, {});
+                const now = new Date();
+                // Lọc bỏ suất đã chiếu (chỉ hiện suất bắt đầu từ bây giờ)
+                const filtered = res.data.filter(s => new Date(s.startTime) > now);
+                
+                if(!filtered.length) { 
+                    container.innerHTML = '<div class="text-center py-4 text-muted small">Không còn suất chiếu nào khả dụng cho hôm nay.</div>'; 
+                    return; 
+                }
+
+                // Gom nhóm theo Định dạng (Format)
+                const grouped = filtered.reduce((acc, s) => { 
+                    const k = s.formatName || '2D'; 
+                    if(!acc[k]) acc[k] = []; 
+                    acc[k].push(s); 
+                    return acc; 
+                }, {});
+
                 container.innerHTML = Object.entries(grouped).map(([fmt, list]) => `
                     <div class="mb-4">
-                        <div class="small fw-bold text-muted mb-2 text-uppercase">${fmt.replace('HALL_','')}</div>
-                        <div class="time-grid">${list.map(s => `<a href="booking.html?showtimeId=${s.id}" class="time-btn">${new Date(s.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</a>`).join('')}</div>
+                        <div class="small fw-bold text-muted mb-2 text-uppercase tracking-wider">
+                            <i class="bi bi-display me-2 text-danger"></i>${fmt}
+                        </div>
+                        <div class="time-grid">
+                            ${list.sort((a,b) => new Date(a.startTime) - new Date(b.startTime)).map(s => `
+                                <a href="booking.html?showtimeId=${s.id}" class="time-btn">
+                                    ${new Date(s.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
+                                </a>`).join('')}
+                        </div>
                     </div>`).join('');
-            } else container.innerHTML = '<div class="text-center py-4 text-muted small">Chưa có lịch chiếu cho ngày này.</div>';
-        } catch(e) { container.innerHTML = '<div class="text-center py-4 text-danger small">Lỗi tải lịch chiếu.</div>'; }
+            } else {
+                container.innerHTML = '<div class="text-center py-4 text-muted small">Chưa có lịch chiếu cho ngày này.</div>';
+            }
+        } catch(e) { 
+            container.innerHTML = '<div class="text-center py-4 text-danger small">Lỗi tải lịch chiếu từ hệ thống.</div>'; 
+        }
     }
     init();
 </script>

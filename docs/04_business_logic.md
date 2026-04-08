@@ -1,72 +1,69 @@
-# 🧠 Business Logic (BLL) – Cinema Management System (Elite Edition)
+# 🧠 Logic Nghiệp vụ Cốt lõi – Cinema Management System
 
-## 1. Phân tầng & Trách nhiệm (SRP)
+Tài liệu này giải thích cách hệ thống xử lý các quy tắc nghiệp vụ phức tạp thông qua các thành phần logic chuyên biệt.
 
-```
-Controller    ❌ KHÔNG chứa logic nghiệp vụ
-Service       ✅ TẤT CẢ logic nghiệp vụ nằm ở đây (Sử dụng Design Patterns)
-Pricing       💎 Decorator Pattern: Tính giá vé cộng dồn linh hoạt
-Scheduling    🤖 AI Algorithm: Tự động hóa xếp lịch theo xu hướng (TMDB)
-Aspects       🛡️ Audit Log: Tự động lưu vết thao tác (AOP)
-Repository    📦 Truy vấn dữ liệu, Native SQL thống kê nâng cao
-```
+## 1. Logic Tính giá vé động (Dynamic Pricing Logic)
 
----
+Hệ thống không sử dụng giá vé cứng. Giá được tính toán động dựa trên `PricingRuleMatcher` và chuỗi `PriceDecorator`.
 
-## 2. Các Logic Elite tiêu biểu
+### 1.1. Matching Quy tắc (Matching Rules)
+Class `PricingRuleMatcher` chịu trách nhiệm tìm kiếm các quy tắc giá phù hợp nhất:
+- **Ưu tiên**: Quy tắc khớp nhiều tiêu chí nhất sẽ được chọn.
+- **Tiêu chí**:
+    - `DayOfWeek`: Giá cuối tuần khác ngày thường.
+    - `IsHoliday`: Ưu tiên giá ngày Lễ nếu có cấu hình.
+    - `StartTime`: Khung giờ (Sáng/Trưa/Tối).
+    - `MovieFormat`: 2D / 3D / IMAX.
 
-### 2.1. Pricing Engine (Decorator Pattern)
-Thay vì tính giá phẳng, hệ thống sử dụng cấu trúc lớp bọc (Layered Pricing):
-- **BasePrice**: Lấy từ cấu hình `seat_prices`.
-- **RoomTypeDecorator**: +50k cho IMAX, +80k cho 4DX.
-- **SeatTypeDecorator**: +20k cho VIP, +40k cho COUPLE.
-- **DayOfWeekDecorator**: -10k cho Thứ 2/3, +10k cho Cuối tuần.
-- **TimeSlotDecorator**: -15k cho Happy Hour (trước 12h sáng).
+### 1.2. Chuỗi Decorator (Pricing Pipeline)
+Giá vé cuối cùng được tính qua một **Pipeline Decorator**:
 
-### 2.2. AI Scheduling Algorithm (Task 9)
-Thuật toán tự động gợi ý lịch chiếu dựa trên:
-1. **Priority Score**: `(Manual Priority * 20) + (TMDB Popularity Score)`.
-2. **70/30 Rule**: Dành 70% các slot "Giờ vàng" (Prime Time) cho các phim có điểm cao nhất.
-3. **Prime Time Logic**:
-    - Ngày thường: 17:00 - 22:00.
-    - Cuối tuần: 10:00 - 23:00 (Mở rộng).
-4. **Staggered Starts**: Giờ bắt đầu giữa các phòng lệch nhau 15-30p để tối ưu vận hành rạp.
-
-### 2.3. Showtime Conflict Detection
-Kiểm tra chính xác đến từng phút bằng logic Java:
-- Một suất chiếu mới `(S_new, E_new)` xung đột nếu tồn tại suất chiếu `(S_old, E_old)` sao cho: `S_new < E_old AND E_new > S_old`.
-- `E_old` luôn bao gồm **15 phút dọn dẹp** sau phim.
-
-### 2.4. Promotion Engine (Builder Pattern)
-Sử dụng **Builder** để tạo chương trình khuyến mãi với các điều kiện tùy chọn:
-- `minOrderAmount`: Đơn hàng tối thiểu.
-- `maxDiscountAmount`: Giới hạn giảm tối đa cho loại PERCENT.
-- `usageLimit`: Tổng lượt sử dụng toàn hệ thống.
-- `minTier`: Hạng thành viên tối thiểu (Standard, Silver, Gold, Diamond).
+1.  **Base Price**: Lấy từ `seat_prices` (Hạng ghế + Định dạng).
+2.  **Pricing Rules**: Duyệt danh sách Rules kích hoạt tại chi nhánh. Nếu thỏa mãn `PricingCondition` (Vd: Ngày lễ, khung giờ), bọc (wrap) mức giá hiện tại vào một Decorator tương ứng.
+3.  **Membership Benefit**: Kiểm tra hạng thành viên của khách hàng, áp dụng giảm giá trực tiếp lên tổng tiền.
+4.  **Promotion**: Giảm giá bằng Coupon Code (nếu có).
 
 ---
 
-## 3. Hệ thống Nhật ký & Kiểm toán (Audit Log)
+## 2. Logic Khuyến mãi (Promotion Logic)
 
-Sử dụng **Spring AOP** để tự động hóa việc giám sát Manager:
-- **Annotation `@LogAction`**: Đánh dấu các phương thức nhạy cảm (CREATE_MOVIE, DELETE_ROOM...).
-- **AuditLogAspect**: Interceptor tự động lấy thông tin `Username` từ SecurityContext, `Action`, `Target` và `Timestamp`.
-- **Async Logging**: Việc ghi log không làm chậm phản hồi của API chính.
-
----
-
-## 4. Quy tắc chuẩn hóa dữ liệu (Validation)
-
-| Đối tượng | Quy tắc (Elite Standard) |
-|-----------|--------------------------|
-| **Phim** | Nhãn độ tuổi chuẩn: P, K, T13, T16, T18. |
-| **Phòng** | Tự động sinh sơ đồ ghế theo Strategy (IMAX, 2D, 4DX). |
-| **Suất chiếu** | Không cho phép cập nhật nếu suất chiếu đã bắt đầu hoặc kết thúc. |
-| **Bảng giá** | Tự động vô hiệu hóa cấu hình cũ khi cập nhật giá mới cho cùng loại phòng/ghế. |
+Mọi mã khuyến mãi (Promo Code) đều được xử lý qua `PromotionService` với các bước kiểm tra nghiêm ngặt:
+- **Xác thực thời gian**: Kiểm tra `startDate` và `endDate`.
+- **Hạn mức sử dụng**: Kiểm tra `usageLimit` (Tổng số lượt sử dụng tối đa) và `perCustomerLimit` (Số lần 1 người dùng được sử dụng).
+- **Giá trị đơn hàng tối thiểu**: Kiểm tra tổng tiền booking có đạt `minOrderValue` không.
+- **Áp dụng Strategy**: Tùy theo loại hình khuyến mãi (`FIX_AMOUNT` hoặc `PERCENTAGE`), hệ thống sẽ gọi Strategy tương ứng qua `DiscountStrategyFactory`.
 
 ---
 
-## 5. Thống kê nâng cao (Native SQL)
-- **Doanh thu thực tế**: Chỉ tính các Booking ở trạng thái `CONFIRMED` hoặc `CHECKED_IN`.
-- **Tỷ trọng phim**: Tính % đóng góp doanh thu của từng phim trong tổng doanh thu rạp.
-- **Biểu đồ 7 ngày**: Truy vấn theo Group By DATE(created_at) để vẽ chuỗi thời gian (Time-series).
+## 3. Logic Lập lịch chiếu AI (AI Scheduling Logic)
+
+Hệ thống sử dụng thuật toán **Advanced Weighting** để xếp lịch tự động.
+
+### 3.1 Công thức tính trọng số (Score)
+$$Score = (Buzz \times W_b) + (Region \times W_r) + (Priority \times W_p) - (Penalty \times W_{pen})$$
+
+*   **Buzz Score ($W_b$):** Lấy từ TMDB Popularity, phản ánh mức độ quan tâm quốc tế.
+*   **Region Score ($W_r$):** Phim Việt Nam (Origin Country = 'VN') được cộng thêm 30% trọng số để ưu tiên điện ảnh nước nhà.
+*   **Priority ($W_p$):** Cấp độ ưu tiên (1-10) do Quản lý rạp thiết lập thủ công.
+*   **Penalty ($W_{pen}$):** Điểm phạt dựa trên số lần phim đã được chiếu trong ngày để tránh nhàm chán.
+
+- **Diversity Penalty**: Cơ chế phạt giảm điểm nếu phim đã được xếp quá nhiều suất gần nhau để đảm bảo sự đa dạng.
+- **Gap Time**: Đảm bảo khoảng nghỉ 15-20 phút giữa các suất chiếu để vận hành.
+
+---
+
+## 4. Quản lý Ghế và Booking (Seat & Inventory Management)
+
+Đây là phần nhạy cảm nhất của hệ thống, đòi hỏi tính nhất quán cao:
+- **Pessimistic Locking**: Hệ thống sử dụng khóa mức database khi Khách hàng bắt đầu chọn ghế (Trạng thái: `SELECTED` tạm thời trong Redis trong 5-10 phút).
+- **Seat States**: `AVAILABLE` -> `BOOKING` (Tạm khóa) -> `SOLD` / `FAILED` -> `AVAILABLE`.
+- **Booking Detail**: Mỗi vé (`Ticket`) được liên kết chặt chẽ với một `Seat` trong một `Showtime` duy nhất.
+
+---
+
+## 5. Logic Tích điểm & Nâng hạng (Loyalty Logic)
+
+- **Cơ chế Membership**: Hệ thống sử dụng mô hình **Master-Detail** linh hoạt:
+    - `MembershipLevel`: Quản lý ngưỡng điểm (`minPoints`).
+    - `MembershipBenefit`: Quản lý các quyền lợi động dưới dạng Key-Value (Vd: `DISCOUNT_RATE: 10%`).
+- **Nâng hạng tự động**: Sau mỗi giao dịch thành công, hệ thống kiểm tra tổng điểm tích lũy với `minPoints` của Level tiếp theo để tự động thăng cấp và cập nhật quyền lợi mới cho khách hàng.
