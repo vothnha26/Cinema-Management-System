@@ -9,6 +9,9 @@ public class CustomerResponse {
     private String fullName;
     private String phone;
     private String membershipLevel;
+    private Integer membershipPriority;
+    private Boolean isAccountLinked;
+    private Double discountRate;
     private BigDecimal totalSpending;
     private Integer points;
 
@@ -58,6 +61,30 @@ public class CustomerResponse {
 
     public void setMembershipLevel(String membershipLevel) {
         this.membershipLevel = membershipLevel;
+    }
+
+    public Integer getMembershipPriority() {
+        return membershipPriority;
+    }
+
+    public void setMembershipPriority(Integer membershipPriority) {
+        this.membershipPriority = membershipPriority;
+    }
+
+    public Boolean getIsAccountLinked() {
+        return isAccountLinked;
+    }
+
+    public void setIsAccountLinked(Boolean isAccountLinked) {
+        this.isAccountLinked = isAccountLinked;
+    }
+
+    public Double getDiscountRate() {
+        return discountRate;
+    }
+
+    public void setDiscountRate(Double discountRate) {
+        this.discountRate = discountRate;
     }
 
     public BigDecimal getTotalSpending() {

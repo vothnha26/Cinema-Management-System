@@ -16,6 +16,7 @@ import com.example.cinema.service.notification.INotificationAutomationService;
 import com.example.cinema.service.user.CustomerService;
 import java.util.List;
 import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,6 +49,43 @@ public class CustomerServiceImpl implements CustomerService {
         this.notificationAutomationService = notificationAutomationService;
     }
 
+    private CustomerResponse mapToResponse(Customer customer) {
+        CustomerResponse res = new CustomerResponse();
+        res.setId(customer.getId());
+        res.setFullName(customer.getFullName());
+        res.setPhone(customer.getPhone());
+        res.setPoints(customer.getPoints());
+        res.setTotalSpending(customer.getTotalSpending());
+        
+        boolean isOfficial = customer.getUser() != null;
+        res.setIsAccountLinked(isOfficial);
+
+        if (customer.getMembershipLevel() != null) {
+            res.setMembershipLevel(customer.getMembershipLevel().getName());
+            res.setMembershipPriority(customer.getMembershipLevel().getPriority());
+            
+            // Lấy tỷ lệ giảm giá từ lợi ích hạng
+            double rate = membershipBenefitRepository.findByMembershipLevelAndBenefitType(customer.getMembershipLevel(), "DISCOUNT")
+                    .map(b -> {
+                        try { return Double.parseDouble(b.getBenefitValue()); }
+                        catch(Exception e) { return 0.0; }
+                    }).orElse(0.0);
+            res.setDiscountRate(rate);
+        } else {
+            res.setMembershipLevel(isOfficial ? "STANDARD" : "GUEST");
+            res.setMembershipPriority(isOfficial ? 1 : 0);
+            res.setDiscountRate(0.0);
+        }
+        
+        if (isOfficial) {
+            res.setUsername(customer.getUser().getUsername());
+            res.setEmail(customer.getUser().getEmail());
+        } else {
+            res.setEmail(customer.getEmail());
+        }
+        return res;
+    }
+
     @Override
     public CustomerResponse getMyProfile() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -55,14 +93,7 @@ public class CustomerServiceImpl implements CustomerService {
             String username = ((UserDetails) principal).getUsername();
             Customer customer = customerRepository.findByUserUsername(username)
                     .orElseThrow(() -> new com.example.cinema.exception.ResourceNotFoundException("Customer profile", "username", username));
-
-            CustomerResponse response = modelMapper.map(customer, CustomerResponse.class);
-            response.setUsername(customer.getUser().getUsername());
-            response.setEmail(customer.getUser().getEmail());
-            if (customer.getMembershipLevel() != null) {
-                response.setMembershipLevel(customer.getMembershipLevel().getName());
-            }
-            return response;
+            return mapToResponse(customer);
         }
         throw new AppException("Unauthorized");
     }
@@ -91,31 +122,22 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public List<CustomerResponse> getAllCustomers() {
         return customerRepository.findAll().stream()
-                .map(c -> {
-                    CustomerResponse response = modelMapper.map(c, CustomerResponse.class);
-                    if (c.getUser() != null) {
-                        response.setUsername(c.getUser().getUsername());
-                        response.setEmail(c.getUser().getEmail());
-                    }
-                    if (c.getMembershipLevel() != null) {
-                        response.setMembershipLevel(c.getMembershipLevel().getName());
-                    }
-                    return response;
-                })
-                .collect(java.util.stream.Collectors.toList());
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
     public CustomerResponse getCustomerByPhone(String phone) {
-        return customerRepository.findByPhone(phone)
-                .map(c -> {
-                    CustomerResponse response = modelMapper.map(c, CustomerResponse.class);
-                    if (c.getMembershipLevel() != null) {
-                        response.setMembershipLevel(c.getMembershipLevel().getName());
-                    }
-                    return response;
-                })
-                .orElse(null);
+        List<Customer> customers = customerRepository.findByPhone(phone);
+        if (customers.isEmpty()) return null;
+
+        // Ưu tiên lấy khách hàng đã có User liên kết (check user_id != null)
+        Customer bestMatch = customers.stream()
+                .filter(c -> c.getUser() != null)
+                .findFirst()
+                .orElse(customers.get(0)); // Nếu không có bản ghi nào có User, lấy bản ghi đầu tiên
+
+        return mapToResponse(bestMatch);
     }
 
     @Override
@@ -137,7 +159,6 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setPoints(request.getPoints());
         customer.setTotalSpending(request.getTotalSpending());
 
-        // Update associated user if exists
         if (customer.getUser() != null) {
             User user = customer.getUser();
             if (request.getEmail() != null) {
@@ -151,8 +172,7 @@ public class CustomerServiceImpl implements CustomerService {
             }
         }
 
-        customerRepository.save(customer);
-        return modelMapper.map(customer, CustomerResponse.class);
+        return mapToResponse(customerRepository.save(customer));
     }
 
     @Override
@@ -172,11 +192,9 @@ public class CustomerServiceImpl implements CustomerService {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
             return;
 
-        // 1. Cập nhật tổng chi tiêu
         BigDecimal newSpending = customer.getTotalSpending().add(amount);
         customer.setTotalSpending(newSpending);
 
-        // 2. Tính điểm thưởng dựa trên quy tắc của hạng
         double multiplier = 1.0;
         if (customer.getMembershipLevel() != null) {
             multiplier = membershipBenefitRepository.findByMembershipLevelAndBenefitType(customer.getMembershipLevel(), "POINT_MULTIPLIER")
@@ -188,10 +206,7 @@ public class CustomerServiceImpl implements CustomerService {
         int additionalPoints = (int) (basePoints * multiplier);
 
         customer.setPoints(customer.getPoints() + additionalPoints);
-
-        // 3. Cập nhật hạng thành viên
         updateMembershipLevel(customer);
-
         customerRepository.save(customer);
     }
 

@@ -69,6 +69,7 @@ const Sidebar = {
                 <li class="nav-item"><a href="/manage-pricing.html" class="nav-link-admin ${currentPath.includes('manage-pricing') ? 'active' : ''}"><i class="bi bi-currency-dollar"></i> Cấu hình giá</a></li>
                 <li class="nav-item"><a href="/manage-promotions.html" class="nav-link-admin ${currentPath.includes('manage-promotions') ? 'active' : ''}"><i class="bi bi-tags"></i> Khuyến mãi</a></li>
                 <li class="nav-item"><a href="/manage-membership.html" class="nav-link-admin ${currentPath.includes('manage-membership') ? 'active' : ''}"><i class="bi bi-card-checklist"></i> Thành viên</a></li>
+                <li class="nav-item"><a href="/manage-combos.html" class="nav-link-admin ${currentPath.includes('manage-combos') ? 'active' : ''}"><i class="bi bi-bag-check"></i> Combo & Bắp nước</a></li>
 
                 <li class="nav-section-title">BÁO CÁO THỐNG KÊ</li>
                 <li class="nav-item"><a href="/dashboard/tickets-report.html" class="nav-link-admin ${currentPath.includes('tickets-report') ? 'active' : ''}"><i class="bi bi-ticket-perforated"></i> Báo cáo Vé</a></li>

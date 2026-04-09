@@ -13,6 +13,7 @@ import com.example.cinema.repository.notification.NotificationRepository;
 import com.example.cinema.repository.room.SeatRepository;
 import com.example.cinema.repository.showtime.ShowtimeRepository;
 import com.example.cinema.repository.user.MembershipLevelRepository;
+import com.example.cinema.repository.user.MembershipBenefitRepository;
 import com.example.cinema.repository.user.CustomerRepository;
 import com.example.cinema.service.booking.BookingService;
 import com.example.cinema.service.commerce.PricingService;
@@ -43,6 +44,7 @@ public class BookingServiceImpl implements BookingService {
     private final SeatRepository seatRepository;
     private final CustomerRepository customerRepository;
     private final MembershipLevelRepository membershipLevelRepository;
+    private final MembershipBenefitRepository membershipBenefitRepository;
     private final BookingDetailRepository bookingDetailRepository;
     private final ComboRepository comboRepository;
     private final PromotionRepository promotionRepository;
@@ -62,6 +64,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingServiceImpl(BookingRepository bookingRepository, ShowtimeRepository showtimeRepository,
                               SeatRepository seatRepository, CustomerRepository customerRepository,
                               MembershipLevelRepository membershipLevelRepository,
+                              MembershipBenefitRepository membershipBenefitRepository,
                               BookingDetailRepository bookingDetailRepository, ComboRepository comboRepository,
                               PromotionRepository promotionRepository, PricingService pricingService,
                               NotificationRepository notificationRepository,
@@ -75,6 +78,7 @@ public class BookingServiceImpl implements BookingService {
         this.seatRepository = seatRepository;
         this.customerRepository = customerRepository;
         this.membershipLevelRepository = membershipLevelRepository;
+        this.membershipBenefitRepository = membershipBenefitRepository;
         this.bookingDetailRepository = bookingDetailRepository;
         this.comboRepository = comboRepository;
         this.promotionRepository = promotionRepository;
@@ -140,44 +144,31 @@ public class BookingServiceImpl implements BookingService {
 
         Customer customer = null;
         
-        // 1. ƯU TIÊN KIỂM TRA TÀI KHOẢN ĐANG ĐĂNG NHẬP
         try {
             customer = getCurrentCustomer();
-            log.info("Booking for logged-in customer: id={}, name={}", customer.getId(), customer.getFullName());
         } catch (Exception e) {
             log.info("No active session, proceeding as guest or checking phone.");
         }
 
-        // 2. NẾU KHÔNG CÓ SESSION, KIỂM TRA SỐ ĐIỆN THOẠI TRONG DB
-        if (customer == null && request.getPhone() != null && !request.getPhone().trim().isEmpty()) {
-            customer = customerRepository.findByPhone(request.getPhone().trim()).orElse(null);
-            if (customer != null) log.info("Found existing guest customer by phone: id={}", customer.getId());
+        String phone = request.getPhone() != null ? request.getPhone().trim() : "";
+        if (customer == null && !phone.isEmpty() && !phone.equals("0000000000")) {
+            List<Customer> customers = customerRepository.findByPhone(phone);
+            if (!customers.isEmpty()) {
+                customer = customers.stream()
+                        .filter(c -> c.getUser() != null)
+                        .findFirst()
+                        .orElse(customers.get(0));
+                log.info("Found existing member by phone: id={}", customer.getId());
+            }
         }
         
-        // 3. NẾU VẪN KHÔNG CÓ, TẠO MỚI KHÁCH VÃNG LAI
         if (customer == null) {
-            if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
-                throw new AppException("Họ tên khách hàng là bắt buộc đối với khách vãng lai");
-            }
-            if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
-                throw new AppException("Số điện thoại là bắt buộc đối với khách vãng lai");
-            }
-
-            log.info("Creating new guest customer record.");
             customer = new Customer();
-            customer.setFullName(request.getFullName().trim());
-            customer.setPhone(request.getPhone().trim());
+            customer.setFullName((request.getFullName() == null || request.getFullName().trim().isEmpty()) ? "Khách vãng lai" : request.getFullName().trim());
+            customer.setPhone(phone.isEmpty() ? "0000000000" : phone);
             customer.setEmail(request.getEmail() != null ? request.getEmail().trim() : null);
-            
-            MembershipLevel standardLevel = membershipLevelRepository.findByName("STANDARD")
-                    .orElseGet(() -> {
-                        log.warn("Membership level 'STANDARD' not found, creating a temporary default.");
-                        return null; // Customer.membershipLevel is nullable
-                    });
-            customer.setMembershipLevel(standardLevel);
-            
+            customer.setMembershipLevel(null);
             customer = customerRepository.save(customer);
-            log.info("New guest customer saved: id={}", customer.getId());
         }
 
         Showtime showtime = getAndValidateShowtime(request.getShowtimeId());
@@ -189,53 +180,62 @@ public class BookingServiceImpl implements BookingService {
         List<BookingDetail> details = processSeatPricing(booking, showtime, request.getSeatIds(), customer);
         List<BookingCombo> combos = processComboPricing(booking, request.getCombos());
 
-        BigDecimal totalPrice = calculateInitialTotal(details, combos);
-        totalPrice = applyPromotion(booking, customer, request.getPromotionCode(), totalPrice);
+        // 1. TÍNH TIỀN VÉ GỐC (Chỉ bao gồm phụ thu)
+        BigDecimal ticketTotal = details.stream().map(BookingDetail::getPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        // 2. ÁP DỤNG CHIẾT KHẤU HỘI VIÊN (Tập trung)
+        BigDecimal membershipDiscount = BigDecimal.ZERO;
+        if (customer != null && customer.getMembershipLevel() != null) {
+            final BigDecimal currentTicketTotal = ticketTotal; // Phải là final để dùng trong lambda
+            membershipDiscount = membershipBenefitRepository
+                    .findByMembershipLevelAndBenefitType(customer.getMembershipLevel(), "DISCOUNT")
+                    .map(b -> {
+                        try {
+                            BigDecimal val = new BigDecimal(b.getBenefitValue());
+                            // Nếu giá trị < 100, coi là giảm theo %, nếu > 100 coi là giảm tiền mặt trực tiếp
+                            if (val.compareTo(new BigDecimal("100")) < 0) {
+                                return currentTicketTotal.multiply(val).divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP);
+                            } else {
+                                return val;
+                            }
+                        } catch (Exception e) { return BigDecimal.ZERO; }
+                    }).orElse(BigDecimal.ZERO);
 
-        finalizeBooking(booking, customer, showtime, details, combos, totalPrice, request.getPaymentMethod());
-        Booking savedBooking = bookingRepository.save(booking);
-        log.info("Booking created successfully: code={}", savedBooking.getBookingCode());
-
-        // LUỒNG POS: Nếu thanh toán tại quầy (CASH/CARD), giải phóng ghế ngay lập tức
-        if (request.getPaymentMethod() == PaymentMethod.CASH || request.getPaymentMethod() == PaymentMethod.CARD) {
-            log.info("POS Booking detected, releasing seat locks immediately.");
-            Long stId = showtime.getId();
-            for (Long seatId : request.getSeatIds()) {
-                redisTemplate.delete(LOCK_KEY_PREFIX + stId + ":" + seatId);
-                broadcastSeatStatus(stId, seatId, "BOOKED", "POS-STAFF");
+            if (membershipDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                ticketTotal = ticketTotal.subtract(membershipDiscount);
+                log.info("Applied membership discount for {}: -{}", customer.getMembershipLevel().getName(), membershipDiscount);
             }
         }
 
-        // 4. GỬI EMAIL THÔNG BÁO MÃ VÉ (Bọc try-catch để không làm sập booking nếu lỗi mail)
+        // 3. TÍNH TIỀN COMBO
+        BigDecimal comboTotal = combos.stream().map(bc -> bc.getPrice().multiply(BigDecimal.valueOf(bc.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal initialTotal = ticketTotal.add(comboTotal);
+
+        // 4. ÁP DỤNG VOUCHER
+        BigDecimal finalTotalPrice = applyPromotion(booking, customer, request.getPromotionCode(), initialTotal);
+
+        finalizeBooking(booking, customer, showtime, details, combos, finalTotalPrice, request.getPaymentMethod());
+        Booking savedBooking = bookingRepository.save(booking);
+
+        if (request.getPaymentMethod() == PaymentMethod.CASH || request.getPaymentMethod() == PaymentMethod.CARD) {
+            for (Long seatId : request.getSeatIds()) {
+                redisTemplate.delete(LOCK_KEY_PREFIX + showtime.getId() + ":" + seatId);
+                broadcastSeatStatus(showtime.getId(), seatId, "BOOKED", "POS-STAFF");
+            }
+        }
+
         try {
             String targetEmail = (customer.getUser() != null) ? customer.getUser().getEmail() : request.getEmail();
             if (targetEmail != null && !targetEmail.isEmpty()) {
-                String emailContent = String.format(
-                    "<p>Chúc mừng bạn đã đặt vé thành công tại <b>StarCinema</b>!</p>" +
-                    "<p>Mã đặt vé của bạn là: <span style='font-size: 20px; color: #E5133A; font-weight: 800;'>%s</span></p>" +
-                    "<p>Phim: <b>%s</b></p>" +
-                    "<p>Suất chiếu: <b>%s</b></p>" +
-                    "<p>Ghế: <b>%s</b></p>" +
-                    "<p>Tổng tiền: <b>%,.0fđ</b></p>" +
-                    "<p>Vui lòng đưa mã này cho nhân viên tại quầy để nhận vé.</p>",
-                    savedBooking.getBookingCode(),
-                    showtime.getMovie().getTitle(),
-                    showtime.getStartTime().toString().replace("T", " "),
-                    details.stream().map(BookingDetail::getSeatCode).collect(Collectors.joining(", ")),
-                    totalPrice
-                );
-                emailService.send(targetEmail, "XÁC NHẬN ĐẶT VÉ THÀNH CÔNG - " + savedBooking.getBookingCode(), emailContent);
+                String emailContent = String.format("<p>Mã đặt vé: <b>%s</b></p><p>Phim: %s</p><p>Tổng tiền: %,.0fđ</p>", 
+                    savedBooking.getBookingCode(), showtime.getMovie().getTitle(), finalTotalPrice);
+                emailService.send(targetEmail, "XÁC NHẬN ĐẶT VÉ - " + savedBooking.getBookingCode(), emailContent);
             }
-        } catch (Exception e) {
-            log.error("Failed to send booking confirmation email: {}", e.getMessage());
-        }
+        } catch (Exception e) { log.error("Mail error: {}", e.getMessage()); }
 
         if (customer.getUser() != null) {
-            if (savedBooking.getPayment().getPaymentStatus() == PaymentStatus.SUCCESS) {
-                customerService.addLoyaltyPoints(customer, totalPrice);
-            }
-            createNotification(customer.getUser(), "Đặt vé thành công", 
-                "Booking " + savedBooking.getBookingCode() + " đã được xác nhận.", NotificationType.BOOKING);
+            if (savedBooking.getPayment().getPaymentStatus() == PaymentStatus.SUCCESS) customerService.addLoyaltyPoints(customer, finalTotalPrice);
+            createNotification(customer.getUser(), "Đặt vé thành công", "Mã: " + savedBooking.getBookingCode(), NotificationType.BOOKING);
         }
 
         return mapToResponse(savedBooking);
@@ -250,7 +250,9 @@ public class BookingServiceImpl implements BookingService {
 
     private Showtime getAndValidateShowtime(Long id) {
         Showtime s = showtimeRepository.findById(id).orElseThrow(() -> new AppException("Showtime not found"));
-        if (s.getStatus() != ShowtimeStatus.UPCOMING) throw new AppException("Suất chiếu không khả dụng");
+        if (s.getStatus() != ShowtimeStatus.UPCOMING && s.getStatus() != ShowtimeStatus.SHOWING) {
+            throw new AppException("Suất chiếu không khả dụng (Đã kết thúc hoặc bị hủy)");
+        }
         return s;
     }
 
@@ -276,18 +278,16 @@ public class BookingServiceImpl implements BookingService {
         if (comboRequests != null) {
             for (Map.Entry<String, Integer> entry : comboRequests.entrySet()) {
                 Combo c = comboRepository.findById(Long.parseLong(entry.getKey())).orElseThrow(() -> new AppException("Combo not found"));
+                int quantity = entry.getValue();
+                if (c.getStockQuantity() < quantity) throw new AppException("Combo " + c.getName() + " hết hàng");
+                c.setStockQuantity(c.getStockQuantity() - quantity);
+                comboRepository.save(c);
                 BookingCombo bc = new BookingCombo();
-                bc.setBooking(booking); bc.setCombo(c); bc.setQuantity(entry.getValue()); bc.setPrice(c.getPrice());
+                bc.setBooking(booking); bc.setCombo(c); bc.setQuantity(quantity); bc.setPrice(c.getPrice());
                 list.add(bc);
             }
         }
         return list;
-    }
-
-    private BigDecimal calculateInitialTotal(List<BookingDetail> details, List<BookingCombo> combos) {
-        BigDecimal total = details.stream().map(BookingDetail::getPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal cTotal = combos.stream().map(bc -> bc.getPrice().multiply(BigDecimal.valueOf(bc.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
-        return total.add(cTotal);
     }
 
     private BigDecimal applyPromotion(Booking booking, Customer customer, String code, BigDecimal current) {
@@ -295,22 +295,19 @@ public class BookingServiceImpl implements BookingService {
         Promotion p = promotionRepository.findByCodeAndIsActiveTrue(code).orElseThrow(() -> new AppException("Mã không hợp lệ"));
         
         if (p.getMinLevel() != null) {
-            if (customer.getMembershipLevel() == null || 
-                customer.getMembershipLevel().getPriority() < p.getMinLevel().getPriority()) {
-                throw new AppException("Hạng thành viên của bạn không đủ điều kiện áp dụng mã này");
+            int customerPriority = 0;
+            if (customer.getMembershipLevel() != null) {
+                customerPriority = customer.getMembershipLevel().getPriority();
+            } else if (customer.getUser() != null) {
+                customerPriority = 1;
             }
+
+            if (customerPriority < p.getMinLevel().getPriority())
+                throw new AppException("Hạng thành viên của bạn không đủ điều kiện áp dụng mã này (Yêu cầu: " + p.getMinLevel().getName() + ")");
         }
-        
         booking.setPromotion(p);
         BigDecimal disc = (p.getDiscountType() == DiscountType.FIXED) ? p.getDiscountValue() : current.multiply(p.getDiscountValue()).divide(BigDecimal.valueOf(100));
         return current.subtract(disc);
-    }
-
-    private BigDecimal applyMembershipDiscount(Customer c, BigDecimal current) {
-        if (c.getMembershipLevel() == null) return current;
-        
-        BigDecimal pct = customerService.getDiscountPercentage(c.getMembershipLevel().getName());
-        return current.subtract(current.multiply(pct).divide(BigDecimal.valueOf(100)));
     }
 
     private void finalizeBooking(Booking b, Customer c, Showtime s, List<BookingDetail> det, List<BookingCombo> com, BigDecimal price, PaymentMethod pm) {
@@ -331,41 +328,13 @@ public class BookingServiceImpl implements BookingService {
 
     private BookingResponse mapToResponse(Booking b) {
         BookingResponse res = new BookingResponse();
-        res.setId(b.getId());
-        res.setBookingCode(b.getBookingCode());
-        res.setTotalPrice(b.getTotalPrice());
-        res.setStatus(b.getStatus());
-        res.setCreatedAt(b.getCreatedAt());
-
-        if (b.getShowtime() != null) {
-            res.setMovieTitle(b.getShowtime().getMovie().getTitle());
-            res.setRoomName(b.getShowtime().getRoom().getName());
-            res.setShowTime(b.getShowtime().getStartTime());
-        }
-
-        if (b.getDetails() != null) {
-            res.setSeatCodes(b.getDetails().stream()
-                    .map(BookingDetail::getSeatCode)
-                    .collect(Collectors.toList()));
-        }
-
-        if (b.getPayment() != null) {
-            res.setPaymentMethod(b.getPayment().getPaymentMethod());
-            res.setPaymentStatus(b.getPayment().getPaymentStatus());
-            res.setTransactionId(b.getPayment().getTransactionId());
-            res.setPaidAt(b.getPayment().getPaidAt());
-        }
-
-        if (b.getCombos() != null) {
-            res.setComboSummary(b.getCombos().stream()
-                    .map(bc -> bc.getCombo().getName() + " (x" + bc.getQuantity() + ")")
-                    .collect(Collectors.toList()));
-        }
-
-        if (b.getPromotion() != null) {
-            res.setPromotionCode(b.getPromotion().getCode());
-        }
-
+        res.setId(b.getId()); res.setBookingCode(b.getBookingCode()); res.setTotalPrice(b.getTotalPrice());
+        res.setStatus(b.getStatus()); res.setCreatedAt(b.getCreatedAt());
+        if (b.getShowtime() != null) { res.setMovieTitle(b.getShowtime().getMovie().getTitle()); res.setRoomName(b.getShowtime().getRoom().getName()); res.setShowTime(b.getShowtime().getStartTime()); }
+        if (b.getDetails() != null) res.setSeatCodes(b.getDetails().stream().map(BookingDetail::getSeatCode).collect(Collectors.toList()));
+        if (b.getPayment() != null) { res.setPaymentMethod(b.getPayment().getPaymentMethod()); res.setPaymentStatus(b.getPayment().getPaymentStatus()); res.setTransactionId(b.getPayment().getTransactionId()); res.setPaidAt(b.getPayment().getPaidAt()); }
+        if (b.getCombos() != null) res.setComboSummary(b.getCombos().stream().map(bc -> bc.getCombo().getName() + " (x" + bc.getQuantity() + ")").collect(Collectors.toList()));
+        if (b.getPromotion() != null) res.setPromotionCode(b.getPromotion().getCode());
         return res;
     }
 

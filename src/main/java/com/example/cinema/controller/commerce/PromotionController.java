@@ -37,11 +37,19 @@ public class PromotionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(promotionService.createPromotion(request)));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<PromotionResponse>> updatePromotion(
+            @PathVariable Long id, 
+            @RequestBody @Valid PromotionRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(promotionService.updatePromotion(id, request)));
+    }
+
     @GetMapping("/validate")
     public ResponseEntity<ApiResponse<PromotionResponse>> validatePromotion(
             @RequestParam String code, 
-            @RequestParam BigDecimal amount) {
-        return ResponseEntity.ok(ApiResponse.ok(promotionService.validatePromotion(code, amount)));
+            @RequestParam BigDecimal amount,
+            @RequestParam(required = false) String phone) {
+        return ResponseEntity.ok(ApiResponse.ok(promotionService.validatePromotion(code, amount, phone)));
     }
 
     @DeleteMapping("/{id}")

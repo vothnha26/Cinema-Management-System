@@ -11,8 +11,8 @@ public interface PromotionService {
     List<PromotionResponse> getActivePromotions();
     PromotionResponse getPromotionById(Long id);
     PromotionResponse createPromotion(PromotionRequest request);
-
-    PromotionResponse validatePromotion(String code, BigDecimal orderAmount);
+    PromotionResponse updatePromotion(Long id, PromotionRequest request);
+    PromotionResponse validatePromotion(String code, BigDecimal orderAmount, String phone);
 
     void deletePromotion(Long id);
 }

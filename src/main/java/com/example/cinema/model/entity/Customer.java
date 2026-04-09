@@ -1,7 +1,6 @@
 package com.example.cinema.model.entity;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 
 @Entity

@@ -17,9 +17,6 @@ public class SeatPriceRequest {
     @Positive(message = "Giá phải lớn hơn 0")
     private BigDecimal price;
 
-    @NotNull(message = "Ngày hiệu lực không được để trống")
-    private LocalDate effectiveDate;
-
     public SeatPriceRequest() {
     }
 
@@ -29,6 +26,4 @@ public class SeatPriceRequest {
     public void setSeatTypeId(String seatTypeId) { this.seatTypeId = seatTypeId; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
-    public LocalDate getEffectiveDate() { return effectiveDate; }
-    public void setEffectiveDate(LocalDate effectiveDate) { this.effectiveDate = effectiveDate; }
 }

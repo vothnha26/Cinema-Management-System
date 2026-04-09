@@ -47,18 +47,22 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            System.out.println(">>> Filter: Quyền trong Database của user: " + userDetails.getAuthorities());
+            try {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                System.out.println(">>> Filter: Quyền trong Database của user: " + userDetails.getAuthorities());
 
-            if (jwtUtil.validateToken(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                usernamePasswordAuthenticationToken
-                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                System.out.println(">>> Filter: Đã đăng nhập THÀNH CÔNG cho user: " + username);
-            } else {
-                System.out.println(">>> Filter: Token KHÔNG hợp lệ!");
+                if (jwtUtil.validateToken(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    usernamePasswordAuthenticationToken
+                            .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+                    System.out.println(">>> Filter: Đã đăng nhập THÀNH CÔNG cho user: " + username);
+                } else {
+                    System.out.println(">>> Filter: Token KHÔNG hợp lệ!");
+                }
+            } catch (Exception e) {
+                System.err.println(">>> Filter: Không tìm thấy User từ Token: " + username);
             }
         }
 

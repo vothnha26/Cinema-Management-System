@@ -12,6 +12,8 @@ import com.example.cinema.repository.movie.MovieRepository;
 import com.example.cinema.repository.room.RoomRepository;
 import com.example.cinema.repository.room.SeatRepository;
 import com.example.cinema.repository.showtime.ShowtimeRepository;
+import com.example.cinema.repository.user.CustomerRepository;
+import com.example.cinema.repository.user.MembershipBenefitRepository;
 import com.example.cinema.service.showtime.ShowtimeService;
 import com.example.cinema.service.commerce.PricingService;
 import com.example.cinema.service.commerce.impl.PricingServiceImpl;
@@ -35,6 +37,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     private final PricingService pricingService;
     private final MovieRepository movieRepository;
     private final RoomRepository roomRepository;
+    private final CustomerRepository customerRepository;
+    private final MembershipBenefitRepository membershipBenefitRepository;
     private final com.example.cinema.repository.movie.FormatRepository formatRepository;
     private final com.example.cinema.repository.movie.BranchMovieRepository branchMovieRepository;
     private final StringRedisTemplate redisTemplate;
@@ -47,6 +51,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             PricingService pricingService,
             MovieRepository movieRepository,
             RoomRepository roomRepository,
+            CustomerRepository customerRepository,
+            MembershipBenefitRepository membershipBenefitRepository,
             com.example.cinema.repository.movie.FormatRepository formatRepository,
             com.example.cinema.repository.movie.BranchMovieRepository branchMovieRepository,
             StringRedisTemplate redisTemplate) {
@@ -56,6 +62,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         this.pricingService = pricingService;
         this.movieRepository = movieRepository;
         this.roomRepository = roomRepository;
+        this.customerRepository = customerRepository;
+        this.membershipBenefitRepository = membershipBenefitRepository;
         this.formatRepository = formatRepository;
         this.branchMovieRepository = branchMovieRepository;
         this.redisTemplate = redisTemplate;
@@ -99,22 +107,26 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     }
 
     @Override
-    public List<SeatResponse> getSeatStatusForShowtime(Long showtimeId) {
+    public List<SeatResponse> getSeatStatusForShowtime(Long showtimeId, String username) {
         Showtime showtime = showtimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new AppException("Suất chiếu không tồn tại"));
+
+        // Lấy thông tin khách hàng nếu có để tính đúng giá chiết khấu
+        Customer currentCustomer = null;
+        if (username != null && !username.isEmpty()) {
+            currentCustomer = customerRepository.findByUserUsername(username).orElse(null);
+        }
 
         List<Seat> allSeats = seatRepository.findByRoomId(showtime.getRoom().getId());
 
         List<Long> bookedSeatList = bookingDetailRepository.findBookedSeatIdsByShowtime(showtimeId);
         Set<Long> bookedSeatIds = bookedSeatList != null ? new HashSet<>(bookedSeatList) : new HashSet<>();
 
-        // TỐI ƯU HIỆU NĂNG: Lấy dữ liệu Pricing một lần duy nhất (Fix N+1)
-        Long branchId = showtime.getRoom().getBranch().getId();
+        // TỐI ƯU HIỆU NĂNG: Lấy dữ liệu Pricing niêm yết tập trung
         RoomType roomType = showtime.getRoom().getRoomType();
-        
         PricingServiceImpl psImpl = (PricingServiceImpl) pricingService;
         
-        // Lấy toàn bộ bảng giá của RoomType này
+        // Lấy bảng giá niêm yết của RoomType này (Tập trung toàn hệ thống)
         List<SeatPrice> seatPrices = psImpl.getSeatPriceRepository().findAllByRoomTypeAndIsActiveTrue(roomType);
         
         // Chuyển thành Map với Key là String ID của SeatType
@@ -125,7 +137,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             }
         }
 
-        // Lấy quy tắc chi nhánh một lần
+        // Lấy quy tắc chi nhánh một lần để tính phụ thu riêng cho chi nhánh
+        Long branchId = showtime.getRoom().getBranch().getId();
         List<com.example.cinema.model.entity.BranchPricingRule> branchRules = 
                 psImpl.getBranchPricingRuleRepository().findAllByBranchIdOrderByPriorityAsc(branchId);
 
@@ -144,6 +157,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         }
 
         PricingRuleMatcher matcher = psImpl.getPricingRuleMatcher();
+        Customer finalCustomer = currentCustomer;
 
         return allSeats.stream().map(seat -> {
             SeatResponse res = new SeatResponse();
@@ -162,9 +176,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             
             res.setAvailable(!bookedSeatIds.contains(seat.getId()) && !lockedSeatIds.contains(seat.getId()));
 
-            // Tính giá nhanh trong bộ nhớ
+            // Tính giá nhanh trong bộ nhớ (Sử dụng khách hàng để tính đúng giá chiết khấu)
             BigDecimal basePrice = priceMap.getOrDefault(res.getSeatTypeId(), new BigDecimal("80000"));
-            PriceCalculationResult calculation = calculateFastPrice(showtime, seat, basePrice, branchRules, matcher);
+            PriceCalculationResult calculation = calculateFastPrice(showtime, seat, basePrice, branchRules, matcher, finalCustomer);
             res.setPrice(calculation.getFinalPrice());
             res.setPriceBreakdown(calculation.getAppliedRules());
 
@@ -174,14 +188,15 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     private PriceCalculationResult calculateFastPrice(Showtime showtime, Seat seat, BigDecimal basePrice, 
                                                      List<com.example.cinema.model.entity.BranchPricingRule> branchRules,
-                                                     PricingRuleMatcher matcher) {
+                                                     PricingRuleMatcher matcher,
+                                                     Customer customer) {
         PriceCalculator calculator = new BasePriceCalculator(basePrice);
         List<String> appliedRules = new ArrayList<>();
         appliedRules.add("Giá gốc: " + basePrice.intValue() + "đ");
 
         for (com.example.cinema.model.entity.BranchPricingRule link : branchRules) {
             PricingRule rule = link.getRule();
-            if (rule.isActive() && matcher.matches(rule, showtime, seat, null)) {
+            if (rule.isActive() && matcher.matches(rule, showtime, seat, customer)) {
                 if (rule.getImpactType() == com.example.cinema.model.enums.PricingImpactType.ADDITIVE) {
                     calculator = new AdditiveDecorator(calculator, rule.getImpactValue());
                     appliedRules.add(rule.getName() + " (+" + rule.getImpactValue().intValue() + "đ)");
@@ -199,7 +214,11 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 if (!rule.isStackable()) break;
             }
         }
-        return new PriceCalculationResult(calculator.calculate(), appliedRules);
+
+        BigDecimal finalPrice = calculator.calculate();
+
+        // KHÔNG áp dụng giảm giá hội viên ở đây nữa, sẽ tính tập trung ở BookingService
+        return new PriceCalculationResult(finalPrice, appliedRules);
     }
 
     @Override
@@ -208,17 +227,40 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         Movie movie = movieRepository.findById(request.getMovieId())
                 .orElseThrow(() -> new AppException("Movie not found"));
         Room room = roomRepository.findById(request.getRoomId()).orElseThrow(() -> new AppException("Room not found"));
-        validateBranchMovieDistribution(room.getBranch().getId(), movie.getId());
+        
+        // KIỂM TRA XUNG ĐỘT LỊCH CHIẾU (Overlap Check)
+        LocalDateTime start = request.getStartTime();
+        LocalDateTime end = start.plusMinutes(movie.getDuration());
+        
+        // Tìm bất kỳ suất chiếu nào trong cùng phòng có thời gian giao thoa
+        List<Showtime> conflicts = showtimeRepository.findAllByRoomIdAndStatusNot(room.getId(), ShowtimeStatus.CANCELLED);
+        for (Showtime s : conflicts) {
+            if (start.isBefore(s.getEndTime()) && end.isAfter(s.getStartTime())) {
+                throw new AppException("Xung đột lịch chiếu: Phòng " + room.getName() + " đã có suất chiếu từ " + 
+                    s.getStartTime().toLocalTime() + " đến " + s.getEndTime().toLocalTime());
+            }
+        }
+
+        // TỰ ĐỘNG PHÂN BỔ PHIM VÀO CHI NHÁNH NẾU CHƯA CÓ
+        if (!branchMovieRepository.existsByBranchIdAndMovieIdAndIsActiveTrue(room.getBranch().getId(), movie.getId())) {
+            com.example.cinema.model.entity.BranchMovie bm = new com.example.cinema.model.entity.BranchMovie();
+            bm.setBranch(room.getBranch());
+            bm.setMovie(movie);
+            bm.setIsActive(true);
+            branchMovieRepository.save(bm);
+        }
+
         Format format = null;
         if (request.getFormatId() != null) {
             format = formatRepository.findById(request.getFormatId()).orElseThrow(() -> new AppException("Format not found"));
         }
         validateRoomFormatCompatibility(room, format);
+        
         Showtime showtime = new Showtime();
         showtime.setMovie(movie);
         showtime.setRoom(room);
-        showtime.setStartTime(request.getStartTime());
-        showtime.setEndTime(request.getStartTime().plusMinutes(movie.getDuration()));
+        showtime.setStartTime(start);
+        showtime.setEndTime(end);
         showtime.setStatus(ShowtimeStatus.UPCOMING);
         showtime.setTotalSeats(room.getCapacity());
         showtime.setSoldSeats(0);
@@ -282,12 +324,11 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         }
         res.setStartTime(showtime.getStartTime()); res.setEndTime(showtime.getEndTime());
         
-        // Fix lỗi hiển thị format name để không bị (null)
         if (showtime.getFormat() != null) {
             res.setFormatId(showtime.getFormat().getId());
             res.setFormatName(showtime.getFormat().getName());
         } else {
-            res.setFormatName("2D"); // Giá trị mặc định an toàn
+            res.setFormatName("2D");
         }
         
         res.setStatus(showtime.getStatus()); res.setTotalSeats(showtime.getTotalSeats());

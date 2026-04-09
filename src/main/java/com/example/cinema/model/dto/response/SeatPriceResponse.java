@@ -8,7 +8,6 @@ public class SeatPriceResponse {
     private String roomTypeId;
     private String seatTypeId;
     private BigDecimal price;
-    private LocalDate effectiveDate;
     private Boolean isActive;
 
     public SeatPriceResponse() {
@@ -22,8 +21,6 @@ public class SeatPriceResponse {
     public void setSeatTypeId(String seatTypeId) { this.seatTypeId = seatTypeId; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
-    public LocalDate getEffectiveDate() { return effectiveDate; }
-    public void setEffectiveDate(LocalDate effectiveDate) { this.effectiveDate = effectiveDate; }
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 }

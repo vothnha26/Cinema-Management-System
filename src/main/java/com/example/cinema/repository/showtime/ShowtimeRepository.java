@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     List<Showtime> findByMovieId(Long movieId);
+    List<Showtime> findAllByRoomIdAndStatusNot(Long roomId, com.example.cinema.model.enums.ShowtimeStatus status);
     
     @Query("SELECT s FROM Showtime s WHERE s.startTime BETWEEN :start AND :end " +
            "AND (:branchId IS NULL OR s.room.branch.id = :branchId)")

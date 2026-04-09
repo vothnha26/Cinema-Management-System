@@ -12,6 +12,7 @@ public class MovieActor {
     @Id
     @ManyToOne
     @JoinColumn(name = "movie_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Movie movie;
 
     @Id

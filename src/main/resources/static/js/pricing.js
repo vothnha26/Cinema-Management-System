@@ -329,9 +329,9 @@
     }
 
     async function savePrice() {
-        const data = { roomTypeId: document.getElementById('roomType').value, seatTypeId: document.getElementById('seatType').value, price: parseFloat(document.getElementById('priceInput').value), effectiveDate: document.getElementById('effectiveDate').value };
+        const data = { roomTypeId: document.getElementById('roomType').value, seatTypeId: document.getElementById('seatType').value, price: parseFloat(document.getElementById('priceInput').value) };
         const res = await api.put('/admin/pricing', data);
         if (res.success) { priceModal.hide(); loadData(); } else alert('Lỗi: ' + res.message);
     }
-    function openPriceModal(roomId, seatId, price, roomName, seatName) { document.getElementById('roomType').value = roomId; document.getElementById('seatType').value = seatId; document.getElementById('targetDisplay').innerText = `${roomName} - ${seatName}`; document.getElementById('priceInput').value = price; document.getElementById('effectiveDate').value = new Date().toISOString().split('T')[0]; priceModal.show(); }
+    function openPriceModal(roomId, seatId, price, roomName, seatName) { document.getElementById('roomType').value = roomId; document.getElementById('seatType').value = seatId; document.getElementById('targetDisplay').innerText = `${roomName} - ${seatName}`; document.getElementById('priceInput').value = price; priceModal.show(); }
     async function deleteRule(id) { if(confirm('Xóa quy tắc này?')) { const res = await api.delete('/admin/pricing-rules/' + id); if(res.success) loadData(); } }

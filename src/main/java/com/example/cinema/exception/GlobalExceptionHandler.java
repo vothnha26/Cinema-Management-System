@@ -1,17 +1,16 @@
 package com.example.cinema.exception;
 
 import com.example.cinema.model.dto.response.ApiResponse;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Xử lý lỗi toàn cục cho tất cả REST API (SRP: Chỉ chịu trách nhiệm format
- * lỗi).
- */
+import java.util.HashMap;
+import java.util.Map;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -23,25 +22,25 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException e) {
-        String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(java.util.stream.Collectors.joining(", "));
-        
-        System.err.println("❌ Validation Error: " + message);
-        
+        Map<String, String> errors = new HashMap<>();
+        for (FieldError error : e.getBindingResult().getFieldErrors()) {
+            errors.put(error.getField(), error.getDefaultMessage());
+        }
+        System.err.println(">>> VALIDATION FAILED: " + errors);
         return ResponseEntity.status(400)
-                .body(ApiResponse.error(message, 400));
+                .body(ApiResponse.error("Dữ liệu không hợp lệ: " + errors.toString(), 400));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Object>> handleAccessDeniedException(AccessDeniedException e) {
         return ResponseEntity.status(403)
-                .body(ApiResponse.error("Bạn không có quyền truy cập tài nguyên này.", 403));
+                .body(ApiResponse.error("Bạn không có quyền truy cập chức năng này", 403));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneralException(Exception e) {
+        e.printStackTrace(); // In ra log server để debug
         return ResponseEntity.status(500)
-                .body(ApiResponse.error("Đã có lỗi xảy ra: " + e.getMessage(), 500));
+                .body(ApiResponse.error("Đã có lỗi hệ thống xảy ra: " + e.getMessage(), 500));
     }
 }

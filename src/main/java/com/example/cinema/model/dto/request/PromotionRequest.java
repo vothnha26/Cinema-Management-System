@@ -38,8 +38,17 @@ public class PromotionRequest {
     private Integer requiredPoints = 0;
 
     private Boolean isRedeemable = false;
+    private Boolean isActive = true;
 
     public PromotionRequest() {
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean active) {
+        isActive = active;
     }
 
     public String getCode() {

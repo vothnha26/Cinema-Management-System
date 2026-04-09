@@ -68,4 +68,12 @@ public class AdminBranchMovieController {
         Branch branch = branchRepository.findById(branchId).orElseThrow();
         return ResponseEntity.ok(ApiResponse.ok(branchMovieRepository.findByBranch(branch)));
     }
+
+    // Cập nhật mức độ ưu tiên của phim tại chi nhánh
+    @PatchMapping("/{id}/priority")
+    public ResponseEntity<ApiResponse<BranchMovie>> updatePriority(@PathVariable Long id, @RequestParam Integer priority) {
+        BranchMovie bm = branchMovieRepository.findById(id).orElseThrow();
+        bm.setPriorityLevel(priority);
+        return ResponseEntity.ok(ApiResponse.ok(branchMovieRepository.save(bm)));
+    }
 }

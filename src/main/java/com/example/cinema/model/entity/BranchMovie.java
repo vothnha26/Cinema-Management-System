@@ -28,7 +28,12 @@ public class BranchMovie {
     private Boolean isActive = true;
 
     @Column(name = "priority_level")
+    @com.fasterxml.jackson.annotation.JsonProperty("priority")
     private Integer priorityLevel = 1;
+
+    @Column(name = "assigned_at")
+    @com.fasterxml.jackson.annotation.JsonProperty("assignedAt")
+    private java.time.LocalDateTime assignedAt = java.time.LocalDateTime.now();
 
     public BranchMovie() {}
 
@@ -49,4 +54,7 @@ public class BranchMovie {
 
     public Integer getPriorityLevel() { return priorityLevel; }
     public void setPriorityLevel(Integer priorityLevel) { this.priorityLevel = priorityLevel; }
+
+    public java.time.LocalDateTime getAssignedAt() { return assignedAt; }
+    public void setAssignedAt(java.time.LocalDateTime assignedAt) { this.assignedAt = assignedAt; }
 }

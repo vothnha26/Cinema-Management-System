@@ -91,7 +91,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
        long countFnBOrders(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
                      @Param("branchId") Long branchId);
 
-       @Query(value = "SELECT st.id, COUNT(bd.id), SUM(bd.price) FROM booking_details bd " +
+       @Query(value = "SELECT st.name, COUNT(bd.id), SUM(bd.price) FROM booking_details bd " +
                      "JOIN bookings b ON bd.booking_id = b.id " +
                      "JOIN seats s_seat ON bd.seat_id = s_seat.id " +
                      "JOIN seat_types st ON s_seat.seat_type_id = st.id " +
@@ -99,7 +99,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                      "JOIN rooms r ON s.room_id = r.id " +
                      "WHERE b.status IN ('CONFIRMED', 'CHECKED_IN') AND b.created_at BETWEEN :start AND :end " +
                      "AND (:branchId IS NULL OR r.branch_id = :branchId) " +
-                     "GROUP BY st.id", nativeQuery = true)
+                     "GROUP BY st.name", nativeQuery = true)
        List<Object[]> calculateStatsBySeatType(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end,
                      @Param("branchId") Long branchId);
 
@@ -141,4 +141,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                      "ORDER BY b.createdAt DESC")
        List<Booking> findRecentBookings(@Param("branchId") Long branchId,
                      org.springframework.data.domain.Pageable pageable);
+
+       long countByShowtimeId(Long showtimeId);
 }

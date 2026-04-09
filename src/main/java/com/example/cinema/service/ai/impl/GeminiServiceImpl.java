@@ -13,7 +13,7 @@ public class GeminiServiceImpl implements GeminiService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    @Value("${gemini.api.url}")
+    @Value("${gemini.api.endpoint}")
     private String apiUrl;
 
     private String getFullUrl() {
@@ -46,13 +46,12 @@ public class GeminiServiceImpl implements GeminiService {
                 List<Map> parts = (List<Map>) contentRes.get("parts");
                 return (String) parts.get(0).get("text");
             }
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            System.err.println("Gemini API Client Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+        } catch (org.springframework.web.client.HttpStatusCodeException e) {
+            throw new RuntimeException("Gemini API Error: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
         } catch (Exception e) {
-            System.err.println("Gemini API Error: " + e.getMessage());
+            throw new RuntimeException("Gemini API Error: " + e.getMessage());
         }
         
-        // Fallback for demo or error
         return "[]"; 
     }
 }

@@ -6,14 +6,11 @@ import com.example.cinema.model.dto.response.PromotionResponse;
 import com.example.cinema.model.entity.Customer;
 import com.example.cinema.model.entity.MembershipLevel;
 import com.example.cinema.model.entity.Promotion;
+import com.example.cinema.model.enums.DiscountType;
 import com.example.cinema.repository.commerce.PromotionRepository;
 import com.example.cinema.repository.user.CustomerRepository;
-import com.example.cinema.repository.user.MembershipBenefitRepository;
 import com.example.cinema.repository.user.MembershipLevelRepository;
-import com.example.cinema.service.commerce.pricing.DiscountStrategy;
-import com.example.cinema.service.commerce.pricing.DiscountStrategyFactory;
 import com.example.cinema.service.commerce.PromotionService;
-
 import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,23 +25,17 @@ import java.util.stream.Collectors;
 public class PromotionServiceImpl implements PromotionService {
 
     private final PromotionRepository promotionRepository;
-    private final CustomerRepository customerRepository;
     private final MembershipLevelRepository membershipLevelRepository;
-    private final MembershipBenefitRepository benefitRepository;
-    private final DiscountStrategyFactory strategyFactory;
+    private final CustomerRepository customerRepository;
     private final ModelMapper modelMapper;
 
     public PromotionServiceImpl(PromotionRepository promotionRepository,
-            CustomerRepository customerRepository,
-            MembershipLevelRepository membershipLevelRepository,
-            MembershipBenefitRepository benefitRepository,
-            DiscountStrategyFactory strategyFactory,
-            ModelMapper modelMapper) {
+                                MembershipLevelRepository membershipLevelRepository,
+                                CustomerRepository customerRepository,
+                                ModelMapper modelMapper) {
         this.promotionRepository = promotionRepository;
-        this.customerRepository = customerRepository;
         this.membershipLevelRepository = membershipLevelRepository;
-        this.benefitRepository = benefitRepository;
-        this.strategyFactory = strategyFactory;
+        this.customerRepository = customerRepository;
         this.modelMapper = modelMapper;
     }
 
@@ -58,14 +48,18 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     public List<PromotionResponse> getActivePromotions() {
-        LocalDate now = LocalDate.now();
+        // Lọc thủ công do Repository chưa có sẵn method filter
         return promotionRepository.findAll().stream()
-                .filter(p -> p.getIsActive() && 
-                            !now.isBefore(p.getStartDate()) && 
-                            !now.isAfter(p.getEndDate()) &&
-                            (p.getUsageLimit() == null || p.getUsedCount() < p.getUsageLimit()))
+                .filter(p -> p.getIsActive() && p.getEndDate().isAfter(java.time.LocalDate.now()))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public PromotionResponse getPromotionById(Long id) {
+        return promotionRepository.findById(id)
+                .map(this::mapToResponse)
+                .orElseThrow(() -> new AppException("Không tìm thấy chương trình khuyến mãi"));
     }
 
     @Override
@@ -76,89 +70,118 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException("Mã khuyến mãi đã tồn tại");
         }
 
-        MembershipLevel level = membershipLevelRepository.findByName(request.getMinLevelName() != null ? request.getMinLevelName() : "STANDARD")
+        MembershipLevel level = null;
+        if (request.getMinLevelName() != null && !request.getMinLevelName().trim().isEmpty()) {
+            level = membershipLevelRepository.findByName(request.getMinLevelName().trim())
                 .orElseThrow(() -> new AppException("Không tìm thấy hạng thành viên: " + request.getMinLevelName()));
+        }
 
         Promotion promotion = new Promotion.Builder(
                 request.getCode(),
                 request.getName(),
                 request.getDiscountType(),
-                request.getDiscountValue())
-                .validity(request.getStartDate(), request.getEndDate())
-                .minOrder(request.getMinOrderAmount())
-                .maxDiscount(request.getMaxDiscountAmount())
-                .limit(request.getUsageLimit())
-                .minLevel(level)
-                .requiredPoints(request.getRequiredPoints())
-                .redeemable(request.getIsRedeemable())
-                .build();
+                request.getDiscountValue()
+        )
+        .validity(request.getStartDate(), request.getEndDate())
+        .minOrder(request.getMinOrderAmount())
+        .maxDiscount(request.getMaxDiscountAmount())
+        .limit(request.getUsageLimit())
+        .minLevel(level)
+        .requiredPoints(request.getRequiredPoints())
+        .redeemable(request.getIsRedeemable())
+        .build();
 
-        Promotion saved = promotionRepository.save(promotion);
-        return mapToResponse(saved);
-    }
-
-    private PromotionResponse mapToResponse(Promotion p) {
-        PromotionResponse res = modelMapper.map(p, PromotionResponse.class);
-        if (p.getMinLevel() != null) {
-            res.setMinLevelName(p.getMinLevel().getName());
-        }
-        return res;
+        return mapToResponse(promotionRepository.save(promotion));
     }
 
     @Override
-    public PromotionResponse getPromotionById(Long id) {
-        Promotion p = promotionRepository.findById(id)
+    @Transactional
+    @com.example.cinema.config.LogAction(action = "UPDATE", target = "PROMOTION")
+    public PromotionResponse updatePromotion(Long id, PromotionRequest request) {
+        Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy chương trình khuyến mãi"));
-        return mapToResponse(p);
+
+        if (!promotion.getCode().equals(request.getCode()) && promotionRepository.existsByCode(request.getCode())) {
+            throw new AppException("Mã khuyến mãi mới đã tồn tại");
+        }
+
+        MembershipLevel level = null;
+        if (request.getMinLevelName() != null && !request.getMinLevelName().trim().isEmpty()) {
+            level = membershipLevelRepository.findByName(request.getMinLevelName().trim())
+                .orElseThrow(() -> new AppException("Không tìm thấy hạng thành viên: " + request.getMinLevelName()));
+        }
+
+        promotion.setCode(request.getCode());
+        promotion.setName(request.getName());
+        promotion.setDiscountType(request.getDiscountType());
+        promotion.setDiscountValue(request.getDiscountValue());
+        promotion.setStartDate(request.getStartDate());
+        promotion.setEndDate(request.getEndDate());
+        promotion.setMinOrderAmount(request.getMinOrderAmount());
+        promotion.setMaxDiscountAmount(request.getMaxDiscountAmount());
+        promotion.setUsageLimit(request.getUsageLimit());
+        promotion.setMinLevel(level);
+        promotion.setRequiredPoints(request.getRequiredPoints());
+        promotion.setIsRedeemable(request.getIsRedeemable());
+        promotion.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
+
+        return mapToResponse(promotionRepository.save(promotion));
     }
 
     @Override
-    public PromotionResponse validatePromotion(String code, BigDecimal orderAmount) {
-        Promotion promotion = promotionRepository.findByCode(code)
-                .orElseThrow(() -> new AppException("Mã khuyến mãi không tồn tại"));
+    @com.example.cinema.config.LogAction(action = "VALIDATE", target = "PROMOTION")
+    public PromotionResponse validatePromotion(String code, BigDecimal amount, String phone) {
+        Promotion p = promotionRepository.findByCodeAndIsActiveTrue(code)
+                .orElseThrow(() -> new AppException("Mã khuyến mãi không hợp lệ hoặc đã hết hạn"));
 
-        validatePromotionRules(promotion, orderAmount);
-
-        DiscountStrategy strategy = strategyFactory.getStrategy(promotion.getDiscountType());
-        BigDecimal discountAmount = strategy.calculateDiscount(promotion, orderAmount);
-
-        PromotionResponse response = mapToResponse(promotion);
-        response.setAppliedDiscountAmount(discountAmount);
-
-        return response;
-    }
-
-    private void validatePromotionRules(Promotion promotion, BigDecimal orderAmount) {
-        if (!promotion.getIsActive()) {
-            throw new AppException("Mã khuyến mãi đã bị vô hiệu hóa");
+        if (p.getEndDate().isBefore(java.time.LocalDate.now())) {
+            throw new AppException("Mã khuyến mãi đã hết hạn");
         }
 
-        LocalDate now = LocalDate.now();
-        if (now.isBefore(promotion.getStartDate()) || now.isAfter(promotion.getEndDate())) {
-            throw new AppException("Mã khuyến mãi đã hết hạn hoặc chưa đến thời gian áp dụng");
-        }
-
-        if (promotion.getUsageLimit() != null && promotion.getUsedCount() >= promotion.getUsageLimit()) {
+        if (p.getUsageLimit() != null && p.getUsedCount() >= p.getUsageLimit()) {
             throw new AppException("Mã khuyến mãi đã hết lượt sử dụng");
         }
 
-        if (promotion.getMinOrderAmount() != null && orderAmount.compareTo(promotion.getMinOrderAmount()) < 0) {
-            throw new AppException("Đơn hàng chưa đạt giá trị tối thiểu " + promotion.getMinOrderAmount() + " VNĐ");
+        if (p.getMinOrderAmount() != null && amount.compareTo(p.getMinOrderAmount()) < 0) {
+            throw new AppException("Đơn hàng chưa đạt giá trị tối thiểu: " + p.getMinOrderAmount() + "đ");
         }
 
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            String username = ((UserDetails) principal).getUsername();
-            Customer customer = customerRepository.findByUserUsername(username).orElse(null);
-
-            if (customer != null && promotion.getMinLevel() != null) {
-                if (customer.getMembershipLevel() == null || 
-                    customer.getMembershipLevel().getPriority() < promotion.getMinLevel().getPriority()) {
-                    throw new AppException("Hạng thành viên của bạn (" + (customer.getMembershipLevel() != null ? customer.getMembershipLevel().getName() : "GUEST") +
-                            ") chưa đủ điều kiện áp dụng mã này (Yêu cầu tối thiểu: " + promotion.getMinLevel().getName() + ")");
+        if (p.getMinLevel() != null) {
+            Customer customer = null;
+            if (phone != null && !phone.isEmpty()) {
+                List<Customer> customers = customerRepository.findByPhone(phone);
+                if (!customers.isEmpty()) {
+                    customer = customers.stream()
+                            .filter(c -> c.getUser() != null)
+                            .findFirst()
+                            .orElse(customers.get(0));
                 }
             }
+            if (customer == null) {
+                Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                if (principal instanceof UserDetails) {
+                    customer = customerRepository.findByUserUsername(((UserDetails) principal).getUsername()).orElse(null);
+                }
+            }
+
+            if (customer == null || customer.getMembershipLevel() == null || 
+                customer.getMembershipLevel().getPriority() < p.getMinLevel().getPriority()) {
+                throw new AppException("Hạng thành viên của bạn không đủ điều kiện áp dụng mã này");
+            }
         }
+
+        PromotionResponse res = mapToResponse(p);
+        BigDecimal discount;
+        if (p.getDiscountType() == DiscountType.PERCENT) {
+            discount = amount.multiply(p.getDiscountValue()).divide(new BigDecimal("100"));
+            if (p.getMaxDiscountAmount() != null && p.getMaxDiscountAmount().compareTo(BigDecimal.ZERO) > 0 && discount.compareTo(p.getMaxDiscountAmount()) > 0) {
+                discount = p.getMaxDiscountAmount();
+            }
+        } else {
+            discount = p.getDiscountValue();
+        }
+        res.setAppliedDiscountAmount(discount);
+        return res;
     }
 
     @Override
@@ -169,5 +192,16 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException("Không tìm thấy chương trình khuyến mãi");
         }
         promotionRepository.deleteById(id);
+    }
+
+    private PromotionResponse mapToResponse(Promotion p) {
+        PromotionResponse res = modelMapper.map(p, PromotionResponse.class);
+        if (p.getMinLevel() != null) {
+            res.setMinLevelName(p.getMinLevel().getName());
+            res.setMinLevelPriority(p.getMinLevel().getPriority());
+        } else {
+            res.setMinLevelPriority(0);
+        }
+        return res;
     }
 }

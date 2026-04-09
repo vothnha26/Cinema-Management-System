@@ -1,5 +1,6 @@
 package com.example.cinema.service.ai.impl;
 
+import com.example.cinema.exception.AppException;
 import com.example.cinema.model.dto.request.SchedulingRequest;
 import com.example.cinema.model.dto.response.ShowtimeResponse;
 import com.example.cinema.model.entity.*;
@@ -9,46 +10,51 @@ import com.example.cinema.repository.movie.MovieRepository;
 import com.example.cinema.repository.movie.BranchMovieRepository;
 import com.example.cinema.repository.room.RoomRepository;
 import com.example.cinema.repository.showtime.ShowtimeRepository;
-import com.example.cinema.service.movie.BuzzAnalysisService;
+import com.example.cinema.repository.booking.BookingRepository;
 import com.example.cinema.service.ai.SchedulingService;
-
-import com.example.cinema.service.ai.strategy.WeightingStrategy;
+import com.example.cinema.service.ai.GeminiService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class SchedulingServiceImpl implements SchedulingService {
 
+    private static final Logger log = LoggerFactory.getLogger(SchedulingServiceImpl.class);
+
     private final MovieRepository movieRepository;
     private final RoomRepository roomRepository;
     private final ShowtimeRepository showtimeRepository;
     private final BranchMovieRepository branchMovieRepository;
-    private final com.example.cinema.repository.movie.FormatRepository formatRepository;
-    private final BuzzAnalysisService buzzAnalysisService;
-    private final List<WeightingStrategy> strategies;
+    private final GeminiService geminiService;
+    private final ObjectMapper objectMapper;
+
+    private final BookingRepository bookingRepository;
 
     @Autowired
     public SchedulingServiceImpl(MovieRepository movieRepository,
             RoomRepository roomRepository,
             ShowtimeRepository showtimeRepository,
             BranchMovieRepository branchMovieRepository,
-            com.example.cinema.repository.movie.FormatRepository formatRepository,
-            BuzzAnalysisService buzzAnalysisService,
-            List<WeightingStrategy> strategies) {
+            GeminiService geminiService,
+            ObjectMapper objectMapper,
+            BookingRepository bookingRepository) {
         this.movieRepository = movieRepository;
         this.roomRepository = roomRepository;
         this.showtimeRepository = showtimeRepository;
         this.branchMovieRepository = branchMovieRepository;
-        this.formatRepository = formatRepository;
-        this.buzzAnalysisService = buzzAnalysisService;
-        this.strategies = strategies;
+        this.geminiService = geminiService;
+        this.objectMapper = objectMapper;
+        this.bookingRepository = bookingRepository;
     }
 
     @Override
@@ -56,243 +62,158 @@ public class SchedulingServiceImpl implements SchedulingService {
         SchedulingRequest request = new SchedulingRequest();
         request.setDate(date);
         request.setMode(mode);
-        request.setStrategy("BALANCED");
         return getSuggestions(request);
     }
 
     @Override
     public List<ShowtimeResponse> getSuggestions(SchedulingRequest request) {
-        LocalDate targetDate = request.getDate();
-        LocalDateTime workingStartDateTime = targetDate
-                .atTime((request.getStartTime() == null) ? LocalTime.of(8, 0) : request.getStartTime());
-        LocalDateTime workingEndDateTime = targetDate.plusDays(1).atTime(2, 0);
+        log.info("AI Scheduling triggered for branch: {}, date: {}", request.getBranchId(), request.getDate());
 
-        double topRatio = (request.getRatio() != null) ? request.getRatio() : 0.7;
-
-        // AI cần biết đang xếp lịch cho rạp nào
-        Long branchId = request.getBranchId();
-
-        List<Movie> candidatesPool;
-        Map<Long, Integer> branchPriorities = new HashMap<>();
-
-        if (branchId != null) {
-            // Lấy danh sách phim đã được phân bổ cho chi nhánh này
-            List<BranchMovie> distributed = branchMovieRepository.findByBranchIdAndIsActiveTrue(branchId);
-            candidatesPool = distributed.stream().map(BranchMovie::getMovie).collect(Collectors.toList());
-            distributed.forEach(bm -> branchPriorities.put(bm.getMovie().getId(), bm.getPriorityLevel()));
+        // 1. LẤY DỮ LIỆU ĐẦU VÀO CHO AI
+        List<Movie> movies;
+        if (request.getBranchId() != null) {
+            movies = branchMovieRepository.findByBranchIdAndIsActiveTrue(request.getBranchId())
+                    .stream()
+                    .map(BranchMovie::getMovie)
+                    .filter(m -> List.of(MovieStatus.SHOWING, MovieStatus.NOW_SHOWING, MovieStatus.PRE_RELEASE).contains(m.getStatus()))
+                    .collect(Collectors.toList());
         } else {
-            // Admin xếp lịch toàn hệ thống (hiếm gặp)
-            candidatesPool = movieRepository.findAll();
-            candidatesPool.forEach(m -> branchPriorities.put(m.getId(), 1));
+            movies = movieRepository.findAllByStatusIn(List.of(MovieStatus.SHOWING, MovieStatus.NOW_SHOWING, MovieStatus.PRE_RELEASE));
         }
 
-        List<Movie> activeMovies = candidatesPool.stream()
-                .filter(m -> m.getStatus() == MovieStatus.SHOWING || m.getStatus() == MovieStatus.NOW_SHOWING
-                        || m.getStatus() == MovieStatus.PRE_RELEASE)
-                .collect(Collectors.toList());
-
-        if (activeMovies.isEmpty())
-            return new ArrayList<>();
-
-        // Lọc phòng thuộc chi nhánh
-        List<Room> rooms = branchId != null
-                ? roomRepository.findAll().stream().filter(r -> r.getBranch().getId().equals(branchId))
-                        .collect(Collectors.toList())
+        List<Room> rooms = request.getBranchId() != null 
+                ? roomRepository.findAll().stream().filter(r -> r.getBranch().getId().equals(request.getBranchId())).collect(Collectors.toList())
                 : roomRepository.findAll();
 
-        Map<Long, Double> buzzScores = buzzAnalysisService.getExternalBuzzScores();
-        Map<Long, Integer> movieUsageCount = new HashMap<>();
-        activeMovies.forEach(m -> movieUsageCount.put(m.getId(), 0));
-
-        List<Showtime> crossDayShowtimes = showtimeRepository.findAllByStartTimeBetween(
-                targetDate.minusDays(1).atStartOfDay(), targetDate.plusDays(1).atTime(LocalTime.MAX), branchId);
-
-        List<ShowtimeResponse> suggestions = new ArrayList<>();
-        int staggeredOffset = 0;
-
-        for (Room room : rooms) {
-            final Long currentRoomId = room.getId();
-            final String rType = room.getRoomType() != null ? room.getRoomType().getId() : "HALL_2D";
-
-            LocalDateTime actualStartTime = workingStartDateTime.plusMinutes(staggeredOffset);
-            staggeredOffset = (staggeredOffset + 15) % 45;
-
-            Optional<Showtime> lastNightShow = crossDayShowtimes.stream()
-                    .filter(s -> s.getRoom().getId().equals(currentRoomId))
-                    .filter(s -> s.getEndTime().isAfter(workingStartDateTime))
-                    .filter(s -> s.getStartTime().isBefore(workingStartDateTime))
-                    .findFirst();
-
-            if (lastNightShow.isPresent()) {
-                actualStartTime = lastNightShow.get().getEndTime().plusMinutes(15);
-            }
-
-            List<Showtime> keptShowtimes = crossDayShowtimes.stream()
-                    .filter(s -> s.getRoom().getId().equals(currentRoomId))
-                    .filter(s -> {
-                        if ("OVERWRITE".equalsIgnoreCase(request.getMode())) {
-                            return s.getStartTime().isBefore(workingStartDateTime)
-                                    || s.getStartTime().isAfter(workingEndDateTime);
-                        }
-                        return true;
-                    })
-                    .sorted(Comparator.comparing(Showtime::getStartTime))
-                    .collect(Collectors.toList());
-
-            LocalDateTime cursor = actualStartTime;
-
-            while (cursor.isBefore(workingEndDateTime)) {
-                final LocalDateTime checkTime = cursor;
-                Optional<Showtime> conflict = keptShowtimes.stream()
-                        .filter(s -> {
-                            LocalDateTime sStart = s.getStartTime();
-                            LocalDateTime sEnd = s.getEndTime().plusMinutes(15);
-                            return !checkTime.isBefore(sStart) && checkTime.isBefore(sEnd);
-                        }).findFirst();
-
-                if (conflict.isPresent()) {
-                    cursor = conflict.get().getEndTime().plusMinutes(15);
-                    continue;
-                }
-
-                final LocalTime evalTime = cursor.toLocalTime();
-                List<Movie> candidates = activeMovies.stream()
-                        .filter(m -> {
-                            if (room.getRoomType() == null)
-                                return !m.getFormats().isEmpty();
-                            Set<Format> supported = room.getRoomType().getSupportedFormats();
-                            return supported == null || supported.isEmpty()
-                                    || m.getFormats().stream().anyMatch(supported::contains);
-                        })
-                        .sorted((m1, m2) -> {
-                            double w1 = calculateAdvancedWeight(m1, evalTime, buzzScores, request, movieUsageCount,
-                                    branchPriorities);
-                            double w2 = calculateAdvancedWeight(m2, evalTime, buzzScores, request, movieUsageCount,
-                                    branchPriorities);
-                            return Double.compare(w2, w1);
-                        })
-                        .collect(Collectors.toList());
-
-                if (candidates.isEmpty()) {
-                    cursor = cursor.plusMinutes(30);
-                    continue;
-                }
-
-                int topSize = Math.max(1, (int) Math.ceil(candidates.size() * topRatio));
-                Movie selectedMovie = candidates.get(new Random().nextInt(topSize));
-
-                int duration = (selectedMovie.getDuration() > 0) ? selectedMovie.getDuration() : 120;
-                LocalDateTime expectedEndTime = cursor.plusMinutes(duration);
-
-                if (expectedEndTime.isAfter(workingEndDateTime))
-                    break;
-
-                final LocalDateTime startRef = cursor;
-                final LocalDateTime endRef = expectedEndTime.plusMinutes(15);
-                boolean willOverlap = keptShowtimes.stream().anyMatch(s -> {
-                    LocalDateTime sStart = s.getStartTime();
-                    return sStart.isAfter(startRef) && sStart.isBefore(endRef);
-                });
-
-                if (!willOverlap) {
-                    ShowtimeResponse res = new ShowtimeResponse();
-                    res.setId(-1L);
-                    res.setMovieId(selectedMovie.getId());
-                    res.setMovieTitle(selectedMovie.getTitle());
-                    res.setRoomId(room.getId());
-                    res.setRoomName(room.getName());
-                    res.setRoomType(rType);
-
-                    Set<Format> supported = room.getRoomType() != null ? room.getRoomType().getSupportedFormats()
-                            : new HashSet<>();
-                    Format selectedFormat = selectedMovie.getFormats().stream()
-                            .filter(f -> supported.isEmpty() || supported.contains(f))
-                            .max(Comparator.comparing(Format::getId))
-                            .orElse(selectedMovie.getFormats().isEmpty() ? null
-                                    : selectedMovie.getFormats().iterator().next());
-
-                    if (selectedFormat != null) {
-                        res.setFormatId(selectedFormat.getId());
-                        res.setFormatName(selectedFormat.getName());
-                    }
-
-                    res.setStartTime(cursor);
-                    res.setEndTime(expectedEndTime);
-                    suggestions.add(res);
-
-                    movieUsageCount.put(selectedMovie.getId(), movieUsageCount.get(selectedMovie.getId()) + 1);
-                    cursor = expectedEndTime.plusMinutes(15);
-                } else {
-                    cursor = cursor.plusMinutes(30);
-                }
-            }
-
-            for (Showtime ks : keptShowtimes) {
-                if (ks.getStartTime().toLocalDate().equals(targetDate)) {
-                    ShowtimeResponse kr = new ShowtimeResponse();
-                    kr.setId(ks.getId());
-                    kr.setMovieId(ks.getMovie().getId());
-                    kr.setMovieTitle(ks.getMovie().getTitle());
-                    kr.setRoomId(ks.getRoom().getId());
-                    kr.setRoomName(ks.getRoom().getName());
-                    if (ks.getFormat() != null) {
-                        kr.setFormatId(ks.getFormat().getId());
-                        kr.setFormatName(ks.getFormat().getName());
-                    }
-                    kr.setStartTime(ks.getStartTime());
-                    kr.setEndTime(ks.getEndTime());
-                    kr.setTotalSeats(ks.getTotalSeats());
-                    kr.setSoldSeats(ks.getSoldSeats());
-                    suggestions.add(kr);
-                }
-            }
-        }
-        return suggestions;
-    }
-
-    private double calculateAdvancedWeight(Movie m, LocalTime time, Map<Long, Double> buzz, SchedulingRequest req,
-            Map<Long, Integer> usage, Map<Long, Integer> branchPriorities) {
-        double totalWeight = 0.0;
-
-        for (WeightingStrategy strategy : strategies) {
-            totalWeight += strategy.calculateWeight(m, time, buzz, req, usage, branchPriorities);
+        if (movies.isEmpty() || rooms.isEmpty()) {
+            log.warn("No movies or rooms found for AI scheduling");
+            return new ArrayList<>();
         }
 
-        return totalWeight;
+        // 2. XÂY DỰNG PROMPT CHO GEMINI
+        StringBuilder prompt = new StringBuilder();
+        prompt.append("Bạn là một chuyên gia điều phối lịch chiếu phim chuyên nghiệp. Hãy lập lịch chiếu cho ngày ")
+              .append(request.getDate()).append(" với các dữ liệu sau:\n\n");
+
+        prompt.append("DANH SÁCH PHIM:\n");
+        for (Movie m : movies) {
+            prompt.append("- ID: ").append(m.getId()).append(", Tên: ").append(m.getTitle())
+                  .append(", Thời lượng: ").append(m.getDuration()).append(" phút")
+                  .append(", Định dạng hỗ trợ: ").append(m.getFormats().stream().map(Format::getName).collect(Collectors.joining(",")))
+                  .append("\n");
+        }
+
+        prompt.append("\nDANH SÁCH PHÒNG CHIẾU:\n");
+        for (Room r : rooms) {
+            prompt.append("- ID: ").append(r.getId()).append(", Tên: ").append(r.getName())
+                  .append(", Loại phòng: ").append(r.getRoomType().getName())
+                  .append(", Định dạng hỗ trợ: ").append(r.getRoomType().getSupportedFormats().stream().map(Format::getName).collect(Collectors.joining(",")))
+                  .append("\n");
+        }
+
+        // Lấy suất chiếu hiện hữu để AI biết khoảng trống
+        List<Showtime> existing = showtimeRepository.findAllByStartTimeBetween(
+                request.getDate().atStartOfDay(), 
+                request.getDate().plusDays(1).atStartOfDay(), 
+                request.getBranchId());
+        
+        if (!existing.isEmpty() && "FILL".equals(request.getMode())) {
+            prompt.append("\nCÁC SUẤT CHIẾU ĐÃ CÓ (KHÔNG ĐƯỢC LẬP ĐÈ LÊN CÁC KHOẢNG NÀY):\n");
+            for (Showtime es : existing) {
+                prompt.append("- Phòng: ").append(es.getRoom().getName())
+                      .append(", Từ: ").append(es.getStartTime().toLocalTime())
+                      .append(", Đến: ").append(es.getEndTime().toLocalTime())
+                      .append("\n");
+            }
+        }
+
+        prompt.append("\nYÊU CẦU ĐIỀU PHỐI:\n")
+              .append("- Chế độ: ").append(request.getMode() != null ? request.getMode() : "FILL").append("\n")
+              .append("- Chiến lược: ").append(request.getStrategy() != null ? request.getStrategy() : "BALANCED").append("\n")
+              .append("- Khung giờ hoạt động: ").append(request.getStartTime() != null ? request.getStartTime() : "08:00").append(" đến ").append(request.getEndTime() != null ? request.getEndTime() : "23:55").append("\n")
+              .append("- CHỈ THỊ ĐẶC BIỆT TỪ QUẢN LÝ (BẮT BUỘC TUÂN THỦ TUYỆT ĐỐI): ").append(request.getCustomDirectives() != null ? request.getCustomDirectives() : "Không có").append("\n")
+              .append("- Quy tắc: Mỗi suất chiếu cách nhau ít nhất 15 phút dọn phòng. Không được lập lịch ngoài khung giờ hoạt động.\n");
+
+        prompt.append("\nHÃY TRẢ VỀ KẾT QUẢ DƯỚI DẠNG MẢNG JSON NHƯ SAU (KHÔNG GIẢI THÍCH THÊM):\n")
+              .append("[{\"id\": -1, \"movieId\": 1, \"movieTitle\": \"Tên Phim\", \"roomId\": 1, \"roomName\": \"Phòng 1\", \"formatName\": \"2D\", \"startTime\": \"")
+              .append(request.getDate()).append("T08:00:00\", \"endTime\": \"").append(request.getDate()).append("T10:00:00\"}]");
+
+        // 3. GỌI GEMINI AI
+        String aiResponse;
+        try {
+            aiResponse = geminiService.generateResponse(prompt.toString());
+            log.info("AI Response received: {}", aiResponse);
+        } catch (Exception e) {
+            log.error("Gemini API connection error: {}", e.getMessage());
+            throw new AppException("Hệ thống AI đang quá tải hoặc gặp sự cố. Vui lòng thử lại sau vài giây.");
+        }
+
+        try {
+            // Làm sạch response (Gemini thường bọc trong ```json ... ```)
+            String cleanedJson = aiResponse.replaceAll("```json", "").replaceAll("```", "").trim();
+            if (cleanedJson.isEmpty() || "[]".equals(cleanedJson)) return new ArrayList<>();
+            
+            List<ShowtimeResponse> suggestions = objectMapper.readValue(cleanedJson, new TypeReference<List<ShowtimeResponse>>() {});
+            
+            // Bổ sung các thông tin còn thiếu cho FE
+            suggestions.forEach(s -> {
+                s.setId(-1L); // Đánh dấu là lịch nháp
+                Movie m = movies.stream().filter(mov -> mov.getId().equals(s.getMovieId())).findFirst().orElse(null);
+                if (m != null) s.setPosterUrl(m.getPosterUrl());
+            });
+
+            return suggestions;
+        } catch (Exception e) {
+            log.error("Failed to parse AI response: {}", e.getMessage());
+            throw new AppException("AI trả về kết quả không hợp lệ. Hãy thử điều chỉnh yêu cầu của bạn.");
+        }
     }
 
     @Override
     @Transactional
     public void applySuggestions(List<ShowtimeResponse> suggestions, boolean overwrite) {
-        if (suggestions.isEmpty())
-            return;
-        LocalDate targetDate = suggestions.stream().filter(s -> s.getId() == -1L).findFirst()
-                .map(s -> s.getStartTime().toLocalDate()).orElse(null);
-        if (targetDate == null)
-            return;
+        if (suggestions.isEmpty()) return;
+        
+        LocalDate targetDate = suggestions.get(0).getStartTime().toLocalDate();
 
         if (overwrite) {
-            showtimeRepository.deleteByStartTimeBetweenAndSoldSeats(targetDate.atStartOfDay(),
-                    targetDate.plusDays(1).atTime(2, 0), 0);
+            // Tìm tất cả suất chiếu trong ngày
+            List<Showtime> existing = showtimeRepository.findAllByStartTimeBetween(
+                targetDate.atStartOfDay(), targetDate.plusDays(1).atStartOfDay(), null);
+            
+            for (Showtime s : existing) {
+                // Chỉ xóa nếu thực sự chưa có bất kỳ đặt chỗ nào (tránh lỗi FK)
+                if (bookingRepository.countByShowtimeId(s.getId()) == 0) {
+                    showtimeRepository.delete(s);
+                } else {
+                    log.warn("Cannot delete showtime {} because it already has bookings", s.getId());
+                }
+            }
         }
 
         for (ShowtimeResponse res : suggestions) {
-            if (res.getId() != null && res.getId() > 0)
-                continue;
+            if (res.getId() != null && res.getId() > 0) continue; // Bỏ qua lịch đã có
+            
             Showtime s = new Showtime();
-            s.setMovie(movieRepository.getReferenceById(res.getMovieId()));
-            s.setRoom(roomRepository.getReferenceById(res.getRoomId()));
-            if (res.getFormatName() != null) {
-                movieRepository.findById(res.getMovieId()).ifPresent(m -> {
-                    m.getFormats().stream().filter(f -> f.getName().equals(res.getFormatName())).findFirst()
-                            .ifPresent(s::setFormat);
-                });
-            }
+            Movie movie = movieRepository.findById(res.getMovieId()).orElseThrow(() -> new AppException("Movie not found"));
+            Room room = roomRepository.findById(res.getRoomId()).orElseThrow(() -> new AppException("Room not found"));
+            
+            s.setMovie(movie);
+            s.setRoom(room);
             s.setStartTime(res.getStartTime());
             s.setEndTime(res.getEndTime());
             s.setStatus(ShowtimeStatus.UPCOMING);
-            s.setTotalSeats(s.getRoom().getCapacity());
+            s.setTotalSeats(room.getCapacity());
             s.setSoldSeats(0);
+            
+            // Tìm format từ tên
+            if (res.getFormatName() != null) {
+                movie.getFormats().stream()
+                    .filter(f -> f.getName().equals(res.getFormatName()))
+                    .findFirst()
+                    .ifPresent(s::setFormat);
+            }
+            
             showtimeRepository.save(s);
         }
     }

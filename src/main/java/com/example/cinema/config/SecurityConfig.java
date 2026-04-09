@@ -70,6 +70,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/bookings/*/checkin").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER", "ROLE_ADMIN")
 
                         // 6. ADMIN ONLY (System & Users)
+                        .requestMatchers("/api/admin/staffs/assignments").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/admin/branch-movies/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
                         .requestMatchers("/api/admin/branches/**", "/api/admin/branches", "/api/admin/pricing/**", "/api/admin/pricing").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
                         .requestMatchers("/api/admin/pricing-rules/**", "/api/admin/pricing-rules").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
                         .requestMatchers("/api/users/**").hasAuthority("ROLE_ADMIN")

@@ -111,7 +111,8 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold text-muted">Hạng tối thiểu</label>
-                            <select name="minTier" class="form-select">
+                            <select name="minLevelName" class="form-select">
+                                <option value="">GUEST (Khách vãng lai)</option>
                                 <option value="STANDARD">STANDARD</option>
                                 <option value="SILVER">SILVER</option>
                                 <option value="GOLD">GOLD</option>
@@ -179,7 +180,7 @@
                                 <div class="small text-muted">Hạn: ${p.startDate} đến ${p.endDate}</div>
                             </td>
                             <td class="text-warning fw-bold">${discountStr}</td>
-                            <td><span class="badge bg-dark border border-secondary">${p.minTier || 'STANDARD'}</span></td>
+                            <td><span class="badge bg-dark border border-secondary">${p.minLevelName || 'GUEST'}</span></td>
                             <td><span class="text-info">${p.requiredPoints || 0} pts</span></td>
                             <td><span class="badge ${p.isActive ? 'bg-success' : 'bg-danger'}">${p.isActive ? 'Đang chạy' : 'Vô hiệu'}</span></td>
                             <td class="text-end">
@@ -218,7 +219,7 @@
         f.querySelector('[name="minOrderAmount"]').value = p.minOrderAmount || 0;
         f.querySelector('[name="maxDiscountAmount"]').value = p.maxDiscountAmount || 0;
         f.querySelector('[name="usageLimit"]').value = p.usageLimit || 1000;
-        f.querySelector('[name="minTier"]').value = p.minTier;
+        f.querySelector('[name="minLevelName"]').value = p.minLevelName || '';
         f.querySelector('[name="requiredPoints"]').value = p.requiredPoints || 0;
         f.querySelector('[name="startDate"]').value = p.startDate;
         f.querySelector('[name="endDate"]').value = p.endDate;
@@ -239,7 +240,7 @@
             minOrderAmount: parseFloat(f.querySelector('[name="minOrderAmount"]').value) || 0,
             maxDiscountAmount: parseFloat(f.querySelector('[name="maxDiscountAmount"]').value) || 0,
             usageLimit: parseInt(f.querySelector('[name="usageLimit"]').value) || 1000,
-            minTier: f.querySelector('[name="minTier"]').value,
+            minLevelName: f.querySelector('[name="minLevelName"]').value,
             requiredPoints: parseInt(f.querySelector('[name="requiredPoints"]').value) || 0,
             isRedeemable: parseInt(f.querySelector('[name="requiredPoints"]').value) > 0,
             startDate: f.querySelector('[name="startDate"]').value,

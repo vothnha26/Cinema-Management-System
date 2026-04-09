@@ -3,283 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý Combo – StarCinema</title>
+    <title>Quản lý Combo & Tồn kho | FlashCinema Elite</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
-          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --accent: #E5133A; --text: #E8EAF0; --text-muted: #7B82A0;
           --gradient: linear-gradient(135deg, #E5133A, #8B0020);
         }
-        * { box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
-
-        .main-content { padding: 40px; min-height: 100vh; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; margin: 0; display: flex; }
+        
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
         .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
-        .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
+        .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; letter-spacing: 2px; margin: 0; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; transition: opacity 0.2s; }
+        .combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 25px; }
+        .combo-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; transition: 0.3s; position: relative; overflow: hidden; }
+        .combo-card:hover { border-color: var(--accent); transform: translateY(-5px); }
         
-        .combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
-        .combo-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; transition: 0.3s; display: flex; flex-direction: column; }
-        .combo-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-        .combo-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--surface); }
-        .combo-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
-        .combo-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
-        .combo-price { color: var(--accent-gold); font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; }
-        
-        .stock-badge { padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
-        .stock-ok { background: rgba(80,200,100,0.1); color: #50C864; }
-        .stock-low { background: rgba(229,19,58,0.1); color: var(--accent); }
+        .combo-image { width: 100%; height: 180px; object-fit: cover; border-radius: 16px; margin-bottom: 20px; background: var(--surface); }
+        .combo-name { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 5px; }
+        .combo-price { color: var(--accent); font-weight: 700; font-size: 1.1rem; margin-bottom: 20px; display: block; }
 
-        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 24px; color: var(--text); }
-        .form-control, .form-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 12px; }
-        .form-control:focus { border-color: var(--accent); background: var(--surface); color: #fff; outline: none; box-shadow: none; }
-        
-        #imagePreview { width: 100%; border-radius: 12px; margin-top: 10px; border: 1px solid var(--border); display: none; }
+        .stock-section { background: var(--surface); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
+        .stock-label { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; display: block; }
+        .stock-control { display: flex; align-items: center; gap: 15px; }
+        .stock-control input { background: #000; border: 1px solid var(--border); color: #fff; text-align: center; font-weight: 800; width: 80px; padding: 8px; border-radius: 10px; }
+        .btn-update { background: var(--accent); color: #fff; border: none; padding: 8px 20px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; flex: 1; transition: 0.2s; }
+        .btn-update:hover { opacity: 0.9; }
+
+        .badge-status { position: absolute; top: 20px; right: 20px; padding: 5px 12px; border-radius: 30px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
+        .bg-active { background: rgba(80,200,100,0.15); color: #50C864; border: 1px solid rgba(80,200,100,0.2); }
+        .bg-inactive { background: rgba(229,19,58,0.15); color: var(--accent); border: 1px solid rgba(229,19,58,0.2); }
+
+        .toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; }
     </style>
 </head>
 <body>
 
-<aside class="sidebar"></aside>
+<aside class="sidebar" id="sidebar"></aside>
 
 <main class="main-content">
     <div class="header-section">
         <div>
-            <h1 class="page-title">Quản lý Combo & Bắp nước</h1>
-            <p class="text-muted m-0" id="pageSubtitle">Danh mục bắp nước toàn hệ thống.</p>
+            <h1 class="page-title">QUẢN LÝ TỒN KHO COMBO</h1>
+            <p class="text-muted m-0 fw-500">Cập nhật số lượng bắp nước và thực phẩm tại chi nhánh</p>
         </div>
-        <button class="btn-add" id="btnAddCombo" onclick="openAddModal()">
-            <i class="bi bi-plus-lg me-2"></i> THÊM COMBO MỚI
-        </button>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary px-4 fw-bold" style="border-radius: 12px" onclick="loadCombos()">
+                <i class="bi bi-arrow-clockwise me-2"></i>LÀM MỚI
+            </button>
+        </div>
     </div>
 
     <div class="combo-grid" id="comboGrid">
-        <!-- Loaded via JS -->
+        <!-- Combo cards will be loaded here -->
     </div>
 </main>
 
-<!-- ADMIN MODAL: CREATE/EDIT COMBO -->
-<div class="modal fade" id="comboModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content p-2">
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold" id="modalTitle">THÔNG TIN COMBO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <form id="comboForm">
-                    <input type="hidden" id="comboId">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Tên Combo *</label>
-                        <input type="text" name="name" class="form-control" required placeholder="VD: Combo Bắp 2 ngăn">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Mô tả chi tiết</label>
-                        <textarea name="description" class="form-control" rows="2"></textarea>
-                    </div>
-                    <div class="row">
-                        <div class="col-12 mb-3">
-                            <label class="form-label small fw-bold text-muted">Giá bán (VNĐ) *</label>
-                            <input type="number" name="price" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Ảnh minh họa</label>
-                        <input type="file" id="imageInput" class="form-control" accept="image/*" onchange="previewImage(this)">
-                        <img id="imagePreview">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-danger px-4 fw-bold" onclick="saveCombo()">LƯU COMBO</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- MANAGER MODAL: UPDATE STOCK -->
-<div class="modal fade" id="stockModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold">NHẬP TỒN KHO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p id="stockComboName" class="text-info fw-bold mb-3"></p>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">Số lượng tồn kho mới</label>
-                    <input type="number" id="newStockInput" class="form-control fs-4 text-center fw-bold" value="0">
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button class="btn btn-danger w-100 py-2 fw-bold" onclick="saveStock()">CẬP NHẬT</button>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="toast-container" id="toastContainer"></div>
 
 <script src="/js/auth-guard.js"></script>
-<script>AuthGuard.requireRole(['ADMIN', 'MANAGER']);</script>
 <script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const comboModal = new bootstrap.Modal(document.getElementById('comboModal'));
-    const stockModal = new bootstrap.Modal(document.getElementById('stockModal'));
+    AuthGuard.requireRole(['MANAGER', 'ADMIN']);
     let allCombos = [];
-    let currentStockingComboId = null;
-
-    document.addEventListener('DOMContentLoaded', init);
-
-    async function init() {
-        const role = localStorage.getItem('cinemaRole');
-        if (role === 'MANAGER') {
-            document.getElementById('btnAddCombo').style.display = 'none';
-            document.getElementById('pageSubtitle').innerText = 'Quản lý tồn kho bắp nước tại chi nhánh.';
-        }
-        loadCombos();
-    }
 
     async function loadCombos() {
-        const role = localStorage.getItem('cinemaRole');
-        const branchId = localStorage.getItem('cinemaBranchId');
-        let res;
-        
-        if (role === 'MANAGER' && branchId) {
-            res = await api.get(`/combos/branch/${branchId}`);
-        } else {
-            res = await api.get('/combos');
-        }
-
+        const res = await api.get('/combos');
         if (res.success) {
             allCombos = res.data;
-            renderCombos(allCombos);
+            renderCombos();
         }
     }
 
-    function renderCombos(combos) {
-        const role = localStorage.getItem('cinemaRole');
-        document.getElementById('comboGrid').innerHTML = combos.map(c => {
-            const stockClass = (c.stockQuantity || 0) < 10 ? 'stock-low' : 'stock-ok';
-            return `
-                <div class="combo-card">
-                    <img src="${c.imageUrl || 'https://placehold.co/300x180?text=Combo'}" class="combo-img" onerror="this.src='https://placehold.co/300x180?text=Combo'">
-                    <div class="combo-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div class="combo-name">${c.name}</div>
-                            <span class="stock-badge ${stockClass}">Tồn: ${c.stockQuantity || 0}</span>
-                        </div>
-                        <div class="text-muted small mb-3" style="font-size: 0.8rem">${c.description || 'Không có mô tả'}</div>
-                        <div class="d-flex justify-content-between align-items-center mt-auto">
-                            <span class="combo-price">${new Intl.NumberFormat('vi-VN').format(c.price)}đ</span>
-                            <div class="btn-group">
-                                ${role === 'ADMIN' ? `
-                                    <button class="btn btn-sm btn-outline-light" onclick="editCombo(${c.id})"><i class="bi bi-pencil"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCombo(${c.id})"><i class="bi bi-trash"></i></button>
-                                ` : `
-                                    <button class="btn btn-sm btn-outline-info fw-bold" onclick="openStockModal(${c.id}, '${c.name}', ${c.stockQuantity})">
-                                        <i class="bi bi-box-seam me-1"></i> KHO
-                                    </button>
-                                `}
-                            </div>
-                        </div>
+    function renderCombos() {
+        const grid = document.getElementById('comboGrid');
+        grid.innerHTML = allCombos.map(c => `
+            <div class="combo-card animate__animated animate__fadeIn">
+                <span class="badge-status ${c.active ? 'bg-active' : 'bg-inactive'}">${c.active ? 'Kinh doanh' : 'Ngừng bán'}</span>
+                <img src="${c.imageUrl || 'https://placehold.co/300x180/161B2E/E8EAF0?text=Combo'}" class="combo-image" onerror="this.src='https://placehold.co/300x180/161B2E/E8EAF0?text=Combo'">
+                <div class="combo-name">${c.name}</div>
+                <span class="combo-price">${c.price.toLocaleString()}đ</span>
+                
+                <div class="stock-section">
+                    <span class="stock-label">Số lượng tồn kho</span>
+                    <div class="stock-control">
+                        <input type="number" id="stock-${c.id}" value="${c.stockQuantity}" min="0">
+                        <button class="btn-update" onclick="updateStock(${c.id})">CẬP NHẬT</button>
                     </div>
                 </div>
-            `;
-        }).join('');
+            </div>
+        `).join('');
     }
 
-    // --- ADMIN ACTIONS ---
-    function openAddModal() {
-        document.getElementById('comboForm').reset();
-        document.getElementById('comboId').value = '';
-        document.getElementById('imagePreview').style.display = 'none';
-        document.getElementById('modalTitle').innerText = 'THÊM COMBO MỚI';
-        comboModal.show();
-    }
-
-    function editCombo(id) {
-        const c = allCombos.find(x => x.id === id);
-        if (!c) return;
-        const f = document.getElementById('comboForm');
-        document.getElementById('comboId').value = c.id;
-        f.querySelector('[name="name"]').value = c.name;
-        f.querySelector('[name="description"]').value = c.description;
-        f.querySelector('[name="price"]').value = c.price;
-        if (c.imageUrl) {
-            const prev = document.getElementById('imagePreview');
-            prev.src = c.imageUrl; prev.style.display = 'block';
-        }
-        document.getElementById('modalTitle').innerText = 'CẬP NHẬT COMBO';
-        comboModal.show();
-    }
-
-    async function saveCombo() {
-        const id = document.getElementById('comboId').value;
-        const f = document.getElementById('comboForm');
-        const data = {
-            name: f.querySelector('[name="name"]').value,
-            description: f.querySelector('[name="description"]').value,
-            price: parseFloat(f.querySelector('[name="price"]').value),
-            stockQuantity: 0 // Default for admin creation
-        };
-
-        const fd = new FormData();
-        fd.append('combo', new Blob([JSON.stringify(data)], { type: 'application/json' }));
-        const imgFile = document.getElementById('imageInput').files[0];
-        if (imgFile) fd.append('image', imgFile);
-
-        const res = await (id ? api.put(`/combos/${id}`, fd, true) : api.post('/combos', fd, true));
-        if (res.success) { comboModal.hide(); loadCombos(); }
-        else alert(res.message);
-    }
-
-    async function deleteCombo(id) {
-        if (confirm('Xóa combo này?')) {
-            const res = await api.delete(`/combos/${id}`);
-            if (res.success) loadCombos();
-        }
-    }
-
-    // --- MANAGER ACTIONS ---
-    function openStockModal(id, name, currentStock) {
-        currentStockingComboId = id;
-        document.getElementById('stockComboName').innerText = name;
-        document.getElementById('newStockInput').value = currentStock || 0;
-        stockModal.show();
-    }
-
-    async function saveStock() {
-        const branchId = localStorage.getItem('cinemaBranchId');
-        const quantity = parseInt(document.getElementById('newStockInput').value);
-        if (isNaN(quantity)) return;
-
-        const res = await api.patch(`/combos/branch/${branchId}/combo/${currentStockingComboId}/stock?quantity=${quantity}`);
+    async function updateStock(id) {
+        const newStock = document.getElementById(`stock-${id}`).value;
+        const res = await api.patch(`/combos/${id}/stock?quantity=${newStock}`);
         if (res.success) {
-            stockModal.hide();
+            showNotify('Thành công', 'Đã cập nhật số lượng tồn kho');
             loadCombos();
-            alert('Cập nhật tồn kho thành công!');
-        } else alert(res.message);
-    }
-
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const prev = document.getElementById('imagePreview');
-                prev.src = e.target.result;
-                prev.style.display = 'block';
-            }
-            reader.readAsDataURL(input.files[0]);
+        } else {
+            showNotify('Lỗi', res.message, 'error');
         }
     }
+
+    function showNotify(title, msg, type='success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type==='success'?'success':'danger'} shadow-lg border-0 d-flex align-items-center gap-3 py-3 px-4 animate__animated animate__fadeInUp`;
+        toast.style.borderRadius = '16px';
+        toast.innerHTML = `<i class="bi ${type==='success'?'bi-check-circle-fill':'bi-exclamation-triangle-fill'} fs-4"></i>
+                           <div><div class="fw-bold">${title}</div><div class="small">${msg}</div></div>`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+    }
+
+    loadCombos();
 </script>
 </body>
 </html>

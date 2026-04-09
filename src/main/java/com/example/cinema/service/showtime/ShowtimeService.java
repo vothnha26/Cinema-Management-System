@@ -10,7 +10,7 @@ public interface ShowtimeService {
     List<ShowtimeResponse> getAllShowtimes(LocalDate date);
     List<ShowtimeResponse> getShowtimesByBranch(Long branchId, LocalDate date);
     List<ShowtimeResponse> getShowtimesByMovie(Long movieId);
-    List<SeatResponse> getSeatStatusForShowtime(Long showtimeId);
+    List<SeatResponse> getSeatStatusForShowtime(Long showtimeId, String username);
     ShowtimeResponse createShowtime(ShowtimeRequest request);
     ShowtimeResponse updateShowtime(Long id, ShowtimeRequest request);
     void deleteShowtime(Long id);

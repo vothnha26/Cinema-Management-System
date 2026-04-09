@@ -17,6 +17,7 @@ public class PromotionResponse {
     private Integer usageLimit;
     private Integer usedCount;
     private String minLevelName;
+    private Integer minLevelPriority;
     private Integer requiredPoints;
     private Boolean isRedeemable;
     private Boolean isActive;
@@ -116,6 +117,14 @@ public class PromotionResponse {
 
     public void setMinLevelName(String minLevelName) {
         this.minLevelName = minLevelName;
+    }
+
+    public Integer getMinLevelPriority() {
+        return minLevelPriority;
+    }
+
+    public void setMinLevelPriority(Integer minLevelPriority) {
+        this.minLevelPriority = minLevelPriority;
     }
 
     public Integer getRequiredPoints() {

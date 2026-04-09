@@ -40,6 +40,12 @@ public class AppConfig {
             mapper.map(src -> src.getRoom().getName(), com.example.cinema.model.dto.response.ShowtimeResponse::setRoomName);
         });
 
+        // Map SeatPrice -> SeatPriceResponse
+        modelMapper.typeMap(com.example.cinema.model.entity.SeatPrice.class, com.example.cinema.model.dto.response.SeatPriceResponse.class).addMappings(mapper -> {
+            mapper.map(src -> src.getRoomType().getId(), com.example.cinema.model.dto.response.SeatPriceResponse::setRoomTypeId);
+            mapper.map(src -> src.getSeatType().getId(), com.example.cinema.model.dto.response.SeatPriceResponse::setSeatTypeId);
+        });
+
         return modelMapper;
     }
 

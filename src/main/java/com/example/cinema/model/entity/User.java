@@ -1,7 +1,6 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.Role;
-
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;

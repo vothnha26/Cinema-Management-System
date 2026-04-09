@@ -12,6 +12,7 @@ import com.example.cinema.repository.room.SeatPriceRepository;
 import com.example.cinema.repository.room.RoomTypeRepository;
 import com.example.cinema.repository.room.SeatTypeRepository;
 import com.example.cinema.repository.commerce.BranchPricingRuleRepository;
+import com.example.cinema.repository.user.MembershipBenefitRepository;
 import com.example.cinema.service.commerce.PricingService;
 import com.example.cinema.service.commerce.pricing.*;
 import org.modelmapper.ModelMapper;
@@ -31,6 +32,7 @@ public class PricingServiceImpl implements PricingService {
         private final RoomTypeRepository roomTypeRepository;
         private final SeatTypeRepository seatTypeRepository;
         private final BranchPricingRuleRepository branchPricingRuleRepository;
+        private final MembershipBenefitRepository membershipBenefitRepository;
         private final PricingRuleMatcher pricingRuleMatcher;
         private final ModelMapper modelMapper;
 
@@ -39,6 +41,7 @@ public class PricingServiceImpl implements PricingService {
                                   RoomTypeRepository roomTypeRepository,
                                   SeatTypeRepository seatTypeRepository,
                                   BranchPricingRuleRepository branchPricingRuleRepository,
+                                  MembershipBenefitRepository membershipBenefitRepository,
                                   PricingRuleMatcher pricingRuleMatcher,
                                   ModelMapper modelMapper) {
                 this.seatPriceRepository = seatPriceRepository;
@@ -46,6 +49,7 @@ public class PricingServiceImpl implements PricingService {
                 this.roomTypeRepository = roomTypeRepository;
                 this.seatTypeRepository = seatTypeRepository;
                 this.branchPricingRuleRepository = branchPricingRuleRepository;
+                this.membershipBenefitRepository = membershipBenefitRepository;
                 this.pricingRuleMatcher = pricingRuleMatcher;
                 this.modelMapper = modelMapper;
         }
@@ -70,50 +74,25 @@ public class PricingServiceImpl implements PricingService {
                 SeatType seatType = seatTypeRepository.findById(request.getSeatTypeId())
                         .orElseThrow(() -> new RuntimeException("SeatType not found: " + request.getSeatTypeId()));
 
-                // 1. Vô hiệu hóa TẤT CẢ các giá đang active hiện tại cho tổ hợp này
-                List<SeatPrice> activePrices = seatPriceRepository
-                                .findAllByRoomTypeAndSeatTypeAndIsActiveTrue(roomType, seatType);
-                if (!activePrices.isEmpty()) {
-                    for (SeatPrice old : activePrices) {
-                        old.setIsActive(false);
-                    }
-                    seatPriceRepository.saveAll(activePrices);
-                }
-
-                // 2. Tìm bản ghi theo ngày hiệu lực (nếu đã tồn tại thì ghi đè, nếu có nhiều bản ghi thì lấy bản ghi đầu tiên)
-                // Lưu ý: Sử dụng List để tránh lỗi NonUniqueResultException
-                List<SeatPrice> existingList = seatPriceRepository
-                                .findAllByRoomTypeAndSeatTypeAndEffectiveDate(roomType, seatType, request.getEffectiveDate());
+                // Tìm bản ghi giá hiện tại để cập nhật hoặc tạo mới
+                List<SeatPrice> existing = seatPriceRepository.findByRoomTypeAndSeatType(roomType, seatType);
+                SeatPrice seatPrice = existing.isEmpty() ? new SeatPrice() : existing.get(0);
                 
-                SeatPrice seatPrice;
-                if (!existingList.isEmpty()) {
-                    seatPrice = existingList.get(0);
-                    // Nếu có lỡ tay có nhiều bản ghi trùng ngày, vô hiệu hóa các bản ghi còn lại
-                    for (int i = 1; i < existingList.size(); i++) {
-                        existingList.get(i).setIsActive(false);
-                        seatPriceRepository.save(existingList.get(i));
-                    }
-                } else {
-                    seatPrice = new SeatPrice();
-                }
-
                 seatPrice.setRoomType(roomType);
                 seatPrice.setSeatType(seatType);
                 seatPrice.setPrice(request.getPrice());
-                seatPrice.setEffectiveDate(request.getEffectiveDate());
                 seatPrice.setIsActive(true);
 
-                SeatPrice saved = seatPriceRepository.save(seatPrice);
-                return modelMapper.map(saved, SeatPriceResponse.class);
+                return modelMapper.map(seatPriceRepository.save(seatPrice), SeatPriceResponse.class);
         }
 
         @Override
         public PriceCalculationResult calculateTicketPrice(com.example.cinema.model.entity.Showtime showtime,
                         com.example.cinema.model.entity.Seat seat,
                         com.example.cinema.model.entity.Customer customer) {
-                // Sử dụng findLatestPrice hoặc lấy bản ghi đầu tiên từ list để tránh lỗi non-unique
+                
                 BigDecimal basePrice = seatPriceRepository
-                                .findAllByRoomTypeAndSeatTypeAndIsActiveTrue(showtime.getRoom().getRoomType(), seat.getSeatType())
+                                .findByRoomTypeAndSeatTypeAndIsActiveTrue(showtime.getRoom().getRoomType(), seat.getSeatType())
                                 .stream().findFirst()
                                 .map(SeatPrice::getPrice)
                                 .orElse(new BigDecimal("80000.00"));
@@ -122,7 +101,6 @@ public class PricingServiceImpl implements PricingService {
                 List<String> appliedRules = new ArrayList<>();
                 appliedRules.add("Giá gốc: " + basePrice.intValue() + "đ");
 
-                // Lấy tất cả Rule liên kết với chi nhánh này, đã được sắp xếp theo priority riêng của chi nhánh
                 Long branchId = showtime.getRoom().getBranch().getId();
                 List<com.example.cinema.model.entity.BranchPricingRule> branchRules = 
                         branchPricingRuleRepository.findAllByBranchIdOrderByPriorityAsc(branchId);
@@ -147,13 +125,11 @@ public class PricingServiceImpl implements PricingService {
                             calculator = () -> fixedPrice;
                             appliedRules.add(rule.getName() + " (Cố định: " + fixedPrice.intValue() + "đ)");
                         }
-
-                        if (!rule.isStackable()) {
-                            break;
-                        }
+                        if (!rule.isStackable()) break;
                     }
                 }
 
-                return new PriceCalculationResult(calculator.calculate(), appliedRules);
+                BigDecimal priceAfterRules = calculator.calculate();
+                return new PriceCalculationResult(priceAfterRules, appliedRules);
         }
 }

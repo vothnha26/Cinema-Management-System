@@ -22,10 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -309,9 +306,7 @@ public class MovieServiceImpl implements MovieService {
         res.setActors(movie.getMovieActors().stream().map(
                 ma -> new PersonResponse(ma.getActor().getId(), ma.getActor().getName(), ma.getActor().getAvatarUrl()))
                 .collect(Collectors.toList()));
-        res.setBranchIds(branchMovieRepository.findByMovieId(movie.getId()).stream()
-                .filter(bm -> Boolean.TRUE.equals(bm.getIsActive())).map(bm -> bm.getBranch().getId())
-                .collect(Collectors.toList()));
+        // Loại bỏ branchIds để tránh N+1 và JSON phình to
         return res;
     }
 

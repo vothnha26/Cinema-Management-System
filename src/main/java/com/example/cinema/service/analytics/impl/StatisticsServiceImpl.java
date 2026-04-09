@@ -352,6 +352,14 @@ public class StatisticsServiceImpl implements StatisticsService {
             rt.setCustomerName(b.getCustomer() != null ? b.getCustomer().getFullName() : "Guest");
             rt.setMovieTitle(b.getShowtime().getMovie().getTitle());
             rt.setShowtime(b.getShowtime().getStartTime().toString());
+            
+            // Lấy loại ghế (nếu có nhiều loại thì lấy loại đầu tiên làm đại diện)
+            String seatType = "N/A";
+            if (b.getDetails() != null && !b.getDetails().isEmpty()) {
+                seatType = b.getDetails().get(0).getSeat().getSeatType().getName();
+            }
+            rt.setSeatType(seatType);
+
             rt.setChannel(b.getPayment() != null ? (b.getPayment().getPaymentMethod().toString().equals("CASH") ? "Quầy" : "Online") : "N/A");
             rt.setPrice(b.getTotalPrice());
             rt.setStatus(b.getStatus().toString());

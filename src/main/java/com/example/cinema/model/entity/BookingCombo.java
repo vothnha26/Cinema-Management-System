@@ -13,6 +13,7 @@ public class BookingCombo {
 
     @ManyToOne
     @JoinColumn(name = "booking_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Booking booking;
 
     @ManyToOne
