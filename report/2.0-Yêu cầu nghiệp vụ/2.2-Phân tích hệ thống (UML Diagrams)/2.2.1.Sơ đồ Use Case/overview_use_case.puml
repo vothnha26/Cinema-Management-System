@@ -16,7 +16,7 @@ actor "Quản trị viên" as Admin
 Staff <|-- Manager
 Manager <|-- Admin
 
-rectangle "Hệ thống StarCinema" {
+rectangle "Hệ thống FlashCinema" {
     package "Nhóm chức năng Khách hàng" {
         usecase "Xem phim & Lịch chiếu" as UC_View
         usecase "Đặt vé & Thanh toán" as UC_Booking

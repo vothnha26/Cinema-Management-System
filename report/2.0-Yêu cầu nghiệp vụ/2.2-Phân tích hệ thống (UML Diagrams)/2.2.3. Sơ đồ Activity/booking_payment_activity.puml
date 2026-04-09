@@ -7,7 +7,7 @@ skinparam activity {
   ArrowColor #E5133A
 }
 
-title Activity Diagram: Quy trình Đặt vé & Thanh toán (StarCinema)
+title Activity Diagram: Quy trình Đặt vé & Thanh toán (FlashCinema)
 
 start
 :Người dùng chọn Suất chiếu & Ghế;
@@ -30,16 +30,20 @@ partition "Xử lý đặt vé" {
   :Tạo yêu cầu Thanh toán;
 }
 
-:Chuyển hướng Cổng thanh toán (MOMO/VietQR)\nhoặc thanh toán tại quầy (Tiền mặt/Thẻ);
+:Chuyển hướng trang Thanh toán (SePay/VietQR)\nhoặc thanh toán tại quầy (Tiền mặt/Thẻ);
 
 if (Thanh toán hoàn tất?) then (Có)
-  :Cập nhật trạng thái Đặt vé (SUCCESS/CHECKED_IN);
+  partition "Xử lý Webhook (SePay)" {
+    :Nhận biến động số dư từ Ngân hàng;
+    :Khớp mã đơn hàng (SEVQR);
+  }
+  :Cập nhật trạng thái Đặt vé (CONFIRMED/CHECKED_IN);
   :Ghi nhận giao dịch thành công;
   
-  partition "Gửi thông báo & Email" {
-    :Phát tín hiệu đặt vé thành công;
-    :Gửi Email xác nhận kèm mã đặt vé;
-    note right: Gồm phim, suất chiếu, ghế, tổng tiền
+  partition "Phản hồi thời gian thực" {
+    :Phát tín hiệu WebSocket tới trình duyệt;
+    :Trình duyệt tự động chuyển trang thành công;
+    :Gửi Email xác nhận mã vé điện tử;
   }
   
   #Green:Hiển thị mã QR vé;

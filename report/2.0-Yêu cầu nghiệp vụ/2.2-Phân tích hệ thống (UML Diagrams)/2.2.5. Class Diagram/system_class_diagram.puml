@@ -8,7 +8,7 @@ skinparam class {
     FontColor #333333
 }
 
-title Class Diagram: StarCinema Core Entities Architecture
+title Class Diagram: FlashCinema Core Entities Architecture
 
 package "User Module" {
     class User {

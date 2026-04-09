@@ -1,4 +1,4 @@
-@startuml StarCinema_DatabaseDiagram
+@startuml FlashCinema_DatabaseDiagram
 !define TABLE(name,desc) class name as "desc" << (T,#AEDFF7) >>
 !define PK(x) <b><color:#8B0000>🔑 x</color></b>
 !define FK(x) <color:#0066CC><i>⬡ x</i></color>

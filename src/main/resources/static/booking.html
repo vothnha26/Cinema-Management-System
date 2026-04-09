@@ -299,12 +299,34 @@
         const cPrice = Object.entries(selectedCombos).reduce((sum, [id, q]) => {
             const c = combos.find(x => x.id == id); return sum + (c ? c.price * q : 0);
         }, 0);
+        
         document.getElementById('sum-seats').textContent = selectedSeats.map(s=>s.seatCode).join(', ') || 'Chưa chọn';
+        
         const breakdownDiv = document.getElementById('price-breakdown');
         if (selectedSeats.length > 0) {
             const firstSeat = selectedSeats[0];
-            breakdownDiv.innerHTML = (firstSeat.priceBreakdown || []).map(b => `<div><i class="bi bi-info-circle me-1"></i>${b}</div>`).join('');
-        } else breakdownDiv.innerHTML = '';
+            const breakdown = firstSeat.priceBreakdown || [];
+            
+            // Tách Giá niêm yết (phần tử đầu tiên) và các điều chỉnh (phần tử còn lại)
+            const baseStr = breakdown.length > 0 ? breakdown[0] : `Giá niêm yết: ${firstSeat.price.toLocaleString()}đ`;
+            const adjustments = breakdown.slice(1);
+            
+            let html = `<div class="d-flex justify-content-between mb-1" style="border-left:none; padding-left:0; font-size:0.75rem">
+                            <span class="text-muted fw-bold">GIÁ NIÊM YẾT</span>
+                            <span class="text-white fw-bold">${baseStr.includes(':') ? baseStr.split(': ')[1] : baseStr}</span>
+                        </div>`;
+            
+            html += adjustments.map(b => `
+                <div class="d-flex justify-content-between mb-1 opacity-75" style="font-size: 0.65rem; border-left: 1px solid var(--accent); padding-left: 8px;">
+                    <span>• ${b.split(' (')[0]}</span>
+                    <span class="text-info">${b.includes('(') ? '(' + b.split(' (')[1] : ''}</span>
+                </div>`).join('');
+                
+            breakdownDiv.innerHTML = html;
+        } else {
+            breakdownDiv.innerHTML = '';
+        }
+
         document.getElementById('sum-t-price').textContent = tPrice.toLocaleString() + 'đ';
         document.getElementById('sum-c-price').textContent = cPrice.toLocaleString() + 'đ';
         document.getElementById('sum-total').textContent = (tPrice + cPrice).toLocaleString() + 'đ';

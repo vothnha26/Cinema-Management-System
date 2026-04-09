@@ -233,8 +233,10 @@ public class BookingServiceImpl implements BookingService {
             }
         } catch (Exception e) { log.error("Mail error: {}", e.getMessage()); }
 
-        if (customer.getUser() != null) {
-            if (savedBooking.getPayment().getPaymentStatus() == PaymentStatus.SUCCESS) customerService.addLoyaltyPoints(customer, finalTotalPrice);
+        if (customer != null && customer.getUser() != null && customer.getUser().getId() != null) {
+            if (savedBooking.getPayment().getPaymentStatus() == PaymentStatus.SUCCESS) {
+                customerService.addLoyaltyPoints(customer, finalTotalPrice);
+            }
             createNotification(customer.getUser(), "Đặt vé thành công", "Mã: " + savedBooking.getBookingCode(), NotificationType.BOOKING);
         }
 
@@ -312,12 +314,24 @@ public class BookingServiceImpl implements BookingService {
 
     private void finalizeBooking(Booking b, Customer c, Showtime s, List<BookingDetail> det, List<BookingCombo> com, BigDecimal price, PaymentMethod pm) {
         PaymentMethod method = pm != null ? pm : PaymentMethod.BANK_TRANSFER;
-        boolean isStaff = method == PaymentMethod.CASH || method == PaymentMethod.CARD;
-        b.setCustomer(c); b.setShowtime(s); b.setBookingCode("BKG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        b.setTotalPrice(price); b.setStatus(isStaff ? BookingStatus.CHECKED_IN : BookingStatus.PENDING);
-        b.setDetails(det); b.setCombos(com);
-        Payment p = new Payment(); p.setBooking(b); p.setAmount(price); p.setPaymentMethod(method);
-        p.setPaymentStatus(isStaff ? PaymentStatus.SUCCESS : PaymentStatus.PENDING);
+        
+        // Chỉ CASH (Tiền mặt tại quầy) mới hoàn tất ngay. 
+        // CARD (Thanh toán thẻ/QR tại quầy) phải PENDING để khách quét mã.
+        boolean autoConfirm = method == PaymentMethod.CASH;
+        
+        b.setCustomer(c); 
+        b.setShowtime(s); 
+        b.setBookingCode("BKG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        b.setTotalPrice(price); 
+        b.setStatus(autoConfirm ? BookingStatus.CHECKED_IN : BookingStatus.PENDING);
+        b.setDetails(det); 
+        b.setCombos(com);
+        
+        Payment p = new Payment(); 
+        p.setBooking(b); 
+        p.setAmount(price); 
+        p.setPaymentMethod(method);
+        p.setPaymentStatus(autoConfirm ? PaymentStatus.SUCCESS : PaymentStatus.PENDING);
         b.setPayment(p);
     }
 
@@ -339,7 +353,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private void createNotification(User user, String title, String msg, NotificationType type) {
-        if (user == null) return;
+        if (user == null || user.getId() == null) return;
         Notification n = new Notification(); n.setUser(user); n.setTitle(title); n.setMessage(msg); n.setType(type);
         notificationRepository.save(n);
     }

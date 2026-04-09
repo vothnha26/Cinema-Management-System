@@ -10,39 +10,38 @@ skinparam sequence {
 }
 
 actor Customer
-participant "CustomerBookingFacade" as CBF
+participant "BookingService" as BS
+participant "RedisTemplate" as RT
 participant "PricingService" as PS
 participant "BookingRepo" as BR
-participant "PaymentRepo" as PR
-participant "EventPublisher" as EP
+participant "EmailService" as ES
 
-Customer -> CBF: processOnlineBooking(request)
-activate CBF
+Customer -> BS: createBooking(request)
+activate BS
 
-CBF -> CBF: Identify Customer/Guest info
+BS -> RT: check & lockSeats(showtime, seats)
+activate RT
+RT --> BS: success
+deactivate RT
 
-CBF -> PS: calculateTicketPrice(showtime, seats)
+BS -> BS: Identify Member/Guest info
+
+BS -> PS: calculateFinalPrice(showtime, seats, customer)
 activate PS
-PS --> CBF: totalPrice
+PS --> BS: finalTotalPrice
 deactivate PS
 
-CBF -> BR: save(pendingBooking)
+BS -> BR: save(Booking & Details)
 activate BR
-BR --> CBF: savedBooking
+BR --> BS: savedBooking
 deactivate BR
 
-CBF -> PR: save(pendingPayment)
-activate PR
-PR --> CBF: savedPayment
-deactivate PR
+BS -> ES: sendBookingConfirmation(email)
+activate ES
+ES --> BS: void
+deactivate ES
 
-CBF -> EP: publishEvent(TicketBookedEvent)
-activate EP
-note right: Trigger notification asynchronously
-EP --> CBF: void
-deactivate EP
-
-CBF --> Customer: BookingResponse (Confirmed/Pending)
-deactivate CBF
+BS --> Customer: BookingResponse (BKG-XXXX)
+deactivate BS
 
 @enduml

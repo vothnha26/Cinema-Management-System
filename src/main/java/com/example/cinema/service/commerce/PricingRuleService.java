@@ -5,6 +5,7 @@ import java.util.List;
 
 public interface PricingRuleService {
     List<PricingRule> getAllRules();
+    List<PricingRule> getRulesByBranch(Long branchId);
     PricingRule getRuleById(Long id);
     PricingRule createRule(PricingRule rule);
     PricingRule updateRule(Long id, PricingRule rule);

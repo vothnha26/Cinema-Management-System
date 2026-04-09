@@ -9,7 +9,7 @@ skinparam usecase {
 
 actor "Quản trị viên" as Admin
 
-rectangle "Phân hệ Quản trị (StarCinema)" {
+rectangle "Phân hệ Quản trị (FlashCinema)" {
     usecase "Quản lý Chi nhánh rạp phim" as UC_Branch
     usecase "Quản lý Tài khoản & Phân quyền" as UC_User
     usecase "Quản lý dữ liệu nền hệ thống" as UC_MasterData

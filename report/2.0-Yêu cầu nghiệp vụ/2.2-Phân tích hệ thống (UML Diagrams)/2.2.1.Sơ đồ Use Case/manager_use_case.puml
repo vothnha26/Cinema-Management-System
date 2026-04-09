@@ -10,7 +10,7 @@ skinparam usecase {
 actor "Quản lý" as Manager
 actor "TMDB API" as TMDB <<External>>
 
-rectangle "Phân hệ Quản lý (StarCinema)" {
+rectangle "Phân hệ Quản lý (FlashCinema)" {
     usecase "Quản lý danh mục Phim" as UC_Movies
     usecase "Tìm kiếm & Nhập phim từ TMDB" as UC_TMDB
     

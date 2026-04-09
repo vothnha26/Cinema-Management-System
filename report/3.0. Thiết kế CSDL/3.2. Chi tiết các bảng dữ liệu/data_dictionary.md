@@ -1,6 +1,6 @@
 # Chương: THIẾT KẾ CƠ SỞ DỮ LIỆU
 
-Trong chương này, chúng ta sẽ đi sâu vào cấu trúc dữ liệu chi tiết của hệ thống StarCinema. Cơ sở dữ liệu được thiết kế để đảm bảo tính toàn vẹn dữ liệu, khả năng mở rộng và hiệu suất truy vấn cao.
+Trong chương này, chúng ta sẽ đi sâu vào cấu trúc dữ liệu chi tiết của hệ thống FlashCinema. Cơ sở dữ liệu được thiết kế để đảm bảo tính toàn vẹn dữ liệu, khả năng mở rộng và hiệu suất truy vấn cao.
 
 ## 1. Sơ đồ Thực thể liên kết (ERD)
 Sơ đồ ERD mô tả mối quan hệ giữa các thực thể cốt lõi trong hệ thống.
@@ -354,4 +354,4 @@ Chi tiết cấu hình giá dựa trên khung giờ và điều kiện Decorator
 
 ---
 
-Kết thúc tài liệu Thiết kế Cơ sở dữ liệu chi tiết hệ thống StarCinema (Phiên bản đầy đủ 34 thực thể/bảng dữ liệu).
+Kết thúc tài liệu Thiết kế Cơ sở dữ liệu chi tiết hệ thống FlashCinema (Phiên bản đầy đủ 34 thực thể/bảng dữ liệu).

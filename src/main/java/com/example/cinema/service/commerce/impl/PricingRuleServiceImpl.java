@@ -36,6 +36,13 @@ public class PricingRuleServiceImpl implements PricingRuleService {
     }
 
     @Override
+    public List<PricingRule> getRulesByBranch(Long branchId) {
+        return branchPricingRuleRepository.findAllByBranchIdOrderByPriorityAsc(branchId).stream()
+                .map(BranchPricingRule::getRule)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
     public PricingRule getRuleById(Long id) {
         return pricingRuleRepository.findById(id)
                 .orElseThrow(() -> new com.example.cinema.exception.ResourceNotFoundException("PricingRule", id));
@@ -115,16 +122,29 @@ public class PricingRuleServiceImpl implements PricingRuleService {
     @Override
     @Transactional
     public void reorderRules(Long branchId, List<Long> ruleIds) {
-        List<BranchPricingRule> existingLinks = branchPricingRuleRepository.findAllByBranchIdOrderByPriorityAsc(branchId);
-        for (int i = 0; i < ruleIds.size(); i++) {
-            Long ruleId = ruleIds.get(i);
-            BranchPricingRule link = existingLinks.stream()
-                    .filter(l -> l.getRule().getId().equals(ruleId))
+        if (branchId != null) {
+            // Trường hợp Manager reorder thứ tự tại chi nhánh
+            List<BranchPricingRule> existingLinks = branchPricingRuleRepository.findAllByBranchIdOrderByPriorityAsc(branchId);
+            for (int i = 0; i < ruleIds.size(); i++) {
+                final Long rid = ruleIds.get(i);
+                final int priority = i + 1;
+                existingLinks.stream()
+                    .filter(l -> l.getRule().getId().equals(rid))
                     .findFirst()
-                    .orElse(null);
-            if (link != null) {
-                link.setPriority(i + 1);
-                branchPricingRuleRepository.save(link);
+                    .ifPresent(link -> {
+                        link.setPriority(priority);
+                        branchPricingRuleRepository.save(link);
+                    });
+            }
+        } else {
+            // Trường hợp Admin reorder thứ tự mặc định của Hệ thống
+            for (int i = 0; i < ruleIds.size(); i++) {
+                final Long rid = ruleIds.get(i);
+                final int priority = i + 1;
+                pricingRuleRepository.findById(rid).ifPresent(rule -> {
+                    rule.setPriority(priority);
+                    pricingRuleRepository.save(rule);
+                });
             }
         }
     }

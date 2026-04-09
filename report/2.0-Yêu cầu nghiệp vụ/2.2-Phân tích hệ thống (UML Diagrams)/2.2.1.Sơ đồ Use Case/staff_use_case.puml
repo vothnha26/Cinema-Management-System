@@ -9,7 +9,7 @@ skinparam usecase {
 
 actor "Nhân viên" as Staff
 
-rectangle "Phân hệ Nhân viên (StarCinema)" {
+rectangle "Phân hệ Nhân viên (FlashCinema)" {
     usecase "Đăng nhập hệ thống" as UC_Login
     usecase "Tra cứu thông tin vé" as UC_SearchTicket
     usecase "Xác thực & Check-in vé" as UC_Checkin

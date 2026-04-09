@@ -1,6 +1,6 @@
 # Chương: CÁC RÀNG BUỘC TOÀN VẸN
 
-Tài liệu này đặc tả các quy tắc đảm bảo tính nhất quán và toàn vẹn của dữ liệu trong hệ thống StarCinema thông qua các ràng buộc Khóa chính (PK) và Khóa ngoại (FK).
+Tài liệu này đặc tả các quy tắc đảm bảo tính nhất quán và toàn vẹn của dữ liệu trong hệ thống FlashCinema thông qua các ràng buộc Khóa chính (PK) và Khóa ngoại (FK).
 
 ---
 
@@ -80,4 +80,4 @@ Mục tiêu: Đảm bảo mối liên kết tham chiếu và tính toàn vẹn g
 
 ---
 
-Kết thúc tài liệu Đặc tả Ràng buộc Toàn vẹn hệ thống StarCinema.
+Kết thúc tài liệu Đặc tả Ràng buộc Toàn vẹn hệ thống FlashCinema.

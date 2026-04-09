@@ -11,7 +11,7 @@ actor "Khách hàng" as Customer
 actor "Hệ thống Thanh toán" as PaymentSystem <<External>>
 actor "Dịch vụ Email" as EmailService <<External>>
 
-rectangle "Phân hệ Khách hàng (StarCinema)" {
+rectangle "Phân hệ Khách hàng (FlashCinema)" {
     usecase "Đăng ký tài khoản" as UC_Register
     usecase "Xác thực OTP qua Email" as UC_OTP
     usecase "Đăng nhập" as UC_Login

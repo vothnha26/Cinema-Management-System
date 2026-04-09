@@ -192,9 +192,10 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                                                      Customer customer) {
         PriceCalculator calculator = new BasePriceCalculator(basePrice);
         List<String> appliedRules = new ArrayList<>();
-        appliedRules.add("Giá gốc: " + basePrice.intValue() + "đ");
+        appliedRules.add("GIÁ NIÊM YẾT: " + basePrice.intValue() + "đ");
 
         for (com.example.cinema.model.entity.BranchPricingRule link : branchRules) {
+
             PricingRule rule = link.getRule();
             if (rule.isActive() && matcher.matches(rule, showtime, seat, customer)) {
                 if (rule.getImpactType() == com.example.cinema.model.enums.PricingImpactType.ADDITIVE) {

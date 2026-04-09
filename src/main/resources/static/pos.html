@@ -167,6 +167,33 @@
     </div>
 </main>
 
+<!-- MODAL THANH TOÁN QR -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background: #fff; color: #000;">
+            <div class="modal-body text-center p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-800 mb-0">QUÉT MÃ THANH TOÁN</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="bg-light p-3 rounded-4 mb-4">
+                    <img id="qrImage" src="" alt="VietQR" class="img-fluid rounded-3 shadow-sm" style="max-width: 300px;">
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted text-uppercase fw-bold tracking-widest mb-1">Số tiền cần trả</div>
+                    <div class="fs-2 fw-800 text-danger" id="qrAmount">0đ</div>
+                </div>
+                <div class="alert alert-info border-0 rounded-3 small py-2">
+                    <i class="bi bi-info-circle-fill me-2"></i>Hệ thống sẽ tự động hoàn tất khi nhận được tiền từ ngân hàng.
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-outline-secondary border-0 small" data-bs-dismiss="modal">HỦY GIAO DỊCH</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="toastContainer"></div>
 
 <script src="/js/auth-guard.js"></script>
@@ -284,19 +311,42 @@
         selectedMovieId = id; selectedShowtime = null; selectedSeats = []; renderMovies();
         document.getElementById('showtimeSection').classList.remove('d-none');
         document.getElementById('seatSection').classList.add('d-none');
+        
         const sts = allShowtimes.filter(s => s.movieId === id);
         
+        // Nhóm suất chiếu theo định dạng (Format)
+        const formatGroups = {};
+        sts.forEach(s => {
+            const fmt = s.formatName || '2D';
+            if (!formatGroups[fmt]) formatGroups[fmt] = [];
+            formatGroups[fmt].push(s);
+        });
+
         const now = new Date();
-        document.getElementById('showtimeGrid').innerHTML = sts.map(s => {
-            const stTime = new Date(s.startTime);
-            const isStarted = stTime < now;
-            return `
-            <div class="st-item ${isStarted ? 'border-warning' : ''}" onclick="selectShowtime(${s.id}, this)">
-                <div class="fw-800 ${isStarted ? 'text-warning' : 'text-white'}">${stTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false})}</div>
-                <div class="small text-muted">${s.roomName}</div>
-                ${isStarted ? '<div class="extra-small text-warning fw-bold mt-1">ĐANG CHIẾU</div>' : ''}
-            </div>`;
-        }).join('');
+        let html = '';
+        
+        Object.entries(formatGroups).forEach(([fmt, showtimes]) => {
+            html += `
+                <div class="mb-4">
+                    <h6 class="fw-800 text-accent small mb-3 text-uppercase" style="letter-spacing: 2px;">
+                        <i class="bi bi-layers-half me-2"></i>Định dạng ${fmt}
+                    </h6>
+                    <div class="st-grid">
+                        ${showtimes.map(s => {
+                            const stTime = new Date(s.startTime);
+                            const isStarted = stTime < now;
+                            return `
+                            <div class="st-item ${isStarted ? 'border-warning' : ''}" onclick="selectShowtime(${s.id}, this)">
+                                <div class="fw-800 ${isStarted ? 'text-warning' : 'text-white'}">${stTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false})}</div>
+                                <div class="small text-muted">${s.roomName}</div>
+                                ${isStarted ? '<div class="extra-small text-warning fw-bold mt-1">ĐANG CHIẾU</div>' : ''}
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('showtimeGrid').innerHTML = html || '<div class="text-muted small">Không có suất chiếu</div>';
         updateBill();
     }
 
@@ -343,7 +393,45 @@
         document.querySelector('.bill-panel .panel-header h6').innerText = currentMember ? currentMember.fullName : 'KHÁCH VÃNG LAI';
         if(!selectedSeats.length && !Object.keys(selectedCombos).length) { container.innerHTML = '<div class="text-center py-5 text-muted small">Chưa có sản phẩm nào</div>'; document.getElementById('billSubtotal').innerText='0đ'; document.getElementById('billDiscount').innerText='-0đ'; document.getElementById('billTotal').innerText='0đ'; document.getElementById('btnFinalize').disabled=true; return; }
         let sub = 0, html = '';
-        selectedSeats.forEach(s => { sub += s.price; html += `<div class="bill-item flex-column align-items-start"><div class="d-flex justify-content-between w-100"><div class="fw-bold small">Ghế ${s.seatCode}</div><div class="small">${s.price.toLocaleString()}đ</div></div><div class="text-muted extra-small">${s.seatType}</div></div>`; });
+        selectedSeats.forEach(s => { 
+            sub += s.price; 
+            const breakdown = s.priceBreakdown || [];
+            
+            // Lấy dòng GIÁ NIÊM YẾT (phần tử đầu tiên)
+            let baseLabel = "GIÁ NIÊM YẾT", baseValue = s.price.toLocaleString() + "đ";
+            if (breakdown.length > 0 && breakdown[0].includes(": ")) {
+                const parts = breakdown[0].split(": ");
+                baseLabel = parts[0];
+                baseValue = parts[1];
+            }
+            
+            const adjustments = breakdown.slice(1);
+            const adjustmentsHtml = adjustments.map(b => {
+                const parts = b.split(" (");
+                const name = parts[0];
+                const value = parts[1] ? "(" + parts[1] : "";
+                return `
+                <div class="extra-small text-info d-flex justify-content-between w-100 opacity-75" style="font-size: 0.65rem; padding-left: 12px; margin-top: 2px;">
+                    <span>• ${name}</span>
+                    <span class="fw-bold">${value}</span>
+                </div>`;
+            }).join('');
+
+            html += `
+                <div class="bill-item flex-column align-items-start py-3 border-bottom border-secondary border-opacity-10">
+                    <div class="d-flex justify-content-between w-100 mb-2">
+                        <div class="fw-800 small text-white">Ghế ${s.seatCode} <span class="badge bg-secondary extra-small ms-1" style="font-size:0.55rem; vertical-align: middle;">${s.seatTypeName || s.seatType}</span></div>
+                        <div class="fs-6 fw-800 text-danger">${s.price.toLocaleString()}đ</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between w-100 text-muted extra-small mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                        <span class="fw-bold text-uppercase">${baseLabel}</span>
+                        <span class="fw-bold">${baseValue}</span>
+                    </div>
+                    
+                    ${adjustmentsHtml}
+                </div>`; 
+        });
         Object.entries(selectedCombos).forEach(([id, q]) => { const c = allCombos.find(x => x.id == id); if(c) { sub += c.price*q; html += `<div class="bill-item"><div><div class="fw-bold small">${c.name}</div><div class="text-muted extra-small">x${q}</div></div><div class="small">${(c.price*q).toLocaleString()}đ</div></div>`; } });
         
         let memDisc = 0;
@@ -366,10 +454,71 @@
     }
 
     async function finalizeSale() {
-        const body = { showtimeId: Number(selectedShowtime.id), seatIds: selectedSeats.map(s => s.id), combos: selectedCombos, paymentMethod: posPaymentMethod, fullName: currentMember ? currentMember.fullName : 'Khách vãng lai', phone: currentMember ? currentMember.phone : (document.getElementById('memberPhone').value || '0000000000'), email: currentMember ? currentMember.email : null, promotionCode: appliedVoucher ? appliedVoucher.code : null };
+        const body = { 
+            showtimeId: Number(selectedShowtime.id), 
+            seatIds: selectedSeats.map(s => s.id), 
+            combos: selectedCombos, 
+            paymentMethod: posPaymentMethod, 
+            fullName: currentMember ? currentMember.fullName : 'Khách vãng lai', 
+            phone: currentMember ? currentMember.phone : (document.getElementById('memberPhone').value.trim() || '0000000000'), 
+            email: currentMember ? currentMember.email : null, 
+            promotionCode: appliedVoucher ? appliedVoucher.code : null 
+        };
+
         const res = await api.post('/bookings', body);
-        if(res.bookingCode) { showNotify('Thành công', 'Đã tạo đơn hàng!'); setTimeout(()=>location.reload(), 1500); }
-        else showNotify('Lỗi', res.message, 'error');
+        if(res.bookingCode) { 
+            if (posPaymentMethod === 'CARD') {
+                showQRModal(res.bookingCode, res.totalPrice);
+            } else {
+                showNotify('Thành công', 'Đã tạo đơn hàng!'); 
+                setTimeout(()=>location.reload(), 1500); 
+            }
+        } else {
+            showNotify('Lỗi', res.message, 'error');
+        }
+    }
+
+    let paymentPollInterval = null;
+    let qrBootstrapModal = null;
+
+    function showQRModal(code, amount) {
+        const bankBin = "970415"; // VietinBank
+        const bankAcc = "109879673245";
+        const description = "SEVQR " + code;
+        
+        const qrUrl = `https://img.vietqr.io/image/${bankBin}-${bankAcc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(description)}&accountName=STAR%20CINEMA`;
+        
+        document.getElementById('qrImage').src = qrUrl;
+        document.getElementById('qrAmount').innerText = amount.toLocaleString() + 'đ';
+        
+        const qrEl = document.getElementById('qrModal');
+        if (!qrBootstrapModal) qrBootstrapModal = new bootstrap.Modal(qrEl);
+        qrBootstrapModal.show();
+
+        // Bắt đầu kiểm tra tự động mỗi 3 giây
+        if (paymentPollInterval) clearInterval(paymentPollInterval);
+        paymentPollInterval = setInterval(async () => {
+            try {
+                const res = await api.get(`/bookings/${code}`);
+                if (res.status === 'CONFIRMED' || res.status === 'CHECKED_IN') {
+                    clearInterval(paymentPollInterval);
+                    qrBootstrapModal.hide();
+                    showNotify('Thành công', 'Giao dịch chuyển khoản đã hoàn tất!');
+                    setTimeout(() => location.reload(), 2000);
+                }
+            } catch (e) { console.error("Polling error:", e); }
+        }, 3000);
+
+        qrEl.addEventListener('hidden.bs.modal', () => {
+            if (paymentPollInterval) clearInterval(paymentPollInterval);
+        });
+    }
+
+    function checkPaymentStatus() {
+        // Nút bấm thủ công vẫn giữ lại để nhân viên xác nhận nếu cần in vé ngay
+        showNotify('Thông tin', 'Đang kiểm tra giao dịch...');
+        // Logic polling ở trên sẽ tự xử lý, nếu nhấn đây tức là nhân viên xác nhận thu tiền mặt/ngoài hệ thống
+        setTimeout(() => location.reload(), 1000);
     }
 
     function switchMode(m) { document.getElementById('modeSale').classList.toggle('d-none', m!=='SALE'); document.getElementById('modeCheckin').classList.toggle('d-none', m!=='CHECKIN'); }

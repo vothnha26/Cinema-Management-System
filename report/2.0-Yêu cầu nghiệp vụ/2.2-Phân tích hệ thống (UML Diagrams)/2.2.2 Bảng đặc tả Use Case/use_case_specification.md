@@ -13,8 +13,9 @@ Tài liệu này cung cấp cái nhìn chi tiết và toàn diện về toàn b�
     3. Khách hàng chọn ghế và nhấn "Giữ chỗ". Hệ thống sử dụng **Redis Lock** để bảo vệ trạng thái ghế.
     4. Khách hàng chọn thêm bắp nước (FnB) và áp dụng voucher/điểm thưởng.
     5. Hệ thống tính tổng tiền thông qua **PriceDecorator**.
-    6. Khách hàng thực hiện quét mã **VietQR**.
-    7. Hệ thống xác nhận qua Webhook và xuất vé điện tử (QR Code).
+    6. Khách hàng thực hiện quét mã **VietQR (SePay)**.
+    7. Hệ thống nhận diện giao dịch thành công qua **Webhook** ngân hàng.
+    8. Hệ thống phát tín hiệu **WebSocket** để tự động chuyển trang và xuất vé điện tử (QR Code).
 
 ### 2.2.2.2. UC-02: Tìm kiếm và Đồng bộ hóa Phim từ TMDB
 **Actor:** Quản lý.

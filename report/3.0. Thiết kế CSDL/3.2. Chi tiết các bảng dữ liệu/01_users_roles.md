@@ -1,6 +1,6 @@
 # Thiết kế Cơ sở dữ liệu - Nhóm 1: Người dùng & Phân quyền
 
-Nhóm này quản lý danh tính, vai trò và nhật ký hoạt động của tất cả các đối tượng tham gia vào hệ thống StarCinema.
+Nhóm này quản lý danh tính, vai trò và nhật ký hoạt động của tất cả các đối tượng tham gia vào hệ thống FlashCinema.
 
 ---
 

@@ -2,6 +2,7 @@ package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.PricingImpactType;
 import com.example.cinema.model.enums.PricingRuleCategory;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "pricing_rules")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PricingRule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +26,8 @@ public class PricingRule {
     private PricingImpactType impactType; // ADDITIVE, PERCENTAGE, FIXED
 
     private BigDecimal impactValue; // Giá trị cộng thêm hoặc tỉ lệ nhân
+
+    private int priority = 100; // Thứ tự ưu tiên (thấp hơn chạy trước)
 
     private boolean isStackable = true; // Có được cộng dồn với các rule khác không?
 
@@ -82,6 +86,14 @@ public class PricingRule {
 
     public void setImpactValue(BigDecimal impactValue) {
         this.impactValue = impactValue;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     public boolean isStackable() {

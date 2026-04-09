@@ -7,7 +7,7 @@ skinparam activity {
   ArrowColor #E5133A
 }
 
-title Activity Diagram: Quy trình Đăng ký & Xác thực OTP (StarCinema)
+title Activity Diagram: Quy trình Đăng ký & Xác thực OTP (FlashCinema)
 
 start
 :Người dùng nhập thông tin đăng ký;

@@ -1,0 +1,47 @@
+@startuml payment_webhook_sequence
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #E5133A
+    ActorBorderColor #E5133A
+    LifeLineBorderColor #1A1A1A
+    ParticipantBackgroundColor #1A1A1A
+    ParticipantBorderColor #E5133A
+    ParticipantFontColor #FFFFFF
+}
+
+actor "SePay Gateway" as SePay
+participant "PaymentWebhookController" as PWC
+participant "PaymentService" as PS
+participant "BookingRepo" as BR
+participant "SimpMessagingTemplate" as SMT
+actor "Customer Browser" as UI
+
+SePay -> PWC: POST /api/public/payments/webhook (Payload)
+activate PWC
+
+PWC -> PS: processWebhook(payload)
+activate PS
+
+PS -> PS: extractBookingCode(content)
+note right: Regex: BKG-?[A-Z0-9]+
+
+PS -> BR: findByBookingCode(code)
+BR --> PS: Booking Entity
+
+PS -> BR: updateStatus(CONFIRMED)
+PS -> PS: save(Payment SUCCESS)
+
+PS -> SMT: convertAndSend(/topic/payment/{code}, SUCCESS)
+activate SMT
+SMT -> UI: Push SUCCESS message
+deactivate SMT
+
+PS --> PWC: success: true
+deactivate PS
+
+PWC --> SePay: 200 OK
+deactivate PWC
+
+UI -> UI: Receive WebSocket signal
+UI -> UI: Redirect to SUCCESS page
+@enduml

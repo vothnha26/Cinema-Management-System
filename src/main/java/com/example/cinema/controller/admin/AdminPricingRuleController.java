@@ -19,7 +19,10 @@ public class AdminPricingRuleController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PricingRule>>> getAllRules() {
+    public ResponseEntity<ApiResponse<List<PricingRule>>> getAllRules(@RequestParam(required = false) Long branchId) {
+        if (branchId != null) {
+            return ResponseEntity.ok(ApiResponse.ok(pricingRuleService.getRulesByBranch(branchId)));
+        }
         return ResponseEntity.ok(ApiResponse.ok(pricingRuleService.getAllRules()));
     }
 

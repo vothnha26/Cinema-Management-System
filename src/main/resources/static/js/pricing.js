@@ -29,27 +29,46 @@
     async function identifyBranch() {
         const role = localStorage.getItem('cinemaRole');
         const username = localStorage.getItem('cinemaUsername');
+        const cachedBranchId = localStorage.getItem('cinemaBranchId');
+        
         if (role !== 'MANAGER') return;
+        if (cachedBranchId && cachedBranchId !== 'null') {
+            currentBranchId = cachedBranchId;
+        }
+
         try {
+            console.log(">>> Identifying branch for manager:", username);
             const res = await api.get('/admin/staffs/assignments');
             if (res.success) {
                 const staff = Object.values(res.data).find(s => s.user.username === username);
                 if (staff && staff.branch) {
                     currentBranchId = staff.branch.id;
                     localStorage.setItem('cinemaBranchId', currentBranchId);
+                    console.log(">>> Branch identified:", currentBranchId);
                 }
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error(">>> identifyBranch Error:", e); }
     }
 
     async function loadData() {
         await identifyBranch();
-        const rulesUrl = currentBranchId ? `/admin/pricing-rules?branchId=${currentBranchId}` : '/admin/pricing-rules';
+        const role = localStorage.getItem('cinemaRole');
+        const reorderSwitch = document.getElementById('enableReorder')?.closest('.form-check');
+        if (reorderSwitch) {
+            reorderSwitch.style.display = role === 'ADMIN' ? 'none' : 'block';
+        }
+
+        const rulesUrl = currentBranchId ? '/admin/pricing-rules?branchId=' + currentBranchId : '/admin/pricing-rules';
+        console.log(">>> Loading pricing data. Rules URL:", rulesUrl);
+
         try {
             const [pRes, rRes, rtRes, stRes, fRes, bRes] = await Promise.all([
-                api.get('/admin/pricing'), api.get(rulesUrl),
-                api.get('/public/master-data/room-types'), api.get('/public/master-data/seat-types'),
-                api.get('/public/master-data/formats'), api.get('/admin/branches')
+                api.get('/admin/pricing'), 
+                api.get(rulesUrl),
+                api.get('/public/master-data/room-types'), 
+                api.get('/public/master-data/seat-types'),
+                api.get('/public/master-data/formats'), 
+                api.get('/admin/branches')
             ]);
             ROOM_TYPES = rtRes.data || []; 
             SEAT_TYPES = (stRes.data || []).filter(s => s.id !== 'EMPTY' && s.id !== 'DISABLED');
@@ -85,6 +104,7 @@
     }
 
     function renderRules() {
+        const role = localStorage.getItem('cinemaRole');
         const container = document.getElementById('globalRulesContainer');
         if (!container) return;
         if (!allRules.length) { 
@@ -100,6 +120,8 @@
         container.innerHTML = displayOrder.map(r => {
             const branchCond = r.conditions.find(c => c.type === 'BRANCH');
             const isLocal = !!branchCond;
+            const canEdit = role === 'ADMIN' || isLocal;
+            
             const impactSign = r.impactType === 'ADDITIVE' ? '+' : r.impactType === 'SUBTRACTIVE' ? '-' : r.impactType === 'PERCENTAGE' ? 'x' : '=';
             const impactVal = r.impactType === 'PERCENTAGE' ? r.impactValue : new Intl.NumberFormat().format(r.impactValue);
 
@@ -124,11 +146,15 @@
                         <div class="text-end ms-3">
                             <div class="rule-impact-lg">${impactSign}${impactVal}${r.impactType!=='PERCENTAGE'?'đ':''}</div>
                             <div class="rule-details mt-2 d-flex gap-1 justify-content-end align-items-center">
+                                ${canEdit ? `
                                 <div class="form-check form-switch me-2">
                                     <input class="form-check-input" type="checkbox" ${r.active?'checked':''} onchange="toggleRuleActive(${r.id}, this.checked)">
                                 </div>
                                 <button class="btn btn-sm btn-dark px-3 fw-bold" onclick="openEditRule(${r.id})">SỬA</button>
                                 <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteRule(${r.id})"><i class="bi bi-trash"></i></button>
+                                ` : `
+                                <div class="small text-muted italic" style="font-size: 0.7rem">Chỉ Admin mới có quyền sửa</div>
+                                `}
                             </div>
                         </div>
                     </div>
@@ -179,7 +205,8 @@
 
     async function saveReorder() {
         if (!temporaryOrderIds.length) return;
-        const res = await api.post('/admin/pricing-rules/reorder', temporaryOrderIds);
+        const url = currentBranchId ? `/admin/pricing-rules/reorder?branchId=${currentBranchId}` : '/admin/pricing-rules/reorder';
+        const res = await api.post(url, temporaryOrderIds);
         if (res.success) { alert('Đã lưu tháp ưu tiên!'); loadData(); }
         else alert('Lỗi: ' + res.message);
     }
@@ -245,7 +272,10 @@
         const role = localStorage.getItem('cinemaRole');
         document.getElementById('ruleForm').reset();
         document.getElementById('conditionsContainer').innerHTML = '';
+        
+        let isGlobal = false;
         if (r) {
+            isGlobal = !r.conditions.find(c => c.type === 'BRANCH');
             document.getElementById('ruleId').value = r.id; document.getElementById('ruleName').value = r.name;
             document.getElementById('ruleCategory').value = r.category; document.getElementById('rulePriority').value = r.priority;
             document.getElementById('ruleImpactType').value = r.impactType; document.getElementById('ruleImpactValue').value = r.impactValue;
@@ -259,6 +289,17 @@
             document.getElementById('ruleActive').checked = true;
             if (role === 'MANAGER' && currentBranchId) addConditionRow({ type: 'BRANCH', value: currentBranchId.toString() });
         }
+
+        // Khóa nút lưu nếu Manager cố tình mở quy tắc hệ thống
+        const saveBtn = document.querySelector('#ruleModal .btn-danger');
+        if (role === 'MANAGER' && isGlobal) {
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'CHỈ ADMIN MỚI CÓ QUYỀN SỬA';
+        } else {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'LƯU QUY TẮC';
+        }
+
         ruleModal.show();
     }
 
@@ -299,7 +340,9 @@
             let val = type === 'DAY_OF_WEEK' ? Array.from(row.querySelectorAll('.cond-day-check:checked')).map(cb => cb.value).join(',') : type === 'TIME_RANGE' ? row.querySelector('.cond-time-start').value + '-' + row.querySelector('.cond-time-end').value : type === 'DATE_RANGE' ? row.querySelector('.cond-date-start').value + ':' + row.querySelector('.cond-date-end').value : row.querySelector('.cond-value').value;
             return { type, value: val };
         }).filter(c => c.value && c.value !== '-' && c.value !== ':');
+        
         if (role === 'MANAGER' && !conds.some(c => c.type === 'BRANCH')) conds.push({ type: 'BRANCH', value: currentBranchId.toString() });
+        
         const data = { 
             name: document.getElementById('ruleName').value, 
             category: document.getElementById('ruleCategory').value, 
@@ -311,13 +354,70 @@
             description: document.getElementById('ruleDesc').value, 
             conditions: conds 
         };
+
+        // CẢNH BÁO GIÁ ÂM
+        if (data.active) {
+            let hasNegative = false;
+            // Giả lập trên ma trận giá gốc
+            for (const room of ROOM_TYPES) {
+                for (const seat of SEAT_TYPES) {
+                    const p = allPrices.find(x => x.roomTypeId === room.id && x.seatTypeId === seat.id);
+                    const basePrice = p ? p.price : 80000;
+                    
+                    // Tạo tập quy tắc giả định (thay thế quy tắc hiện tại nếu đang sửa)
+                    const id = document.getElementById('ruleId').value;
+                    let tempRules = [...allRules];
+                    if (id) {
+                        const idx = tempRules.findIndex(r => r.id == id);
+                        if (idx !== -1) tempRules[idx] = { ...data, id: id };
+                    } else {
+                        tempRules.push({ ...data, id: -1 });
+                    }
+
+                    // Tính toán thử
+                    let current = basePrice;
+                    const sorted = tempRules.filter(r => r.active).sort((a, b) => a.priority - b.priority);
+                    for (const rule of sorted) {
+                        const matches = rule.conditions.every(c => {
+                            if (c.type === 'ROOM_TYPE' && c.value !== room.id) return false;
+                            if (c.type === 'SEAT_TYPE' && c.value !== seat.id) return false;
+                            if (c.type === 'BRANCH' && currentBranchId && c.value != currentBranchId) return false;
+                            return true;
+                        });
+                        if (matches) {
+                            if (rule.impactType === 'FIXED') current = rule.impactValue;
+                            else if (rule.impactType === 'ADDITIVE') current += rule.impactValue;
+                            else if (rule.impactType === 'SUBTRACTIVE') current -= rule.impactValue;
+                            else if (rule.impactType === 'PERCENTAGE') current *= rule.impactValue;
+                            if (!rule.stackable) break;
+                        }
+                    }
+                    if (current < 0) { hasNegative = true; break; }
+                }
+                if (hasNegative) break;
+            }
+
+            if (hasNegative) {
+                if (!confirm('CẢNH BÁO: Quy tắc này có thể khiến giá vé bị ÂM ở một số cấu hình phòng/ghế. Bạn có chắc chắn muốn lưu?')) return;
+            }
+        }
+
         const id = document.getElementById('ruleId').value, res = id ? await api.put('/admin/pricing-rules/' + id, data) : await api.post('/admin/pricing-rules', data);
         if (res.success) { ruleModal.hide(); loadData(); } else alert('Lỗi: ' + res.message);
     }
 
     async function toggleRuleActive(id, active) {
+        const role = localStorage.getItem('cinemaRole');
         const rule = allRules.find(r => r.id == id);
         if (!rule) return;
+        
+        const isGlobal = !rule.conditions.find(c => c.type === 'BRANCH');
+        if (role === 'MANAGER' && isGlobal) {
+            alert('Bạn không có quyền thay đổi quy tắc hệ thống!');
+            loadData();
+            return;
+        }
+
         const data = { ...rule, active: active };
         const res = await api.put('/admin/pricing-rules/' + id, data);
         if (res.success) {
@@ -334,4 +434,19 @@
         if (res.success) { priceModal.hide(); loadData(); } else alert('Lỗi: ' + res.message);
     }
     function openPriceModal(roomId, seatId, price, roomName, seatName) { document.getElementById('roomType').value = roomId; document.getElementById('seatType').value = seatId; document.getElementById('targetDisplay').innerText = `${roomName} - ${seatName}`; document.getElementById('priceInput').value = price; priceModal.show(); }
-    async function deleteRule(id) { if(confirm('Xóa quy tắc này?')) { const res = await api.delete('/admin/pricing-rules/' + id); if(res.success) loadData(); } }
+    async function deleteRule(id) { 
+        const role = localStorage.getItem('cinemaRole');
+        const rule = allRules.find(r => r.id == id);
+        if (!rule) return;
+        
+        const isGlobal = !rule.conditions.find(c => c.type === 'BRANCH');
+        if (role === 'MANAGER' && isGlobal) {
+            alert('Bạn không có quyền xóa quy tắc hệ thống!');
+            return;
+        }
+
+        if(confirm('Xóa quy tắc này?')) { 
+            const res = await api.delete('/admin/pricing-rules/' + id); 
+            if(res.success) loadData(); 
+        } 
+    }

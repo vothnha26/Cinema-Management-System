@@ -147,10 +147,12 @@ public class PaymentServiceImpl implements PaymentService {
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
 
-        createNotification(booking.getCustomer().getUser(),
-                "Thanh toan that bai",
-                "Booking " + booking.getBookingCode() + " da duoc huy do thanh toan khong thanh cong.",
-                NotificationType.SYSTEM);
+        if (booking.getCustomer() != null && booking.getCustomer().getUser() != null && booking.getCustomer().getUser().getId() != null) {
+            createNotification(booking.getCustomer().getUser(),
+                    "Thanh toan that bai",
+                    "Booking " + booking.getBookingCode() + " da duoc huy do thanh toan khong thanh cong.",
+                    NotificationType.SYSTEM);
+        }
 
         return mapToResponse(payment);
     }
@@ -282,7 +284,7 @@ public class PaymentServiceImpl implements PaymentService {
         // Xử lý điểm thưởng và thông báo chỉ khi có Customer
         if (booking.getCustomer() != null) {
             customerService.addLoyaltyPoints(booking.getCustomer(), payment.getAmount());
-            if (booking.getCustomer().getUser() != null) {
+            if (booking.getCustomer().getUser() != null && booking.getCustomer().getUser().getId() != null) {
                 createNotification(booking.getCustomer().getUser(),
                         "Thanh toan thanh cong",
                         "Booking " + booking.getBookingCode() + " da duoc thanh toan thanh cong" + (autoSource ? " va xac nhan tu dong." : "."),

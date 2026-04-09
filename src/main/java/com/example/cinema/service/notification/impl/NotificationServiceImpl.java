@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 @Service
 public class NotificationServiceImpl implements INotificationService, INotificationAutomationService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(NotificationServiceImpl.class);
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final Map<String, INotificationStrategy> strategies;
@@ -72,6 +73,11 @@ public class NotificationServiceImpl implements INotificationService, INotificat
     @Override
     @Transactional
     public void sendAndSave(User user, String title, String message, NotificationType type) {
+        if (user == null || user.getId() == null) {
+            log.info("Skipping notification save: No registered user found (Guest customer).");
+            return;
+        }
+        
         Notification notification = new Notification();
         notification.setUser(user);
         notification.setTitle(title);
