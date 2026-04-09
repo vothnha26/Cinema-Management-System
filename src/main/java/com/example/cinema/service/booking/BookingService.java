@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface BookingService {
     BookingResponse createBooking(BookingRequest request);
+    BookingResponse finalizeBooking(String bookingCode, String transactionId);
     
     void holdSeat(Long showtimeId, Long seatId, String sessionId);
     void releaseSeat(Long showtimeId, Long seatId, String sessionId);

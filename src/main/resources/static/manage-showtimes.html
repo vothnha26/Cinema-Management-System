@@ -183,12 +183,13 @@
             const staffRes = await api.get('/staff/me');
             if (staffRes.success && staffRes.data) currentBranchId = staffRes.data.branch?.id;
 
-            const movieApi = currentBranchId ? `/movies/branch/${currentBranchId}` : '/movies';
+            // SỬA: Luôn gọi /movies để lấy toàn bộ danh sách (tránh bị lọc bởi suất chiếu ở endpoint branch)
             const [mRes, rRes, fRes] = await Promise.all([
-                api.get(movieApi), api.get('/rooms'), api.get('/public/master-data/formats')
+                api.get('/movies'), api.get('/rooms'), api.get('/public/master-data/formats')
             ]);
             
-            allMovies = (mRes.data || []).filter(m => m.status !== 'COMING');
+            // SỬA: Cho phép hiện cả phim Đang chiếu và Sắp chiếu để quản lý có thể lên lịch trước
+            allMovies = (mRes.data || []).filter(m => m.status === 'SHOWING' || m.status === 'COMING');
             allRooms = currentBranchId ? (rRes.data || []).filter(r => r.branchId === currentBranchId) : (rRes.data || []);
             
             if (fRes.success) {

@@ -9,6 +9,7 @@ public class ComboResponse {
     private BigDecimal price;
     private String imageUrl;
     private Integer stockQuantity;
+    private Boolean isActive;
 
     public Long getId() {
         return id;
@@ -56,5 +57,13 @@ public class ComboResponse {
 
     public void setStockQuantity(Integer stockQuantity) {
         this.stockQuantity = stockQuantity;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }

@@ -90,9 +90,9 @@
         </div>
     </div>
 
-    <!-- 6 Big KPIs -->
+    <!-- 5 Big KPIs (Removed Occupancy) -->
     <div class="row g-3 mb-4">
-        <div class="col-md-2 col-sm-4">
+        <div class="col">
             <div class="kpi-card revenue">
                 <i class="bi bi-currency-dollar kpi-icon"></i>
                 <div class="kpi-label">Doanh Thu</div>
@@ -100,7 +100,7 @@
                 <span class="kpi-delta delta-up" id="kpiRevenueDelta"><i class="bi bi-arrow-up-short"></i> --%</span>
             </div>
         </div>
-        <div class="col-md-2 col-sm-4">
+        <div class="col">
             <div class="kpi-card tickets">
                 <i class="bi bi-ticket-perforated kpi-icon"></i>
                 <div class="kpi-label">Vé Đã Bán</div>
@@ -108,7 +108,7 @@
                 <span class="kpi-delta delta-up" id="kpiTicketsDelta"><i class="bi bi-arrow-up-short"></i> --%</span>
             </div>
         </div>
-        <div class="col-md-2 col-sm-4">
+        <div class="col">
             <div class="kpi-card customers">
                 <i class="bi bi-people kpi-icon"></i>
                 <div class="kpi-label">Khách Hàng</div>
@@ -116,15 +116,7 @@
                 <span class="kpi-delta delta-up" id="kpiCustomersDelta"><i class="bi bi-arrow-up-short"></i> --%</span>
             </div>
         </div>
-        <div class="col-md-2 col-sm-4">
-            <div class="kpi-card occupancy">
-                <i class="bi bi-percent kpi-icon"></i>
-                <div class="kpi-label">Lấp Đầy</div>
-                <div class="kpi-value" id="kpiOccupancy">--%</div>
-                <span class="kpi-delta delta-up" id="kpiOccupancyDelta"><i class="bi bi-arrow-up-short"></i> --%</span>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-4">
+        <div class="col">
             <div class="kpi-card fnb">
                 <i class="bi bi-cup-hot kpi-icon"></i>
                 <div class="kpi-label">F&B Revenue</div>
@@ -132,7 +124,7 @@
                 <span class="kpi-delta delta-up" id="kpiFNBDelta"><i class="bi bi-arrow-up-short"></i> --%</span>
             </div>
         </div>
-        <div class="col-md-2 col-sm-4">
+        <div class="col">
             <div class="kpi-card nps">
                 <i class="bi bi-star kpi-icon"></i>
                 <div class="kpi-label">NPS Score</div>
@@ -162,7 +154,7 @@
         </div>
 
         <!-- Mục tiêu doanh thu -->
-        <div class="col-lg-5">
+        <div class="col-lg-7">
             <div class="analytics-card">
                 <div class="chart-title"><i class="bi bi-bullseye text-success"></i>TIẾN ĐỘ MỤC TIÊU THÁNG</div>
                 <div id="targetProgress"></div>
@@ -170,25 +162,11 @@
         </div>
 
         <!-- Top phim -->
-        <div class="col-lg-4">
+        <div class="col-lg-5">
             <div class="analytics-card">
                 <div class="chart-title"><i class="bi bi-trophy text-warning"></i>TOP 5 PHIM DOANH THU CAO</div>
                 <div style="height: 260px; position: relative;">
                     <canvas id="topMoviesChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Occupancy heatmap -->
-        <div class="col-lg-3">
-            <div class="analytics-card">
-                <div class="chart-title"><i class="bi bi-grid text-info"></i>HEATMAP LẤP ĐẦY</div>
-                <div class="heatmap-grid" id="heatmapDays" style="margin-bottom:6px"></div>
-                <div class="heatmap-grid" id="heatmapGrid"></div>
-                <div class="d-flex align-items-center gap-2 mt-3">
-                    <span class="small text-muted">Thấp</span>
-                    <div style="flex:1;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(229,19,58,0.1),rgba(229,19,58,0.4),#E5133A)"></div>
-                    <span class="small text-muted">Cao</span>
                 </div>
             </div>
         </div>

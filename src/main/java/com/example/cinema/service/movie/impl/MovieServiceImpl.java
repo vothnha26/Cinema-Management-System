@@ -40,6 +40,7 @@ public class MovieServiceImpl implements MovieService {
     private final BranchRepository branchRepository;
     private final MovieMediaService movieMediaService;
     private final ModelMapper modelMapper;
+    private final com.example.cinema.repository.showtime.ShowtimeRepository showtimeRepository;
 
     @Autowired
     public MovieServiceImpl(MovieRepository movieRepository,
@@ -52,7 +53,8 @@ public class MovieServiceImpl implements MovieService {
             BranchMovieRepository branchMovieRepository,
             BranchRepository branchRepository,
             MovieMediaService movieMediaService,
-            ModelMapper modelMapper) {
+            ModelMapper modelMapper,
+            com.example.cinema.repository.showtime.ShowtimeRepository showtimeRepository) {
         this.movieRepository = movieRepository;
         this.genreRepository = genreRepository;
         this.actorRepository = actorRepository;
@@ -64,6 +66,7 @@ public class MovieServiceImpl implements MovieService {
         this.branchRepository = branchRepository;
         this.movieMediaService = movieMediaService;
         this.modelMapper = modelMapper;
+        this.showtimeRepository = showtimeRepository;
     }
 
     @Override
@@ -75,7 +78,9 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public List<MovieResponse> getMoviesByBranch(Long branchId) {
+        List<Long> movieIdsWithShowtimes = showtimeRepository.findMovieIdsWithFutureShowtimes(branchId);
         return branchMovieRepository.findByBranchIdAndIsActiveTrue(branchId).stream()
+                .filter(bm -> movieIdsWithShowtimes.contains(bm.getMovie().getId()))
                 .map(bm -> {
                     MovieResponse resp = mapToResponse(bm.getMovie());
                     resp.setPriorityLevel(bm.getPriorityLevel());
@@ -99,7 +104,9 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public List<MovieResponse> getShowingMovies() {
+        List<Long> movieIdsWithShowtimes = showtimeRepository.findAllMovieIdsWithFutureShowtimes();
         return movieRepository.findByStatus(MovieStatus.SHOWING).stream()
+                .filter(m -> movieIdsWithShowtimes.contains(m.getId()))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }

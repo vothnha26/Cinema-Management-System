@@ -2,16 +2,19 @@ package com.example.cinema.service.booking.impl;
 
 import com.example.cinema.config.SePayProperties;
 import com.example.cinema.exception.AppException;
+import com.example.cinema.model.dto.response.BookingResponse;
 import com.example.cinema.model.dto.response.PaymentCheckoutResponse;
 import com.example.cinema.model.dto.response.PaymentResponse;
 import com.example.cinema.model.entity.*;
 import com.example.cinema.model.enums.BookingStatus;
 import com.example.cinema.model.enums.NotificationType;
+import com.example.cinema.model.enums.PaymentMethod;
 import com.example.cinema.model.enums.PaymentStatus;
 import com.example.cinema.repository.booking.BookingRepository;
 import com.example.cinema.repository.booking.PaymentRepository;
 import com.example.cinema.repository.notification.NotificationRepository;
 import com.example.cinema.repository.user.CustomerRepository;
+import com.example.cinema.service.booking.BookingService;
 import com.example.cinema.service.booking.PaymentService;
 import com.example.cinema.service.infrastructure.vietqr.IVietQRService;
 import com.example.cinema.service.user.CustomerService;
@@ -44,6 +47,11 @@ public class PaymentServiceImpl implements PaymentService {
     private final StringRedisTemplate redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
 
+    private final BookingService bookingService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    private static final String PENDING_BOOKING_PREFIX = "pending_booking:";
+
     public PaymentServiceImpl(PaymentRepository paymentRepository,
                               BookingRepository bookingRepository,
                               CustomerRepository customerRepository,
@@ -52,7 +60,9 @@ public class PaymentServiceImpl implements PaymentService {
                               IVietQRService vietQRService,
                               SePayProperties sePayProperties,
                               StringRedisTemplate redisTemplate,
-                              SimpMessagingTemplate messagingTemplate) {
+                              SimpMessagingTemplate messagingTemplate,
+                              BookingService bookingService,
+                              com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.customerRepository = customerRepository;
@@ -62,6 +72,8 @@ public class PaymentServiceImpl implements PaymentService {
         this.sePayProperties = sePayProperties;
         this.redisTemplate = redisTemplate;
         this.messagingTemplate = messagingTemplate;
+        this.bookingService = bookingService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -75,140 +87,119 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentResponse getMyPayment(String bookingCode) {
-        return mapToResponse(getOwnedPayment(bookingCode));
+        // Thử tìm trong DB
+        Optional<Payment> p = paymentRepository.findByBookingBookingCode(bookingCode);
+        if (p.isPresent()) return mapToResponse(p.get());
+
+        // Thử tìm trong Redis (cho khách đang thanh toán)
+        String json = redisTemplate.opsForValue().get(PENDING_BOOKING_PREFIX + bookingCode);
+        if (json != null) {
+            try {
+                Map<String, Object> redisData = objectMapper.readValue(json, Map.class);
+                BookingResponse bResp = objectMapper.convertValue(redisData.get("response"), BookingResponse.class);
+                
+                PaymentResponse resp = new PaymentResponse();
+                resp.setBookingCode(bResp.getBookingCode());
+                resp.setAmount(bResp.getTotalPrice());
+                resp.setMovieTitle(bResp.getMovieTitle());
+                resp.setPaymentStatus(PaymentStatus.PENDING);
+                resp.setPaymentMethod(bResp.getPaymentMethod());
+                return resp;
+            } catch (Exception e) { log.error("Redis read error: {}", e.getMessage()); }
+        }
+        
+        throw new AppException("Không tìm thấy thông tin thanh toán");
     }
 
     @Override
     @Transactional
     public PaymentCheckoutResponse createCheckout(String bookingCode) {
-        Payment payment = getOwnedPayment(bookingCode);
+        // 1. Thử tìm trong DB trước
+        Optional<Payment> existingPayment = paymentRepository.findByBookingBookingCode(bookingCode);
+        if (existingPayment.isPresent()) {
+            Payment p = existingPayment.get();
+            return mapToCheckoutResponse(p.getBooking().getBookingCode(), p.getAmount(), p.getPaymentMethod(), p.getPaymentStatus());
+        }
 
+        // 2. Thử tìm trong Redis
+        String json = redisTemplate.opsForValue().get(PENDING_BOOKING_PREFIX + bookingCode);
+        if (json == null) throw new AppException("Đơn hàng không tồn tại hoặc đã hết hạn.");
+
+        try {
+            Map<String, Object> redisData = objectMapper.readValue(json, Map.class);
+            BookingResponse responseDto = objectMapper.convertValue(redisData.get("response"), BookingResponse.class);
+            
+            return mapToCheckoutResponse(responseDto.getBookingCode(), responseDto.getTotalPrice(), responseDto.getPaymentMethod(), PaymentStatus.PENDING);
+        } catch (Exception e) {
+            log.error("Error reading redis data for checkout: {}", e.getMessage());
+            throw new AppException("Lỗi xử lý thông tin đơn hàng.");
+        }
+    }
+
+    private PaymentCheckoutResponse mapToCheckoutResponse(String code, java.math.BigDecimal amount, PaymentMethod method, PaymentStatus status) {
         PaymentCheckoutResponse response = new PaymentCheckoutResponse();
-        response.setBookingCode(payment.getBooking().getBookingCode());
-        response.setAmount(payment.getAmount());
-        response.setPaymentMethod(payment.getPaymentMethod());
-        response.setPaymentStatus(payment.getPaymentStatus());
+        response.setBookingCode(code);
+        response.setAmount(amount);
+        response.setPaymentMethod(method);
+        response.setPaymentStatus(status);
 
-        if (payment.getPaymentStatus() == PaymentStatus.SUCCESS) {
-            response.setMessage("Thanh toan cho booking nay da hoan tat.");
+        if (status == PaymentStatus.SUCCESS) {
+            response.setMessage("Thanh toán thành công.");
             return response;
         }
 
-        if (payment.getPaymentStatus() == PaymentStatus.FAILED || payment.getBooking().getStatus() == BookingStatus.CANCELLED) {
-            throw new AppException("Booking nay khong con o trang thai cho thanh toan");
-        }
-
-        String qrCodeUrl = vietQRService.generateCheckoutUrl(
-                payment.getBooking().getBookingCode(),
-                payment.getAmount(),
-                "Thanh toan ve xem phim");
-        response.setQrCodeUrl(qrCodeUrl);
-        response.setCheckoutUrl(qrCodeUrl);
-        response.setReturnUrl(sePayProperties.getBaseUrl() + "/payment/return?bookingCode=" + payment.getBooking().getBookingCode());
-        response.setMessage("Quet ma QR de hoan tat thanh toan. He thong se tu cap nhat khi nhan duoc callback tu cong thanh toan.");
+        String qrUrl = vietQRService.generateCheckoutUrl(code, amount, "Thanh toan ve StarCinema " + code);
+        response.setQrCodeUrl(qrUrl);
+        response.setCheckoutUrl(qrUrl);
+        response.setMessage("Quét mã QR để thanh toán.");
         return response;
     }
 
     @Override
     @Transactional
     public PaymentResponse confirmMyPayment(String bookingCode) {
-        Payment payment = paymentRepository.findByBookingBookingCode(bookingCode)
-                .orElseThrow(() -> new AppException("Payment not found"));
-
-        // Nếu khách hàng đã đăng nhập, kiểm tra quyền sở hữu
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails userDetails) {
-            Customer customer = customerRepository.findByUserUsername(userDetails.getUsername())
-                    .orElseThrow(() -> new AppException("Customer not found"));
-
-            if (payment.getBooking().getCustomer() != null &&
-                !payment.getBooking().getCustomer().getId().equals(customer.getId())) {
-                throw new AppException("Unauthorized");
-            }
-        }
-
-        return mapToResponse(confirmPaymentInternal(payment, null, false));
-    }
-
-    @Override
-    @Transactional
-    public PaymentResponse failMyPayment(String bookingCode) {
-        Payment payment = getOwnedPayment(bookingCode);
-
-        if (payment.getPaymentStatus() == PaymentStatus.SUCCESS) {
-            throw new AppException("Giao dich nay da thanh toan thanh cong, khong the danh dau that bai");
-        }
-
-        payment.setPaymentStatus(PaymentStatus.FAILED);
-        payment.setPaidAt(null);
-        payment.setTransactionId(null);
-
-        Booking booking = payment.getBooking();
-        booking.setStatus(BookingStatus.CANCELLED);
-        bookingRepository.save(booking);
-
-        if (booking.getCustomer() != null && booking.getCustomer().getUser() != null && booking.getCustomer().getUser().getId() != null) {
-            createNotification(booking.getCustomer().getUser(),
-                    "Thanh toan that bai",
-                    "Booking " + booking.getBookingCode() + " da duoc huy do thanh toan khong thanh cong.",
-                    NotificationType.SYSTEM);
-        }
-
-        return mapToResponse(payment);
+        log.info("Manually confirming payment for code: {}", bookingCode);
+        BookingResponse finalized = bookingService.finalizeBooking(bookingCode, "MANUAL-" + System.currentTimeMillis());
+        
+        Payment p = paymentRepository.findByBookingBookingCode(bookingCode)
+                .orElseThrow(() -> new AppException("Xác nhận thanh toán thất bại."));
+        return mapToResponse(p);
     }
 
     @Override
     @Transactional
     public void handleWebhook(Map<String, Object> payload, String signatureHeader) {
-        log.info("--- [Service] Start processing payment webhook ---");
-        
-        // 1. Kiểm tra bảo mật (nếu có signature)
-        if (signatureHeader != null) {
-            log.info("Checking webhook signature...");
-            validateWebhookSignature(signatureHeader);
-        }
-
-        // 2. Trích xuất mã đặt vé từ nội dung chuyển khoản (content)
+        if (signatureHeader != null) validateWebhookSignature(signatureHeader);
         String bookingCode = extractBookingCode(payload);
-        log.info("Extracted Booking Code: {}", bookingCode);
+        if (bookingCode == null) return;
+
+        log.info("Webhook received SUCCESS for booking: {}", bookingCode);
+        bookingService.finalizeBooking(bookingCode, extractTransactionId(payload));
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponse failMyPayment(String bookingCode) {
+        log.info("Marking payment as FAILED for booking: {}", bookingCode);
         
-        if (bookingCode == null) {
-            log.warn("SePay Webhook: No booking code found in content '{}'. Payload: {}", 
-                payload.get("content"), payload);
-            return; 
-        }
-
-        Payment payment = paymentRepository.findByBookingBookingCode(bookingCode)
-                .orElseThrow(() -> new AppException("Payment not found for code: " + bookingCode));
-        log.info("Found corresponding payment in DB. Total required: {}", payment.getAmount());
-
-        // 3. Kiểm tra loại giao dịch (Chỉ xử lý tiền vào 'in')
-        String transferType = Objects.toString(payload.get("transferType"), "").toLowerCase();
-        log.info("Transaction Type: {}", transferType);
+        // Xóa data tạm trong Redis nếu có
+        redisTemplate.delete(PENDING_BOOKING_PREFIX + bookingCode);
         
-        if (!"in".equals(transferType)) {
-            log.info("SePay Webhook: Ignored non-income transaction type: {}", transferType);
-            return;
+        // Nếu đã có trong DB thì cập nhật trạng thái
+        Optional<Payment> pOpt = paymentRepository.findByBookingBookingCode(bookingCode);
+        if (pOpt.isPresent()) {
+            Payment p = pOpt.get();
+            p.setPaymentStatus(PaymentStatus.FAILED);
+            p.getBooking().setStatus(BookingStatus.CANCELLED);
+            paymentRepository.save(p);
+            return mapToResponse(p);
         }
-
-        // 4. Kiểm tra số tiền (Phải chuyển đủ hoặc thừa mới xác nhận)
-        Object amountObj = payload.get("transferAmount");
-        double receivedAmount = amountObj != null ? Double.parseDouble(amountObj.toString()) : 0;
-        double requiredAmount = payment.getAmount().doubleValue();
-        log.info("Received Amount: {}, Required Amount: {}", receivedAmount, requiredAmount);
-
-        if (receivedAmount < requiredAmount) {
-            log.warn("SePay Webhook: UNDERPAYMENT for {}. Required: {}, Received: {}", 
-                bookingCode, requiredAmount, receivedAmount);
-            return;
-        }
-
-        // 5. Xác nhận thanh toán thành công
-        String transactionId = Objects.toString(payload.get("id"), "SP-" + System.currentTimeMillis());
-        log.info("Confirming payment with Transaction ID: {}", transactionId);
         
-        confirmPaymentInternal(payment, transactionId, true);
-        log.info("--- [Service] Webhook processed SUCCESSFULLY for booking {} ---", bookingCode);
+        // Nếu chưa có trong DB (khách vãng lai), trả về response giả lập hoặc báo lỗi
+        PaymentResponse resp = new PaymentResponse();
+        resp.setBookingCode(bookingCode);
+        resp.setPaymentStatus(PaymentStatus.FAILED);
+        return resp;
     }
 
     private Customer getCurrentCustomer() {
@@ -223,22 +214,33 @@ public class PaymentServiceImpl implements PaymentService {
 
     private Payment getOwnedPayment(String bookingCode) {
         Payment payment = paymentRepository.findByBookingBookingCode(bookingCode)
-                .orElseThrow(() -> new AppException("Payment not found"));
+                .orElseThrow(() -> new AppException("Payment not found for code: " + bookingCode));
 
         Customer bookingCustomer = payment.getBooking().getCustomer();
-        
-        // Nếu booking này thuộc về một Hội viên (có user_id)
+
+        // TRƯỜNG HỢP 1: Booking thuộc về một Hội viên đã đăng ký tài khoản (User)
         if (bookingCustomer != null && bookingCustomer.getUser() != null) {
-            Customer currentCustomer = getCurrentCustomer();
-            if (!bookingCustomer.getId().equals(currentCustomer.getId())) {
-                throw new AppException("Unauthorized: This booking belongs to another member");
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            
+            // Nếu là Hội viên, bắt buộc phải đăng nhập đúng tài khoản mới được xem
+            if (principal instanceof UserDetails userDetails) {
+                Customer currentCustomer = customerRepository.findByUserUsername(userDetails.getUsername())
+                        .orElse(null);
+                
+                if (currentCustomer == null || !bookingCustomer.getId().equals(currentCustomer.getId())) {
+                    throw new AppException("Giao dịch này thuộc về tài khoản khác. Vui lòng đăng nhập đúng tài khoản.");
+                }
+            } else {
+                // Nếu chưa đăng nhập mà xem booking của Hội viên -> Yêu cầu đăng nhập
+                throw new AppException("Giao dịch này thuộc về một Hội viên. Vui lòng đăng nhập để tiếp tục.");
             }
         }
-        // Nếu là khách vãng lai (không có user_id), cho phép truy cập qua bookingCode (đã pass qua URL)
+        
+        // TRƯỜNG HỢP 2: Booking của Khách vãng lai (GUEST)
+        // Cho phép truy cập công khai qua bookingCode (vì mã này được sinh ngẫu nhiên khó đoán)
         
         return payment;
     }
-
     private Payment confirmPaymentInternal(Payment payment, String transactionId, boolean autoSource) {
         if (payment.getPaymentStatus() == PaymentStatus.SUCCESS) {
             return payment;

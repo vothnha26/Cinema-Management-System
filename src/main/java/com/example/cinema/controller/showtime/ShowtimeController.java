@@ -34,26 +34,31 @@ public class ShowtimeController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ShowtimeResponse>>> getAllShowtimes(
             @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) Long branchId,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date,
             Authentication authentication) {
 
         System.out.println(">>> FETCHING SHOWTIMES. Auth: " + (authentication != null ? authentication.getName() : "NULL"));
-        if (authentication != null) {
-            System.out.println(">>> Authorities: " + authentication.getAuthorities());
+
+        // Nếu truyền branchId từ request (Public hoặc Quick Booking)
+        if (branchId != null) {
+            List<ShowtimeResponse> list = showtimeService.getAllShowtimes(date, branchId);
+            if (movieId != null) {
+                list = list.stream().filter(s -> s.getMovieId().equals(movieId)).toList();
+            }
+            return ResponseEntity.ok(ApiResponse.ok(list));
         }
 
-        // Nếu là Manager hoặc Staff, chỉ xem suất chiếu của rạp mình
-        if (authentication != null && (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER")) 
+        // Nếu là Manager hoặc Staff (tự động lấy theo chi nhánh của họ nếu không truyền branchId)
+        if (authentication != null && (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"))
                 || authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_STAFF")))) {
 
             String username = authentication.getName();
             User user = userRepository.findByUsername(username)
                     .orElseGet(() -> userRepository.findByEmail(username).orElse(null));
-            
+
             if (user != null) {
                 Staff staff = staffRepository.findByUser(user).orElse(null);
-                System.out.println(">>> Staff lookup for " + username + ": " + (staff != null ? "Found, Branch: " + staff.getBranch().getName() : "NOT FOUND IN STAFF TABLE"));
-                
                 if (staff != null && staff.getBranch() != null) {
                     List<ShowtimeResponse> list = showtimeService.getShowtimesByBranch(staff.getBranch().getId(), date);
                     if (movieId != null) {
@@ -64,16 +69,21 @@ public class ShowtimeController {
             }
         }
 
-        List<ShowtimeResponse> list = showtimeService.getAllShowtimes(date);
+        List<ShowtimeResponse> list = showtimeService.getAllShowtimes(date, null);
         if (movieId != null) {
             list = list.stream().filter(s -> s.getMovieId().equals(movieId)).toList();
         }
         return ResponseEntity.ok(ApiResponse.ok(list));
     }
-    @GetMapping("/{id}")
+
+    @GetMapping("/dates")
+    public ResponseEntity<ApiResponse<List<java.time.LocalDate>>> getDistinctDates(
+            @RequestParam(required = false) Long movieId,
+            @RequestParam(required = false) Long branchId) {
+        return ResponseEntity.ok(ApiResponse.ok(showtimeService.getDistinctShowtimeDates(movieId, branchId)));
+    }    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ShowtimeResponse>> getShowtimeById(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok(showtimeService.getAllShowtimes(null).stream()
-                .filter(s -> s.getId().equals(id)).findFirst().orElse(null)));
+        return ResponseEntity.ok(ApiResponse.ok(showtimeService.getShowtimeById(id)));
     }
 
     @GetMapping("/{id}/seats")

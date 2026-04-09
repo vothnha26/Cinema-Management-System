@@ -70,18 +70,32 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     }
 
     @Override
-    public List<ShowtimeResponse> getAllShowtimes(LocalDate date) {
+    public List<ShowtimeResponse> getAllShowtimes(LocalDate date, Long branchId) {
         List<Showtime> showtimes;
         if (date != null) {
             LocalDateTime startOfDay = date.atStartOfDay();
             LocalDateTime endOfDay = date.atTime(java.time.LocalTime.MAX);
-            showtimes = showtimeRepository.findAllByStartTimeBetween(startOfDay, endOfDay, null);
+            showtimes = showtimeRepository.findAllByStartTimeBetween(startOfDay, endOfDay, branchId);
+        } else if (branchId != null) {
+            showtimes = showtimeRepository.findByBranchId(branchId);
         } else {
             showtimes = showtimeRepository.findAll();
         }
         return showtimes.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<LocalDate> getDistinctShowtimeDates(Long movieId, Long branchId) {
+        return showtimeRepository.findDistinctDates(movieId, branchId);
+    }
+
+    @Override
+    public ShowtimeResponse getShowtimeById(Long id) {
+        return showtimeRepository.findById(id)
+                .map(this::mapToResponse)
+                .orElse(null);
     }
 
     @Override

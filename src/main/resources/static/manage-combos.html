@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
         :root {
           --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
@@ -30,14 +31,26 @@
 
         .stock-section { background: var(--surface); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
         .stock-label { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; display: block; }
-        .stock-control { display: flex; align-items: center; gap: 15px; }
-        .stock-control input { background: #000; border: 1px solid var(--border); color: #fff; text-align: center; font-weight: 800; width: 80px; padding: 8px; border-radius: 10px; }
-        .btn-update { background: var(--accent); color: #fff; border: none; padding: 8px 20px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; flex: 1; transition: 0.2s; }
+        .stock-control { display: flex; align-items: center; gap: 10px; }
+        .stock-control input { background: #000; border: 1px solid var(--border); color: #fff; text-align: center; font-weight: 800; width: 70px; padding: 8px; border-radius: 10px; }
+        .btn-update { background: var(--accent); color: #fff; border: none; padding: 8px 15px; border-radius: 10px; font-weight: 700; font-size: 0.8rem; flex: 1; transition: 0.2s; }
         .btn-update:hover { opacity: 0.9; }
+
+        .admin-actions { position: absolute; top: 15px; left: 15px; display: flex; gap: 8px; opacity: 0; transition: 0.3s; }
+        .combo-card:hover .admin-actions { opacity: 1; }
+        .btn-admin { width: 32px; height: 32px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: 0.2s; }
+        .btn-edit { background: #3B82F6; color: #fff; }
+        .btn-delete { background: #EF4444; color: #fff; }
 
         .badge-status { position: absolute; top: 20px; right: 20px; padding: 5px 12px; border-radius: 30px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
         .bg-active { background: rgba(80,200,100,0.15); color: #50C864; border: 1px solid rgba(80,200,100,0.2); }
         .bg-inactive { background: rgba(229,19,58,0.15); color: var(--accent); border: 1px solid rgba(229,19,58,0.2); }
+
+        /* Modal styling */
+        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; color: #fff; }
+        .form-label { font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); }
+        .form-control { background: var(--bg); border: 1px solid var(--border); color: #fff; border-radius: 12px; padding: 12px; }
+        .form-control:focus { background: var(--bg); color: #fff; border-color: var(--accent); box-shadow: none; }
 
         .toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 9999; }
     </style>
@@ -49,10 +62,13 @@
 <main class="main-content">
     <div class="header-section">
         <div>
-            <h1 class="page-title">QUẢN LÝ TỒN KHO COMBO</h1>
-            <p class="text-muted m-0 fw-500">Cập nhật số lượng bắp nước và thực phẩm tại chi nhánh</p>
+            <h1 class="page-title">QUẢN LÝ COMBO</h1>
+            <p class="text-muted m-0 fw-500" id="pageSubtitle">Cập nhật bắp nước và tồn kho tại hệ thống</p>
         </div>
         <div class="d-flex gap-2">
+            <button id="btnAddCombo" class="btn btn-danger px-4 fw-bold d-none" style="border-radius: 12px" onclick="openAddModal()">
+                <i class="bi bi-plus-lg me-2"></i>THÊM COMBO MỚI
+            </button>
             <button class="btn btn-outline-secondary px-4 fw-bold" style="border-radius: 12px" onclick="loadCombos()">
                 <i class="bi bi-arrow-clockwise me-2"></i>LÀM MỚI
             </button>
@@ -64,17 +80,75 @@
     </div>
 </main>
 
+<!-- Modal Thêm/Sửa Combo -->
+<div class="modal fade" id="comboModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold" id="modalTitle">THÊM COMBO MỚI</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="comboForm">
+                    <input type="hidden" id="comboId">
+                    <div class="mb-3">
+                        <label class="form-label">Tên Combo</label>
+                        <input type="text" id="comboName" class="form-control" placeholder="Bắp nước size L..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Giá bán (VNĐ)</label>
+                        <input type="number" id="comboPrice" class="form-control" placeholder="100000" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea id="comboDesc" class="form-control" rows="3" placeholder="Chi tiết combo..."></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Hình ảnh</label>
+                        <input type="file" id="comboImage" class="form-control" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 py-3 fw-bold" style="border-radius: 12px">LƯU THÔNG TIN</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="/js/auth-guard.js"></script>
 <script src="/js/sidebar.js"></script>
 <script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    AuthGuard.requireRole(['MANAGER', 'ADMIN']);
+    const userRole = localStorage.getItem('cinemaRole');
+    const isAdmin = userRole === 'ROLE_ADMIN';
+    const isManager = userRole === 'ROLE_MANAGER';
+    
     let allCombos = [];
+    let currentBranchId = null;
+    const comboModal = new bootstrap.Modal(document.getElementById('comboModal'));
+
+    async function init() {
+        if (isAdmin) {
+            document.getElementById('btnAddCombo').classList.remove('d-none');
+            document.getElementById('pageSubtitle').innerText = 'Định nghĩa tên, giá và mô tả cho toàn hệ thống';
+        }
+        
+        if (isManager) {
+            const staffRes = await api.get('/staff/me');
+            if (staffRes.success && staffRes.data) {
+                currentBranchId = staffRes.data.branch?.id;
+                document.getElementById('pageSubtitle').innerText = `Quản lý tồn kho tại chi nhánh: ${staffRes.data.branch?.name}`;
+            }
+        }
+        
+        await loadCombos();
+    }
 
     async function loadCombos() {
-        const res = await api.get('/combos');
+        const endpoint = (isManager && currentBranchId) ? `/combos/branch/${currentBranchId}` : '/combos';
+        const res = await api.get(endpoint);
         if (res.success) {
             allCombos = res.data;
             renderCombos();
@@ -85,27 +159,109 @@
         const grid = document.getElementById('comboGrid');
         grid.innerHTML = allCombos.map(c => `
             <div class="combo-card animate__animated animate__fadeIn">
-                <span class="badge-status ${c.active ? 'bg-active' : 'bg-inactive'}">${c.active ? 'Kinh doanh' : 'Ngừng bán'}</span>
+                ${isAdmin ? `
+                <div class="admin-actions">
+                    <button class="btn-admin btn-edit" onclick="openEditModal(${c.id})" title="Sửa"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn-admin btn-delete" onclick="deleteCombo(${c.id})" title="Xóa"><i class="bi bi-trash"></i></button>
+                </div>
+                ` : ''}
+                
+                <span class="badge-status ${c.isActive !== false ? 'bg-active' : 'bg-inactive'}">${c.isActive !== false ? 'Kinh doanh' : 'Ngừng bán'}</span>
                 <img src="${c.imageUrl || 'https://placehold.co/300x180/161B2E/E8EAF0?text=Combo'}" class="combo-image" onerror="this.src='https://placehold.co/300x180/161B2E/E8EAF0?text=Combo'">
                 <div class="combo-name">${c.name}</div>
                 <span class="combo-price">${c.price.toLocaleString()}đ</span>
                 
+                ${isManager ? `
                 <div class="stock-section">
-                    <span class="stock-label">Số lượng tồn kho</span>
+                    <span class="stock-label">Tồn kho chi nhánh</span>
                     <div class="stock-control">
-                        <input type="number" id="stock-${c.id}" value="${c.stockQuantity}" min="0">
-                        <button class="btn-update" onclick="updateStock(${c.id})">CẬP NHẬT</button>
+                        <input type="number" id="stock-${c.id}" value="${c.stockQuantity || 0}" min="0">
+                        <button class="btn-update" onclick="updateBranchStock(${c.id})">CẬP NHẬT</button>
                     </div>
                 </div>
+                ` : `
+                <div class="small text-muted">${c.description || 'Không có mô tả'}</div>
+                `}
             </div>
         `).join('');
     }
 
-    async function updateStock(id) {
-        const newStock = document.getElementById(`stock-${id}`).value;
-        const res = await api.patch(`/combos/${id}/stock?quantity=${newStock}`);
+    // --- ADMIN LOGIC ---
+    function openAddModal() {
+        document.getElementById('modalTitle').innerText = 'THÊM COMBO MỚI';
+        document.getElementById('comboForm').reset();
+        document.getElementById('comboId').value = '';
+        comboModal.show();
+    }
+
+    function openEditModal(id) {
+        const combo = allCombos.find(c => c.id == id);
+        if (!combo) return;
+        
+        document.getElementById('modalTitle').innerText = 'SỬA THÔNG TIN COMBO';
+        document.getElementById('comboId').value = combo.id;
+        document.getElementById('comboName').value = combo.name;
+        document.getElementById('comboPrice').value = combo.price;
+        document.getElementById('comboDesc').value = combo.description || '';
+        comboModal.show();
+    }
+
+    document.getElementById('comboForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('comboId').value;
+        const formData = new FormData();
+        
+        const comboData = {
+            name: document.getElementById('comboName').value,
+            price: document.getElementById('comboPrice').value,
+            description: document.getElementById('comboDesc').value,
+            stockQuantity: 0 // Admin mặc định tạo với tồn kho 0
+        };
+        
+        formData.append('combo', new Blob([JSON.stringify(comboData)], { type: 'application/json' }));
+        const imageFile = document.getElementById('comboImage').files[0];
+        if (imageFile) formData.append('image', imageFile);
+
+        const url = id ? `/combos/${id}` : '/combos';
+        const method = id ? 'PUT' : 'POST';
+        
+        // Dùng fetch trực tiếp cho multipart
+        const response = await fetch(`/api${url}`, {
+            method: method,
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem('cinemaToken') },
+            body: formData
+        });
+        
+        const res = await response.json();
         if (res.success) {
-            showNotify('Thành công', 'Đã cập nhật số lượng tồn kho');
+            showNotify('Thành công', 'Đã lưu thông tin combo');
+            comboModal.hide();
+            loadCombos();
+        } else {
+            showNotify('Lỗi', res.message, 'error');
+        }
+    };
+
+    async function deleteCombo(id) {
+        if (!confirm('Bạn có chắc muốn xóa combo này? Thao tác này sẽ xóa tồn kho tại tất cả chi nhánh.')) return;
+        const res = await api.delete(`/combos/${id}`);
+        if (res.success) {
+            showNotify('Thành công', 'Đã xóa combo');
+            loadCombos();
+        } else {
+            showNotify('Lỗi', res.message, 'error');
+        }
+    }
+
+    // --- MANAGER LOGIC ---
+    async function updateBranchStock(comboId) {
+        if (!currentBranchId) return showNotify('Lỗi', 'Không xác định được chi nhánh', 'error');
+        
+        const newStock = document.getElementById(`stock-${comboId}`).value;
+        const res = await api.patch(`/combos/branch/${currentBranchId}/combo/${comboId}/stock?quantity=${newStock}`);
+        
+        if (res.success) {
+            showNotify('Thành công', 'Đã cập nhật số lượng tồn kho chi nhánh');
             loadCombos();
         } else {
             showNotify('Lỗi', res.message, 'error');
@@ -123,7 +279,7 @@
         setTimeout(() => toast.remove(), 4000);
     }
 
-    loadCombos();
+    init();
 </script>
 </body>
 </html>
