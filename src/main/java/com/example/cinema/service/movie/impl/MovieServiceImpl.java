@@ -78,9 +78,12 @@ public class MovieServiceImpl implements MovieService {
 
     @Override
     public List<MovieResponse> getMoviesByBranch(Long branchId) {
-        List<Long> movieIdsWithShowtimes = showtimeRepository.findMovieIdsWithFutureShowtimes(branchId);
+        // Lấy các phim đang hoạt động (Đang chiếu/Sắp chiếu) tại chi nhánh
         return branchMovieRepository.findByBranchIdAndIsActiveTrue(branchId).stream()
-                .filter(bm -> movieIdsWithShowtimes.contains(bm.getMovie().getId()))
+                .filter(bm -> {
+                    MovieStatus status = bm.getMovie().getStatus();
+                    return status != MovieStatus.STOPPED;
+                })
                 .map(bm -> {
                     MovieResponse resp = mapToResponse(bm.getMovie());
                     resp.setPriorityLevel(bm.getPriorityLevel());
@@ -205,30 +208,32 @@ public class MovieServiceImpl implements MovieService {
     }
 
     private void saveMovieBranches(Movie movie, List<Long> branchIds) {
+        // Nếu branchIds là null hoặc rỗng (thường là khi update thông tin chung từ Admin mà không chọn lại rạp)
+        // thì KHÔNG thay đổi gì để tránh mất dữ liệu phân phối cũ.
+        if (branchIds == null || branchIds.isEmpty()) return;
+
         List<BranchMovie> existing = branchMovieRepository.findByMovieId(movie.getId());
         for (BranchMovie bm : existing) {
-            if (branchIds == null || !branchIds.contains(bm.getBranch().getId())) {
+            if (!branchIds.contains(bm.getBranch().getId())) {
                 bm.setIsActive(false);
             }
         }
         branchMovieRepository.saveAll(existing);
 
-        if (branchIds != null && !branchIds.isEmpty()) {
-            for (Long branchId : branchIds) {
-                Branch branch = branchRepository.findById(branchId)
-                        .orElseThrow(() -> new AppException("Branch not found: " + branchId));
-                BranchMovie bm = branchMovieRepository.findByBranchAndMovie(branch, movie)
-                        .orElseGet(() -> {
-                            BranchMovie newBm = new BranchMovie();
-                            newBm.setBranch(branch);
-                            newBm.setMovie(movie);
-                            newBm.setPriorityLevel(1);
-                            return newBm;
-                        });
-                bm.setStatus(movie.getStatus());
-                bm.setIsActive(true);
-                branchMovieRepository.save(bm);
-            }
+        for (Long branchId : branchIds) {
+            Branch branch = branchRepository.findById(branchId)
+                    .orElseThrow(() -> new AppException("Branch not found: " + branchId));
+            BranchMovie bm = branchMovieRepository.findByBranchAndMovie(branch, movie)
+                    .orElseGet(() -> {
+                        BranchMovie newBm = new BranchMovie();
+                        newBm.setBranch(branch);
+                        newBm.setMovie(movie);
+                        newBm.setPriorityLevel(1);
+                        return newBm;
+                    });
+            bm.setStatus(movie.getStatus());
+            bm.setIsActive(true);
+            branchMovieRepository.save(bm);
         }
     }
 

@@ -522,6 +522,87 @@
     }
 
     function switchMode(m) { document.getElementById('modeSale').classList.toggle('d-none', m!=='SALE'); document.getElementById('modeCheckin').classList.toggle('d-none', m!=='CHECKIN'); }
+    
+    async function handleCheckin() {
+        const code = document.getElementById('checkinCode').value.trim().toUpperCase();
+        if(!code) return showNotify('Lỗi', 'Vui lòng nhập mã vé', 'error');
+        
+        const container = document.getElementById('checkinResult');
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-danger"></div></div>';
+
+        try {
+            // SỬA: Dùng endpoint /lookup để tìm cả trong Redis và DB
+            const res = await api.get(`/bookings/lookup/${code}`);
+            
+            if (res.success === false) {
+                container.innerHTML = `<div class="alert alert-danger border-0 rounded-4 p-4 animate__animated animate__shakeX">
+                    <h5 class="fw-800 mb-2">KHÔNG TÌM THẤY VÉ</h5>
+                    <p class="m-0">${res.message || 'Mã vé không hợp lệ hoặc đã hết hạn.'}</p>
+                </div>`;
+                return;
+            }
+
+            const b = res; // Trực tiếp nhận object nếu thành công
+            const isConfirmed = b.status === 'CONFIRMED' || b.status === 'CHECKED_IN';
+            const isPending = b.status === 'PENDING';
+            
+            let statusHtml = '';
+            if (isConfirmed) statusHtml = `<span class="badge bg-success px-3 py-2 rounded-pill">ĐÃ THANH TOÁN</span>`;
+            else if (isPending) statusHtml = `<span class="badge bg-warning text-dark px-3 py-2 rounded-pill">CHỜ THANH TOÁN</span>`;
+            else statusHtml = `<span class="badge bg-danger px-3 py-2 rounded-pill">${b.status}</span>`;
+
+            container.innerHTML = `
+                <div class="cardx p-4 border-0 shadow-lg animate__animated animate__fadeInUp" style="background: var(--surface);">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h4 class="fw-800 text-white mb-1">${b.movieTitle || 'Vé xem phim'}</h4>
+                            <div class="text-muted small">${new Date(b.showTime).toLocaleString('vi-VN')} • ${b.roomName}</div>
+                        </div>
+                        ${statusHtml}
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.6rem;">Mã đặt vé</div>
+                            <div class="fw-800 text-danger fs-5">${b.bookingCode}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.6rem;">Danh sách ghế</div>
+                            <div class="fw-800 text-white fs-5">${(b.seatCodes || []).join(', ') || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    ${isConfirmed && b.status !== 'CHECKED_IN' ? `
+                        <button class="btn btn-danger w-100 py-3 fw-800 rounded-3 shadow-lg" onclick="confirmCheckin('${b.bookingCode}')">XÁC NHẬN VÀO PHÒNG</button>
+                    ` : ''}
+                    
+                    ${b.status === 'CHECKED_IN' ? `
+                        <div class="alert alert-info border-0 rounded-3 text-center fw-bold py-3 m-0">
+                            <i class="bi bi-check-circle-fill me-2"></i>VÉ NÀY ĐÃ ĐƯỢC SOÁT VÀO CỔNG
+                        </div>
+                    ` : ''}
+
+                    ${isPending ? `
+                        <div class="alert alert-warning border-0 rounded-3 small py-3 m-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>Đơn hàng này chưa hoàn tất thanh toán. Vui lòng kiểm tra lại.
+                        </div>
+                    ` : ''}
+                </div>`;
+        } catch (e) {
+            container.innerHTML = `<div class="alert alert-danger border-0 rounded-4 p-4">Lỗi kết nối máy chủ</div>`;
+        }
+    }
+
+    async function confirmCheckin(code) {
+        const res = await api.put(`/bookings/${code}/checkin`);
+        if (res.success) {
+            showNotify('Thành công', 'Đã soát vé thành công!');
+            handleCheckin(); // Reload lại thông tin
+        } else {
+            showNotify('Lỗi', res.message, 'error');
+        }
+    }
+
     function selectPosPay(m) { posPaymentMethod = m; document.getElementById('payCash').classList.toggle('active', m==='CASH'); document.getElementById('payCard').classList.toggle('active', m==='CARD'); }
     function showNotify(t, m, type='success') {
         const c = document.getElementById('toastContainer');

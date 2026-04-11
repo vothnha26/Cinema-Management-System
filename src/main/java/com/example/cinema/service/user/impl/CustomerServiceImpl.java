@@ -128,16 +128,9 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponse getCustomerByPhone(String phone) {
-        List<Customer> customers = customerRepository.findByPhone(phone);
-        if (customers.isEmpty()) return null;
-
-        // Ưu tiên lấy khách hàng đã có User liên kết (check user_id != null)
-        Customer bestMatch = customers.stream()
-                .filter(c -> c.getUser() != null)
-                .findFirst()
-                .orElse(customers.get(0)); // Nếu không có bản ghi nào có User, lấy bản ghi đầu tiên
-
-        return mapToResponse(bestMatch);
+        return customerRepository.findByPhone(phone)
+                .map(this::mapToResponse)
+                .orElse(null);
     }
 
     @Override

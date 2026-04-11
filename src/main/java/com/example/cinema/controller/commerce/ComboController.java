@@ -64,6 +64,14 @@ public class ComboController {
         return ResponseEntity.ok(ApiResponse.ok(comboService.updateBranchStock(branchId, comboId, quantity)));
     }
 
+    @PatchMapping("/branch/{branchId}/combo/{comboId}/toggle-active")
+    public ResponseEntity<ApiResponse<ComboResponse>> toggleBranchActive(
+            @PathVariable Long branchId, 
+            @PathVariable Long comboId, 
+            @RequestParam Boolean active) {
+        return ResponseEntity.ok(ApiResponse.ok(comboService.toggleBranchActive(branchId, comboId, active)));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteCombo(@PathVariable Long id) {
         comboService.deleteCombo(id);

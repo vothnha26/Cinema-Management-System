@@ -32,7 +32,7 @@
         .stock-section { background: var(--surface); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
         .stock-label { font-size: 0.7rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; display: block; }
         .stock-control { display: flex; align-items: center; gap: 10px; }
-        .stock-control input { background: #000; border: 1px solid var(--border); color: #fff; text-align: center; font-weight: 800; width: 70px; padding: 8px; border-radius: 10px; }
+        .stock-control input { background: #000; border: 1px solid var(--border); color: #fff; text-align: center; font-weight: 800; width: 100%; padding: 8px; border-radius: 10px; }
         .btn-update { background: var(--accent); color: #fff; border: none; padding: 8px 15px; border-radius: 10px; font-weight: 700; font-size: 0.8rem; flex: 1; transition: 0.2s; }
         .btn-update:hover { opacity: 0.9; }
 
@@ -122,8 +122,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const userRole = localStorage.getItem('cinemaRole');
-    const isAdmin = userRole === 'ROLE_ADMIN';
-    const isManager = userRole === 'ROLE_MANAGER';
+    const isAdmin = userRole === 'ADMIN';
+    const isManager = userRole === 'MANAGER';
+    const isStaff = userRole === 'STAFF';
+    const canUpdateStock = isManager || isStaff;
     
     let allCombos = [];
     let currentBranchId = null;
@@ -135,11 +137,11 @@
             document.getElementById('pageSubtitle').innerText = 'Định nghĩa tên, giá và mô tả cho toàn hệ thống';
         }
         
-        if (isManager) {
+        if (canUpdateStock) {
             const staffRes = await api.get('/staff/me');
             if (staffRes.success && staffRes.data) {
                 currentBranchId = staffRes.data.branch?.id;
-                document.getElementById('pageSubtitle').innerText = `Quản lý tồn kho tại chi nhánh: ${staffRes.data.branch?.name}`;
+                document.getElementById('pageSubtitle').innerText = `Quản lý tồn kho tại chi nhánh: ${staffRes.data.branch?.name || 'Chưa xác định'}`;
             }
         }
         
@@ -147,7 +149,7 @@
     }
 
     async function loadCombos() {
-        const endpoint = (isManager && currentBranchId) ? `/combos/branch/${currentBranchId}` : '/combos';
+        const endpoint = (canUpdateStock && currentBranchId) ? `/combos/branch/${currentBranchId}` : '/combos';
         const res = await api.get(endpoint);
         if (res.success) {
             allCombos = res.data;
@@ -157,8 +159,10 @@
 
     function renderCombos() {
         const grid = document.getElementById('comboGrid');
-        grid.innerHTML = allCombos.map(c => `
-            <div class="combo-card animate__animated animate__fadeIn">
+        grid.innerHTML = allCombos.map(c => {
+            const active = c.isActive !== false;
+            return `
+            <div class="combo-card animate__animated animate__fadeIn ${active ? '' : 'opacity-75'}" style="${active ? '' : 'border-style: dashed; filter: grayscale(0.5)'}">
                 ${isAdmin ? `
                 <div class="admin-actions">
                     <button class="btn-admin btn-edit" onclick="openEditModal(${c.id})" title="Sửa"><i class="bi bi-pencil-square"></i></button>
@@ -166,24 +170,64 @@
                 </div>
                 ` : ''}
                 
-                <span class="badge-status ${c.isActive !== false ? 'bg-active' : 'bg-inactive'}">${c.isActive !== false ? 'Kinh doanh' : 'Ngừng bán'}</span>
+                <span class="badge-status ${active ? 'bg-active' : 'bg-inactive'}">
+                    <i class="bi ${active ? 'bi-check-circle-fill' : 'bi-pause-circle-fill'} me-1"></i>
+                    ${active ? 'Đang bán' : 'Tạm ngưng'}
+                </span>
+
                 <img src="${c.imageUrl || 'https://placehold.co/300x180/161B2E/E8EAF0?text=Combo'}" class="combo-image" onerror="this.src='https://placehold.co/300x180/161B2E/E8EAF0?text=Combo'">
                 <div class="combo-name">${c.name}</div>
                 <span class="combo-price">${c.price.toLocaleString()}đ</span>
                 
-                ${isManager ? `
+                ${canUpdateStock ? `
                 <div class="stock-section">
-                    <span class="stock-label">Tồn kho chi nhánh</span>
-                    <div class="stock-control">
-                        <input type="number" id="stock-${c.id}" value="${c.stockQuantity || 0}" min="0">
-                        <button class="btn-update" onclick="updateBranchStock(${c.id})">CẬP NHẬT</button>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="stock-label m-0">Trạng thái rạp</span>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" 
+                                   ${active ? 'checked' : ''} 
+                                   onchange="toggleActive(${c.id}, this.checked)"
+                                   style="cursor: pointer; transform: scale(1.1)">
+                        </div>
+                    </div>
+
+                    <!-- Chế độ hiển thị -->
+                    <div id="stock-view-${c.id}" class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="stock-label mb-1">Tồn kho hiện tại</span>
+                            <div class="fw-bold fs-4">${c.stockQuantity || 0} <small class="text-muted fw-normal" style="font-size: 0.7rem">PHẦN</small></div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary border-0" onclick="showEditStock(${c.id})" title="Sửa số lượng">
+                            <i class="bi bi-pencil-square fs-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Chế độ chỉnh sửa -->
+                    <div id="stock-edit-${c.id}" class="d-none animate__animated animate__fadeIn">
+                        <span class="stock-label mb-2 d-block">Cập nhật tồn kho</span>
+                        <div class="stock-control mb-2">
+                            <input type="number" id="stock-input-${c.id}" value="${c.stockQuantity || 0}" min="0">
+                            <button class="btn-update" onclick="updateBranchStock(${c.id})">LƯU</button>
+                        </div>
+                        <button class="btn btn-link btn-sm text-muted w-100 text-decoration-none p-0" onclick="hideEditStock(${c.id})">Hủy bỏ</button>
                     </div>
                 </div>
                 ` : `
                 <div class="small text-muted">${c.description || 'Không có mô tả'}</div>
                 `}
             </div>
-        `).join('');
+        `; }).join('');
+    }
+
+    function showEditStock(id) {
+        document.getElementById(`stock-view-${id}`).classList.add('d-none');
+        document.getElementById(`stock-edit-${id}`).classList.remove('d-none');
+        document.getElementById(`stock-input-${id}`).focus();
+    }
+
+    function hideEditStock(id) {
+        document.getElementById(`stock-view-${id}`).classList.remove('d-none');
+        document.getElementById(`stock-edit-${id}`).classList.add('d-none');
     }
 
     // --- ADMIN LOGIC ---
@@ -215,7 +259,7 @@
             name: document.getElementById('comboName').value,
             price: document.getElementById('comboPrice').value,
             description: document.getElementById('comboDesc').value,
-            stockQuantity: 0 // Admin mặc định tạo với tồn kho 0
+            stockQuantity: 0
         };
         
         formData.append('combo', new Blob([JSON.stringify(comboData)], { type: 'application/json' }));
@@ -225,7 +269,6 @@
         const url = id ? `/combos/${id}` : '/combos';
         const method = id ? 'PUT' : 'POST';
         
-        // Dùng fetch trực tiếp cho multipart
         const response = await fetch(`/api${url}`, {
             method: method,
             headers: { 'Authorization': 'Bearer ' + localStorage.getItem('cinemaToken') },
@@ -254,14 +297,23 @@
     }
 
     // --- MANAGER LOGIC ---
+    async function toggleActive(comboId, newStatus) {
+        if (!currentBranchId) return;
+        const res = await api.patch(`/combos/branch/${currentBranchId}/combo/${comboId}/toggle-active?active=${newStatus}`);
+        if (res.success) {
+            showNotify('Thành công', `Đã ${newStatus ? 'bật' : 'tắt'} kinh doanh combo`);
+            loadCombos();
+        }
+    }
+
     async function updateBranchStock(comboId) {
         if (!currentBranchId) return showNotify('Lỗi', 'Không xác định được chi nhánh', 'error');
         
-        const newStock = document.getElementById(`stock-${comboId}`).value;
+        const newStock = document.getElementById(`stock-input-${comboId}`).value;
         const res = await api.patch(`/combos/branch/${currentBranchId}/combo/${comboId}/stock?quantity=${newStock}`);
         
         if (res.success) {
-            showNotify('Thành công', 'Đã cập nhật số lượng tồn kho chi nhánh');
+            showNotify('Thành công', 'Đã cập nhật số lượng tồn kho');
             loadCombos();
         } else {
             showNotify('Lỗi', res.message, 'error');

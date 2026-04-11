@@ -3,7 +3,6 @@ package com.example.cinema.config;
 import com.example.cinema.model.entity.*;
 import com.example.cinema.model.enums.*;
 import com.example.cinema.repository.branch.BranchRepository;
-import com.example.cinema.repository.commerce.PromotionRepository;
 import com.example.cinema.repository.movie.FormatRepository;
 import com.example.cinema.repository.movie.GenreRepository;
 import com.example.cinema.repository.movie.MovieRepository;

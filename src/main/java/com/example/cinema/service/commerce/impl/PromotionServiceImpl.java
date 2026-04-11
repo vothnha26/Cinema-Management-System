@@ -149,13 +149,7 @@ public class PromotionServiceImpl implements PromotionService {
         if (p.getMinLevel() != null) {
             Customer customer = null;
             if (phone != null && !phone.isEmpty()) {
-                List<Customer> customers = customerRepository.findByPhone(phone);
-                if (!customers.isEmpty()) {
-                    customer = customers.stream()
-                            .filter(c -> c.getUser() != null)
-                            .findFirst()
-                            .orElse(customers.get(0));
-                }
+                customer = customerRepository.findByPhone(phone).orElse(null);
             }
             if (customer == null) {
                 Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();

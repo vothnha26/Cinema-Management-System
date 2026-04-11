@@ -8,6 +8,7 @@ import com.example.cinema.model.enums.*;
 import com.example.cinema.repository.booking.BookingDetailRepository;
 import com.example.cinema.repository.booking.BookingRepository;
 import com.example.cinema.repository.booking.PaymentRepository;
+import com.example.cinema.repository.commerce.BranchComboRepository;
 import com.example.cinema.repository.commerce.ComboRepository;
 import com.example.cinema.repository.commerce.PromotionRepository;
 import com.example.cinema.repository.notification.NotificationRepository;
@@ -50,6 +51,7 @@ public class BookingServiceImpl implements BookingService {
     private final MembershipBenefitRepository membershipBenefitRepository;
     private final BookingDetailRepository bookingDetailRepository;
     private final ComboRepository comboRepository;
+    private final BranchComboRepository branchComboRepository;
     private final PromotionRepository promotionRepository;
     private final PaymentRepository paymentRepository;
     private final PricingService pricingService;
@@ -71,6 +73,7 @@ public class BookingServiceImpl implements BookingService {
                               MembershipLevelRepository membershipLevelRepository,
                               MembershipBenefitRepository membershipBenefitRepository,
                               BookingDetailRepository bookingDetailRepository, ComboRepository comboRepository,
+                              BranchComboRepository branchComboRepository,
                               PromotionRepository promotionRepository, PaymentRepository paymentRepository,
                               PricingService pricingService,
                               NotificationRepository notificationRepository,
@@ -88,6 +91,7 @@ public class BookingServiceImpl implements BookingService {
         this.membershipBenefitRepository = membershipBenefitRepository;
         this.bookingDetailRepository = bookingDetailRepository;
         this.comboRepository = comboRepository;
+        this.branchComboRepository = branchComboRepository;
         this.promotionRepository = promotionRepository;
         this.paymentRepository = paymentRepository;
         this.pricingService = pricingService;
@@ -190,12 +194,64 @@ public class BookingServiceImpl implements BookingService {
             total = total.add(pricingService.calculateTicketPrice(showtime, s, tempCust).getFinalPrice());
         }
         if (request.getCombos() != null) {
+            Branch branch = showtime.getRoom().getBranch();
             for (Map.Entry<String, Integer> entry : request.getCombos().entrySet()) {
                 Combo c = comboRepository.findById(Long.parseLong(entry.getKey())).orElseThrow();
-                total = total.add(c.getPrice().multiply(BigDecimal.valueOf(entry.getValue())));
+                // Lấy giá từ chi nhánh
+                BranchCombo bc = branchComboRepository.findByBranchAndCombo(branch, c)
+                        .orElseThrow(() -> new AppException("Combo " + c.getName() + " không có sẵn tại chi nhánh này"));
+                total = total.add(bc.getPrice().multiply(BigDecimal.valueOf(entry.getValue())));
             }
         }
         return total;
+    }
+
+    @Override
+    @Transactional
+    public BookingResponse createPOSBooking(BookingRequest request) {
+        log.info("Creating POS booking directly in DB: email={}, phone={}", request.getEmail(), request.getPhone());
+
+        Showtime showtime = getAndValidateShowtime(request.getShowtimeId());
+        validateSeatsAvailability(showtime.getId(), request.getSeatIds());
+
+        String bookingCode = "POS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        Customer customer = null;
+        try { customer = getCurrentCustomer(); } catch (Exception e) { customer = findOrCreateCustomer(request); }
+
+        Booking booking = new Booking();
+        booking.setBookingCode(bookingCode);
+        booking.setShowtime(showtime);
+        booking.setCustomer(customer);
+        booking.setStatus(BookingStatus.CONFIRMED);
+
+        List<BookingDetail> details = processSeatPricing(booking, showtime, request.getSeatIds(), customer);
+        List<BookingCombo> combos = processComboPricing(booking, request.getCombos());
+
+        BigDecimal ticketTotal = details.stream().map(BookingDetail::getPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal comboTotal = combos.stream().map(bc -> bc.getPrice().multiply(BigDecimal.valueOf(bc.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        BigDecimal finalTotalPrice = applyPromotion(booking, customer, request.getPromotionCode(), ticketTotal.add(comboTotal));
+        booking.setTotalPrice(finalTotalPrice);
+        booking.setDetails(details);
+        booking.setCombos(combos);
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        Payment p = new Payment();
+        p.setBooking(savedBooking);
+        p.setAmount(finalTotalPrice);
+        p.setPaymentMethod(request.getPaymentMethod());
+        p.setPaymentStatus(PaymentStatus.SUCCESS);
+        p.setTransactionId("POS-" + System.currentTimeMillis());
+        p.setPaidAt(LocalDateTime.now());
+        paymentRepository.save(p);
+        savedBooking.setPayment(p);
+
+        // Giải phóng Redis nếu có hold seat
+        cleanupRedisData(null, showtime.getId(), request.getSeatIds());
+
+        return mapToResponse(savedBooking);
     }
 
     @Override
@@ -219,8 +275,13 @@ public class BookingServiceImpl implements BookingService {
 
         Showtime showtime = getAndValidateShowtime(request.getShowtimeId());
         
-        // Tìm hoặc tạo khách hàng
-        Customer customer = findOrCreateCustomer(request);
+        // Xác định khách hàng: Ưu tiên người đang đăng nhập
+        Customer customer = null;
+        try {
+            customer = getCurrentCustomer();
+        } catch (Exception e) {
+            customer = findOrCreateCustomer(request);
+        }
 
         Booking booking = new Booking();
         booking.setBookingCode(bookingCode);
@@ -262,16 +323,19 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private Customer findOrCreateCustomer(BookingRequest request) {
-        String phone = request.getPhone() != null ? request.getPhone().trim() : "0000000000";
-        return customerRepository.findByPhone(phone).stream()
-                .findFirst()
-                .orElseGet(() -> {
-                    Customer c = new Customer();
-                    c.setFullName(request.getFullName() != null ? request.getFullName().trim() : "Khách vãng lai");
-                    c.setPhone(phone);
-                    c.setEmail(request.getEmail());
-                    return customerRepository.save(c);
-                });
+        String phone = (request.getPhone() != null && !request.getPhone().trim().isEmpty()) 
+                ? request.getPhone().trim() : null;
+        
+        if (phone != null) {
+            Optional<Customer> existing = customerRepository.findByPhone(phone);
+            if (existing.isPresent()) return existing.get();
+        }
+
+        Customer c = new Customer();
+        c.setFullName(request.getFullName() != null ? request.getFullName().trim() : "Khách vãng lai");
+        c.setPhone(phone);
+        c.setEmail(request.getEmail());
+        return customerRepository.save(c);
     }
 
     private void cleanupRedisData(String bookingCode, Long showtimeId, List<Long> seatIds) {
@@ -331,14 +395,28 @@ public class BookingServiceImpl implements BookingService {
     private List<BookingCombo> processComboPricing(Booking booking, Map<String, Integer> comboRequests) {
         List<BookingCombo> list = new ArrayList<>();
         if (comboRequests != null) {
+            Branch branch = booking.getShowtime().getRoom().getBranch();
             for (Map.Entry<String, Integer> entry : comboRequests.entrySet()) {
                 Combo c = comboRepository.findById(Long.parseLong(entry.getKey())).orElseThrow();
                 int qty = entry.getValue();
-                if (c.getStockQuantity() < qty) throw new AppException("Combo " + c.getName() + " hết hàng");
-                c.setStockQuantity(c.getStockQuantity() - qty);
-                comboRepository.save(c);
+
+                // SỬA: Tìm BranchCombo để trừ kho tại đúng chi nhánh
+                BranchCombo bc_item = branchComboRepository.findByBranchAndCombo(branch, c)
+                        .orElseThrow(() -> new AppException("Combo " + c.getName() + " không có sẵn tại chi nhánh này"));
+
+                if (bc_item.getStockQuantity() < qty) {
+                    throw new AppException("Combo " + c.getName() + " tại chi nhánh " + branch.getName() + " đã hết hàng");
+                }
+
+                // Trừ kho chi nhánh
+                bc_item.setStockQuantity(bc_item.getStockQuantity() - qty);
+                branchComboRepository.save(bc_item);
+
                 BookingCombo bc = new BookingCombo();
-                bc.setBooking(booking); bc.setCombo(c); bc.setQuantity(qty); bc.setPrice(c.getPrice());
+                bc.setBooking(booking);
+                bc.setCombo(c);
+                bc.setQuantity(qty);
+                bc.setPrice(bc_item.getPrice()); // Lấy giá chi nhánh
                 list.add(bc);
             }
         }
@@ -354,7 +432,29 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override public List<BookingResponse> getMyBookings() { return bookingRepository.findByCustomerIdOrderByCreatedAtDesc(getCurrentCustomer().getId()).stream().map(this::mapToResponse).collect(Collectors.toList()); }
-    @Override public BookingResponse getMyBookingByCode(String code) { return mapToResponse(bookingRepository.findByBookingCode(code).orElseThrow(() -> new AppException("Không tìm thấy đơn hàng"))); }
+    @Override
+    public BookingResponse getMyBookingByCode(String code) { return mapToResponse(bookingRepository.findByBookingCode(code).orElseThrow(() -> new AppException("Không tìm thấy đơn hàng"))); }
+
+    @Override
+    public BookingResponse lookupBooking(String code) {
+        // 1. Tìm trong DB (Vé đã chốt)
+        Optional<Booking> dbBooking = bookingRepository.findByBookingCode(code);
+        if (dbBooking.isPresent()) return mapToResponse(dbBooking.get());
+
+        // 2. Tìm trong Redis (Vé đang chờ thanh toán)
+        String json = redisTemplate.opsForValue().get(PENDING_BOOKING_PREFIX + code);
+        if (json != null) {
+            try {
+                Map<String, Object> redisData = objectMapper.readValue(json, Map.class);
+                BookingResponse res = objectMapper.convertValue(redisData.get("response"), BookingResponse.class);
+                res.setStatus(BookingStatus.PENDING); // Đảm bảo trạng thái là PENDING
+                return res;
+            } catch (Exception e) { log.error("Redis parse error: {}", e.getMessage()); }
+        }
+
+        throw new AppException("Mã đặt vé không tồn tại hoặc đã quá hạn 15 phút.");
+    }
+
     @Override @Transactional public void cancelBooking(String code) { Booking b = bookingRepository.findByBookingCode(code).orElseThrow(); b.setStatus(BookingStatus.CANCELLED); bookingRepository.save(b); }
     @Override @Transactional public void checkInBooking(String code) { Booking b = bookingRepository.findByBookingCode(code).orElseThrow(); b.setStatus(BookingStatus.CHECKED_IN); bookingRepository.save(b); }
 

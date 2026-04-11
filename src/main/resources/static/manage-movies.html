@@ -218,7 +218,17 @@
     });
 
     async function loadMovies() {
-        const role = localStorage.getItem('cinemaRole'), bId = localStorage.getItem('cinemaBranchId');
+        let role = localStorage.getItem('cinemaRole'), bId = localStorage.getItem('cinemaBranchId');
+        
+        // Nếu là MANAGER mà chưa có bId, thử lấy từ API
+        if (role === 'MANAGER' && !bId) {
+            const staffRes = await api.get('/staff/me');
+            if (staffRes.success && staffRes.data && staffRes.data.branch) {
+                bId = staffRes.data.branch.id;
+                localStorage.setItem('cinemaBranchId', bId);
+            }
+        }
+
         const res = (role === 'MANAGER' && bId) ? await api.get(`/movies/branch/${bId}`) : await api.get('/movies');
         if (res.success) { allMovies = res.data || []; filteredMovies = [...allMovies]; renderMovies(); }
     }

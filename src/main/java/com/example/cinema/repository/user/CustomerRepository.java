@@ -14,8 +14,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByUserId(Long userId);
     Optional<Customer> findByUserUsername(String username);
     
-    @Query("SELECT c FROM Customer c WHERE c.phone = :phone")
-    List<Customer> findByPhone(@Param("phone") String phone);
+    Optional<Customer> findByPhone(String phone);
 
     @Query("SELECT COUNT(DISTINCT c) FROM Customer c JOIN Booking b ON c.id = b.customer.id " +
            "WHERE b.createdAt BETWEEN :start AND :end " +

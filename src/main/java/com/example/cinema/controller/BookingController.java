@@ -22,6 +22,12 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<BookingResponse> createBooking(@RequestBody @Valid BookingRequest request) {
+        // Nếu là thanh toán tại quầy (Tiền mặt/Thẻ POS) thì chốt đơn luôn
+        if (request.getPaymentMethod() == com.example.cinema.model.enums.PaymentMethod.CASH || 
+            request.getPaymentMethod() == com.example.cinema.model.enums.PaymentMethod.CARD) {
+            return ResponseEntity.ok(bookingService.createPOSBooking(request));
+        }
+        // Ngược lại là đặt vé Online (VNPAY/MOMO...) thì đi qua luồng hold 15p
         return ResponseEntity.ok(bookingService.createBooking(request));
     }
 
@@ -50,6 +56,11 @@ public class BookingController {
     @GetMapping("/{code}")
     public ResponseEntity<BookingResponse> getMyBookingByCode(@PathVariable String code) {
         return ResponseEntity.ok(bookingService.getMyBookingByCode(code));
+    }
+
+    @GetMapping("/lookup/{code}")
+    public ResponseEntity<BookingResponse> lookupBooking(@PathVariable String code) {
+        return ResponseEntity.ok(bookingService.lookupBooking(code));
     }
 
     @PutMapping("/{code}/cancel")

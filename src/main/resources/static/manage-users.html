@@ -189,7 +189,8 @@
                     </td>
                     <td><span class="badge ${u.status ? 'bg-success' : 'bg-secondary'}">${u.status ? 'Hoạt động' : 'Khóa'}</span></td>
                     <td class="text-end">
-                        <button class="action-btn me-2" onclick="toggleStatus(${u.id})"><i class="bi bi-power"></i></button>
+                        <button class="action-btn me-2" style="color: #3B82F6;" onclick="showEditModal(${u.id})" title="Chỉnh sửa"><i class="bi bi-pencil-square"></i></button>
+                        <button class="action-btn" style="color: #EF4444;" onclick="deleteUser(${u.id})" title="Xóa tài khoản"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>
             `;
@@ -202,9 +203,46 @@
     }
 
     function showCreateModal() {
+        document.getElementById('modalTitle').innerText = 'THÊM NHÂN VIÊN MỚI';
         document.getElementById('userForm').reset();
+        document.getElementById('username').disabled = false;
         toggleBranchSelection();
         userModal.show();
+    }
+
+    async function showEditModal(id) {
+        const response = await api.get(`/admin/users/${id}`);
+        if (response.success) {
+            const user = response.data;
+            const staffInfo = staffMap[id];
+            
+            document.getElementById('modalTitle').innerText = 'CHỈNH SỬA NHÂN SỰ';
+            document.getElementById('username').value = user.username;
+            document.getElementById('username').disabled = true;
+            document.getElementById('email').value = user.email;
+            document.getElementById('role').value = user.role;
+            
+            if (staffInfo) {
+                document.getElementById('branchId').value = staffInfo.branch.id;
+                document.getElementById('staffCode').value = staffInfo.staffCode || '';
+                document.getElementById('position').value = staffInfo.position || '';
+            }
+            
+            toggleBranchSelection();
+            userModal.show();
+        }
+    }
+
+    async function deleteUser(id) {
+        if (confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản này? Hành động này không thể hoàn tác.')) {
+            const response = await api.delete(`/admin/users/${id}`);
+            if (response.success) {
+                alert('Đã xóa người dùng thành công');
+                loadUsers();
+            } else {
+                alert('Lỗi: ' + response.message);
+            }
+        }
     }
 
     async function toggleStatus(id) {

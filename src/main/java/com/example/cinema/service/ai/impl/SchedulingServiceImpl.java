@@ -175,18 +175,28 @@ public class SchedulingServiceImpl implements SchedulingService {
         if (suggestions.isEmpty()) return;
         
         LocalDate targetDate = suggestions.get(0).getStartTime().toLocalDate();
+        
+        // Lấy branchId từ suggestion đầu tiên (hoặc từ context nếu có)
+        // Vì hiện tại ShowtimeResponse chưa có branchId, ta sẽ lấy từ Room của suggestion đầu tiên
+        Long branchId = null;
+        if (suggestions.get(0).getRoomId() != null) {
+            Room firstRoom = roomRepository.findById(suggestions.get(0).getRoomId()).orElse(null);
+            if (firstRoom != null && firstRoom.getBranch() != null) {
+                branchId = firstRoom.getBranch().getId();
+            }
+        }
 
         if (overwrite) {
-            // Tìm tất cả suất chiếu trong ngày
+            // SỬA: Truyền branchId vào để chỉ xóa suất chiếu của đúng chi nhánh đang lập lịch
             List<Showtime> existing = showtimeRepository.findAllByStartTimeBetween(
-                targetDate.atStartOfDay(), targetDate.plusDays(1).atStartOfDay(), null);
+                targetDate.atStartOfDay(), targetDate.plusDays(1).atStartOfDay(), branchId);
             
             for (Showtime s : existing) {
                 // Chỉ xóa nếu thực sự chưa có bất kỳ đặt chỗ nào (tránh lỗi FK)
                 if (bookingRepository.countByShowtimeId(s.getId()) == 0) {
                     showtimeRepository.delete(s);
                 } else {
-                    log.warn("Cannot delete showtime {} because it already has bookings", s.getId());
+                    log.warn("Cannot delete showtime {} because it đã có vé", s.getId());
                 }
             }
         }

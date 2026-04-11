@@ -47,7 +47,7 @@ public class SecurityConfig {
 
                         // 2. SHARED MANAGER & ADMIN (Operation)
                         .requestMatchers("/api/tmdb/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
-                        .requestMatchers("/api/audit/**", "/api/statistics/**", "/api/scheduling/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/audit/**", "/api/statistics/**", "/api/scheduling/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER", "ROLE_STAFF")
                         
                         // 3. MOVIE & COMBO CATALOG (Admin edits, Manager updates priority)
                         .requestMatchers(HttpMethod.POST, "/api/movies", "/api/combos").hasAuthority("ROLE_ADMIN")

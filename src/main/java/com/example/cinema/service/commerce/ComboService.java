@@ -19,4 +19,6 @@ public interface ComboService {
     List<ComboResponse> getCombosByBranch(Long branchId);
 
     ComboResponse updateBranchStock(Long branchId, Long comboId, Integer newStock);
+
+    ComboResponse toggleBranchActive(Long branchId, Long comboId, Boolean active);
 }

@@ -8,6 +8,7 @@ import com.example.cinema.model.dto.response.PriceCalculationResult;
 import com.example.cinema.model.entity.*;
 import com.example.cinema.model.enums.ShowtimeStatus;
 import com.example.cinema.repository.booking.BookingDetailRepository;
+import com.example.cinema.repository.booking.BookingRepository;
 import com.example.cinema.repository.movie.MovieRepository;
 import com.example.cinema.repository.room.RoomRepository;
 import com.example.cinema.repository.room.SeatRepository;
@@ -42,6 +43,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     private final com.example.cinema.repository.movie.FormatRepository formatRepository;
     private final com.example.cinema.repository.movie.BranchMovieRepository branchMovieRepository;
     private final StringRedisTemplate redisTemplate;
+    private final BookingRepository bookingRepository;
 
     private static final String LOCK_KEY_PREFIX = "seat_lock:";
 
@@ -55,7 +57,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             MembershipBenefitRepository membershipBenefitRepository,
             com.example.cinema.repository.movie.FormatRepository formatRepository,
             com.example.cinema.repository.movie.BranchMovieRepository branchMovieRepository,
-            StringRedisTemplate redisTemplate) {
+            StringRedisTemplate redisTemplate,
+            BookingRepository bookingRepository) {
         this.showtimeRepository = showtimeRepository;
         this.seatRepository = seatRepository;
         this.bookingDetailRepository = bookingDetailRepository;
@@ -67,6 +70,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         this.formatRepository = formatRepository;
         this.branchMovieRepository = branchMovieRepository;
         this.redisTemplate = redisTemplate;
+        this.bookingRepository = bookingRepository;
     }
 
     @Override
@@ -319,8 +323,17 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     @Transactional
     public void deleteShowtime(Long id) {
         Showtime s = showtimeRepository.findById(id).orElseThrow(() -> new AppException("Not found"));
-        if (s.getSoldSeats() > 0) throw new AppException("Suất chiếu đã bán vé");
-        if (s.getStartTime().isBefore(LocalDateTime.now().plusHours(2))) throw new AppException("Cách giờ chiếu dưới 2 tiếng");
+        
+        // SỬA: Kiểm tra tất cả các loại booking (CONFIRMED, CANCELLED, PENDING...) 
+        // để tránh lỗi Foreign Key Constraint trong DB.
+        if (bookingRepository.countByShowtimeId(id) > 0) {
+            throw new AppException("Không thể xóa suất chiếu đã có dữ liệu đặt vé (bao gồm cả vé đã hủy)");
+        }
+        
+        if (s.getStartTime().isBefore(LocalDateTime.now().plusHours(2))) {
+            throw new AppException("Không thể xóa suất chiếu cách giờ diễn dưới 2 tiếng");
+        }
+        
         showtimeRepository.deleteById(id);
     }
 

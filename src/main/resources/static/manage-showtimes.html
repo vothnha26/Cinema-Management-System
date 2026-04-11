@@ -181,14 +181,18 @@
         
         try {
             const staffRes = await api.get('/staff/me');
-            if (staffRes.success && staffRes.data) currentBranchId = staffRes.data.branch?.id;
+            if (staffRes.success && staffRes.data) {
+                currentBranchId = staffRes.data.branch?.id;
+                if (currentBranchId) localStorage.setItem('cinemaBranchId', currentBranchId);
+            }
 
-            // SỬA: Luôn gọi /movies để lấy toàn bộ danh sách (tránh bị lọc bởi suất chiếu ở endpoint branch)
+            // SỬA: Lấy phim theo chi nhánh nếu có branchId
+            const movieUrl = currentBranchId ? `/movies/branch/${currentBranchId}` : '/movies';
             const [mRes, rRes, fRes] = await Promise.all([
-                api.get('/movies'), api.get('/rooms'), api.get('/public/master-data/formats')
+                api.get(movieUrl), api.get('/rooms'), api.get('/public/master-data/formats')
             ]);
             
-            // SỬA: Cho phép hiện cả phim Đang chiếu và Sắp chiếu để quản lý có thể lên lịch trước
+            // Lọc phim Đang chiếu và Sắp chiếu từ danh sách phim của chi nhánh
             allMovies = (mRes.data || []).filter(m => m.status === 'SHOWING' || m.status === 'COMING');
             allRooms = currentBranchId ? (rRes.data || []).filter(r => r.branchId === currentBranchId) : (rRes.data || []);
             
@@ -228,9 +232,10 @@
                 const width = ((end - start)/3600000) * 120;
                 const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
                 
+                // SỬA: Chỉ truyền ID thay vì truyền chuỗi JSON phức tạp
                 html += `<div class="st-block ${s.id < 0 ? 'ai-draft' : ''}" 
                               style="left:${left}px; width:${width}px;" 
-                              onclick='openDetailModal(${JSON.stringify(s).replace(/'/g, "&apos;")})'>
+                              onclick="openDetailById(${s.id})">
                             <div class="st-title">${s.movieTitle}</div>
                             <div class="st-info"><span class="fw-bold">${startStr}</span></div>
                          </div>`;
@@ -240,7 +245,16 @@
         document.getElementById('timelineGrid').innerHTML = html;
     }
 
+    function openDetailById(id) {
+        if (!id) return;
+        // Nếu ID âm, đó là từ AI Result
+        const list = (id < 0) ? currentAIResult : currentShowtimes;
+        const s = list.find(item => item.id == id);
+        if (s) openDetailModal(s);
+    }
+
     async function openDetailModal(s) {
+        if (!s || !s.id) return;
         currentViewStId = s.id;
         document.getElementById('detailTitle').innerText = s.movieTitle;
         document.getElementById('detailInfo').innerHTML = `
@@ -253,10 +267,16 @@
         grid.innerHTML = '<div class="py-5 text-muted text-center w-100">Đang tải sơ đồ...</div>';
         detailModal.show();
 
-        const res = await api.get(`/showtimes/${s.id}/seats`);
-        if (res.success) {
-            document.getElementById('seatStats').innerText = `${s.soldSeats}/${s.totalSeats} Vé đã bán`;
-            renderSeatMap(res.data);
+        // Chỉ gọi API lấy ghế nếu là suất chiếu thật (ID dương)
+        if (s.id > 0) {
+            const res = await api.get(`/showtimes/${s.id}/seats`);
+            if (res.success) {
+                document.getElementById('seatStats').innerText = `${s.soldSeats}/${s.totalSeats} Vé đã bán`;
+                renderSeatMap(res.data);
+            }
+        } else {
+            document.getElementById('seatStats').innerText = `0/${s.totalSeats} (BẢN NHÁP AI)`;
+            grid.innerHTML = '<div class="py-5 text-muted text-center w-100">Suất chiếu nháp không có dữ liệu ghế thời gian thực</div>';
         }
     }
 

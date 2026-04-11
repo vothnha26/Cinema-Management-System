@@ -60,13 +60,35 @@ public class ComboServiceImpl implements ComboService {
                         newBc.setCombo(c);
                         newBc.setPrice(c.getPrice());
                         newBc.setStockQuantity(0);
+                        newBc.setIsActive(true);
                         return branchComboRepository.save(newBc);
                     });
             
             ComboResponse resp = modelMapper.map(c, ComboResponse.class);
             resp.setStockQuantity(bc.getStockQuantity());
+            resp.setIsActive(bc.getIsActive()); // Lấy trạng thái từ chi nhánh
             return resp;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public ComboResponse toggleBranchActive(Long branchId, Long comboId, Boolean active) {
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new AppException("Không tìm thấy chi nhánh"));
+        Combo combo = comboRepository.findById(comboId)
+                .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
+        
+        BranchCombo bc = branchComboRepository.findByBranchAndCombo(branch, combo)
+                .orElseThrow(() -> new AppException("Combo chưa được phân phối cho chi nhánh này"));
+        
+        bc.setIsActive(active);
+        branchComboRepository.save(bc);
+        
+        ComboResponse resp = modelMapper.map(combo, ComboResponse.class);
+        resp.setStockQuantity(bc.getStockQuantity());
+        resp.setIsActive(bc.getIsActive());
+        return resp;
     }
 
     @Override
