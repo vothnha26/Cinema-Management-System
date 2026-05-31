@@ -15,5 +15,6 @@ public interface BranchMovieRepository extends JpaRepository<BranchMovie, Long> 
     Optional<BranchMovie> findByBranchAndMovie(Branch branch, Movie movie);
     List<BranchMovie> findByMovieId(Long movieId);
     List<BranchMovie> findByBranchIdAndIsActiveTrue(Long branchId);
+    Optional<BranchMovie> findByBranchIdAndMovieIdAndIsActiveTrue(Long branchId, Long movieId);
     boolean existsByBranchIdAndMovieIdAndIsActiveTrue(Long branchId, Long movieId);
 }

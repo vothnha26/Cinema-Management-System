@@ -102,6 +102,12 @@ public class ShowtimeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(showtimeService.createShowtime(request)));
     }
 
+    @PostMapping("/bulk")
+    public ResponseEntity<ApiResponse<com.example.cinema.model.dto.response.BulkShowtimeResultResponse>> createBulkShowtimes(
+            @RequestBody com.example.cinema.model.dto.request.BulkShowtimeRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(showtimeService.createBulkShowtimes(request)));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ShowtimeResponse>> updateShowtime(@PathVariable Long id,
             @RequestBody @Valid ShowtimeRequest request) {

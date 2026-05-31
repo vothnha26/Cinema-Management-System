@@ -14,7 +14,9 @@ public interface BookingService {
     List<Long> getMyLockedSeats(Long showtimeId, String sessionId);
 
     List<BookingResponse> getMyBookings();
-    BookingResponse getMyBookingByCode(String bookingCode);
+    List<BookingResponse> getAllBookings();
+    BookingResponse getMyBookingByCode(String code);
+
     BookingResponse lookupBooking(String bookingCode);
     void cancelBooking(String bookingCode);
     void checkInBooking(String bookingCode);

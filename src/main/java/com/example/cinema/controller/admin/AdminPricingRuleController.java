@@ -1,29 +1,57 @@
 package com.example.cinema.controller.admin;
 
 import com.example.cinema.model.dto.response.ApiResponse;
+import com.example.cinema.model.dto.response.PricingRuleResponse;
 import com.example.cinema.model.entity.PricingRule;
 import com.example.cinema.service.commerce.PricingRuleService;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/pricing-rules")
 public class AdminPricingRuleController {
 
     private final PricingRuleService pricingRuleService;
+    private final ModelMapper modelMapper;
 
-    public AdminPricingRuleController(PricingRuleService pricingRuleService) {
+    public AdminPricingRuleController(PricingRuleService pricingRuleService, ModelMapper modelMapper) {
         this.pricingRuleService = pricingRuleService;
+        this.modelMapper = modelMapper;
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<PricingRule>>> getAllRules(@RequestParam(required = false) Long branchId) {
+    public ResponseEntity<ApiResponse<List<PricingRuleResponse>>> getAllRules(@RequestParam(required = false) Long branchId) {
+        List<PricingRule> rules;
         if (branchId != null) {
-            return ResponseEntity.ok(ApiResponse.ok(pricingRuleService.getRulesByBranch(branchId)));
+            rules = pricingRuleService.getRulesByBranch(branchId);
+        } else {
+            rules = pricingRuleService.getAllRules();
         }
-        return ResponseEntity.ok(ApiResponse.ok(pricingRuleService.getAllRules()));
+        return ResponseEntity.ok(ApiResponse.ok(rules.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList())));
+    }
+
+    private PricingRuleResponse mapToResponse(PricingRule rule) {
+        PricingRuleResponse res = modelMapper.map(rule, PricingRuleResponse.class);
+        res.setSystem(rule.isSystem());
+        res.setActive(rule.getActive());
+        res.setStackable(rule.isStackable());
+        
+        if (rule.getConditions() != null) {
+            res.setConditions(rule.getConditions().stream().map(c -> {
+                PricingRuleResponse.ConditionResponse cr = new PricingRuleResponse.ConditionResponse();
+                cr.setType(c.getType().name());
+                cr.setValue(c.getValue());
+                cr.setDescription(c.getDescription());
+                return cr;
+            }).collect(Collectors.toList()));
+        }
+        return res;
     }
 
     @PostMapping

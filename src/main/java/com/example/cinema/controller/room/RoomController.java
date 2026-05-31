@@ -24,7 +24,10 @@ public class RoomController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<RoomResponse>>> getAllRooms() {
+    public ResponseEntity<ApiResponse<List<RoomResponse>>> getAllRooms(@RequestParam(required = false) Long branchId) {
+        if (branchId != null) {
+            return ResponseEntity.ok(ApiResponse.ok(roomService.getRoomsByBranch(branchId)));
+        }
         return ResponseEntity.ok(ApiResponse.ok(roomService.getAllRooms()));
     }
 

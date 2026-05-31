@@ -1,26 +1,20 @@
 package com.example.cinema.service.commerce.pricing.matcher.impl;
 
-import com.example.cinema.model.entity.Customer;
-import com.example.cinema.model.entity.PricingCondition;
-import com.example.cinema.model.entity.Seat;
-import com.example.cinema.model.entity.Showtime;
-import com.example.cinema.service.commerce.pricing.matcher.PricingConditionMatcher;
+import com.example.cinema.model.entity.*;
+import com.example.cinema.model.enums.PricingConditionType;
+import com.example.cinema.service.commerce.pricing.matcher.IConditionMatcher;
 import org.springframework.stereotype.Component;
-
 import java.time.LocalDate;
 
 @Component
-public class DateRangeMatcher implements PricingConditionMatcher {
-    @Override
-    public boolean matches(PricingCondition condition, Showtime showtime, Seat seat, Customer customer) {
-        String value = condition.getValue();
-        if (value == null || !value.contains(":")) return false;
-
-        String[] parts = value.split(":");
-        LocalDate start = LocalDate.parse(parts[0].trim());
-        LocalDate end = LocalDate.parse(parts[1].trim());
-
-        LocalDate showDate = showtime.getStartTime().toLocalDate();
-        return !showDate.isBefore(start) && !showDate.isAfter(end);
+public class DateRangeMatcher implements IConditionMatcher {
+    @Override public PricingConditionType getSupportedType() { return PricingConditionType.DATE_RANGE; }
+    @Override public boolean matches(PricingCondition cond, Showtime showtime, Seat seat, Customer customer) {
+        String[] range = cond.getValue().split(",");
+        if (range.length != 2) return false;
+        LocalDate start = LocalDate.parse(range[0]);
+        LocalDate end = LocalDate.parse(range[1]);
+        LocalDate current = showtime.getStartTime().toLocalDate();
+        return !current.isBefore(start) && !current.isAfter(end);
     }
 }

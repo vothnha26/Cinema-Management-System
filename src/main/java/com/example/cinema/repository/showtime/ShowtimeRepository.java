@@ -13,22 +13,21 @@ import java.util.List;
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     List<Showtime> findByMovieId(Long movieId);
     List<Showtime> findAllByRoomIdAndStatusNot(Long roomId, com.example.cinema.model.enums.ShowtimeStatus status);
+    List<Showtime> findAllByRoomIdAndStatusNotAndIdNot(Long roomId, com.example.cinema.model.enums.ShowtimeStatus status, Long id);
     
     @Query("SELECT s FROM Showtime s WHERE s.startTime BETWEEN :start AND :end " +
-           "AND (:branchId IS NULL OR s.room.branch.id = :branchId) " +
-           "AND s.startTime >= CURRENT_TIMESTAMP")
+           "AND (:branchId IS NULL OR s.room.branch.id = :branchId)")
     List<Showtime> findAllByStartTimeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end, @Param("branchId") Long branchId);
 
-    @Query("SELECT s FROM Showtime s WHERE s.room.branch.id = :branchId AND s.startTime >= CURRENT_TIMESTAMP")
+    @Query("SELECT s FROM Showtime s WHERE s.room.branch.id = :branchId")
     List<Showtime> findByBranchId(@Param("branchId") Long branchId);
 
-    @Query("SELECT s FROM Showtime s WHERE s.room.branch.id = :branchId AND s.startTime BETWEEN :start AND :end AND s.startTime >= CURRENT_TIMESTAMP")
+    @Query("SELECT s FROM Showtime s WHERE s.room.branch.id = :branchId AND s.startTime BETWEEN :start AND :end")
     List<Showtime> findByBranchIdAndStartTimeBetween(@Param("branchId") Long branchId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT DISTINCT CAST(s.startTime AS LocalDate) FROM Showtime s " +
            "WHERE (:movieId IS NULL OR s.movie.id = :movieId) " +
            "AND (:branchId IS NULL OR s.room.branch.id = :branchId) " +
-           "AND s.startTime >= CURRENT_TIMESTAMP " +
            "ORDER BY CAST(s.startTime AS LocalDate) ASC")
     List<java.time.LocalDate> findDistinctDates(@Param("movieId") Long movieId, @Param("branchId") Long branchId);
 

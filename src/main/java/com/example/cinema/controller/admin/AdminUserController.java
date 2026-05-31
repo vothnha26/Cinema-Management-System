@@ -5,6 +5,7 @@ import com.example.cinema.model.dto.request.UpdateUserRequest;
 import com.example.cinema.model.dto.response.ApiResponse;
 import com.example.cinema.model.dto.response.UserResponse;
 import com.example.cinema.model.enums.Role;
+import com.example.cinema.service.auth.IAuthService;
 import com.example.cinema.service.user.IUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,9 +23,9 @@ import java.util.List;
 public class AdminUserController {
 
     private final IUserService userService;
-    private final com.example.cinema.service.auth.IAuthService authService;
+    private final IAuthService authService;
 
-    public AdminUserController(IUserService userService, com.example.cinema.service.auth.IAuthService authService) {
+    public AdminUserController(IUserService userService, IAuthService authService) {
         this.userService = userService;
         this.authService = authService;
     }

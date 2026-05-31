@@ -38,9 +38,20 @@ public class MembershipController {
 
     @PostMapping("/update")
     public ResponseEntity<ApiResponse<MembershipBenefit>> updateBenefitRule(
-            @RequestParam Long levelId,
+            @RequestParam(required = false) Long levelId,
+            @RequestParam(required = false) String levelName,
             @RequestParam String type,
             @RequestParam String value) {
-        return ResponseEntity.ok(ApiResponse.ok(membershipService.updateBenefit(levelId, type, value)));
+        
+        Long targetId = levelId;
+        if (targetId == null && levelName != null) {
+            targetId = membershipService.getLevelByName(levelName).getId();
+        }
+        
+        if (targetId == null) {
+            throw new com.example.cinema.exception.AppException("Thiếu thông tin hạng thành viên (levelId hoặc levelName)");
+        }
+        
+        return ResponseEntity.ok(ApiResponse.ok(membershipService.updateBenefit(targetId, type, value)));
     }
 }

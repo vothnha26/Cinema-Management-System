@@ -14,4 +14,5 @@ public interface BranchComboRepository extends JpaRepository<BranchCombo, Long> 
     List<BranchCombo> findByBranch(Branch branch);
     List<BranchCombo> findByBranchAndIsActiveTrue(Branch branch);
     Optional<BranchCombo> findByBranchAndCombo(Branch branch, Combo combo);
+    List<BranchCombo> findAllByBranchId(Long branchId);
 }

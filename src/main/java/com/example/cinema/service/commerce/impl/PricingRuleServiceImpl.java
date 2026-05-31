@@ -112,8 +112,10 @@ public class PricingRuleServiceImpl implements PricingRuleService {
     @Transactional
     @LogAction(action = "DELETE", target = "PRICING_RULE")
     public void deleteRule(Long id) {
-        if (!pricingRuleRepository.existsById(id)) {
-            throw new ResourceNotFoundException("PricingRule", id);
+        PricingRule rule = pricingRuleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("PricingRule", id));
+        if (rule.isSystem()) {
+            throw new com.example.cinema.exception.AppException("Đây là quy tắc hệ thống, không thể xóa. Bạn chỉ có thể tạm ngưng nó.");
         }
         branchPricingRuleRepository.deleteByRuleId(id);
         pricingRuleRepository.deleteById(id);

@@ -1,66 +1,63 @@
 /**
- * Auth Guard - Bảo vệ các trang cần đăng nhập.
- * Include file này ở đầu các trang admin/staff/manager.
- *
- * Cách dùng:
- * <script src="/js/auth-guard.js"></script>
- * <script>
- *   AuthGuard.requireRole(['ADMIN']);           // Chỉ cho ADMIN vào
- *   AuthGuard.requireRole(['STAFF', 'ADMIN']);  // STAFF hoặc ADMIN
- *   AuthGuard.requireLogin();                   // Chỉ cần đăng nhập
- * </script>
+ * Auth Guard - Bảo vệ các trang dựa trên Role.
+ * Tự động kiểm tra quyền khi trang tải lên.
  */
 const AuthGuard = {
-    getToken() {
-        return localStorage.getItem('cinemaToken');
+    // Cấu hình quyền truy cập dựa trên tên file (URL)
+    // Nếu không có trong danh sách này -> Cần Login
+    // Nếu có -> Chỉ những Role được liệt kê mới được vào
+    permissions: {
+        'dashboard.html': ['ADMIN', 'MANAGER'],
+        'manage-branches.html': ['ADMIN'],
+        'manage-users.html': ['ADMIN'],
+        'manage-master-data.html': ['ADMIN'],
+        'manage-movies.html': ['ADMIN', 'MANAGER'],
+        'manage-pricing.html': ['ADMIN', 'MANAGER'],
+        'manage-promotions.html': ['ADMIN', 'MANAGER'],
+        'manage-membership.html': ['ADMIN', 'MANAGER'],
+        'manage-combos.html': ['ADMIN', 'MANAGER'],
+        'manage-audit.html': ['ADMIN'],
+        'manage-showtimes.html': ['ADMIN', 'MANAGER'],
+        'manage-rooms.html': ['ADMIN', 'MANAGER'],
+        'manage-bookings.html': ['ADMIN', 'MANAGER', 'STAFF'],
+        'pos.html': ['ADMIN', 'MANAGER', 'STAFF'],
+        'history.html': ['ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER'],
+        'profile.html': ['ADMIN', 'MANAGER', 'STAFF', 'CUSTOMER'],
     },
 
-    getRole() {
-        return localStorage.getItem('cinemaRole');
-    },
-
-    getUsername() {
-        return localStorage.getItem('cinemaUsername');
-    },
-
-    isLoggedIn() {
-        return !!this.getToken();
-    },
+    getToken() { return localStorage.getItem('cinemaToken'); },
+    getRole() { return localStorage.getItem('cinemaRole'); },
+    getUsername() { return localStorage.getItem('cinemaUsername'); },
+    isLoggedIn() { return !!this.getToken(); },
 
     /**
-     * Yêu cầu đăng nhập. Nếu chưa login -> redirect về auth.html.
+     * Tự động kiểm tra quyền dựa trên URL hiện tại
      */
-    requireLogin() {
+    init() {
+        const path = window.location.pathname.split('/').pop();
+        if (!path || path === 'index.html' || path === 'auth.html' || path === 'reset-password.html' || path === 'logout.html') {
+            return; // Trang công khai
+        }
+
         if (!this.isLoggedIn()) {
             window.location.href = '/auth.html';
-            return false;
+            return;
         }
-        return true;
+
+        const allowedRoles = this.permissions[path];
+        if (allowedRoles) {
+            const currentRole = this.getRole();
+            if (!allowedRoles.includes(currentRole)) {
+                alert('Bạn không có quyền truy cập trang này.');
+                window.location.href = '/index.html';
+            }
+        }
     },
 
-    /**
-     * Yêu cầu role cụ thể. Nếu không đúng role -> redirect về trang chủ.
-     * @param {string[]} allowedRoles - Danh sách role được phép, vd: ['ADMIN', 'STAFF']
-     */
-    requireRole(allowedRoles) {
-        if (!this.requireLogin()) return false;
-
-        const currentRole = this.getRole();
-        if (!allowedRoles.includes(currentRole)) {
-            alert('Bạn không có quyền truy cập trang này.');
-            window.location.href = '/index.html';
-            return false;
-        }
-        return true;
-    },
-
-    /**
-     * Đăng xuất: xóa token và redirect về trang đăng nhập.
-     */
     logout() {
-        localStorage.removeItem('cinemaToken');
-        localStorage.removeItem('cinemaRole');
-        localStorage.removeItem('cinemaUsername');
-        window.location.href = '/auth.html';
+        window.location.href = '/logout.html';
     }
 };
+
+// Tự động kích hoạt khi tải trang
+AuthGuard.init();

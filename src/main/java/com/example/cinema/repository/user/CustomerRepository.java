@@ -12,9 +12,17 @@ import java.util.Optional;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByUserId(Long userId);
-    Optional<Customer> findByUserUsername(String username);
+    Optional<Customer> findFirstByUserUsernameOrderByIdDesc(String username);
+    default Optional<Customer> findByUserUsername(String username) {
+        return findFirstByUserUsernameOrderByIdDesc(username);
+    }
+
+    Optional<Customer> findByUser(com.example.cinema.model.entity.User user);
     
-    Optional<Customer> findByPhone(String phone);
+    Optional<Customer> findFirstByPhoneOrderByIdDesc(String phone);
+    default Optional<Customer> findByPhone(String phone) {
+        return findFirstByPhoneOrderByIdDesc(phone);
+    }
 
     @Query("SELECT COUNT(DISTINCT c) FROM Customer c JOIN Booking b ON c.id = b.customer.id " +
            "WHERE b.createdAt BETWEEN :start AND :end " +

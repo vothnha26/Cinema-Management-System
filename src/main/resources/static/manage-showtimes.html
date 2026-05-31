@@ -134,83 +134,215 @@
   </div>
 </div>
 
-<!-- MODAL THÊM MỚI -->
+<!-- MODAL LẬP LỊCH (HỖ TRỢ HÀNG LOẠT) -->
 <div class="modal fade" id="addModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="fw-800 m-0">THÊM SUẤT CHIẾU</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-  <div class="modal-body"><form id="addForm">
-    <div class="mb-3"><label class="form-label">Phim</label><select id="addMovieId" class="form-select" onchange="onMovieSelectChange('add')"></select></div>
-    <div class="mb-3"><label class="form-label">Phòng</label><select id="addRoomId" class="form-select" onchange="onMovieSelectChange('add')"></select></div>
-    <div class="mb-3"><label class="form-label">Định dạng</label><select id="addFormatId" class="form-select"></select></div>
-    <div class="mb-4"><label class="form-label">Giờ bắt đầu</label><input type="datetime-local" id="addStartTime" class="form-control"></div>
-    <button type="button" class="btn btn-danger w-100 py-3 fw-bold" onclick="handleCreateShowtime()">TẠO SUẤT CHIẾU</button>
-  </form></div></div></div>
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="fw-800 m-0">LẬP LỊCH SUẤT CHIẾU</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body p-4">
+    <form id="addForm">
+      <div class="mb-3"><label class="form-label small fw-bold text-muted">PHIM</label><select id="addMovieId" class="form-select" onchange="onMovieSelectChange('add')"></select></div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6"><label class="form-label small fw-bold text-muted">PHÒNG</label><select id="addRoomId" class="form-select" onchange="onMovieSelectChange('add')"></select></div>
+        <div class="col-md-6"><label class="form-label small fw-bold text-muted">ĐỊNH DẠNG</label><select id="addFormatId" class="form-select"></select></div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-bold text-muted">CHỌN KHUNG GIỜ BẮT ĐẦU</label>
+        <div class="input-group">
+            <input type="datetime-local" id="addStartTime" class="form-control">
+            <button class="btn btn-outline-info" type="button" onclick="addTimeSlot()"><i class="bi bi-plus-circle"></i> THÊM</button>
+        </div>
+        <div id="timeSlotsContainer" class="mt-3 d-flex flex-wrap gap-2"></div>
+      </div>
+      <button type="button" id="btnSubmitBulk" class="btn btn-danger w-100 py-3 fw-bold mt-2" onclick="handleCreateBulkShowtimes()">XÁC NHẬN TẠO LỊCH</button>
+    </form>
+  </div></div></div>
 </div>
 
-<div class="modal fade" id="aiModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="fw-800 m-0">LẬP LỊCH THÔNG MINH (GEMINI AI)</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-  <div class="modal-body">
-    <div class="row g-3">
-      <div class="col-md-6"><label class="form-label">Ngày lập lịch</label><input type="date" id="aiTargetDate" class="form-control"></div>
-      <div class="col-md-6"><label class="form-label">Chế độ</label><select id="aiMode" class="form-select"><option value="OVERWRITE">Ghi đè lịch cũ</option><option value="FILL">Lấp đầy chỗ trống</option></select></div>
-      <div class="col-md-6"><label class="form-label">Giờ bắt đầu</label><input type="time" id="aiStartTime" class="form-control" value="08:00"></div>
-      <div class="col-md-6"><label class="form-label">Giờ kết thúc</label><input type="time" id="aiEndTime" class="form-control" value="23:55"></div>
-      <div class="col-md-6"><label class="form-label">Chiến lược</label><select id="aiStrategy" class="form-select"><option value="BALANCED">Cân bằng</option><option value="REVENUE">Tối ưu doanh thu</option></select></div>
-      <div class="col-12"><label class="form-label">Ghi chú cho AI</label><textarea id="customDirectives" class="form-control" rows="3" placeholder="Ví dụ: Ưu tiên phim bom tấn vào giờ vàng..."></textarea></div>
+<!-- MODAL BÁO CÁO XUNG ĐỘT CHI TIẾT -->
+<div class="modal fade" id="conflictModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-warning">
+      <div class="modal-header bg-warning bg-opacity-10 border-warning border-opacity-25">
+        <h5 class="fw-800 m-0 text-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>BÁO CÁO XUNG ĐỘT LỊCH CHIẾU</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-4">Một số suất chiếu không thể khởi tạo do trùng lặp thời gian hoặc phòng chiếu. Các suất khác không bị xung đột đã được lưu thành công.</p>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover border-secondary border-opacity-10">
+                <thead class="small text-uppercase">
+                    <tr>
+                        <th>Khung giờ yêu cầu</th>
+                        <th>Nguyên nhân</th>
+                        <th>Xung đột với</th>
+                    </tr>
+                </thead>
+                <tbody id="conflictTableBody"></tbody>
+            </table>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">ĐÃ HIỂU</button>
+      </div>
     </div>
-    <button id="btnRunAI" class="btn btn-primary w-100 mt-4 py-3 fw-bold" onclick="generateAI()">BẮT ĐẦU PHÂN TÍCH AI</button>
-  </div></div></div>
+  </div>
+</div>
+
+<!-- MODAL ĐIỀU PHỐI AI -->
+<div class="modal fade" id="aiModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="fw-800 m-0">ĐIỀU PHỐI SUẤT CHIẾU BẰNG AI</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body p-4">
+        <div class="alert alert-info border-info border-opacity-25 bg-info bg-opacity-10 small mb-4">
+          <i class="bi bi-info-circle-fill me-2"></i> AI sẽ phân tích hiệu suất phòng, độ ưu tiên phim và lịch sử bán vé để gợi ý khung giờ tối ưu nhất.
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label small fw-bold text-muted">NGÀY ÁP DỤNG</label><input type="date" id="aiTargetDate" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label small fw-bold text-muted">CHẾ ĐỘ LẬP LỊCH</label>
+            <select id="aiMode" class="form-select">
+              <option value="APPEND">Bổ sung (Giữ lại lịch cũ)</option>
+              <option value="OVERWRITE">Ghi đè (Xóa sạch lịch cũ)</option>
+            </select>
+          </div>
+          <div class="col-md-6"><label class="form-label small fw-bold text-muted">GIỜ BẮT ĐẦU</label><input type="time" id="aiStartTime" class="form-control" value="08:00"></div>
+          <div class="col-md-6"><label class="form-label small fw-bold text-muted">GIỜ KẾT THÚC</label><input type="time" id="aiEndTime" class="form-control" value="23:59"></div>
+          <div class="col-md-12"><label class="form-label small fw-bold text-muted">CHIẾN LƯỢC TỐI ƯU</label>
+            <select id="aiStrategy" class="form-select">
+              <option value="MAX_REVENUE">Tối đa hóa doanh thu (Phim hot phòng to)</option>
+              <option value="MAX_OCCUPANCY">Tối đa hóa tỷ lệ lấp đầy</option>
+              <option value="BALANCED">Cân bằng độ phủ phim</option>
+            </select>
+          </div>
+          <div class="col-md-12"><label class="form-label small fw-bold text-muted">CHỈ THỊ TÙY CHỈNH (TÙY CHỌN)</label><textarea id="customDirectives" class="form-control" rows="2" placeholder="Ví dụ: Ưu tiên phim hành động vào buổi tối..."></textarea></div>
+        </div>
+        <button type="button" id="btnRunAI" class="btn btn-danger w-100 py-3 fw-bold mt-4" onclick="generateAI()">BẮT ĐẦU PHÂN TÍCH AI</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="toastContainer"></div>
 
 <script src="/js/auth-guard.js"></script>
 <script src="/js/sidebar.js"></script>
+<script src="/js/ui-utils.js"></script>
 <script src="/js/api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    let allMovies = [], allRooms = [], currentShowtimes = [], currentAIResult = [], currentBranchId = null;
-    let selectedMovieId = null, currentViewStId = null;
+    let allMovies = [], allRooms = [], currentShowtimes = [], currentAIResult = [], currentBranchId = localStorage.getItem('cinemaBranchId');
+    // Fix: localStorage returns string "null" sometimes
+    if (currentBranchId === 'null') currentBranchId = null;
+
+    let selectedMovieId = null, currentViewStId = null, addedTimeSlots = [];
     const addModal = new bootstrap.Modal(document.getElementById('addModal'));
     const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
     const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+    const conflictModal = new bootstrap.Modal(document.getElementById('conflictModal'));
 
     async function init() {
+        UIUtils.applyRoleVisibility();
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('filterDate').value = today;
         document.getElementById('aiTargetDate').value = today;
         
-        try {
+        if (!currentBranchId && AuthGuard.getRole() !== 'ADMIN') {
             const staffRes = await api.get('/staff/me');
-            if (staffRes.success && staffRes.data) {
-                currentBranchId = staffRes.data.branch?.id;
-                if (currentBranchId) localStorage.setItem('cinemaBranchId', currentBranchId);
+            if (staffRes.success && staffRes.data?.branch) {
+                currentBranchId = staffRes.data.branch.id;
+                localStorage.setItem('cinemaBranchId', currentBranchId);
             }
+        }
 
-            // SỬA: Lấy phim theo chi nhánh nếu có branchId
-            const movieUrl = currentBranchId ? `/movies/branch/${currentBranchId}` : '/movies';
-            const [mRes, rRes, fRes] = await Promise.all([
-                api.get(movieUrl), api.get('/rooms'), api.get('/public/master-data/formats')
-            ]);
-            
-            // Lọc phim Đang chiếu và Sắp chiếu từ danh sách phim của chi nhánh
-            allMovies = (mRes.data || []).filter(m => m.status === 'SHOWING' || m.status === 'COMING');
-            allRooms = currentBranchId ? (rRes.data || []).filter(r => r.branchId === currentBranchId) : (rRes.data || []);
-            
-            if (fRes.success) {
-                document.getElementById('filterFormat').innerHTML = '<option value="">Tất cả</option>' + 
-                    fRes.data.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+        const movieUrl = currentBranchId ? `/movies/branch/${currentBranchId}` : '/movies';
+        const [mRes, rRes, fRes] = await Promise.all([
+            api.get(movieUrl), api.get('/rooms'), api.get('/public/master-data/formats')
+        ]);
+        
+        allMovies = (mRes.data || []).filter(m => ['SHOWING', 'COMING', 'NOW_SHOWING', 'PRE_RELEASE'].includes(m.status));
+        allRooms = currentBranchId ? (rRes.data || []).filter(r => String(r.branchId) === String(currentBranchId)) : (rRes.data || []);
+        
+        if (fRes.success) {
+            document.getElementById('filterFormat').innerHTML = '<option value="">Tất cả</option>' + 
+                fRes.data.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+        }
+
+        renderTimeHeader(); renderRoomLabels(); renderMovieList(); loadShowtimes();
+        
+        document.getElementById('addMovieId').innerHTML = allMovies.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+        document.getElementById('addRoomId').innerHTML = allRooms.map(r => `<option value="${r.id}">${r.name} (${r.type})</option>`).join('');
+    }
+
+    function addTimeSlot() {
+        const val = document.getElementById('addStartTime').value;
+        if (!val) return;
+        if (addedTimeSlots.includes(val)) { UIUtils.showToast('Khung giờ này đã có trong danh sách', 'warning'); return; }
+        addedTimeSlots.push(val);
+        renderTimeSlots();
+    }
+
+    function removeTimeSlot(index) {
+        addedTimeSlots.splice(index, 1);
+        renderTimeSlots();
+    }
+
+    function renderTimeSlots() {
+        const container = document.getElementById('timeSlotsContainer');
+        container.innerHTML = addedTimeSlots.map((t, i) => `
+            <div class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 p-2 px-3 d-flex align-items-center gap-2">
+                <span>${new Date(t).toLocaleString('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'})}</span>
+                <i class="bi bi-x-circle-fill" style="cursor:pointer" onclick="removeTimeSlot(${i})"></i>
+            </div>
+        `).join('');
+    }
+
+    async function handleCreateBulkShowtimes() {
+        if (addedTimeSlots.length === 0) { UIUtils.showToast('Vui lòng chọn ít nhất một khung giờ', 'warning'); return; }
+        
+        const btn = document.getElementById('btnSubmitBulk');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ĐANG XỬ LÝ...';
+
+        const data = {
+            movieId: document.getElementById('addMovieId').value,
+            roomId: document.getElementById('addRoomId').value,
+            formatId: document.getElementById('addFormatId').value,
+            startTimes: addedTimeSlots.map(t => t + ':00')
+        };
+
+        const res = await api.post('/showtimes/bulk', data);
+        btn.disabled = false; btn.innerHTML = 'XÁC NHẬN TẠO LỊCH';
+
+        if (res.success) {
+            const report = res.data;
+            if (report.conflicts && report.conflicts.length > 0) {
+                showConflictReport(report.conflicts);
+                UIUtils.showToast(`Đã tạo ${report.success.length} suất. Có ${report.conflicts.length} suất bị trùng.`, 'warning');
+            } else {
+                UIUtils.showToast(`Đã tạo thành công toàn bộ ${report.success.length} suất chiếu.`);
             }
+            addModal.hide();
+            loadShowtimes();
+        } else {
+            UIUtils.showToast(res.message, 'danger');
+        }
+    }
 
-            renderTimeHeader(); renderRoomLabels(); renderMovieList(); loadShowtimes();
-            
-            document.getElementById('addMovieId').innerHTML = allMovies.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
-            document.getElementById('addRoomId').innerHTML = allRooms.map(r => `<option value="${r.id}">${r.name} (${r.type})</option>`).join('');
-        } catch (e) { console.error(e); }
+    function showConflictReport(conflicts) {
+        document.getElementById('conflictTableBody').innerHTML = conflicts.map(c => `
+            <tr>
+                <td class="fw-bold text-info">${new Date(c.requestedStartTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                <td><span class="text-danger">${c.reason}</span></td>
+                <td>
+                    <div class="fw-bold">${c.conflictingMovie}</div>
+                    <div class="small text-muted">${c.conflictingTime}</div>
+                </td>
+            </tr>
+        `).join('');
+        conflictModal.show();
     }
 
     async function loadShowtimes() {
         const date = document.getElementById('filterDate').value;
-        const res = await api.get(`/showtimes?date=${date}`);
+        const res = await api.get(`/showtimes?date=${date}${currentBranchId ? '&branchId='+currentBranchId : ''}`);
         if (res.success) {
             currentShowtimes = res.data || [];
             currentAIResult = [];
@@ -221,33 +353,62 @@
     }
 
     function renderTimeline(list) {
+        if (!list) return;
+        console.log("Rendering timeline with", list.length, "items");
+        
         let html = '';
         allRooms.forEach(room => {
-            const stInRoom = list.filter(s => s.roomId === room.id);
+            const stInRoom = list.filter(s => {
+                // Đảm bảo so sánh đúng ID phòng (AI có thể trả về roomId là string hoặc number)
+                return String(s.roomId) === String(room.id);
+            });
+            
             html += `<div class="grid-row">`;
             stInRoom.forEach(s => {
-                const start = new Date(s.startTime);
-                const end = new Date(s.endTime);
-                const left = (start.getHours() + start.getMinutes()/60) * 120;
-                const width = ((end - start)/3600000) * 120;
-                const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
-                
-                // SỬA: Chỉ truyền ID thay vì truyền chuỗi JSON phức tạp
-                html += `<div class="st-block ${s.id < 0 ? 'ai-draft' : ''}" 
-                              style="left:${left}px; width:${width}px;" 
-                              onclick="openDetailById(${s.id})">
-                            <div class="st-title">${s.movieTitle}</div>
-                            <div class="st-info"><span class="fw-bold">${startStr}</span></div>
-                         </div>`;
+                try {
+                    // Xử lý cả định dạng chuỗi ISO và mảng [Y,M,D,h,m] từ Java Jackson
+                    const start = parseJavaDate(s.startTime);
+                    const end = parseJavaDate(s.endTime);
+                    
+                    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                        console.error("Invalid date for showtime:", s);
+                        return;
+                    }
+
+                    const left = (start.getHours() + start.getMinutes()/60) * 120;
+                    const width = ((end - start)/3600000) * 120;
+                    const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+                    
+                    html += `<div class="st-block ${s.id < 0 ? 'ai-draft' : ''}" 
+                                  style="left:${left}px; width:${width}px;" 
+                                  onclick="openDetailById(${s.id})">
+                                <div class="st-title">${s.movieTitle || 'Không rõ tên'}</div>
+                                <div class="st-info"><span class="fw-bold">${startStr}</span></div>
+                             </div>`;
+                } catch (e) {
+                    console.error("Error rendering showtime block:", e, s);
+                }
             });
             html += `</div>`;
         });
         document.getElementById('timelineGrid').innerHTML = html;
     }
 
+    /**
+     * Chuyển đổi dữ liệu ngày tháng từ Java (Array hoặc ISO String) sang JS Date
+     */
+    function parseJavaDate(dateInput) {
+        if (!dateInput) return new Date();
+        if (Array.isArray(dateInput)) {
+            // Java LocalDateTime trả về mảng [year, month, day, hour, minute, second, nano]
+            // Lưu ý: Tháng trong JS bắt đầu từ 0
+            return new Date(dateInput[0], dateInput[1] - 1, dateInput[2], dateInput[3], dateInput[4], dateInput[5] || 0);
+        }
+        return new Date(dateInput);
+    }
+
     function openDetailById(id) {
         if (!id) return;
-        // Nếu ID âm, đó là từ AI Result
         const list = (id < 0) ? currentAIResult : currentShowtimes;
         const s = list.find(item => item.id == id);
         if (s) openDetailModal(s);
@@ -258,16 +419,15 @@
         currentViewStId = s.id;
         document.getElementById('detailTitle').innerText = s.movieTitle;
         document.getElementById('detailInfo').innerHTML = `
-            <div class="small text-muted mb-1">PHÒNG CHIẾU</div><div class="fw-bold mb-3">${s.roomName} (${s.roomType})</div>
-            <div class="small text-muted mb-1">ĐỊNH DẠNG</div><div class="fw-bold mb-3">${s.formatName}</div>
-            <div class="small text-muted mb-1">THỜI GIAN</div><div class="fw-bold">${new Date(s.startTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} - ${new Date(s.endTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+            <div class="small text-muted mb-1 text-uppercase fw-800">PHÒNG CHIẾU</div><div class="fw-bold mb-3">${s.roomName} (${s.roomType})</div>
+            <div class="small text-muted mb-1 text-uppercase fw-800">ĐỊNH DẠNG</div><div class="fw-bold mb-3">${s.formatName}</div>
+            <div class="small text-muted mb-1 text-uppercase fw-800">THỜI GIAN</div><div class="fw-bold">${UIUtils.formatDateTime(s.startTime)} - ${UIUtils.formatDateTime(s.endTime).split(' ')[1]}</div>
         `;
         
         const grid = document.getElementById('liveSeatGrid');
         grid.innerHTML = '<div class="py-5 text-muted text-center w-100">Đang tải sơ đồ...</div>';
         detailModal.show();
 
-        // Chỉ gọi API lấy ghế nếu là suất chiếu thật (ID dương)
         if (s.id > 0) {
             const res = await api.get(`/showtimes/${s.id}/seats`);
             if (res.success) {
@@ -276,13 +436,13 @@
             }
         } else {
             document.getElementById('seatStats').innerText = `0/${s.totalSeats} (BẢN NHÁP AI)`;
-            grid.innerHTML = '<div class="py-5 text-muted text-center w-100">Suất chiếu nháp không có dữ liệu ghế thời gian thực</div>';
+            grid.innerHTML = '<div class="py-5 text-muted text-center w-100">Suất chiếu nháp không có dữ liệu ghế.</div>';
         }
     }
 
     function renderSeatMap(seats) {
         const grid = document.getElementById('liveSeatGrid');
-        if (!seats.length) return;
+        if (!seats || !seats.length) return;
         const rows = [...new Set(seats.map(s => s.rowChar))].sort();
         const maxCol = Math.max(...seats.map(s => s.colNum));
         grid.style.gridTemplateColumns = `repeat(${maxCol}, 1fr)`;
@@ -298,10 +458,10 @@
     }
 
     async function handleDeleteShowtime() {
-        if (!confirm('Bạn có chắc muốn hủy suất chiếu này? (Chỉ hủy được khi chưa bán vé)')) return;
+        if (!confirm('Bạn có chắc muốn hủy suất chiếu này? (Chỉ thực hiện được khi chưa bán vé)')) return;
         const res = await api.delete(`/showtimes/${currentViewStId}`);
-        if(res.success) { showNotify('Thành công', 'Đã hủy suất chiếu'); detailModal.hide(); loadShowtimes(); }
-        else showNotify('Lỗi', res.message, 'danger');
+        if(res.success) { UIUtils.showToast('Đã hủy suất chiếu thành công'); detailModal.hide(); loadShowtimes(); }
+        else UIUtils.showToast(res.message, 'danger');
     }
 
     function renderTimeHeader() {
@@ -317,7 +477,7 @@
     function renderMovieList() {
         document.getElementById('movieFilterList').innerHTML = allMovies.map(m => `
             <div class="movie-item-filter ${selectedMovieId==m.id?'active':''}" onclick="filterByMovie(${m.id})">
-                <img src="${m.posterUrl}" class="movie-poster-tiny">
+                <img src="${m.posterUrl || 'https://placehold.co/40x55'}" class="movie-poster-tiny" onerror="this.src='https://placehold.co/40x55'">
                 <div class="movie-info-tiny"><div class="title">${m.title}</div><div class="meta">${m.duration}p</div></div>
             </div>`).join('');
     }
@@ -343,25 +503,21 @@
 
     function openManualModal() {
         const d = document.getElementById('filterDate').value;
+        // Thiết lập sẵn một số khung giờ phổ biến cho ngày đang chọn
+        addedTimeSlots = [
+            `${d}T09:00`,
+            `${d}T13:00`,
+            `${d}T16:00`,
+            `${d}T20:00`
+        ];
+        renderTimeSlots();
         document.getElementById('addStartTime').value = d + 'T' + new Date().toTimeString().substring(0,5);
         onMovieSelectChange('add');
         addModal.show();
     }
 
-    async function handleCreateShowtime() {
-        const data = {
-            movieId: document.getElementById('addMovieId').value,
-            roomId: document.getElementById('addRoomId').value,
-            formatId: document.getElementById('addFormatId').value,
-            startTime: document.getElementById('addStartTime').value + ':00'
-        };
-        const res = await api.post('/showtimes', data);
-        if(res.success) { showNotify('Thành công', 'Đã tạo suất chiếu'); addModal.hide(); loadShowtimes(); }
-        else showNotify('Lỗi', res.message, 'danger');
-    }
-
     async function generateAI() {
-        const btn = document.getElementById('btnRunAI'); btn.disabled = true; btn.innerHTML = 'ĐANG PHÂN TÍCH...';
+        const btn = document.getElementById('btnRunAI'); btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ĐANG PHÂN TÍCH...';
         const res = await api.post('/scheduling/suggest', { 
             date: document.getElementById('aiTargetDate').value, 
             mode: document.getElementById('aiMode').value,
@@ -371,27 +527,22 @@
             customDirectives: document.getElementById('customDirectives').value,
             branchId: currentBranchId 
         });
-        if (res.success) { currentAIResult = res.data; renderTimeline(currentAIResult); document.getElementById('aiActions').classList.remove('d-none'); document.getElementById('aiStatusBadge').classList.remove('d-none'); aiModal.hide(); }
-        else { showNotify('Lỗi', res.message, 'danger'); }
         btn.disabled = false; btn.innerHTML = 'BẮT ĐẦU PHÂN TÍCH AI';
+        if (res.success) { 
+            currentAIResult = res.data; renderTimeline(currentAIResult); 
+            document.getElementById('aiActions').classList.remove('d-none'); 
+            document.getElementById('aiStatusBadge').classList.remove('d-none'); 
+            aiModal.hide(); UIUtils.showToast('AI đã tạo lịch nháp, vui lòng kiểm tra và lưu.');
+        }
+        else UIUtils.showToast(res.message, 'danger');
     }
 
     async function saveAI() {
         const overwrite = document.getElementById('aiMode').value === 'OVERWRITE';
         const res = await api.post(`/scheduling/apply?overwrite=${overwrite}`, currentAIResult);
-        if (res.success) { showNotify('Thành công', 'Lịch AI đã được lưu'); loadShowtimes(); }
-        else showNotify('Lỗi', res.message, 'danger');
-    }
-
-    function showNotify(t, m, type='success') {
-        const c = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        toast.className = 'toast-star animate__animated animate__fadeInUp';
-        toast.innerHTML = `<i class="bi bi-info-circle fs-4"></i><div><div class="fw-bold">${t}</div><div class="small">${m}</div></div>`;
-        c.appendChild(toast); setTimeout(() => toast.remove(), 4000);
+        if (res.success) { UIUtils.showToast('Đã lưu lịch chiếu chính thức'); loadShowtimes(); }
+        else UIUtils.showToast(res.message, 'danger');
     }
 
     init();
 </script>
-</body>
-</html>

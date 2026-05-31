@@ -98,12 +98,12 @@
     document.addEventListener('DOMContentLoaded', loadBookings);
 
     async function loadBookings() {
-        const res = await api.get('/admin/bookings');
+        const res = await api.get('/bookings/admin/all');
         if (res.success) {
             allBookings = res.data;
             renderBookings(allBookings);
         } else {
-            const resUser = await api.get('/bookings/my'); 
+            const resUser = await api.get('/bookings/me'); 
             if (resUser.success) {
                 allBookings = resUser.data;
                 renderBookings(allBookings);
@@ -159,7 +159,7 @@
 
     async function checkIn(code) {
         if (!confirm('Xác nhận khách đã vào phòng chiếu cho mã vé: ' + code)) return;
-        const res = await api.post(`/bookings/check-in?bookingCode=${code}`, {});
+        const res = await api.put(`/bookings/${code}/checkin`, {});
         if (res.success) {
             alert('Soát vé thành công!');
             loadBookings();

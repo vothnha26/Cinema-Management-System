@@ -412,7 +412,7 @@
 </div>
 
 <script>
-    function switchTab(tab) {
+    function switchTab(tab, pushState = true) {
       document.querySelectorAll('.auth-tab').forEach((t, i) => {
         t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
       });
@@ -423,16 +423,35 @@
       const tabs = document.querySelector('.auth-tabs');
 
       // Reset display
-      [lp, rp, op, fp].forEach(p => p.style.display = 'none');
-      tabs.style.display = 'flex';
+      [lp, rp, op, fp].forEach(p => { if(p) p.style.display = 'none'; });
+      if(tabs) tabs.style.display = 'flex';
 
-      if (tab === 'login') { lp.style.display = 'block'; }
-      else if (tab === 'register') { rp.style.display = 'block'; }
-      else if (tab === 'forgot') { fp.style.display = 'block'; tabs.style.display = 'none'; }
-      else if (tab === 'otp') { op.style.display = 'block'; tabs.style.display = 'none'; }
+      if (tab === 'login') { if(lp) lp.style.display = 'block'; document.title = 'StarCinema – Đăng nhập'; }
+      else if (tab === 'register') { if(rp) rp.style.display = 'block'; document.title = 'StarCinema – Đăng ký'; }
+      else if (tab === 'forgot') { if(fp) fp.style.display = 'block'; if(tabs) tabs.style.display = 'none'; document.title = 'StarCinema – Quên mật khẩu'; }
+      else if (tab === 'otp') { if(op) op.style.display = 'block'; if(tabs) tabs.style.display = 'none'; document.title = 'StarCinema – Xác thực OTP'; }
       
       [lp, rp, op, fp].forEach(p => { if(p) p.classList.add('form-panel'); });
+
+      // Cập nhật URL mà không tải lại trang
+      if (pushState) {
+        const newUrl = window.location.pathname + (tab !== 'login' ? '?mode=' + tab : '');
+        window.history.pushState({ mode: tab }, '', newUrl);
+      }
     }
+
+    // Xử lý nút Back/Forward của trình duyệt
+    window.onpopstate = function(event) {
+      const mode = (event.state && event.state.mode) || 'login';
+      switchTab(mode, false);
+    };
+
+    // Khởi tạo trang dựa trên URL hiện tại
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const mode = urlParams.get('mode') || 'login';
+      switchTab(mode, false);
+    });
 
     function togglePass(id, btn) {
       const input = document.getElementById(id);

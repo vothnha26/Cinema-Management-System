@@ -33,7 +33,18 @@ public class Room {
     @Enumerated(EnumType.STRING)
     private RoomStatus status = RoomStatus.ACTIVE;
 
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private java.util.List<Seat> seats = new java.util.ArrayList<>();
+
     public Room() {
+    }
+
+    public java.util.List<Seat> getSeats() {
+        return seats;
+    }
+
+    public void setSeats(java.util.List<Seat> seats) {
+        this.seats = seats;
     }
 
     public Long getId() {

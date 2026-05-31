@@ -15,5 +15,4 @@ public interface MovieService {
     void deleteMovie(Long id);
     List<MovieResponse> getMoviesByBranch(Long branchId);
     void updateMoviePriority(Long branchId, Long movieId, Integer priority);
-    void updatePriority(Long id, Integer priority);
 }

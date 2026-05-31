@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/room-templates")
-@PreAuthorize("hasRole('MANAGER')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
 public class RoomTemplateController {
 
     private final RoomTemplateService roomTemplateService;

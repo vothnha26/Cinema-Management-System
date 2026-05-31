@@ -225,53 +225,51 @@
 </main>
 
 <script src="/js/auth-guard.js"></script>
-<script>AuthGuard.requireRole(['ADMIN', 'MANAGER']);</script>
 <script src="/js/sidebar.js"></script>
+<script src="/js/ui-utils.js"></script>
 <script src="/js/api.js"></script>
 <script>
     let overviewTrendChart, topMoviesChart;
+    const currentBranchId = localStorage.getItem('cinemaBranchId');
 
-    async function init() { loadStats(); }
+    async function init() { 
+        UIUtils.applyRoleVisibility();
+        loadStats(); 
+    }
 
     async function loadStats() {
         const days = document.getElementById('periodSelect').value;
         const end = new Date(), start = new Date();
         start.setDate(end.getDate() - parseInt(days));
         const s = start.toISOString().split('T')[0], e = end.toISOString().split('T')[0];
+        
+        let url = `/statistics/overview?startDate=${s}&endDate=${e}`;
+        if (AuthGuard.getRole() === 'MANAGER' && currentBranchId) {
+            url += `&branchId=${currentBranchId}`;
+        }
+
         try {
-            const res = await api.get(`/statistics/overview?startDate=${s}&endDate=${e}`);
+            const res = await api.get(url);
             if (res.success) renderAll(res.data);
         } catch (err) { console.error(err); mockRender(); }
     }
 
     function renderAll(d) {
-        // KPIs mapping from StatisticsResponse
-        const fmt = (v) => v ? (v/1000000).toFixed(1) + 'M' : '0M';
-        const delta = (v) => `<span class="kpi-delta ${v >= 0 ? 'delta-up' : 'delta-down'}"><i class="bi bi-arrow-${v >= 0 ? 'up' : 'down'}-short"></i> ${Math.abs(v)}%</span>`;
-        
-        document.getElementById('kpiRevenue').innerText = fmt(d.totalRevenue);
+        document.getElementById('kpiRevenue').innerText = UIUtils.formatVND(d.totalRevenue || 0).replace(',00', '').replace('₫', 'đ');
         document.getElementById('kpiTickets').innerText = (d.totalTicketsSold || 0).toLocaleString();
-        document.getElementById('kpiOccupancy').innerText = (d.averageOccupancyRate || 0) + '%';
-        document.getElementById('kpiFNB').innerText = fmt(d.comboRevenue);
+        document.getElementById('kpiFNB').innerText = UIUtils.formatVND(d.comboRevenue || 0).replace(',00', '').replace('₫', 'đ');
         document.getElementById('kpiCustomers').innerText = (d.newCustomersCount || 0).toLocaleString();
-        document.getElementById('kpiNPS').innerText = '82'; // Mock for now
+        document.getElementById('kpiNPS').innerText = '82'; 
 
-        // Mapping trend data
         renderTrendChart(d.revenueByDay || {});
         renderTopMovies(d.revenueByMovie || {});
         
-        // Heatmap mapping from occupancyByRoom (Simplified mapping to days)
-        const heatmapData = Object.values(d.occupancyByRoom || {});
-        renderHeatmap(heatmapData);
-
-        // Alerts (Static or dynamic based on logic)
         renderAlerts([
-            { type: 'success', title: 'Hệ thống hoạt động ổn định', desc: 'Dữ liệu được cập nhật thời gian thực từ server.' }
+            { type: 'success', title: 'Hệ thống hoạt động ổn định', desc: 'Dữ liệu được cập nhật thời gian thực.' }
         ]);
         
-        // Targets (Static for now)
         renderTargets([
-            { name: 'Doanh thu tháng', current: d.totalRevenue || 0, target: 350000000 }
+            { name: 'Mục tiêu doanh thu', current: d.totalRevenue || 0, target: 500000000 }
         ]);
     }
 

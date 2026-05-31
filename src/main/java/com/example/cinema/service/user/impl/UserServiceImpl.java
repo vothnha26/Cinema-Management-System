@@ -8,8 +8,9 @@ import com.example.cinema.model.enums.Role;
 import com.example.cinema.repository.user.UserRepository;
 import com.example.cinema.service.notification.INotificationService;
 import com.example.cinema.service.user.IUserService;
-
+import com.example.cinema.service.auth.IAuthService;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +29,13 @@ public class UserServiceImpl implements IUserService {
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
     private final INotificationService notificationService;
-    private final com.example.cinema.service.auth.IAuthService authService;
+    private final IAuthService authService;
 
     public UserServiceImpl(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             ModelMapper modelMapper,
             INotificationService notificationService,
-            @org.springframework.context.annotation.Lazy com.example.cinema.service.auth.IAuthService authService) {
+            @Lazy IAuthService authService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;

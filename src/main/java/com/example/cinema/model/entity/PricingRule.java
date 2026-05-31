@@ -20,113 +20,64 @@ public class PricingRule {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    private PricingRuleCategory category; // BASE, SURCHARGE, DISCOUNT
+    private PricingRuleCategory category;
 
     @Enumerated(EnumType.STRING)
-    private PricingImpactType impactType; // ADDITIVE, PERCENTAGE, FIXED
+    private PricingImpactType impactType;
 
-    private BigDecimal impactValue; // Giá trị cộng thêm hoặc tỉ lệ nhân
+    private BigDecimal impactValue;
 
-    private int priority = 100; // Thứ tự ưu tiên (thấp hơn chạy trước)
+    private int priority = 100;
 
-    private boolean isStackable = true; // Có được cộng dồn với các rule khác không?
+    @Column(name = "is_stackable")
+    private Boolean stackable = true;
+
+    @Column(name = "max_discount_limit")
+    private BigDecimal maxDiscountLimit;
 
     @Column(name = "is_active")
-    private boolean isActive = true;
+    private Boolean active = true;
+
+    @Column(name = "is_system", columnDefinition = "TINYINT(1) DEFAULT 0")
+    private Boolean systemRule = false;
 
     @OneToMany(mappedBy = "rule", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PricingCondition> conditions = new ArrayList<>();
 
-    public PricingRule() {
-    }
+    public PricingRule() {}
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public PricingRuleCategory getCategory() { return category; }
+    public void setCategory(PricingRuleCategory category) { this.category = category; }
+    public PricingImpactType getImpactType() { return impactType; }
+    public void setImpactType(PricingImpactType impactType) { this.impactType = impactType; }
+    public BigDecimal getImpactValue() { return impactValue; }
+    public void setImpactValue(BigDecimal impactValue) { this.impactValue = impactValue; }
+    public int getPriority() { return priority; }
+    public void setPriority(int priority) { this.priority = priority; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    // Boolean wrapper getters/setters
+    public Boolean getStackable() { return stackable != null && stackable; }
+    public void setStackable(Boolean stackable) { this.stackable = stackable; }
+    public Boolean getActive() { return active != null && active; }
+    public void setActive(Boolean active) { this.active = active; }
+    public Boolean getSystemRule() { return systemRule != null && systemRule; }
+    public void setSystemRule(Boolean systemRule) { this.systemRule = systemRule; }
 
-    public String getName() {
-        return name;
-    }
+    // Tiện ích để ModelMapper/Logic không bị NPE
+    public boolean isSystem() { return systemRule != null && systemRule; }
+    public boolean isActive() { return active != null && active; }
+    public boolean isStackable() { return stackable != null && stackable; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public PricingRuleCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(PricingRuleCategory category) {
-        this.category = category;
-    }
-
-    public PricingImpactType getImpactType() {
-        return impactType;
-    }
-
-    public void setImpactType(PricingImpactType impactType) {
-        this.impactType = impactType;
-    }
-
-    public BigDecimal getImpactValue() {
-        return impactValue;
-    }
-
-    public void setImpactValue(BigDecimal impactValue) {
-        this.impactValue = impactValue;
-    }
-
-    public int getPriority() {
-        return priority;
-    }
-
-    public void setPriority(int priority) {
-        this.priority = priority;
-    }
-
-    public boolean isStackable() {
-        return isStackable;
-    }
-
-    public void setStackable(boolean stackable) {
-        isStackable = stackable;
-    }
-
-    public boolean isActive() {
-        return isActive;
-    }
-
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    public List<PricingCondition> getConditions() {
-        return conditions;
-    }
-
-    public void setConditions(List<PricingCondition> conditions) {
-        this.conditions = conditions;
-    }
-
-    public void addCondition(PricingCondition condition) {
-        conditions.add(condition);
-        condition.setRule(this);
-    }
-
-    public void removeCondition(PricingCondition condition) {
-        conditions.remove(condition);
-        condition.setRule(null);
-    }
+    public BigDecimal getMaxDiscountLimit() { return maxDiscountLimit; }
+    public void setMaxDiscountLimit(BigDecimal maxDiscountLimit) { this.maxDiscountLimit = maxDiscountLimit; }
+    public List<PricingCondition> getConditions() { return conditions; }
+    public void setConditions(List<PricingCondition> conditions) { this.conditions = conditions; }
+    public void addCondition(PricingCondition condition) { conditions.add(condition); condition.setRule(this); }
+    public void removeCondition(PricingCondition condition) { conditions.remove(condition); condition.setRule(null); }
 }

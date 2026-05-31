@@ -45,7 +45,7 @@ public class MovieController {
     @PatchMapping("/branch/{branchId}/movie/{movieId}/priority")
     public ResponseEntity<ApiResponse<Void>> updateMoviePriority(
             @PathVariable Long branchId, @PathVariable Long movieId, @RequestParam Integer priority) {
-        ((com.example.cinema.service.movie.impl.MovieServiceImpl)movieService).updateMoviePriority(branchId, movieId, priority);
+        movieService.updateMoviePriority(branchId, movieId, priority);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
@@ -79,9 +79,10 @@ public class MovieController {
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
-    @PatchMapping("/{id}/priority")
-    public ResponseEntity<ApiResponse<Void>> updatePriority(@PathVariable Long id, @RequestParam Integer priority) {
-        movieService.updatePriority(id, priority);
+    @PutMapping("/{id}/priority")
+    public ResponseEntity<ApiResponse<Void>> updatePriority(@PathVariable Long id, @RequestParam Integer level) {
+        movieService.updateMoviePriority(null, id, level);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
+
 }

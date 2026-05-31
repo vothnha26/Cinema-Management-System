@@ -53,6 +53,11 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getMyBookings());
     }
 
+    @GetMapping("/admin/all")
+    public ResponseEntity<ApiResponse<List<BookingResponse>>> getAllBookings() {
+        return ResponseEntity.ok(ApiResponse.ok(bookingService.getAllBookings()));
+    }
+
     @GetMapping("/{code}")
     public ResponseEntity<BookingResponse> getMyBookingByCode(@PathVariable String code) {
         return ResponseEntity.ok(bookingService.getMyBookingByCode(code));

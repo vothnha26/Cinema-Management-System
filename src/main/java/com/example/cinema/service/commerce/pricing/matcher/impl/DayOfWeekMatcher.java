@@ -1,25 +1,16 @@
 package com.example.cinema.service.commerce.pricing.matcher.impl;
 
-import com.example.cinema.model.entity.Customer;
-import com.example.cinema.model.entity.PricingCondition;
-import com.example.cinema.model.entity.Seat;
-import com.example.cinema.model.entity.Showtime;
-import com.example.cinema.service.commerce.pricing.matcher.PricingConditionMatcher;
+import com.example.cinema.model.entity.*;
+import com.example.cinema.model.enums.PricingConditionType;
+import com.example.cinema.service.commerce.pricing.matcher.IConditionMatcher;
 import org.springframework.stereotype.Component;
-
 import java.time.DayOfWeek;
-import java.util.Arrays;
 
 @Component
-public class DayOfWeekMatcher implements PricingConditionMatcher {
-    @Override
-    public boolean matches(PricingCondition condition, Showtime showtime, Seat seat, Customer customer) {
-        String value = condition.getValue();
-        if (value == null || value.isEmpty()) return false;
-
-        DayOfWeek showDay = showtime.getStartTime().getDayOfWeek();
-        return Arrays.stream(value.split(","))
-                .map(String::trim)
-                .anyMatch(day -> day.equalsIgnoreCase(showDay.name()));
+public class DayOfWeekMatcher implements IConditionMatcher {
+    @Override public PricingConditionType getSupportedType() { return PricingConditionType.DAY_OF_WEEK; }
+    @Override public boolean matches(PricingCondition cond, Showtime showtime, Seat seat, Customer customer) {
+        DayOfWeek current = showtime.getStartTime().getDayOfWeek();
+        return cond.getValue().contains(current.name());
     }
 }

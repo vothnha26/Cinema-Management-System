@@ -23,8 +23,33 @@
         fullMatrixModal = new bootstrap.Modal(document.getElementById(els.matrix));
         previewModal = new bootstrap.Modal(document.getElementById(els.prev));
 
+        // Lắng nghe sự kiện thay đổi loại quy tắc để cập nhật UI
+        document.getElementById('ruleCategory').addEventListener('change', (e) => updateCategoryUI(e.target.value));
+
         loadData();
     });
+
+    function updateCategoryUI(category) {
+        const impactSelect = document.getElementById('ruleImpactType');
+        const maxDiscountContainer = document.getElementById('ruleMaxDiscount')?.closest('.col-md-4');
+        
+        // Reset options
+        Array.from(impactSelect.options).forEach(opt => opt.disabled = false);
+
+        if (category === 'BASE') {
+            impactSelect.value = 'FIXED';
+            Array.from(impactSelect.options).forEach(opt => { if(opt.value !== 'FIXED') opt.disabled = true; });
+            if (maxDiscountContainer) maxDiscountContainer.style.display = 'none';
+        } else if (category === 'SURCHARGE') {
+            if (impactSelect.value === 'SUBTRACTIVE' || impactSelect.value === 'FIXED') impactSelect.value = 'ADDITIVE';
+            impactSelect.options[1].disabled = true; // Disable Subtractive
+            if (maxDiscountContainer) maxDiscountContainer.style.display = 'none';
+        } else if (category === 'DISCOUNT') {
+            if (impactSelect.value === 'ADDITIVE' || impactSelect.value === 'FIXED') impactSelect.value = 'SUBTRACTIVE';
+            impactSelect.options[0].disabled = true; // Disable Additive
+            if (maxDiscountContainer) maxDiscountContainer.style.display = 'block';
+        }
+    }
 
     async function identifyBranch() {
         const role = localStorage.getItem('cinemaRole');
@@ -125,17 +150,26 @@
             const impactSign = r.impactType === 'ADDITIVE' ? '+' : r.impactType === 'SUBTRACTIVE' ? '-' : r.impactType === 'PERCENTAGE' ? 'x' : '=';
             const impactVal = r.impactType === 'PERCENTAGE' ? r.impactValue : new Intl.NumberFormat().format(r.impactValue);
 
+            // Phân loại màu sắc và icon
+            let categoryClass = 'border-secondary', categoryIcon = 'bi-gear', categoryLabel = 'KHÁC';
+            if (r.category === 'BASE') { categoryClass = 'border-primary'; categoryIcon = 'bi-cash-stack'; categoryLabel = 'GIÁ GỐC'; }
+            else if (r.category === 'SURCHARGE') { categoryClass = 'border-warning'; categoryIcon = 'bi-plus-circle'; categoryLabel = 'PHỤ THU'; }
+            else if (r.category === 'DISCOUNT') { categoryClass = 'border-success'; categoryIcon = 'bi-arrow-down-circle'; categoryLabel = 'GIẢM GIÁ'; }
+
             return `
             <div class="col-md-6 rule-wrapper" data-id="${r.id}">
-                <div class="rule-card ${!r.active ? 'inactive opacity-50' : ''} ${isLocal?'border-info':''}">
+                <div class="rule-card ${!r.active ? 'inactive opacity-50' : ''} ${categoryClass} border-start border-4">
                     <div class="drag-handle text-muted position-absolute" style="top:12px; right:12px; display:none"><i class="bi bi-grip-vertical fs-4"></i></div>
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge ${r.category==='BASE'?'bg-primary':r.category==='SURCHARGE'?'bg-warning':'bg-success'} bg-opacity-10 ${r.category==='BASE'?'text-primary':r.category==='SURCHARGE'?'text-warning':'text-success'}" style="font-size:0.6rem">
+                                    <i class="bi ${categoryIcon} me-1"></i>${categoryLabel}
+                                </span>
                                 <span class="badge ${isLocal?'bg-info':'bg-danger'} bg-opacity-10 ${isLocal?'text-info':'text-danger'}" style="font-size:0.6rem">${isLocal?'CHI NHÁNH':'HỆ THỐNG'}</span>
                                 <span class="badge ${r.active?'bg-success':'bg-secondary'} bg-opacity-10 ${r.active?'text-success':'text-secondary'}" style="font-size:0.6rem">${r.active?'ĐANG CHẠY':'TẠM NGƯNG'}</span>
                             </div>
-                            <h6 class="rule-name ${isLocal?'text-info':''}">${r.name}</h6>
+                            <h6 class="rule-name ${r.category==='BASE'?'text-primary':r.category==='SURCHARGE'?'text-warning':'text-success'}">${r.name}</h6>
                             <div class="rule-details">
                                 <p class="rule-desc small mb-2">${r.description || 'Quy tắc tự động'}</p>
                                 <div class="d-flex flex-wrap gap-1">
@@ -144,14 +178,14 @@
                             </div>
                         </div>
                         <div class="text-end ms-3">
-                            <div class="rule-impact-lg">${impactSign}${impactVal}${r.impactType!=='PERCENTAGE'?'đ':''}</div>
+                            <div class="rule-impact-lg ${r.category==='BASE'?'text-primary':r.category==='SURCHARGE'?'text-warning':'text-success'}">${impactSign}${impactVal}${r.impactType!=='PERCENTAGE'?'đ':''}</div>
                             <div class="rule-details mt-2 d-flex gap-1 justify-content-end align-items-center">
                                 ${canEdit ? `
                                 <div class="form-check form-switch me-2">
                                     <input class="form-check-input" type="checkbox" ${r.active?'checked':''} onchange="toggleRuleActive(${r.id}, this.checked)">
                                 </div>
                                 <button class="btn btn-sm btn-dark px-3 fw-bold" onclick="openEditRule(${r.id})">SỬA</button>
-                                <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteRule(${r.id})"><i class="bi bi-trash"></i></button>
+                                ${r.system ? '' : `<button class="btn btn-sm btn-outline-danger border-0" onclick="deleteRule(${r.id})"><i class="bi bi-trash"></i></button>`}
                                 ` : `
                                 <div class="small text-muted italic" style="font-size: 0.7rem">Chỉ Admin mới có quyền sửa</div>
                                 `}
@@ -305,32 +339,73 @@
 
     function addConditionRow(condition = null) {
         const role = localStorage.getItem('cinemaRole');
-        const clone = document.getElementById('conditionRowTemplate').content.cloneNode(true);
-        const row = clone.querySelector('.condition-row'), typeSel = row.querySelector('.cond-type'), delBtn = row.querySelector('.text-danger');
-        if (condition) typeSel.value = condition.type;
-        if (role === 'MANAGER' && condition?.type === 'BRANCH') { typeSel.disabled = true; delBtn.style.display = 'none'; }
+        const template = document.getElementById('conditionRowTemplate');
+        if (!template) return;
+
+        const clone = template.content.cloneNode(true);
+        const row = clone.querySelector('.condition-row');
+        const typeSel = row.querySelector('.cond-type');
+        const delBtn = row.querySelector('.text-danger');
+
+        if (condition) {
+            typeSel.value = condition.type;
+        }
+
+        if (role === 'MANAGER' && condition?.type === 'BRANCH') {
+            typeSel.disabled = true;
+            if (delBtn) delBtn.style.display = 'none';
+        }
+
         updateConditionValueInput(typeSel, condition ? condition.value : '');
         document.getElementById('conditionsContainer').appendChild(row);
     }
 
     function updateConditionValueInput(select, value = '') {
-        const container = select.closest('.condition-row').querySelector('.cond-value-container'), type = select.value, role = localStorage.getItem('cinemaRole');
+        const container = select.closest('.condition-row').querySelector('.cond-value-container');
+        const type = select.value;
+        const role = localStorage.getItem('cinemaRole');
         let html = '';
-        if (type === 'BRANCH') html = `<select class="form-select form-select-sm cond-value" ${role==='MANAGER'?'disabled':''}>${BRANCHES.map(b => `<option value="${b.id}" ${value==b.id?'selected':''}>${b.name}</option>`).join('')}</select>`;
-        else if (type === 'DAY_OF_WEEK') {
+
+        if (type === 'BRANCH') {
+            html = `<select class="form-select form-select-sm cond-value" ${role==='MANAGER'?'disabled':''}>
+                ${BRANCHES.map(b => `<option value="${b.id}" ${value==b.id?'selected':''}>${b.name}</option>`).join('')}
+            </select>`;
+        } else if (type === 'DAY_OF_WEEK') {
             const sels = value ? value.split(',') : [];
-            html = `<div class="d-flex flex-wrap gap-2 pt-1">${DAYS.map(d => `<div class="form-check"><input class="form-check-input cond-day-check" type="checkbox" value="${d.id}" id="day_${d.id}_${Math.random()}" ${sels.includes(d.id)?'checked':''}><label class="form-check-label small" style="font-size:0.7rem" for="day_${d.id}">${d.name}</label></div>`).join('')}</div>`;
+            html = `<div class="d-flex flex-wrap gap-2 pt-1">
+                ${DAYS.map(d => `
+                    <div class="form-check">
+                        <input class="form-check-input cond-day-check" type="checkbox" value="${d.id}" id="day_${d.id}_${Math.random()}" ${sels.includes(d.id)?'checked':''}>
+                        <label class="form-check-label small" style="font-size:0.7rem" for="day_${d.id}">${d.name}</label>
+                    </div>
+                `).join('')}
+            </div>`;
         } else if (type === 'TIME_RANGE') {
-            const [s, e] = value ? value.split('-') : ['08:00', '22:00'];
-            html = `<div class="d-flex align-items-center gap-2"><input type="time" class="form-control form-control-sm cond-time-start" value="${s}"><span class="small text-muted">đến</span><input type="time" class="form-control form-control-sm cond-time-end" value="${e}"></div>`;
+            const [s, e] = value ? (value.includes('-') ? value.split('-') : value.split(',')) : ['08:00', '22:00'];
+            html = `<div class="d-flex align-items-center gap-2">
+                <input type="time" class="form-control form-control-sm cond-time-start" value="${s || '08:00'}">
+                <span class="small text-muted">đến</span>
+                <input type="time" class="form-control form-control-sm cond-time-end" value="${e || '22:00'}">
+            </div>`;
         } else if (type === 'DATE_RANGE') {
-            const [s, e] = value ? value.split(':') : ['', ''];
-            html = `<div class="d-flex align-items-center gap-2"><input type="date" class="form-control form-control-sm cond-date-start" value="${s}"><span class="small text-muted">:</span><input type="date" class="form-control form-control-sm cond-date-end" value="${e}"></div>`;
-        } else if (type === 'MEMBER_TIER') html = `<select class="form-select form-select-sm cond-value">${['GUEST','STANDARD','SILVER','GOLD','PLATINUM'].map(t => `<option value="${t}" ${value==t?'selected':''}>${t}</option>`).join('')}</select>`;
-        else if (['ROOM_TYPE','SEAT_TYPE','SHOW_FORMAT'].includes(type)) {
-            const data = type==='ROOM_TYPE'?ROOM_TYPES:type==='SEAT_TYPE'?SEAT_TYPES:[{id:'2D',name:'2D'},{id:'3D',name:'3D'},{id:'IMAX',name:'IMAX'},{id:'4DX',name:'4DX'}];
-            html = `<select class="form-select form-select-sm cond-value">${data.map(x => `<option value="${x.id}" ${value==x.id?'selected':''}>${x.name}</option>`).join('')}</select>`;
-        } else html = `<input type="text" class="form-control form-control-sm cond-value" value="${value}" placeholder="Giá trị...">`;
+            const [s, e] = value ? (value.includes(',') ? value.split(',') : value.split(':')) : ['', ''];
+            html = `<div class="d-flex align-items-center gap-2">
+                <input type="date" class="form-control form-control-sm cond-date-start" value="${s || ''}">
+                <span class="small text-muted">đến</span>
+                <input type="date" class="form-control form-control-sm cond-date-end" value="${e || ''}">
+            </div>`;
+        } else if (type === 'MEMBER_TIER') {
+            html = `<select class="form-select form-select-sm cond-value">
+                ${['GUEST','STANDARD','SILVER','GOLD','PLATINUM'].map(t => `<option value="${t}" ${value==t?'selected':''}>${t}</option>`).join('')}
+            </select>`;
+        } else if (['ROOM_TYPE','SEAT_TYPE','SHOW_FORMAT'].includes(type)) {
+            const data = type==='ROOM_TYPE' ? ROOM_TYPES : type==='SEAT_TYPE' ? SEAT_TYPES : [{id:'2D',name:'2D'},{id:'3D',name:'3D'},{id:'IMAX',name:'IMAX'},{id:'4DX',name:'4DX'}];
+            html = `<select class="form-select form-select-sm cond-value">
+                ${data.map(x => `<option value="${x.id}" ${value==x.id?'selected':''}>${x.name}</option>`).join('')}
+            </select>`;
+        } else {
+            html = `<input type="text" class="form-control form-control-sm cond-value" value="${value}" placeholder="Giá trị...">`;
+        }
         container.innerHTML = html;
     }
 

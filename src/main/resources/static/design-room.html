@@ -213,7 +213,7 @@
             grid.appendChild(label);
 
             for (let c = 1; c <= cols; c++) {
-                const seat = roomData.seats.find(s => s.rowChar === rowChar && s.colNum === c);
+                const seat = roomData.seats ? roomData.seats.find(s => s.rowChar === rowChar && s.colNum === c) : null;
                 const type = seat ? seat.seatTypeId : 'EMPTY';
                 const index = `${rowChar}-${c}`;
                 
@@ -244,6 +244,11 @@
     function updateUI() {
         document.getElementById('selectionStatus').textContent = `${selectedIndices.size} ghế được chọn`;
         
+        if (!roomData.seats) {
+            console.warn("Room has no seats data");
+            return;
+        }
+
         // Update stats
         const total = roomData.seats.filter(s => s.seatTypeId !== 'EMPTY').length;
         const vip = roomData.seats.filter(s => s.seatTypeId === 'VIP').length;
