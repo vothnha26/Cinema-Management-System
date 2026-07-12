@@ -9,11 +9,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 
 @Aspect
 @Component
 public class AuditLogAspect {
+    private static final Logger log = LoggerFactory.getLogger(AuditLogAspect.class);
 
     private final AuditLogRepository auditLogRepository;
 
@@ -39,7 +42,7 @@ public class AuditLogAspect {
             auditLogRepository.save(log);
         } catch (Exception e) {
             // Không để lỗi ghi log làm ảnh hưởng đến luồng nghiệp vụ chính
-            System.err.println("Lỗi khi ghi Audit Log: " + e.getMessage());
+            log.error("Lỗi khi ghi Audit Log: ", e);
         }
     }
 }

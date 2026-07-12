@@ -13,10 +13,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.lang.NonNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.IOException;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+    private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
@@ -40,16 +43,16 @@ public class JwtFilter extends OncePerRequestFilter {
             jwt = authorizationHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
-                System.out.println(">>> Filter: Nhận Token từ user: " + username);
+                log.debug(">>> Filter: Nhận Token từ user: {}", username);
             } catch (Exception e) {
-                System.err.println(">>> Filter Error (Token): " + e.getMessage());
+                log.error(">>> Filter Error (Token): ", e);
             }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-                System.out.println(">>> Filter: Quyền trong Database của user: " + userDetails.getAuthorities());
+                log.debug(">>> Filter: Quyền trong Database của user: {}", userDetails.getAuthorities());
 
                 if (jwtUtil.validateToken(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
@@ -57,12 +60,12 @@ public class JwtFilter extends OncePerRequestFilter {
                     usernamePasswordAuthenticationToken
                             .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
-                    System.out.println(">>> Filter: Đã đăng nhập THÀNH CÔNG cho user: " + username);
+                    log.debug(">>> Filter: Đã đăng nhập THÀNH CÔNG cho user: {}", username);
                 } else {
-                    System.out.println(">>> Filter: Token KHÔNG hợp lệ!");
+                    log.warn(">>> Filter: Token KHÔNG hợp lệ!");
                 }
             } catch (Exception e) {
-                System.err.println(">>> Filter: Không tìm thấy User từ Token: " + username);
+                log.error(">>> Filter: Không tìm thấy User từ Token: {}", username, e);
             }
         }
 

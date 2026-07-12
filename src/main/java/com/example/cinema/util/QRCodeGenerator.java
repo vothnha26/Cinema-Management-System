@@ -8,7 +8,11 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import java.io.ByteArrayOutputStream;
 import java.util.Base64;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class QRCodeGenerator {
+    private static final Logger log = LoggerFactory.getLogger(QRCodeGenerator.class);
 
     public static String generateQRCodeBase64(String text, int width, int height) {
         try {
@@ -20,7 +24,7 @@ public class QRCodeGenerator {
             byte[] pngData = pngOutputStream.toByteArray();
             return Base64.getEncoder().encodeToString(pngData);
         } catch (Exception e) {
-            System.err.println(">>> QR Generation Error: " + e.getMessage());
+            log.error(">>> QR Generation Error: ", e);
             return "";
         }
     }

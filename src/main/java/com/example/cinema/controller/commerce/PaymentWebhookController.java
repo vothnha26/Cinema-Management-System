@@ -32,16 +32,12 @@ public class PaymentWebhookController {
     public ResponseEntity<?> handleSePayWebhook(@RequestBody Map<String, Object> payload, 
                                                @RequestHeader(value = "Authorization", required = false) String auth) {
         
-        // Dùng System.out để chắc chắn hiện lên console dù log level thế nào
-        System.out.println("================================================");
-        System.out.println(">>> SEPAY WEBHOOK INCOMING!");
-        System.out.println(">>> Auth Header: " + auth);
-        System.out.println(">>> Content: " + payload.get("content"));
-        System.out.println(">>> Amount: " + payload.get("transferAmount"));
-        System.out.println("================================================");
-
-        log.info("Headers - Authorization: {}", auth);
-        log.info("Body Payload: {}", payload);
+        log.info("================================================");
+        log.info(">>> SEPAY WEBHOOK INCOMING!");
+        log.info(">>> Auth Header: {}", auth);
+        log.info(">>> Content: {}", payload.get("content"));
+        log.info(">>> Amount: {}", payload.get("transferAmount"));
+        log.info("================================================");
 
         // 1. KIỂM TRA BẢO MẬT (API KEY)
         String secret = sePayProperties.getSecret();
@@ -50,9 +46,9 @@ public class PaymentWebhookController {
             String expectedToken = secret.trim();
 
             if (!receivedToken.equals(expectedToken)) {
-                System.err.println("!!! UNAUTHORIZED WEBHOOK !!!");
-                System.err.println(">>> Received (trimmed): " + (receivedToken.length() > 4 ? receivedToken.substring(0, 4) + "***" : "invalid"));
-                System.err.println(">>> Expected (trimmed): " + (expectedToken.length() > 4 ? expectedToken.substring(0, 4) + "***" : "invalid"));
+                log.warn("!!! UNAUTHORIZED WEBHOOK !!!");
+                log.warn(">>> Received (trimmed): {}", (receivedToken.length() > 4 ? receivedToken.substring(0, 4) + "***" : "invalid"));
+                log.warn(">>> Expected (trimmed): {}", (expectedToken.length() > 4 ? expectedToken.substring(0, 4) + "***" : "invalid"));
                 return ResponseEntity.status(401).body("Invalid API Key");
             }
         }
@@ -60,10 +56,10 @@ public class PaymentWebhookController {
         // 2. GỌI SERVICE XỬ LÝ
         try {
             paymentService.handleWebhook(payload, null);
-            System.out.println(">>> WEBHOOK PROCESSED SUCCESSFULLY!");
+            log.info(">>> WEBHOOK PROCESSED SUCCESSFULLY!");
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
-            System.err.println("!!! ERROR PROCESSING WEBHOOK: " + e.getMessage());
+            log.error("!!! ERROR PROCESSING WEBHOOK: ", e);
             return ResponseEntity.status(500).body(e.getMessage());
         }
     }

@@ -7,11 +7,15 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Strategy cụ thể: Gửi thông báo qua Email với định dạng HTML và mã QR vé.
  */
 @Component
 public class EmailNotificationStrategy implements INotificationStrategy {
+    private static final Logger log = LoggerFactory.getLogger(EmailNotificationStrategy.class);
 
     private final JavaMailSender mailSender;
 
@@ -39,9 +43,9 @@ public class EmailNotificationStrategy implements INotificationStrategy {
 
             helper.setText(htmlContent, true);
             mailSender.send(mimeMessage);
-            System.out.println("✅ [EmailStrategy] Đã gửi mail thành công tới: " + to);
+            log.info("✅ [EmailStrategy] Đã gửi mail thành công tới: {}", to);
         } catch (Exception e) {
-            System.err.println("❌ [EmailStrategy] Gửi mail thất bại tới " + to + ": " + e.getMessage());
+            log.error("❌ [EmailStrategy] Gửi mail thất bại tới {}: ", to, e);
         }
     }
 

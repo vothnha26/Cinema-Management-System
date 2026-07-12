@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class BuzzAnalysisServiceImpl implements BuzzAnalysisService {
+    private static final Logger log = LoggerFactory.getLogger(BuzzAnalysisServiceImpl.class);
 
     private final MovieRepository movieRepository;
     private final RestTemplate restTemplate;
@@ -99,7 +103,7 @@ public class BuzzAnalysisServiceImpl implements BuzzAnalysisService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Lỗi gọi TMDB API cho phim " + movie.getTitle() + ": " + e.getMessage());
+            log.error("Lỗi gọi TMDB API cho phim {}: ", movie.getTitle(), e);
         }
 
         return 50.0 + (Math.random() * 10);

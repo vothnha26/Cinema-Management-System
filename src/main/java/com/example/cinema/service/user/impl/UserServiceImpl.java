@@ -18,12 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Implementation quản lý User (SRP: Chỉ xử lý CRUD tài khoản).
  * Không chứa logic xác thực (Authentication) hay phân quyền (Authorization).
  */
 @Service
 public class UserServiceImpl implements IUserService {
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -93,7 +97,7 @@ public class UserServiceImpl implements IUserService {
         try {
             authService.requestPasswordReset(email);
         } catch (Exception e) {
-            System.err.println("⚠️ Không thể gửi mail Onboarding: " + e.getMessage());
+            log.error("⚠️ Không thể gửi mail Onboarding: ", e);
         }
 
         return toResponse(savedUser);

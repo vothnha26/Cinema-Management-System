@@ -100,7 +100,7 @@ public class NotificationServiceImpl implements INotificationService, INotificat
         if (strategy != null) {
             strategy.send(to, subject, body);
         } else {
-            System.err.println("❌ Không tìm thấy strategy cho kênh: " + channel);
+            log.error("❌ Không tìm thấy strategy cho kênh: {}", channel);
         }
     }
 

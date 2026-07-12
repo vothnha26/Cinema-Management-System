@@ -8,11 +8,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<Object>> handleAppException(AppException e) {
@@ -26,7 +29,7 @@ public class GlobalExceptionHandler {
         for (FieldError error : e.getBindingResult().getFieldErrors()) {
             errors.put(error.getField(), error.getDefaultMessage());
         }
-        System.err.println(">>> VALIDATION FAILED: " + errors);
+        log.error(">>> VALIDATION FAILED: {}", errors);
         return ResponseEntity.status(400)
                 .body(ApiResponse.error("Dữ liệu không hợp lệ: " + errors.toString(), 400));
     }
@@ -39,7 +42,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGeneralException(Exception e) {
-        e.printStackTrace(); // In ra log server để debug
+        log.error("System error: ", e); // In ra log server để debug
         return ResponseEntity.status(500)
                 .body(ApiResponse.error("Đã có lỗi hệ thống xảy ra: " + e.getMessage(), 500));
     }

@@ -14,12 +14,15 @@ import com.example.cinema.model.entity.Staff;
 import com.example.cinema.model.entity.User;
 import com.example.cinema.repository.user.StaffRepository;
 import com.example.cinema.repository.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/showtimes")
 @CrossOrigin(origins = "*")
 public class ShowtimeController {
+    private static final Logger log = LoggerFactory.getLogger(ShowtimeController.class);
 
     private final ShowtimeService showtimeService;
     private final StaffRepository staffRepository;
@@ -38,7 +41,7 @@ public class ShowtimeController {
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date,
             Authentication authentication) {
 
-        System.out.println(">>> FETCHING SHOWTIMES. Auth: " + (authentication != null ? authentication.getName() : "NULL"));
+        log.info(">>> FETCHING SHOWTIMES. Auth: {}", (authentication != null ? authentication.getName() : "NULL"));
 
         // Nếu truyền branchId từ request (Public hoặc Quick Booking)
         if (branchId != null) {
