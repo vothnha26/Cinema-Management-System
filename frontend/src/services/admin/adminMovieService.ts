@@ -12,6 +12,7 @@ export interface MovieRequestData {
   director: string;
   cast: string;
   trailerUrl?: string;
+  posterUrl?: string;
   ageRating: string;
   status: 'NOW_SHOWING' | 'COMING_SOON' | 'END_OF_SHOW';
 }

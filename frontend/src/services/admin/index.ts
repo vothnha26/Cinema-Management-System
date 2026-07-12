@@ -8,6 +8,9 @@ export * from './adminRoomService';
 export * from './adminShowtimeService';
 export * from './adminBookingService';
 export * from './adminDashboardService';
+export * from './adminDistributionService';
+export * from './adminMembershipService';
+export * from './adminAuditService';
 
 export type { BranchData } from './adminBranchService';
 export type { ComboData } from './adminComboService';
@@ -19,3 +22,6 @@ export type { RoomData } from './adminRoomService';
 export type { BulkShowtimeRequest, AISchedulingRequest } from './adminShowtimeService';
 export type { BookingData } from './adminBookingService';
 export type { DashboardStatsRequest } from './adminDashboardService';
+export type { BranchMovieData } from './adminDistributionService';
+export type { MembershipLevel, MembershipBenefitData, CustomerData, UpdateCustomerPayload } from './adminMembershipService';
+export type { AuditLogData } from './adminAuditService';

@@ -9,6 +9,7 @@ export const ADMIN_ROUTES = {
   BOOKINGS: '/admin/bookings',
   COMBOS: '/admin/combos',
   BRANCHES: '/admin/branches',
+  DISTRIBUTIONS: '/admin/distributions',
   MEMBERSHIP: '/admin/membership',
   PROMOTIONS: '/admin/promotions',
   USERS: '/admin/users',
@@ -26,8 +27,10 @@ export const ADMIN_API_ENDPOINTS = {
   BRANCHES: '/admin/branches',
   USERS: '/admin/users',
   PROMOTIONS: '/admin/promotions',
-  MEMBERSHIP: '/admin/memberships',
-  AUDIT_LOGS: '/admin/audit-logs',
+  MEMBERSHIP_BENEFITS: '/membership-benefits',
+  AUDIT_LOGS: '/audit-logs',
+  CUSTOMERS: '/admin/customers',
+  BRANCH_MOVIES: '/admin/branch-movies',
 } as const;
 
 // Hằng số phân quyền các module cho từng vai trò admin
@@ -39,6 +42,7 @@ export const MODULE_PERMISSIONS = {
     ADMIN_ROUTES.SHOWTIMES,
     ADMIN_ROUTES.COMBOS,
     ADMIN_ROUTES.BRANCHES,
+    ADMIN_ROUTES.DISTRIBUTIONS,
   ],
   [USER_ROLES.STAFF]: [
     ADMIN_ROUTES.BOOKINGS,
