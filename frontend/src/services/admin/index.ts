@@ -4,6 +4,10 @@ export * from './adminPromotionService';
 export * from './adminUserService';
 export * from './adminMovieService';
 export * from './adminPricingService';
+export * from './adminRoomService';
+export * from './adminShowtimeService';
+export * from './adminBookingService';
+export * from './adminDashboardService';
 
 export type { BranchData } from './adminBranchService';
 export type { ComboData } from './adminComboService';
@@ -11,3 +15,7 @@ export type { PromotionData } from './adminPromotionService';
 export type { StaffAssignData } from './adminUserService';
 export type { MovieRequestData } from './adminMovieService';
 export type { PricingRuleData, ConditionData } from './adminPricingService';
+export type { RoomData } from './adminRoomService';
+export type { BulkShowtimeRequest, AISchedulingRequest } from './adminShowtimeService';
+export type { BookingData } from './adminBookingService';
+export type { DashboardStatsRequest } from './adminDashboardService';
