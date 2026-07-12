@@ -49,13 +49,9 @@ jobs:
         with:
           chrome-version: stable
 
-      - name: Setup ChromeDriver
-        uses: browser-actions/setup-chromedriver@latest
-
       - name: Verify Chrome Installation
         run: |
           google-chrome --version
-          chromedriver --version
 
       - name: Run Spring Boot & Selenium Tests
         env:
