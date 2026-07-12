@@ -1,0 +1,88 @@
+@startuml G5_ClassDiagram_Pricing
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam classFontSize 13
+skinparam ArrowColor #333333
+skinparam ClassBorderColor #E74C3C
+skinparam ClassBackgroundColor #FDEDEC
+skinparam ClassHeaderBackgroundColor #C0392B
+
+title <b>CLASS DIAGRAM — Nhóm 5: Khuyến mãi & Chính sách giá</b>
+
+class PricingRule <<Master>> {
+  + id            : BIGINT <<PK>>
+  --
+  # name          : VARCHAR(255)
+  # category      : ENUM(BASE, SURCHARGE, DISCOUNT)
+  # impact_type   : ENUM(ADDITIVE, PERCENTAGE, FIXED)
+  # impact_value  : DECIMAL(10,2)
+  # is_stackable  : BOOLEAN
+  # is_active     : BOOLEAN
+}
+
+class PricingCondition <<Detail>> {
+  + id          : BIGINT <<PK>>
+  --
+  # type        : ENUM(TIME, AGE, SEAT_TYPE, ...)
+  # value       : VARCHAR(255)
+  # description : VARCHAR(255)
+}
+
+class SeatPrice <<Config>> {
+  + id         : BIGINT <<PK>>
+  --
+  # base_price : DECIMAL(10,2)
+}
+
+class Promotion <<Entity>> {
+  + id             : BIGINT <<PK>>
+  --
+  # code           : VARCHAR(50)
+  # name           : VARCHAR(255)
+  # discount_type  : ENUM(PERCENTAGE, FIXED)
+  # discount_value : DECIMAL(10,2)
+  # start_date     : DATE
+  # end_date       : DATE
+  # usage_limit    : INT
+}
+
+class BranchPricingRule <<Junction>> {
+  + id         : BIGINT <<PK>>
+  --
+  # priority   : INT
+}
+
+note right of PricingRule
+  <b>Decorator Pattern:</b>
+  category=BASE → giá sàn
+  category=SURCHARGE → phụ thu
+  category=DISCOUNT → giảm giá
+
+  is_stackable=true → có thể cộng
+  dồn nhiều quy tắc cùng lúc
+end note
+
+note right of PricingCondition
+  type=TIME: value="17:00-23:59"
+  type=AGE:  value="STUDENT"
+  type=SEAT_TYPE: value="VIP"
+  Mỗi Rule có thể có nhiều Condition
+  (AND logic)
+end note
+
+note top of SeatPrice
+  Bảng giá gốc theo tổ hợp:
+  [SeatType × Format]
+  Vd: VIP × IMAX = 180,000đ
+  Vd: STANDARD × 2D = 80,000đ
+end note
+
+PricingRule      "1"  *-- "*"  PricingCondition    : "has conditions >"
+PricingRule      "1"  --  "*"  BranchPricingRule   : "applied via >"
+BranchPricingRule "*" --  "1"  Branch              : "< at branch"
+SeatPrice        "*"  --o "1"  SeatType            : "< for seat type"
+SeatPrice        "*"  --o "1"  Format              : "< for format"
+
+@enduml

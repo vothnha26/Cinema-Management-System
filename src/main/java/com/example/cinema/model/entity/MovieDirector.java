@@ -7,18 +7,17 @@ import java.util.Objects;
 
 @Entity
 @Table(name = "movie_directors")
+@IdClass(MovieDirector.MovieDirectorId.class)
 public class MovieDirector {
 
-    @EmbeddedId
-    private MovieDirectorId id;
-
+    @Id
     @ManyToOne
-    @MapsId("movieId")
     @JoinColumn(name = "movie_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Movie movie;
 
+    @Id
     @ManyToOne
-    @MapsId("directorId")
     @JoinColumn(name = "director_id")
     private Director director;
 
@@ -26,59 +25,65 @@ public class MovieDirector {
     @Column(nullable = false)
     private DirectorRole role;
 
-    public MovieDirector() {}
+    public MovieDirector() {
+    }
 
-    public MovieDirector(MovieDirectorId id, Movie movie, Director director, DirectorRole role) {
-        this.id = id;
+    public MovieDirector(Movie movie, Director director, DirectorRole role) {
         this.movie = movie;
         this.director = director;
         this.role = role;
     }
 
-    public MovieDirectorId getId() { return id; }
-    public void setId(MovieDirectorId id) { this.id = id; }
+    public DirectorRole getRole() {
+        return role;
+    }
 
-    public Movie getMovie() { return movie; }
-    public void setMovie(Movie movie) { this.movie = movie; }
+    public void setRole(DirectorRole role) {
+        this.role = role;
+    }
 
-    public Director getDirector() { return director; }
-    public void setDirector(Director director) { this.director = director; }
+    public Movie getMovie() {
+        return movie;
+    }
 
-    public DirectorRole getRole() { return role; }
-    public void setRole(DirectorRole role) { this.role = role; }
+    public void setMovie(Movie movie) {
+        this.movie = movie;
+    }
 
-    @Embeddable
+    public Director getDirector() {
+        return director;
+    }
+
+    public void setDirector(Director director) {
+        this.director = director;
+    }
+
     public static class MovieDirectorId implements Serializable {
-        @Column(name = "movie_id")
-        private Long movieId;
-
-        @Column(name = "director_id")
-        private Long directorId;
+        private Long movie;
+        private Long director;
 
         public MovieDirectorId() {}
-
-        public MovieDirectorId(Long movieId, Long directorId) {
-            this.movieId = movieId;
-            this.directorId = directorId;
+        public MovieDirectorId(Long movie, Long director) {
+            this.movie = movie;
+            this.director = director;
         }
 
-        public Long getMovieId() { return movieId; }
-        public void setMovieId(Long movieId) { this.movieId = movieId; }
-
-        public Long getDirectorId() { return directorId; }
-        public void setDirectorId(Long directorId) { this.directorId = directorId; }
+        public Long getMovie() { return movie; }
+        public void setMovie(Long movie) { this.movie = movie; }
+        public Long getDirector() { return director; }
+        public void setDirector(Long director) { this.director = director; }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             MovieDirectorId that = (MovieDirectorId) o;
-            return Objects.equals(movieId, that.movieId) && Objects.equals(directorId, that.directorId);
+            return Objects.equals(movie, that.movie) && Objects.equals(director, that.director);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(movieId, directorId);
+            return Objects.hash(movie, director);
         }
     }
 }

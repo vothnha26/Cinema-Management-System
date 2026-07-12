@@ -1,8 +1,6 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.enums.MembershipTier;
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 
 @Entity
@@ -13,7 +11,7 @@ public class Customer {
     private Long id;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @Column(name = "full_name", nullable = false)
@@ -21,9 +19,11 @@ public class Customer {
 
     private String phone;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "membership_tier")
-    private MembershipTier membershipTier = MembershipTier.STANDARD;
+    private String email;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "membership_level_id")
+    private MembershipLevel membershipLevel;
 
     @Column(name = "total_spending", precision = 15, scale = 2)
     private BigDecimal totalSpending = BigDecimal.ZERO;
@@ -31,16 +31,11 @@ public class Customer {
     @Column(nullable = false)
     private Integer points = 0;
 
-    public Customer() {}
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
 
-    public Customer(Long id, User user, String fullName, String phone, MembershipTier membershipTier, BigDecimal totalSpending, Integer points) {
-        this.id = id;
-        this.user = user;
-        this.fullName = fullName;
-        this.phone = phone;
-        this.membershipTier = membershipTier;
-        this.totalSpending = totalSpending;
-        this.points = points;
+    public Customer() {
     }
 
     public Long getId() {
@@ -75,12 +70,20 @@ public class Customer {
         this.phone = phone;
     }
 
-    public MembershipTier getMembershipTier() {
-        return membershipTier;
+    public String getEmail() {
+        return email;
     }
 
-    public void setMembershipTier(MembershipTier membershipTier) {
-        this.membershipTier = membershipTier;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public MembershipLevel getMembershipLevel() {
+        return membershipLevel;
+    }
+
+    public void setMembershipLevel(MembershipLevel membershipLevel) {
+        this.membershipLevel = membershipLevel;
     }
 
     public BigDecimal getTotalSpending() {
@@ -97,5 +100,13 @@ public class Customer {
 
     public void setPoints(Integer points) {
         this.points = points;
+    }
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

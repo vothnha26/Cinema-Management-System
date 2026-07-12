@@ -1,0 +1,44 @@
+@startuml admin_manage_user
+actor Admin
+participant "AdminUserController" as AUC
+participant "UserServiceImpl" as USI
+participant "UserRepository" as UR
+participant "PasswordEncoder" as PE
+database "Database" as DB
+
+Admin -> AUC : POST /api/admin/users/staff (CreateStaffRequest)
+activate AUC
+
+AUC -> USI : createStaff(request)
+activate USI
+
+USI -> UR : existsByUsername(username)
+activate UR
+UR --> USI : false
+deactivate UR
+
+USI -> PE : encode(password)
+activate PE
+PE --> USI : hashedPassword
+deactivate PE
+
+USI -> UR : save(UserEntity)
+activate UR
+UR -> DB : INSERT
+DB --> UR : OK
+UR --> USI : savedUser
+deactivate UR
+
+USI --> AUC : UserResponse
+deactivate USI
+
+AUC --> Admin : 201 Created (UserResponse)
+deactivate AUC
+
+Admin -> AUC : GET /api/admin/users (Search Users)
+AUC -> USI : getAllUsers()
+USI -> UR : findAll()
+UR --> USI : List<User>
+USI --> AUC : List<UserResponse>
+AUC --> Admin : 200 OK
+@enduml

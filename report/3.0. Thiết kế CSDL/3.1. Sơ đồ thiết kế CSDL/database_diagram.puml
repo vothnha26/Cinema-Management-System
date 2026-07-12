@@ -1,0 +1,384 @@
+@startuml FlashCinema_DatabaseDiagram
+!define TABLE(name,desc) class name as "desc" << (T,#AEDFF7) >>
+!define PK(x) <b><color:#8B0000>🔑 x</color></b>
+!define FK(x) <color:#0066CC><i>⬡ x</i></color>
+!define COL(x) x
+
+!theme plain
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classFontName Courier
+skinparam classBackgroundColor #FAFAFA
+skinparam classBorderColor #999999
+skinparam classHeaderBackgroundColor #2C3E50
+skinparam ArrowColor #555555
+skinparam ArrowThickness 1.2
+skinparam NoteBackgroundColor #FFFDE7
+
+' ==========================================
+'  NHÓM 1: NGƯỜI DÙNG & PHÂN QUYỀN
+' ==========================================
+
+TABLE(users, "users") {
+  PK(id : BIGINT)
+  ..
+  COL(username : VARCHAR(255) UNIQUE)
+  COL(password : VARCHAR(255))
+  COL(email    : VARCHAR(255) UNIQUE)
+  COL(role     : VARCHAR(50))
+  COL(status   : BOOLEAN DEFAULT true)
+  COL(created_at : DATETIME)
+}
+
+TABLE(customers, "customers") {
+  PK(id : BIGINT)
+  ..
+  FK(user_id : BIGINT)
+  FK(membership_level_id : BIGINT)
+  COL(full_name     : VARCHAR(255))
+  COL(phone         : VARCHAR(20))
+  COL(points        : INT DEFAULT 0)
+  COL(total_spending : DECIMAL(15,2))
+}
+
+TABLE(membership_levels, "membership_levels") {
+  PK(id : BIGINT)
+  ..
+  COL(name         : VARCHAR(255) UNIQUE)
+  COL(min_spending  : DECIMAL(15,2))
+  COL(priority      : INT)
+}
+
+TABLE(membership_benefits, "membership_benefits") {
+  PK(id : BIGINT)
+  ..
+  FK(membership_level_id : BIGINT)
+  COL(benefit_type  : VARCHAR(50))
+  COL(benefit_value : VARCHAR(255))
+}
+
+TABLE(staffs, "staffs") {
+  PK(id : BIGINT)
+  ..
+  FK(user_id   : BIGINT)
+  FK(branch_id : BIGINT)
+  COL(staff_code : VARCHAR(50) UNIQUE)
+  COL(full_name  : VARCHAR(255))
+  COL(position   : VARCHAR(100))
+}
+
+TABLE(audit_logs, "audit_logs") {
+  PK(id : BIGINT)
+  ..
+  COL(username   : VARCHAR(255))
+  COL(action     : VARCHAR(100))
+  COL(target     : VARCHAR(100))
+  COL(target_id  : BIGINT)
+  COL(details    : TEXT)
+  COL(timestamp  : DATETIME DEFAULT NOW)
+}
+
+TABLE(notifications, "notifications") {
+  PK(id : BIGINT)
+  ..
+  FK(user_id : BIGINT)
+  COL(title      : VARCHAR(255))
+  COL(message    : TEXT)
+  COL(type       : VARCHAR(50))
+  COL(is_read    : BOOLEAN)
+  COL(created_at : DATETIME)
+}
+
+' ==========================================
+'  NHÓM 2: CƠ SỞ VẬT CHẤT & RẠP
+' ==========================================
+
+TABLE(branches, "branches") {
+  PK(id : BIGINT)
+  ..
+  COL(name      : VARCHAR(255))
+  COL(address   : VARCHAR(255))
+  COL(city      : VARCHAR(100))
+  COL(phone     : VARCHAR(20))
+  COL(is_active : BOOLEAN DEFAULT true)
+}
+
+TABLE(room_types, "room_types") {
+  PK(id : VARCHAR(50))
+  ..
+  COL(name : VARCHAR(255))
+}
+
+TABLE(rooms, "rooms") {
+  PK(id : BIGINT)
+  ..
+  FK(branch_id    : BIGINT)
+  FK(room_type_id : VARCHAR(50))
+  COL(name     : VARCHAR(255))
+  COL(capacity : INT)
+  COL(num_rows : INT)
+  COL(num_cols : INT)
+  COL(status   : VARCHAR(50))
+}
+
+TABLE(seat_types, "seat_types") {
+  PK(id : VARCHAR(50))
+  ..
+  COL(name        : VARCHAR(255))
+  COL(description : TEXT)
+}
+
+TABLE(seats, "seats") {
+  PK(id : BIGINT)
+  ..
+  FK(room_id      : BIGINT)
+  FK(seat_type_id : VARCHAR(50))
+  COL(row_char : VARCHAR(10))
+  COL(col_num  : INT)
+  COL(status   : BOOLEAN DEFAULT true)
+}
+
+TABLE(room_type_formats, "room_type_formats") {
+  PK(room_type_id : VARCHAR(50))
+  PK(format_id    : VARCHAR(50))
+}
+
+' ==========================================
+'  NHÓM 3: PHIM & NỘI DUNG
+' ==========================================
+
+TABLE(movies, "movies") {
+  PK(id : BIGINT)
+  ..
+  COL(title          : VARCHAR(255))
+  COL(description    : TEXT)
+  COL(duration       : INT)
+  COL(release_date   : DATE)
+  COL(age_rating     : VARCHAR(50))
+  COL(status         : VARCHAR(50))
+  COL(tmdb_id        : BIGINT UNIQUE)
+  COL(origin_country : VARCHAR(100))
+  COL(priority_level : INT DEFAULT 1)
+}
+
+TABLE(genres, "genres") {
+  PK(id : VARCHAR(50))
+  ..
+  COL(name : VARCHAR(255))
+}
+
+TABLE(formats, "formats") {
+  PK(id : VARCHAR(50))
+  ..
+  COL(name : VARCHAR(255))
+}
+
+TABLE(actors, "actors") {
+  PK(id : BIGINT)
+  ..
+  COL(name       : VARCHAR(255))
+  COL(avatar_url : VARCHAR(255))
+}
+
+TABLE(directors, "directors") {
+  PK(id : BIGINT)
+  ..
+  COL(name       : VARCHAR(255))
+  COL(avatar_url : VARCHAR(255))
+}
+
+TABLE(showtimes, "showtimes") {
+  PK(id : BIGINT)
+  ..
+  FK(movie_id  : BIGINT)
+  FK(room_id   : BIGINT)
+  FK(format_id : VARCHAR(50))
+  COL(start_time : DATETIME)
+  COL(end_time   : DATETIME)
+  COL(status     : VARCHAR(50))
+}
+
+TABLE(movie_actors, "movie_actors") {
+  PK(movie_id : BIGINT)
+  PK(actor_id : BIGINT)
+}
+
+TABLE(movie_directors, "movie_directors") {
+  PK(movie_id    : BIGINT)
+  PK(director_id : BIGINT)
+}
+
+TABLE(movie_genres, "movie_genres") {
+  PK(movie_id : BIGINT)
+  PK(genre_id : VARCHAR(50))
+}
+
+TABLE(movie_formats, "movie_formats") {
+  PK(movie_id  : BIGINT)
+  PK(format_id : VARCHAR(50))
+}
+
+' ==========================================
+'  NHÓM 4: GIAO DỊCH & BẮP NƯỚC
+' ==========================================
+
+TABLE(bookings, "bookings") {
+  PK(id : BIGINT)
+  ..
+  FK(customer_id  : BIGINT NULLABLE)
+  FK(showtime_id  : BIGINT)
+  COL(booking_code : VARCHAR(50) UNIQUE)
+  COL(total_price  : DECIMAL(15,2))
+  COL(status       : VARCHAR(50))
+  COL(created_at   : DATETIME DEFAULT NOW)
+}
+
+TABLE(booking_details, "booking_details") {
+  PK(id : BIGINT)
+  ..
+  FK(booking_id : BIGINT)
+  FK(seat_id    : BIGINT)
+  COL(price : DECIMAL(15,2))
+}
+
+TABLE(payments, "payments") {
+  PK(id : BIGINT)
+  ..
+  FK(booking_id : BIGINT UNIQUE)
+  COL(amount         : DECIMAL(15,2))
+  COL(method         : VARCHAR(50))
+  COL(transaction_id : VARCHAR(255))
+  COL(status         : VARCHAR(50))
+}
+
+TABLE(combos, "combos") {
+  PK(id : BIGINT)
+  ..
+  COL(name           : VARCHAR(255))
+  COL(price          : DECIMAL(10,2))
+  COL(stock_quantity : INT)
+  COL(is_active      : BOOLEAN DEFAULT true)
+}
+
+TABLE(booking_combos, "booking_combos") {
+  PK(id : BIGINT)
+  ..
+  FK(booking_id : BIGINT)
+  FK(combo_id   : BIGINT)
+  COL(quantity : INT)
+}
+
+TABLE(branch_combos, "branch_combos") {
+  PK(branch_id : BIGINT)
+  PK(combo_id  : BIGINT)
+  ..
+  COL(stock_quantity : INT)
+}
+
+' ==========================================
+'  NHÓM 5: KHUYẾN MÃI & GIÁ
+' ==========================================
+
+TABLE(pricing_rules, "pricing_rules") {
+  PK(id : BIGINT)
+  ..
+  COL(name         : VARCHAR(255))
+  COL(category     : VARCHAR(50))
+  COL(impact_type  : VARCHAR(20))
+  COL(impact_value : DECIMAL(10,2))
+  COL(is_stackable : BOOLEAN)
+  COL(is_active    : BOOLEAN)
+}
+
+TABLE(pricing_conditions, "pricing_conditions") {
+  PK(id : BIGINT)
+  ..
+  FK(rule_id : BIGINT)
+  COL(type        : VARCHAR(50))
+  COL(value       : VARCHAR(255))
+  COL(description : VARCHAR(255))
+}
+
+TABLE(seat_prices, "seat_prices") {
+  PK(id : BIGINT)
+  ..
+  FK(seat_type_id : VARCHAR(50))
+  FK(format_id    : VARCHAR(50))
+  COL(base_price : DECIMAL(10,2))
+}
+
+TABLE(promotions, "promotions") {
+  PK(id : BIGINT)
+  ..
+  COL(code           : VARCHAR(50) UNIQUE)
+  COL(name           : VARCHAR(255))
+  COL(discount_type  : VARCHAR(20))
+  COL(discount_value : DECIMAL(10,2))
+  COL(start_date     : DATE)
+  COL(end_date       : DATE)
+  COL(usage_limit    : INT)
+}
+
+TABLE(branch_pricing_rules, "branch_pricing_rules") {
+  PK(id : BIGINT)
+  ..
+  FK(branch_id : BIGINT)
+  FK(rule_id   : BIGINT)
+  COL(priority : INT)
+}
+
+' ==========================================
+'  RELATIONSHIPS
+' ==========================================
+
+' --- Nhóm 1 ---
+users           ||--o{ customers         : "user_id"
+users           ||--o{ staffs            : "user_id"
+users           ||--o{ notifications     : "user_id"
+membership_levels ||--o{ customers       : "membership_level_id"
+membership_levels ||--|{ membership_benefits : "membership_level_id"
+
+' --- Nhóm 2 ---
+branches        ||--|{ rooms             : "branch_id"
+branches        ||--o{ staffs            : "branch_id"
+room_types      ||--o{ rooms             : "room_type_id"
+rooms           ||--|{ seats             : "room_id"
+seat_types      ||--o{ seats             : "seat_type_id"
+room_types      ||--|{ room_type_formats : "room_type_id"
+formats         ||--|{ room_type_formats : "format_id"
+
+' --- Nhóm 3 ---
+movies          ||--o{ showtimes         : "movie_id"
+rooms           ||--o{ showtimes         : "room_id"
+formats         ||--o{ showtimes         : "format_id"
+movies          ||--|{ movie_actors      : "movie_id"
+actors          ||--|{ movie_actors      : "actor_id"
+movies          ||--|{ movie_directors   : "movie_id"
+directors       ||--|{ movie_directors   : "director_id"
+movies          ||--|{ movie_genres      : "movie_id"
+genres          ||--|{ movie_genres      : "genre_id"
+movies          ||--|{ movie_formats     : "movie_id"
+formats         ||--|{ movie_formats     : "format_id"
+
+' --- Nhóm 4 ---
+customers       |o--o{ bookings          : "customer_id"
+showtimes       ||--o{ bookings          : "showtime_id"
+bookings        ||--|{ booking_details   : "booking_id"
+seats           ||--o{ booking_details   : "seat_id"
+bookings        ||--o| payments          : "booking_id"
+bookings        ||--o{ booking_combos    : "booking_id"
+combos          ||--o{ booking_combos    : "combo_id"
+branches        ||--|{ branch_combos     : "branch_id"
+combos          ||--|{ branch_combos     : "combo_id"
+
+' --- Nhóm 5 ---
+pricing_rules   ||--|{ pricing_conditions   : "rule_id"
+pricing_rules   ||--|{ branch_pricing_rules : "rule_id"
+branches        ||--|{ branch_pricing_rules : "branch_id"
+seat_types      ||--o{ seat_prices          : "seat_type_id"
+formats         ||--o{ seat_prices          : "format_id"
+
+@enduml

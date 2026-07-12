@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarCinema – Đăng nhập</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <link rel="icon" type="image/png" href="/favicon.png?v=2">
+    <style>
+        :root {
+          --bg: #080B14;
+          --surface: #0F1320;
+          --card: #161B2E;
+          --border: #252A3D;
+          --accent: #E5133A;
+          --accent-gold: #F5A623;
+          --text: #E8EAF0;
+          --text-muted: #7B82A0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          background: var(--bg);
+          color: var(--text);
+          font-family: 'Outfit', sans-serif;
+          min-height: 100vh;
+          display: flex;
+          overflow: hidden;
+        }
+
+        /* LEFT PANEL */
+        .auth-left {
+          flex: 1;
+          position: relative;
+          overflow: hidden;
+          display: none;
+        }
+        @media(min-width:992px){ .auth-left { display: block; } }
+        .auth-left .bg-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(to bottom right, rgba(8,11,20,0.3), rgba(229,19,58,0.15));
+          z-index: 2;
+        }
+        .film-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          grid-template-rows: repeat(4, 1fr);
+          height: 100%;
+          gap: 3px;
+        }
+        .film-cell {
+          background: var(--card);
+          overflow: hidden;
+          position: relative;
+        }
+        .film-cell img {
+          width: 100%; height: 100%;
+          object-fit: cover;
+          opacity: 0.7;
+          transition: opacity 0.3s;
+        }
+        .film-cell:hover img { opacity: 0.9; }
+
+        .film-cell:nth-child(1) { grid-row: span 2; }
+        .film-cell:nth-child(5) { grid-column: span 2; }
+
+        .left-brand {
+          position: absolute;
+          bottom: 0; left: 0; right: 0;
+          z-index: 3;
+          padding: 40px;
+          background: linear-gradient(transparent, rgba(8,11,20,0.95));
+        }
+        .left-brand h1 {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 4rem;
+          letter-spacing: 4px;
+          color: var(--text);
+        }
+        .left-brand h1 span { color: var(--accent); }
+        .left-brand p {
+          color: var(--text-muted);
+          font-size: 1rem;
+          margin-top: 8px;
+        }
+
+        /* RIGHT PANEL */
+        .auth-right {
+          width: 100%;
+          max-width: 480px;
+          background: var(--surface);
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          padding: 48px 40px;
+          position: relative;
+          overflow-y: auto;
+        }
+        @media(min-width:992px){ .auth-right { min-width: 440px; } }
+
+        .auth-right::before {
+          content: '';
+          position: absolute;
+          top: -100px; right: -100px;
+          width: 300px; height: 300px;
+          background: radial-gradient(circle, rgba(229,19,58,0.08), transparent 70%);
+          pointer-events: none;
+        }
+
+        .brand-mobile {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 2.5rem;
+          letter-spacing: 3px;
+          margin-bottom: 32px;
+          display: block;
+        }
+        .brand-mobile span { color: var(--accent); }
+        @media(min-width:992px){ .brand-mobile { display: none; } }
+
+        .auth-tabs {
+          display: flex;
+          background: var(--card);
+          border-radius: 12px;
+          padding: 4px;
+          margin-bottom: 32px;
+          border: 1px solid var(--border);
+        }
+        .auth-tab {
+          flex: 1;
+          padding: 10px;
+          border: none;
+          background: transparent;
+          color: var(--text-muted);
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 500;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.25s;
+        }
+        .auth-tab.active {
+          background: var(--gradient);
+          color: #fff;
+        }
+
+        .form-label {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: var(--text-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.8px;
+          margin-bottom: 6px;
+        }
+        .form-control {
+          background: var(--card);
+          border: 1.5px solid var(--border);
+          color: var(--text);
+          font-family: 'Outfit', sans-serif;
+          padding: 12px 16px;
+          border-radius: 10px;
+          font-size: 0.95rem;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus {
+          background: var(--card);
+          border-color: var(--accent);
+          color: var(--text);
+          box-shadow: 0 0 0 3px rgba(229,19,58,0.15);
+        }
+        .form-control::placeholder { color: var(--text-muted); opacity: 0.5; }
+        .input-group .form-control { border-right: none; border-radius: 10px 0 0 10px; }
+        .input-group .btn-eye {
+          background: var(--card);
+          border: 1.5px solid var(--border);
+          border-left: none;
+          color: var(--text-muted);
+          border-radius: 0 10px 10px 0;
+          padding: 0 16px;
+          cursor: pointer;
+          transition: color 0.2s;
+        }
+        .input-group .btn-eye:hover { color: var(--accent); }
+
+        .btn-auth {
+          background: var(--gradient);
+          color: #fff;
+          border: none;
+          padding: 14px;
+          border-radius: 10px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 1rem;
+          font-weight: 600;
+          width: 100%;
+          cursor: pointer;
+          transition: opacity 0.2s, transform 0.1s;
+          letter-spacing: 0.5px;
+          margin-top: 8px;
+        }
+        .btn-auth:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-auth:active { transform: translateY(0); }
+
+        .divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 20px 0;
+          color: var(--text-muted);
+          font-size: 0.85rem;
+        }
+        .divider::before, .divider::after {
+          content: ''; flex: 1;
+          height: 1px;
+          background: var(--border);
+        }
+
+        .btn-social {
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+          background: var(--card);
+          border: 1.5px solid var(--border);
+          color: var(--text);
+          padding: 12px;
+          border-radius: 10px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 0.9rem;
+          font-weight: 500;
+          width: 100%;
+          cursor: pointer;
+          transition: border-color 0.2s, background 0.2s;
+        }
+        .btn-social:hover { border-color: var(--accent); background: rgba(229,19,58,0.05); }
+
+        .forgot-link {
+          text-align: right;
+          margin-bottom: 16px;
+        }
+        .forgot-link a {
+          color: var(--accent);
+          font-size: 0.85rem;
+          text-decoration: none;
+          font-weight: 500;
+        }
+        .forgot-link a:hover { text-decoration: underline; }
+
+        .mb-form { margin-bottom: 16px; }
+
+        .alert-auth {
+          background: rgba(229,19,58,0.1);
+          border: 1px solid rgba(229,19,58,0.3);
+          border-radius: 8px;
+          color: #ff6b7a;
+          padding: 10px 14px;
+          font-size: 0.88rem;
+          margin-bottom: 16px;
+          display: none;
+        }
+
+        /* Animations */
+        .form-panel { animation: fadeUp 0.3s ease; }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Floating film strip decoration */
+        .film-strip {
+          position: absolute;
+          top: 0; left: 0;
+          width: 100%; height: 6px;
+          background: repeating-linear-gradient(90deg, var(--accent) 0 20px, transparent 20px 30px);
+          opacity: 0.6;
+        }
+
+        select.form-control option { background: var(--card); }
+    </style>
+</head>
+<body>
+
+<!-- LEFT: Film Collage -->
+<div class="auth-left">
+    <div class="bg-overlay"></div>
+    <div class="film-grid" id="filmGrid">
+        <!-- 10 cells, JS will fill with colored placeholders -->
+    </div>
+    <div class="left-brand">
+        <h1>STAR<span>CINEMA</span></h1>
+        <p>🎬 Hơn 500 bộ phim · Đặt vé trực tuyến 24/7 · Ưu đãi thành viên hấp dẫn</p>
+    </div>
+</div>
+
+<!-- RIGHT: Auth Form -->
+<div class="auth-right">
+    <div class="film-strip"></div>
+
+    <span class="brand-mobile">STAR<span>CINEMA</span></span>
+
+    <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchTab('login')">Đăng nhập</button>
+        <button class="auth-tab" onclick="switchTab('register')">Đăng ký</button>
+    </div>
+
+    <div class="alert-auth" id="alertMsg"></div>
+
+    <!-- OTP PANEL -->
+    <div id="otpPanel" class="form-panel" style="display:none">
+        <div class="text-center mb-4">
+            <i class="bi bi-shield-lock" style="font-size: 3rem; color: var(--accent);"></i>
+            <h4 class="mt-3">Xác thực tài khoản</h4>
+            <p class="text-muted small">Chúng tôi đã gửi mã OTP gồm 6 chữ số đến email của bạn. Vui lòng kiểm tra và nhập mã bên dưới.</p>
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Mã OTP</label>
+            <input type="text" class="form-control text-center" placeholder="000000" id="otpCode" maxlength="6" style="font-size: 1.5rem; letter-spacing: 8px; font-weight: 700;">
+        </div>
+        <button class="btn-auth" onclick="handleVerifyOtp()">
+            <i class="bi bi-check-circle me-2"></i>Xác nhận OTP
+        </button>
+        <div class="text-center mt-3">
+            <a href="javascript:void(0)" onclick="switchTab('register')" class="small text-decoration-none" style="color: var(--text-muted);">Quay lại Đăng ký</a>
+        </div>
+    </div>
+
+    <!-- FORGOT PASSWORD PANEL -->
+    <div id="forgotPanel" class="form-panel" style="display:none">
+        <div class="text-center mb-4">
+            <i class="bi bi-envelope-at" style="font-size: 3rem; color: var(--accent);"></i>
+            <h4 class="mt-3">Quên mật khẩu?</h4>
+            <p class="text-muted small">Nhập email đã đăng ký của bạn. Chúng tôi sẽ gửi một liên kết để đặt lại mật khẩu.</p>
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Email tài khoản</label>
+            <input type="email" class="form-control" placeholder="your-email@example.com" id="forgotEmail">
+        </div>
+        <button class="btn-auth" onclick="handleForgotPassword()">
+            <i class="bi bi-send-fill me-2"></i>Gửi yêu cầu
+        </button>
+        <div class="text-center mt-3">
+            <a href="javascript:void(0)" onclick="switchTab('login')" class="small text-decoration-none" style="color: var(--text-muted);">Quay lại Đăng nhập</a>
+        </div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginPanel" class="form-panel">
+        <div class="mb-form">
+            <label class="form-label">Tên đăng nhập / Email</label>
+            <input type="text" class="form-control" placeholder="Nhập email hoặc tên đăng nhập" id="loginUser">
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Mật khẩu</label>
+            <div class="input-group">
+                <input type="password" class="form-control" placeholder="Nhập mật khẩu" id="loginPass">
+                <button class="btn-eye" type="button" onclick="togglePass('loginPass', this)">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+        </div>
+        <div class="forgot-link">
+            <a href="javascript:void(0)" onclick="switchTab('forgot')">Quên mật khẩu?</a>
+        </div>
+        <button class="btn-auth" onclick="handleLogin()">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+        </button>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerPanel" class="form-panel" style="display:none">
+        <div class="row g-2 mb-form">
+            <div class="col-6">
+                <label class="form-label">Họ</label>
+                <input type="text" class="form-control" placeholder="Nguyễn">
+            </div>
+            <div class="col-6">
+                <label class="form-label">Tên</label>
+                <input type="text" class="form-control" placeholder="Văn A">
+            </div>
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" placeholder="email@example.com" id="regEmail">
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Số điện thoại</label>
+            <input type="tel" class="form-control" placeholder="0901 234 567">
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Mật khẩu</label>
+            <div class="input-group">
+                <input type="password" class="form-control" placeholder="Tối thiểu 8 ký tự, có chữ hoa và số"
+                       id="regPass">
+                <button class="btn-eye" type="button" onclick="togglePass('regPass', this)">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+        </div>
+        <div class="mb-form">
+            <label class="form-label">Xác nhận mật khẩu</label>
+            <div class="input-group">
+                <input type="password" class="form-control" placeholder="Nhập lại mật khẩu" id="regPass2">
+                <button class="btn-eye" type="button" onclick="togglePass('regPass2', this)">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+        </div>
+        <button class="btn-auth" onclick="handleRegister()">
+            <i class="bi bi-person-plus me-2"></i>Tạo tài khoản
+        </button>
+    </div>
+</div>
+
+<script>
+    function switchTab(tab, pushState = true) {
+      document.querySelectorAll('.auth-tab').forEach((t, i) => {
+        t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
+      });
+      const lp = document.getElementById('loginPanel');
+      const rp = document.getElementById('registerPanel');
+      const op = document.getElementById('otpPanel');
+      const fp = document.getElementById('forgotPanel');
+      const tabs = document.querySelector('.auth-tabs');
+
+      // Reset display
+      [lp, rp, op, fp].forEach(p => { if(p) p.style.display = 'none'; });
+      if(tabs) tabs.style.display = 'flex';
+
+      if (tab === 'login') { if(lp) lp.style.display = 'block'; document.title = 'StarCinema – Đăng nhập'; }
+      else if (tab === 'register') { if(rp) rp.style.display = 'block'; document.title = 'StarCinema – Đăng ký'; }
+      else if (tab === 'forgot') { if(fp) fp.style.display = 'block'; if(tabs) tabs.style.display = 'none'; document.title = 'StarCinema – Quên mật khẩu'; }
+      else if (tab === 'otp') { if(op) op.style.display = 'block'; if(tabs) tabs.style.display = 'none'; document.title = 'StarCinema – Xác thực OTP'; }
+      
+      [lp, rp, op, fp].forEach(p => { if(p) p.classList.add('form-panel'); });
+
+      // Cập nhật URL mà không tải lại trang
+      if (pushState) {
+        const newUrl = window.location.pathname + (tab !== 'login' ? '?mode=' + tab : '');
+        window.history.pushState({ mode: tab }, '', newUrl);
+      }
+    }
+
+    // Xử lý nút Back/Forward của trình duyệt
+    window.onpopstate = function(event) {
+      const mode = (event.state && event.state.mode) || 'login';
+      switchTab(mode, false);
+    };
+
+    // Khởi tạo trang dựa trên URL hiện tại
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const mode = urlParams.get('mode') || 'login';
+      switchTab(mode, false);
+    });
+
+    function togglePass(id, btn) {
+      const input = document.getElementById(id);
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text'; icon.className = 'bi bi-eye-slash';
+      } else {
+        input.type = 'password'; icon.className = 'bi bi-eye';
+      }
+    }
+
+    function showAlert(msg) {
+      const el = document.getElementById('alertMsg');
+      el.textContent = msg; el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 3500);
+    }
+
+    async function handleLogin() {
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      if (!u || !p) { showAlert('Vui lòng nhập đầy đủ thông tin.'); return; }
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        
+        if (response.ok) {
+          const apiResponse = await response.json();
+          const data = apiResponse.data;
+          localStorage.setItem('cinemaToken', data.token);
+          localStorage.setItem('cinemaRole', data.role);
+          localStorage.setItem('cinemaUsername', data.username);
+          if (data.branchId) {
+            localStorage.setItem('cinemaBranchId', data.branchId);
+          } else {
+            localStorage.removeItem('cinemaBranchId');
+          }
+          
+          if (data.role === 'ADMIN' || data.role === 'MANAGER') {
+            window.location.href = 'dashboard.html';
+          } else if (data.role === 'STAFF') {
+            window.location.href = 'pos.html';
+          } else {
+            window.location.href = 'index.html';
+          }
+        } else {
+          showAlert('Tên đăng nhập hoặc mật khẩu không chính xác.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Lỗi kết nối máy chủ.');
+      }
+    }
+
+    async function handleRegister() {
+      const lastName = document.querySelector('#registerPanel input[placeholder="Nguyễn"]').value.trim();
+      const firstName = document.querySelector('#registerPanel input[placeholder="Văn A"]').value.trim();
+      const fullName = (lastName + ' ' + firstName).trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const phone = document.querySelector('#registerPanel input[type="tel"]').value.trim();
+      const pass = document.getElementById('regPass').value;
+      const pass2 = document.getElementById('regPass2').value;
+
+      if (!email || !pass || !fullName || !phone) { showAlert('Vui lòng nhập đầy đủ thông tin.'); return; }
+      if (pass !== pass2) { showAlert('Mật khẩu xác nhận không khớp.'); return; }
+      if (pass.length < 6) { showAlert('Mật khẩu phải có nhất 6 ký tự.'); return; }
+      
+      const username = email.split('@')[0];
+
+      try {
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: username,
+            password: pass,
+            email: email,
+            fullName: fullName,
+            phone: phone
+          })
+        });
+
+        const apiResponse = await response.json();
+        if (response.ok) {
+          switchTab('otp');
+          showAlert(apiResponse.data);
+        } else {
+          showAlert(apiResponse.message || 'Đăng ký thất bại.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Lỗi kết nối máy chủ.');
+      }
+    }
+
+    async function handleVerifyOtp() {
+      const email = document.getElementById('regEmail').value.trim();
+      const otp = document.getElementById('otpCode').value.trim();
+      if (!otp) { showAlert('Vui lòng nhập mã OTP.'); return; }
+
+      try {
+        const response = await fetch('/api/auth/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, otp: otp })
+        });
+
+        const apiResponse = await response.json();
+        if (response.ok) {
+          alert('Xác thực thành công! Bạn có thể đăng nhập ngay bây giờ.');
+          location.reload();
+        } else {
+          showAlert(apiResponse.message || 'Mã OTP không hợp lệ.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Lỗi kết nối máy chủ.');
+      }
+    }
+
+    async function handleForgotPassword() {
+      const email = document.getElementById('forgotEmail').value.trim();
+      if (!email) { showAlert('Vui lòng nhập email.'); return; }
+
+      try {
+        const response = await fetch(`/api/auth/forgot-password?email=${encodeURIComponent(email)}`, {
+          method: 'POST'
+        });
+
+        if (response.ok) {
+          alert('Yêu cầu đã được gửi! Vui lòng kiểm tra email của bạn để lấy liên kết đặt lại mật khẩu.');
+          switchTab('login');
+        } else {
+          const apiResponse = await response.json();
+          showAlert(apiResponse.message || 'Không tìm thấy người dùng với email này.');
+        }
+      } catch (err) {
+        console.error(err);
+        showAlert('Lỗi kết nối máy chủ.');
+      }
+    }
+
+    // Build film grid
+    const colors = [
+      ['#1a0a0a','#8B0020'], ['#0a0d1a','#1B2A5A'], ['#0d1a0a','#1B5A2A'],
+      ['#1a120a','#5A3A1B'], ['#0a1a1a','#1B4A5A'], ['#1a0a14','#5A1B3A'],
+      ['#12080a','#6B0015'], ['#080d1a','#0B2050'], ['#0a1408','#1B5020'],
+      ['#14100a','#503A10']
+    ];
+    const labels = ['Action','Drama','Comedy','Sci-Fi','Horror','Romance','Thriller','Animation','Documentary','Fantasy'];
+    const grid = document.getElementById('filmGrid');
+    if(grid) {
+        for(let i = 0; i < 10; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'film-cell';
+          cell.style.background = `linear-gradient(135deg, ${colors[i][0]}, ${colors[i][1]})`;
+          cell.innerHTML = `<div style="position:absolute;bottom:8px;left:8px;font-size:0.7rem;color:rgba(255,255,255,0.4);font-family:Outfit,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:1px">${labels[i]}</div>`;
+          grid.appendChild(cell);
+        }
+    }
+</script>
+</body>
+</html>

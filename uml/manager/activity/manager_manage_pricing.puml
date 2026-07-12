@@ -1,0 +1,32 @@
+@startuml Manager Pricing Activity
+title Thiết lập Giá vé (Member 2)
+skinparam theme cerulean
+
+start
+:Truy cập Cấu hình Giá vé;
+:Chọn Ma trận giá cần thiết lập;
+
+fork
+    :Cấu hình giá theo Loại ghế;
+    note right: Standard, VIP, Couple
+fork again
+    :Cấu hình giá theo Định dạng;
+    note right: 2D, 3D, IMAX
+fork again
+    :Cấu hình giá theo Thời gian;
+    note right: Ngày thường, Cuối tuần, Lễ
+end fork
+
+:Hệ thống tổng hợp công thức tính giá;
+:Xem trước (Preview) giá vé cho một suất chiếu thử nghiệm;
+
+if (Giá chính xác?) then (có)
+    :Áp dụng bảng giá toàn hệ thống;
+    :Cập nhật logic tính tiền trong BookingService;
+else (không)
+    :Điều chỉnh lại tham số;
+    stop
+endif
+
+stop
+@enduml

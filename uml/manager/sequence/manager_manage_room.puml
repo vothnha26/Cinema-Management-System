@@ -1,0 +1,40 @@
+@startuml Manager Manage Room Sequence
+title Sequence Diagram: Quản lý Phòng & Sơ đồ ghế (Manager)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-rooms.html" as UI
+control "RoomController" as Ctrl
+entity "RoomService" as Svc
+entity "SeatService" as SeatSvc
+database "MySQL" as DB
+
+Manager -> UI: Nhập tên phòng, số hàng, số cột
+UI -> Ctrl: POST /api/rooms (RoomRequest)
+activate Ctrl
+
+Ctrl -> Svc: createRoomWithSeats(roomRequest)
+activate Svc
+
+Svc -> DB: save(roomEntity)
+activate DB
+DB --> Svc: roomEntity (with ID)
+deactivate DB
+
+note right of Svc: Tự động sinh danh sách ghế\ndựa trên hàng (A, B...) và cột (1, 2...)
+Svc -> SeatSvc: generateSeatsForRoom(roomEntity)
+activate SeatSvc
+SeatSvc -> DB: saveAll(seatList)
+activate DB
+DB --> SeatSvc: success
+deactivate DB
+SeatSvc --> Svc: success
+deactivate SeatSvc
+
+Svc --> Ctrl: roomResponseDto
+deactivate Svc
+
+Ctrl --> UI: 201 Created
+deactivate Ctrl
+UI -> Manager: Hiển thị sơ đồ ghế vừa tạo
+@enduml

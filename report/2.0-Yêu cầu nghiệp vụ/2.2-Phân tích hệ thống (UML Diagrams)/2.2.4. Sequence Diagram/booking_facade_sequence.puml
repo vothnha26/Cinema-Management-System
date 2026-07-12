@@ -1,0 +1,47 @@
+@startuml booking_facade_sequence
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #3498DB
+    ActorBorderColor #3498DB
+    LifeLineBorderColor #1A1A1A
+    ParticipantBackgroundColor #1A1A1A
+    ParticipantBorderColor #3498DB
+    ParticipantFontColor #FFFFFF
+}
+
+actor Customer
+participant "BookingService" as BS
+participant "RedisTemplate" as RT
+participant "PricingService" as PS
+participant "BookingRepo" as BR
+participant "EmailService" as ES
+
+Customer -> BS: createBooking(request)
+activate BS
+
+BS -> RT: check & lockSeats(showtime, seats)
+activate RT
+RT --> BS: success
+deactivate RT
+
+BS -> BS: Identify Member/Guest info
+
+BS -> PS: calculateFinalPrice(showtime, seats, customer)
+activate PS
+PS --> BS: finalTotalPrice
+deactivate PS
+
+BS -> BR: save(Booking & Details)
+activate BR
+BR --> BS: savedBooking
+deactivate BR
+
+BS -> ES: sendBookingConfirmation(email)
+activate ES
+ES --> BS: void
+deactivate ES
+
+BS --> Customer: BookingResponse (BKG-XXXX)
+deactivate BS
+
+@enduml

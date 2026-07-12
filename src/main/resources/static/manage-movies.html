@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Phim Elite – FlashCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+        .main-content { padding: 40px; min-height: 100vh; }
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; letter-spacing: 2px; margin: 0; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .tool-bar { display: flex; gap: 16px; margin-bottom: 24px; }
+        .search-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 20px; display: flex; align-items: center; gap: 12px; flex: 1; }
+        .search-box input { background: transparent; border: none; color: var(--text); outline: none; width: 100%; font-size: 0.95rem; }
+        .btn-add { background: var(--gradient); border: none; color: #fff; padding: 12px 28px; border-radius: 12px; font-weight: 800; transition: 0.3s; box-shadow: 0 10px 20px rgba(229,19,58,0.2); }
+        .btn-add:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(229,19,58,0.3); opacity: 0.9; }
+        
+        .table-container { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .table { margin: 0; color: var(--text); border-collapse: separate; border-spacing: 0; }
+        .table thead th { background: var(--surface); border-bottom: 1px solid var(--border); color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; padding: 20px 24px; font-weight: 700; letter-spacing: 1px; }
+        .table tbody td { padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; font-size: 0.95rem; }
+        .movie-poster-sm { width: 50px; height: 75px; border-radius: 8px; object-fit: cover; background: var(--surface); box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+        
+        .status-badge { padding: 6px 14px; border-radius: 30px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; display: inline-block; }
+        .badge-showing { background: rgba(80,200,100,0.15); color: #50C864; border: 1px solid rgba(80,200,100,0.2); }
+        .badge-coming { background: rgba(100,180,255,0.15); color: #64B4FF; border: 1px solid rgba(100,180,255,0.2); }
+        .badge-pre_release { background: rgba(245,166,35,0.15); color: var(--accent-gold); border: 1px solid rgba(245,166,35,0.3); }
+        .badge-stopped { background: rgba(229,19,58,0.15); color: var(--accent); border: 1px solid rgba(229,19,58,0.2); }
+        
+        .action-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; cursor: pointer; }
+        .action-btn:hover { border-color: var(--accent); color: var(--accent); transform: scale(1.1); }
+
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 24px; color: var(--text); }
+        .form-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .form-control, .form-select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 14px 18px; border-radius: 12px; font-weight: 500; }
+        .form-control:focus, .form-select:focus { background: var(--surface); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 4px rgba(229,19,58,0.1); }
+        
+        .poster-column { display: flex; flex-direction: column; gap: 15px; }
+        .poster-preview-box { width: 100%; aspect-ratio: 2/3; border: 2px dashed var(--border); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; background: rgba(255,255,255,0.02); }
+        .poster-preview-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 10; display: none; }
+        .poster-placeholder-ui { position: relative; z-index: 5; text-align: center; }
+        
+        .tmdb-search-container { position: relative; margin-bottom: 24px; padding: 20px; background: rgba(0,180,255,0.05); border: 1px solid rgba(0,180,255,0.1); border-radius: 16px; }
+        .tmdb-results { position: absolute; top: 100%; left: 20px; right: 20px; background: #1a1f35; border: 1px solid var(--border); border-radius: 12px; z-index: 1000; max-height: 350px; overflow-y: auto; display: none; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+        .tmdb-item { padding: 12px 18px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .tmdb-item:hover { background: rgba(229,19,58,0.15); }
+        .tmdb-item img { width: 40px; height: 60px; border-radius: 6px; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar"></aside>
+
+<main class="main-content">
+    <div class="header-section">
+        <div>
+            <h1 class="page-title">QUẢN LÝ PHIM HỆ THỐNG</h1>
+            <p class="text-muted m-0 fw-500">Kho phim và trạng thái phát hành toàn hệ thống</p>
+        </div>
+        <button class="btn-add" id="btnAddMovie" data-role="ADMIN" onclick="openAddModal()">
+            <i class="bi bi-plus-lg me-2"></i> THÊM PHIM MỚI
+        </button>
+    </div>
+
+    <div id="adminTabs" style="display: none; margin-bottom: 30px;">
+        <ul class="nav nav-pills small gap-3">
+            <li class="nav-item"><a class="nav-link active bg-danger text-white rounded-pill px-4 fw-800" href="#">KHO PHIM</a></li>
+            <li class="nav-item"><a class="nav-link text-muted fw-700" href="#" onclick="switchTab('distribution')">PHÂN BỔ CHI NHÁNH</a></li>
+        </ul>
+    </div>
+
+    <div id="tabLibrary">
+        <div class="tool-bar">
+            <div class="search-box">
+                <i class="bi bi-search text-info"></i>
+                <input type="text" id="searchTitle" placeholder="Tìm tên phim hoặc quốc gia..." onkeyup="applyFilters()">
+            </div>
+            <select id="filterStatus" class="form-select w-auto" onchange="applyFilters()">
+                <option value="">Tất cả trạng thái</option>
+                <option value="SHOWING">Đang chiếu</option>
+                <option value="PRE_RELEASE">Chiếu sớm (Sneak)</option>
+                <option value="COMING">Sắp chiếu</option>
+                <option value="STOPPED">Ngưng chiếu</option>
+            </select>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 40%">Thông tin phim</th>
+                        <th>Thời lượng</th>
+                        <th>Đánh giá</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="movieTableBody">
+                    <tr><td colspan="5" class="text-center py-5 text-muted">Đang tải dữ liệu...</td></tr>
+                </tbody>
+            </table>
+            <div class="d-flex justify-content-between align-items-center p-4 border-top border-secondary border-opacity-10">
+                <div class="small text-muted fw-600" id="moviePageInfo"></div>
+                <nav><ul class="pagination pagination-sm mb-0" id="moviePagination"></ul></nav>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div class="modal fade" id="movieModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header border-bottom-0 px-4 py-3">
+                <h5 class="modal-title fw-800" id="modalTitle">THÔNG TIN PHIM</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="tmdbSearchSection" class="tmdb-search-container">
+                    <label class="form-label text-info small fw-800 mb-2"><i class="bi bi-magic me-1"></i> ĐỒNG BỘ DỮ LIỆU TMDB</label>
+                    <div class="input-group shadow-sm">
+                        <input type="text" id="tmdbInput" class="form-control border-info border-opacity-25" placeholder="Nhập tên phim để tìm..." onkeyup="if(event.key==='Enter') triggerSearchTMDB()">
+                        <button class="btn btn-info text-white fw-800 px-4" type="button" id="btnSearchTMDB" onclick="triggerSearchTMDB()">TÌM KIẾM</button>
+                    </div>
+                    <div id="tmdbResults" class="tmdb-results"></div>
+                </div>
+
+                <div id="fullFormSection">
+                    <div class="row g-4">
+                        <div class="col-md-3 poster-column">
+                            <label class="form-label">Poster Phim</label>
+                            <div class="poster-preview-box" id="posterBox" onclick="document.getElementById('posterInput').click()">
+                                <img id="posterPreview">
+                                <div id="posterPlaceholder" class="poster-placeholder-ui">
+                                    <i class="bi bi-image fs-1 d-block mb-2 text-muted"></i>
+                                    <span class="text-muted small">Tải ảnh lên</span>
+                                </div>
+                            </div>
+                            <input type="file" id="posterInput" class="d-none" onchange="previewImage(this)">
+                            <div><label class="form-label small text-muted">POSTER URL</label><input type="text" id="hiddenPosterUrl" name="posterUrl" class="form-control form-control-sm" placeholder="https://..."></div>
+                        </div>
+                        <div class="col-md-9">
+                            <form id="movieForm">
+                                <input type="hidden" id="movieId">
+                                <input type="hidden" name="directorAvatarUrl" id="directorAvatarUrl">
+                                <input type="hidden" name="actorAvatarUrls" id="actorAvatarUrls">
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-8"><label class="form-label">Tiêu đề</label><input type="text" name="title" class="form-control" required></div>
+                                    <div class="col-md-4"><label class="form-label">Trạng thái phát hành</label>
+                                        <select name="status" id="statusSelect" class="form-select fw-800 text-info">
+                                            <option value="COMING">SẮP CHIẾU</option><option value="PRE_RELEASE">CHIẾU SỚM</option><option value="SHOWING">ĐANG CHIẾU</option><option value="STOPPED">NGƯNG CHIẾU</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12"><label class="form-label">Mô tả cốt truyện</label><textarea name="description" class="form-control" rows="3"></textarea></div>
+                                    <div class="col-md-4"><label class="form-label">Quốc gia / Vùng lãnh thổ</label><input type="text" name="originCountry" id="originCountryInput" class="form-control" placeholder="VD: US, KR, Vietnam..."></div>
+                                    <div class="col-md-4"><label class="form-label">Đánh giá hệ thống</label><input type="number" name="rating" class="form-control" step="0.1" placeholder="0.0"></div>
+                                    <div class="col-md-4"><label class="form-label">Thời lượng (phút)</label><input type="number" name="duration" class="form-control" placeholder="120"></div>
+                                    <div class="col-md-4"><label class="form-label">Ngày phát hành</label><input type="date" name="releaseDate" id="releaseDateInput" class="form-control" onchange="suggestStatusFromDate(this.value)"></div>
+                                    <div class="col-md-4"><label class="form-label">Độ tuổi</label>
+                                        <select name="ageRating" class="form-select">
+                                            <option value="P">P</option><option value="K">K</option><option value="T13">T13</option><option value="T16">T16</option><option value="T18">T18</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4"><label class="form-label">Độ ưu tiên AI (1-10)</label><input type="number" name="priorityLevel" class="form-control" value="1"></div>
+                                    <div class="col-12"><label class="form-label">Trailer Youtube (Embed Link)</label><input type="text" name="trailerUrl" class="form-control" placeholder="https://www.youtube.com/embed/..."></div>
+                                    <div class="col-12"><label class="form-label">Thể loại (Ngăn cách bởi dấu phẩy)</label><input type="text" name="genres" class="form-control" placeholder="Hành động, Phiêu lưu..."></div>
+                                    <div class="col-md-6"><label class="form-label">Đạo diễn</label><input type="text" name="director" class="form-control"></div>
+                                    <div class="col-md-6"><label class="form-label">Diễn viên chính</label><input type="text" name="actors" class="form-control"></div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="managerEditSection" style="display:none">
+                    <div class="text-center mb-4"><h4 id="mgrMovieTitle" class="text-info fw-800"></h4></div>
+                    <div class="mx-auto" style="max-width: 200px">
+                        <label class="form-label d-block text-center">Mức độ ưu tiên xếp lịch</label>
+                        <input type="number" id="mgrPriorityInput" class="form-control form-control-lg text-center fw-800" min="1" max="10">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 px-4 pb-4">
+                <button type="button" class="btn btn-link text-muted text-decoration-none fw-700 me-auto" data-bs-dismiss="modal">HỦY BỎ</button>
+                <button type="button" class="btn btn-danger px-5 py-2 fw-800 rounded-pill shadow" id="btnSaveMovie" onclick="saveMovie()">LƯU DỮ LIỆU</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/ui-utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const movieModal = new bootstrap.Modal(document.getElementById('movieModal'));
+    let allMovies = [], filteredMovies = [], moviePageSize = 10, movieCurrentPage = 1;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Fallback cho api.putMultipart nếu api.js bị cache bản cũ
+        if (typeof api !== 'undefined' && !api.putMultipart) {
+            api.putMultipart = function(endpoint, formData) {
+                return this.request(endpoint, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('cinemaToken')}` },
+                    body: formData
+                });
+            };
+        }
+
+        // Tự động ẩn/hiện nút Thêm Phim dựa trên data-role="ADMIN" đã gắn ở HTML
+        UIUtils.applyRoleVisibility();
+        
+        if (AuthGuard.getRole() === 'ADMIN') {
+            document.getElementById('adminTabs').style.display = 'block';
+        }
+        loadMovies();
+    });
+
+    async function loadMovies() {
+        let role = localStorage.getItem('cinemaRole'), bId = localStorage.getItem('cinemaBranchId');
+        
+        // Nếu là MANAGER mà chưa có bId, thử lấy từ API
+        if (role === 'MANAGER' && !bId) {
+            const staffRes = await api.get('/staff/me');
+            if (staffRes.success && staffRes.data && staffRes.data.branch) {
+                bId = staffRes.data.branch.id;
+                localStorage.setItem('cinemaBranchId', bId);
+            }
+        }
+
+        const res = (role === 'MANAGER' && bId) ? await api.get(`/movies/branch/${bId}`) : await api.get('/movies');
+        if (res.success) { allMovies = res.data || []; filteredMovies = [...allMovies]; renderMovies(); }
+    }
+
+    function renderMovies() {
+        const start = (movieCurrentPage - 1) * moviePageSize;
+        const pagedData = filteredMovies.slice(start, start + moviePageSize);
+        document.getElementById('movieTableBody').innerHTML = pagedData.map(m => `
+            <tr>
+                <td><div class="d-flex align-items-center gap-3"><img src="${m.posterUrl || 'https://placehold.co/50x75'}" class="movie-poster-sm" onerror="this.src='https://placehold.co/50x75'"><div><div class="fw-bold">${m.title}</div><div class="small text-muted fw-800 text-info">${(m.originCountry || 'N/A').toUpperCase()}</div></div></div></td>
+                <td><span class="fw-600 text-muted">${m.duration}p</span></td>
+                <td><span class="text-warning fw-bold">★ ${m.rating ? m.rating.toFixed(1) : '0.0'}</span></td>
+                <td><span class="status-badge badge-${m.status.toLowerCase()}">${m.status.replace('_', ' ')}</span></td>
+                <td class="text-end">
+                    <button class="action-btn me-1" onclick="viewMovie(${m.id})"><i class="bi bi-eye"></i></button>
+                    <button class="action-btn me-1" onclick="editMovie(${m.id})"><i class="bi bi-pencil-square"></i></button>
+                    ${localStorage.getItem('cinemaRole') === 'ADMIN' ? `<button class="action-btn text-danger" onclick="deleteMovie(${m.id})"><i class="bi bi-trash"></i></button>` : ''}
+                </td>
+            </tr>`).join('');
+        updatePaginationUI();
+    }
+
+    function suggestStatusFromDate(dateStr) {
+        if (!dateStr) return;
+        const releaseDate = new Date(dateStr), today = new Date(); today.setHours(0,0,0,0);
+        const diffDays = Math.ceil((releaseDate - today) / (1000 * 60 * 60 * 24));
+        const statusSelect = document.getElementById('statusSelect');
+        if (diffDays > 7) statusSelect.value = 'COMING';
+        else if (diffDays > 0) statusSelect.value = 'PRE_RELEASE';
+        else statusSelect.value = 'SHOWING';
+    }
+
+    function fillFormData(m, readonly) {
+        const f = document.getElementById('movieForm');
+        document.getElementById('directorAvatarUrl').value = m.directorAvatarUrl || '';
+        document.getElementById('actorAvatarUrls').value = m.actorAvatarUrls || '';
+        document.getElementById('hiddenPosterUrl').value = m.posterUrl || '';
+        f.querySelectorAll('input, textarea, select').forEach(el => {
+            if (['directorAvatarUrl', 'actorAvatarUrls', 'posterUrl'].includes(el.name)) return;
+            let val = m[el.name];
+            if (el.name === 'genres' && Array.isArray(val)) val = val.join(', ');
+            if (el.name === 'actors' && Array.isArray(m.actors)) val = m.actors.map(a => a.name).join(', ');
+            if (el.name === 'director' && Array.isArray(m.directors)) val = m.directors.map(d => d.name).join(', ');
+            if (val !== undefined) el.value = val;
+            el.disabled = readonly;
+        });
+        const prev = document.getElementById('posterPreview'), placeholder = document.getElementById('posterPlaceholder');
+        if (m.posterUrl) { prev.src = m.posterUrl; prev.style.display = 'block'; placeholder.style.display = 'none'; }
+        else { prev.style.display = 'none'; placeholder.style.display = 'block'; }
+    }
+
+    async function saveMovie() {
+        const id = document.getElementById('movieId').value, role = localStorage.getItem('cinemaRole');
+        if (role === 'MANAGER') {
+            const res = await api.patch(`/movies/branch/${localStorage.getItem('cinemaBranchId')}/movie/${id}/priority?priority=${document.getElementById('mgrPriorityInput').value}`);
+            if (res.success) { movieModal.hide(); loadMovies(); }
+            return;
+        }
+        const fd = new FormData(document.getElementById('movieForm'));
+        const posterFile = document.getElementById('posterInput').files[0];
+        const data = Object.fromEntries(fd.entries());
+        
+        // Loại bỏ id khỏi data body vì đã có trên URL (tránh lỗi Hibernate Altered Identifier)
+        delete data.id;
+        
+        if (data.genres && typeof data.genres === 'string') data.genres = data.genres.split(',').map(s => s.trim()).filter(s => s);
+        data.duration = parseInt(data.duration) || 0; data.rating = parseFloat(data.rating) || 0; data.priorityLevel = parseInt(data.priorityLevel) || 1;
+        if (!data.releaseDate) delete data.releaseDate;
+        data.tmdbId = data.tmdbId ? parseInt(data.tmdbId) : null;
+        
+        const multipartFd = new FormData();
+        if (posterFile) multipartFd.append('poster', posterFile);
+        multipartFd.append('movie', new Blob([JSON.stringify(data)], {type: 'application/json'}));
+        
+        const res = id ? await api.putMultipart(`/movies/${id}`, multipartFd) : await api.postMultipart('/movies', multipartFd);
+        if (res.success) { movieModal.hide(); loadMovies(); alert('Lưu phim thành công!'); }
+        else alert('Lỗi: ' + res.message);
+    }
+
+    function triggerSearchTMDB() {
+        const q = document.getElementById('tmdbInput').value.trim();
+        if (q.length < 2) return;
+        searchTMDB(q);
+    }
+
+    async function searchTMDB(query) {
+        document.getElementById('btnSearchTMDB').innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        const res = await api.get(`/tmdb/search?query=${encodeURIComponent(query)}`);
+        document.getElementById('btnSearchTMDB').innerText = 'TÌM KIẾM';
+        if (res && res.results) {
+            document.getElementById('tmdbResults').innerHTML = res.results.slice(0, 6).map(m => `
+                <div class="tmdb-item" onclick="importFromTMDB(${m.id})">
+                    <img src="https://image.tmdb.org/t/p/w92${m.poster_path}" onerror="this.src='https://placehold.co/40x60'">
+                    <div><div class="title fw-bold small">${m.title}</div><div class="small text-muted fw-600">${m.release_date ? m.release_date.split('-')[0] : 'N/A'} • ${(m.original_language||'').toUpperCase()}</div></div>
+                </div>`).join('');
+            document.getElementById('tmdbResults').style.display = 'block';
+        }
+    }
+
+    async function importFromTMDB(tmdbId) {
+        document.getElementById('tmdbResults').style.display = 'none';
+        const m = await api.get(`/tmdb/movie/${tmdbId}`);
+        if (m) {
+            // Lấy dữ liệu bất kỳ từ TMDB, không xét đúng sai
+            let country = 'N/A';
+            if (m.production_countries && m.production_countries.length > 0) {
+                // Lấy tên nước đầu tiên (vd: United States of America)
+                country = m.production_countries[0].name;
+            } else if (m.origin_country && m.origin_country.length > 0) {
+                // Lấy mã nước đầu tiên (vd: US)
+                country = m.origin_country[0];
+            } else {
+                // Cuối cùng là lấy mã ngôn ngữ (vd: en)
+                country = m.original_language || 'N/A';
+            }
+            
+            const movieData = {
+                title: m.title, description: m.overview, duration: m.runtime, releaseDate: m.release_date, 
+                posterUrl: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '',
+                rating: m.vote_average, originCountry: country, genres: (m.genres || []).map(g => g.name).join(', '), tmdbId: m.id
+            };
+            if (m.credits) {
+                const ds = (m.credits.crew || []).filter(c => c.job === 'Director'), as = (m.credits.cast || []).slice(0, 10);
+                movieData.director = ds.map(d => d.name).join(', ');
+                movieData.directorAvatarUrl = ds.map(d => d.profile_path).join(',');
+                movieData.actors = as.map(a => a.name).join(', ');
+                movieData.actorAvatarUrls = as.map(a => a.profile_path).join(',');
+            }
+            fillFormData(movieData, false); suggestStatusFromDate(m.release_date);
+        }
+    }
+
+    function editMovie(id) {
+        const m = allMovies.find(mv => mv.id === id); if (!m) return;
+        document.getElementById('movieId').value = m.id;
+        document.getElementById('btnSaveMovie').style.display = 'block';
+        if (localStorage.getItem('cinemaRole') === 'MANAGER') {
+            document.getElementById('modalTitle').innerText = 'ƯU TIÊN CHI NHÁNH';
+            document.getElementById('fullFormSection').style.display = 'none';
+            document.getElementById('managerEditSection').style.display = 'block';
+            document.getElementById('tmdbSearchSection').style.display = 'none';
+            document.getElementById('mgrMovieTitle').innerText = m.title;
+            document.getElementById('mgrPriorityInput').value = m.priorityLevel || 1;
+        } else {
+            document.getElementById('modalTitle').innerText = 'CẬP NHẬT PHIM HỆ THỐNG';
+            document.getElementById('fullFormSection').style.display = 'block';
+            document.getElementById('managerEditSection').style.display = 'none';
+            document.getElementById('tmdbSearchSection').style.display = 'block';
+            fillFormData(m, false);
+        }
+        movieModal.show();
+    }
+
+    function viewMovie(id) {
+        const m = allMovies.find(mv => mv.id === id); if (!m) return;
+        document.getElementById('modalTitle').innerText = 'CHI TIẾT PHIM';
+        document.getElementById('fullFormSection').style.display = 'block';
+        document.getElementById('managerEditSection').style.display = 'none';
+        document.getElementById('tmdbSearchSection').style.display = 'none';
+        document.getElementById('btnSaveMovie').style.display = 'none';
+        fillFormData(m, true); movieModal.show();
+    }
+
+    function applyFilters() {
+        const q = document.getElementById('searchTitle').value.toLowerCase(), s = document.getElementById('filterStatus').value;
+        filteredMovies = allMovies.filter(m => (m.title.toLowerCase().includes(q) || (m.originCountry||'').toLowerCase().includes(q)) && (!s || m.status === s));
+        movieCurrentPage = 1; renderMovies();
+    }
+
+    function updatePaginationUI() {
+        const total = filteredMovies.length, totalPages = Math.ceil(total / moviePageSize);
+        document.getElementById('moviePageInfo').innerText = `Hiển thị ${(movieCurrentPage-1)*moviePageSize+1} - ${Math.min(movieCurrentPage*moviePageSize, total)} của ${total} phim`;
+        let html = '';
+        for (let i = 1; i <= totalPages; i++) html += `<li class="page-item ${i === movieCurrentPage ? 'active' : ''}"><a class="page-link bg-dark text-white border-secondary fw-700" href="#" onclick="movieCurrentPage=${i};renderMovies();">${i}</a></li>`;
+        document.getElementById('moviePagination').innerHTML = html;
+    }
+
+    function openAddModal() { document.getElementById('movieForm').reset(); document.getElementById('movieId').value = ''; fillFormData({}, false); movieModal.show(); }
+    function previewImage(i) { if (i.files[0]) { const r = new FileReader(); r.onload = (e) => { 
+        const p = document.getElementById('posterPreview'); p.src = e.target.result; p.style.display = 'block'; 
+        document.getElementById('posterPlaceholder').style.display = 'none'; 
+    }; r.readAsDataURL(i.files[0]); } }
+    async function deleteMovie(id) { if (confirm('Xóa?')) { const res = await api.delete(`/movies/${id}`); if (res.success) loadMovies(); } }
+    function switchTab(t) { if(t==='distribution') window.location.href='manage-master-data.html'; }
+</script>
+</body>
+</html>

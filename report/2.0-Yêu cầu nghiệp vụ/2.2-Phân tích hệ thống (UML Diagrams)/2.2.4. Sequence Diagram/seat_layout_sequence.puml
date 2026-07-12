@@ -1,0 +1,40 @@
+@startuml seat_layout_sequence
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #9B59B6
+    ActorBorderColor #9B59B6
+    LifeLineBorderColor #1A1A1A
+    ParticipantBackgroundColor #1A1A1A
+    ParticipantBorderColor #9B59B6
+    ParticipantFontColor #FFFFFF
+}
+
+actor Staff
+participant "RoomService" as RS
+participant "SeatLayoutFactory" as SLF
+participant "SeatLayoutStrategy" as SLS
+participant "SeatRepo" as SR
+
+Staff -> RS: setupRoomLayout(roomId, type)
+activate RS
+
+RS -> SLF: getStrategy(type)
+activate SLF
+SLF --> RS: specificStrategy (Standard/IMAX)
+deactivate SLF
+
+RS -> SLS: generateLayout(rows, cols)
+activate SLS
+SLS -> SLS: calculate row/col specific logic
+SLS --> RS: List<Seat>
+deactivate SLS
+
+RS -> SR: saveAll(seats)
+activate SR
+SR --> RS: success
+deactivate SR
+
+RS --> Staff: Layout generated successfully
+deactivate RS
+
+@enduml

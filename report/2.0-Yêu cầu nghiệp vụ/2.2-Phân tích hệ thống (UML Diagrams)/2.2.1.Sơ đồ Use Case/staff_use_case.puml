@@ -1,0 +1,34 @@
+@startuml staff_use_case
+left to right direction
+skinparam backgroundColor #FFFFFF
+skinparam usecase {
+    BackgroundColor #F8F9FA
+    BorderColor #2ECC71
+    ArrowColor #333333
+}
+
+actor "Nhân viên" as Staff
+
+rectangle "Phân hệ Nhân viên (FlashCinema)" {
+    usecase "Đăng nhập hệ thống" as UC_Login
+    usecase "Tra cứu thông tin vé" as UC_SearchTicket
+    usecase "Xác thực & Check-in vé" as UC_Checkin
+    usecase "Kiểm tra sơ đồ ghế suất chiếu" as UC_ViewSeat
+    usecase "Hỗ trợ thay đổi thông tin khách hàng" as UC_Support
+    usecase "Xem lịch làm việc cá nhân" as UC_Schedule
+    
+    usecase "Bán vé tại quầy" as UC_CounterSales
+    usecase "In vé cho khách hàng" as UC_Print
+    
+    UC_Checkin ..> UC_SearchTicket : <<include>>
+    UC_CounterSales ..> UC_Print : <<include>>
+}
+
+Staff --> UC_Login
+Staff --> UC_Checkin
+Staff --> UC_ViewSeat
+Staff --> UC_Support
+Staff --> UC_Schedule
+Staff --> UC_CounterSales
+
+@enduml

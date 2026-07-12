@@ -1,0 +1,31 @@
+@startuml Manager Create Promotion Sequence
+title Sequence Diagram: Tạo khuyến mãi mới (Manager)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-promotions.html" as UI
+control "PromotionController" as Ctrl
+entity "PromotionService" as Svc
+database "MySQL" as DB
+
+Manager -> UI: Nhập Voucher Code, Giảm giá, Thời hạn áp dụng
+UI -> Ctrl: POST /api/promotions (PromotionRequest)
+activate Ctrl
+
+Ctrl -> Svc: createPromotion(request)
+activate Svc
+
+Svc -> Svc: Map DTO to Entity(Promotion)
+Svc -> DB: save(promotion)
+activate DB
+DB --> Svc: promotionEntity
+deactivate DB
+
+Svc --> Ctrl: promotionResponseDto
+deactivate Svc
+
+Ctrl --> UI: 201 Created
+deactivate Ctrl
+
+UI -> Manager: Thông báo tạo thành công
+@enduml

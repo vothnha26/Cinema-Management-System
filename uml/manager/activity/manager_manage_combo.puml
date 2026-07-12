@@ -1,0 +1,22 @@
+@startuml Manager Combo Activity
+title Quản lý Combo & Dịch vụ (Member 2)
+skinparam theme cerulean
+
+start
+:Truy cập trang Quản lý Combo;
+:Nhấn "Tạo Combo mới";
+:Nhập Tên Combo, Mô tả và Giá bán;
+:Chọn các thành phần (Bắp, Nước, Snack);
+:Tải lên ảnh minh họa;
+
+if (Thông tin đầy đủ?) then (có)
+    :Lưu vào Database;
+    :Cập nhật trạng thái "Đang kinh doanh";
+    :Hiển thị lên giao diện đặt vé (Khách hàng);
+else (không)
+    :Yêu cầu bổ sung thông tin;
+    stop
+endif
+
+stop
+@enduml

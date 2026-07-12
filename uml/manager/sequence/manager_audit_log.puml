@@ -1,0 +1,31 @@
+@startuml Manager Audit Log
+title Sequence Diagram: Ghi lại nhật ký kiểm toán với Spring AOP (Task 8)
+skinparam theme cerulean
+
+actor "Manager/Staff" as User
+participant "Any Controller/Service" as Target
+participant "AuditAspect (AOP)" as Aspect
+participant "AuditService" as Svc
+database "Database" as DB
+
+User -> Target: Thực hiện hành động (CRUD Movie, Showtime, etc.)
+activate Target
+
+Target -> Aspect: [Before/Around Advice] Intercept Operation
+activate Aspect
+
+Aspect -> Aspect: Lấy thông tin User (SecurityContext)
+Aspect -> Aspect: Lấy thông tin Action (Method Name, Params)
+
+Aspect -> Svc: logAction(user, action, targetId, details)
+activate Svc
+Svc -> DB: INSERT INTO audit_logs
+Svc --> Aspect: Success
+deactivate Svc
+
+Aspect -> Target: Proceed with Business Logic
+deactivate Aspect
+
+Target --> User: Response Kết quả
+deactivate Target
+@enduml

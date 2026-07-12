@@ -1,0 +1,46 @@
+@startuml notification_system_sequence
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #F1C40F
+    ActorBorderColor #F1C40F
+    LifeLineBorderColor #1A1A1A
+    ParticipantBackgroundColor #1A1A1A
+    ParticipantBorderColor #F1C40F
+    ParticipantFontColor #FFFFFF
+}
+
+participant "ApplicationEventPublisher" as AEP
+participant "BookingEventListener" as BEL
+participant "NotificationService" as NS
+participant "INotificationStrategy" as IS
+participant "EmailStrategy" as ES
+participant "SmsStrategy" as SS
+
+AEP -> BEL: onTicketBooked(event)
+activate BEL
+note left: Triggered by BookingFacade
+
+BEL -> NS: sendNotification(target, subject, body, type)
+activate NS
+
+NS -> NS: selectStrategy(type)
+note right: EMAIL, SMS, or PUSH
+
+alt type == EMAIL
+    NS -> ES: send(target, subject, body)
+    activate ES
+    ES --> NS: result
+    deactivate ES
+else type == SMS
+    NS -> SS: send(target, body)
+    activate SS
+    SS --> NS: result
+    deactivate SS
+end
+
+NS --> BEL: status
+deactivate NS
+BEL -> BEL: Log notification history
+deactivate BEL
+
+@enduml

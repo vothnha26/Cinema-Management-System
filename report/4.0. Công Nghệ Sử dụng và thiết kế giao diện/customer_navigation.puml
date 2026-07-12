@@ -1,0 +1,57 @@
+@startuml customer_navigation_flow
+' Sơ đồ điều hướng Khách hàng FlashCinema - Đồng bộ theo mẫu ảnh người dùng cung cấp
+' Cấu trúc: Trang chủ làm trung tâm, các chức năng tỏa ra xung quanh
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName "Arial"
+
+' Thiết kế các hộp chức năng (giống mẫu ảnh)
+skinparam rectangle {
+    BackgroundColor #FFFFFF
+    BorderColor #DC3545
+    FontColor #000000
+    FontSize 14
+}
+
+' Mũi tên xanh nhạt (giống mẫu ảnh)
+skinparam arrow {
+    Color #74B9FF
+    Thickness 2
+}
+
+rectangle "Hệ thống FlashCinema - Trải nghiệm Khách hàng" #FFFFFF {
+    
+    ' Các chức năng bao quanh
+    rectangle "Đăng ký" as Register
+    rectangle "Đăng nhập" as Login
+    rectangle "Phim" as Movie
+    rectangle "Chi tiết phim" as MovieDetail
+    rectangle "Danh mục phim" as Category
+    rectangle "Đặt vé" as Booking
+    rectangle "Thanh toán" as Payment
+    rectangle "Lịch sử đặt vé" as History
+    rectangle "Trang cá nhân" as Profile
+
+    ' Trang chủ nằm ở trung tâm (màu xanh lá nhạt giống mẫu)
+    rectangle "**Trang chủ**" as Home #D4EDDA
+
+    ' Các kết nối tỏa ra từ Trang chủ (Mũi tên 2 đầu)
+    Login <--> Register
+    Login <--> Home
+    
+    Home <--> Movie
+    Movie <--> MovieDetail
+    
+    Home <--> Category
+    
+    Home <--> Booking
+    Booking <--> Payment
+    
+    Home <--> History
+    
+    Home <--> Profile
+}
+
+center footer Luồng điều hướng dành cho Khách hàng FlashCinema
+
+@enduml

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch sử đặt vé | StarCinema Elite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{--bg:#080B14;--surface:#0F1320;--card:#161B2E;--border:#252A3D;--accent:#E5133A;--gold:#F5A623;--text:#E8EAF0;--muted:#7B82A0;--success:#50C864;--info:#64B4FF;--gradient:linear-gradient(135deg,#E5133A,#8B0020)}
+    *{box-sizing:border-box;margin:0;padding:0} body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh} a{text-decoration:none;color:inherit}
+    .navbar-star{background:rgba(8,11,20,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:14px 0;position:sticky;top:0;z-index:20}
+    .brand{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:3px}.brand span{color:var(--accent)}
+    .nav-link-star{color:var(--muted);font-size:.9rem;font-weight:500;padding:6px 16px;border-radius:6px;transition:.2s}.nav-link-star:hover,.nav-link-star.active{color:var(--accent);background:rgba(255,255,255,.04)}
+    .page{max-width:960px;margin:0 auto;padding:32px 20px 56px}
+    .cardx,.ticket{background:var(--card);border:1px solid var(--border);border-radius:16px}
+    .member-card{background:linear-gradient(135deg,#1a0825 0%,#0d1a40 50%,#1a1200 100%);border:1px solid rgba(245,166,35,.25);border-radius:20px;padding:28px;position:relative;overflow:hidden;height:100%}
+    .member-card:after{content:'★';position:absolute;right:-8px;top:-16px;font-size:7rem;opacity:.05}
+    .tier-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px}
+    .tier-std{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--muted)} .tier-silver{background:rgba(192,192,192,.12);border:1px solid #C0C0C0;color:#C0C0C0} .tier-gold{background:rgba(245,166,35,.15);border:1px solid var(--gold);color:var(--gold)} .tier-plat{background:rgba(100,200,255,.12);border:1px solid #64C8FF;color:#64C8FF}
+    .member-name{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px}.member-id{font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:18px}
+    .stats{display:flex;gap:24px;flex-wrap:wrap}.stat{text-align:center}.stat .val{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--gold);line-height:1}.stat .lbl{font-size:.72rem;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.8px}.divider{width:1px;height:40px;background:rgba(255,255,255,.1);align-self:center}
+    .tier-progress{margin-top:16px}.tier-progress-label{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.82rem;color:rgba(255,255,255,.6);margin-bottom:6px}.tier-bar{height:6px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}.tier-fill{height:100%;background:linear-gradient(90deg,var(--gold),#fff8a0);width:0;transition:width .6s}
+    .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.chip{background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.2);color:var(--gold);padding:5px 12px;border-radius:20px;font-size:.8rem;font-weight:600}
+    .tabs{display:flex;flex-wrap:wrap;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;width:100%}.tab-btn{flex:1 1 140px;border:none;background:transparent;color:var(--muted);padding:9px;border-radius:7px;font:500 .88rem 'Outfit',sans-serif;cursor:pointer}.tab-btn.active{background:var(--gradient);color:#fff}
+    .filter-select,.field{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font:400 .92rem 'Outfit',sans-serif;width:100%}.filter-select{width:auto;background:var(--card)} .field:focus,.filter-select:focus{outline:none;border-color:var(--accent)}
+    .ticket{overflow:hidden;margin-bottom:16px}.ticket-top{padding:18px 20px;display:flex;gap:16px;align-items:flex-start}.poster{width:52px;height:74px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0}.pg-1{background:linear-gradient(135deg,#1a0a0f,#4a1020)}.pg-2{background:linear-gradient(135deg,#0a0f1a,#102040)}.pg-3{background:linear-gradient(135deg,#0d1a0d,#1a3a1a)}.pg-4{background:linear-gradient(135deg,#1a140a,#3a2a10)}.pg-5{background:linear-gradient(135deg,#0a1215,#10252a)}
+    .ticket-main{flex:1;min-width:0}.ticket-movie{font-weight:700;font-size:1rem;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ticket-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px}.ticket-meta span{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:4px}.seat-list{display:flex;gap:5px;flex-wrap:wrap}.seat{background:rgba(229,19,58,.1);border:1px solid rgba(229,19,58,.2);color:var(--accent);padding:2px 7px;border-radius:4px;font-size:.75rem;font-weight:600}
+    .ticket-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.status{padding:4px 12px;border-radius:6px;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px}.status-confirmed{background:rgba(80,200,100,.12);color:var(--success);border:1px solid rgba(80,200,100,.3)}.status-checked{background:rgba(100,180,255,.12);color:var(--info);border:1px solid rgba(100,180,255,.3)}.status-cancelled{background:rgba(229,19,58,.1);color:var(--accent);border:1px solid rgba(229,19,58,.2)}.status-pending{background:rgba(245,166,35,.1);color:var(--gold);border:1px solid rgba(245,166,35,.2)} .price{font-weight:700;color:var(--gold)}
+    .ticket-divider{border-top:2px dashed rgba(255,255,255,.06);margin:0 20px}.ticket-bottom{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.02)}.code{font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:2px;color:var(--muted)}
+    .btn-soft,.btn-danger-soft,.btn-primary-soft{border-radius:8px;padding:8px 14px;font:600 .82rem 'Outfit',sans-serif;cursor:pointer;transition:.2s}.btn-soft{background:transparent;border:1.5px solid var(--border);color:var(--muted)}.btn-soft:hover{border-color:var(--accent);color:var(--accent)}.btn-danger-soft{background:transparent;border:1.5px solid var(--border);color:var(--muted)}.btn-danger-soft:hover{border-color:var(--accent);color:var(--accent)}.btn-primary-soft{background:rgba(229,19,58,.1);border:1.5px solid rgba(229,19,58,.2);color:var(--accent)}
+    .empty{text-align:center;padding:60px 20px;color:var(--muted)} .empty .icon{font-size:4rem;margin-bottom:14px;opacity:.55}
+    .list-item{padding:16px 0;border-bottom:1px solid var(--border)}.list-item:last-child{border-bottom:none}.point-item,.notification-item{display:flex;gap:14px;align-items:flex-start}.badge-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.badge-point{background:rgba(245,166,35,.12);color:var(--gold)}.badge-bell{background:rgba(100,180,255,.12);color:var(--info)}
+    .section-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;margin-bottom:20px}.muted{color:var(--muted)}
+    @media(max-width:768px){.ticket-top{flex-wrap:wrap}.ticket-right{align-items:flex-start}.toolbar{flex-direction:column;align-items:stretch!important;gap:12px}.member-card{padding:24px 20px}}
+  </style>
+</head>
+<body>
+<nav class="navbar-star">
+  <div class="container-xxl d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-4">
+      <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
+      <div class="d-none d-lg-flex gap-2">
+        <a href="index.html" class="nav-link-star">Phim</a>
+        <a href="history.html" class="nav-link-star active">Vé của tôi</a>
+      </div>
+    </div>
+    <div id="authSection" class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <span id="navName" class="small text-muted fw-bold" style="cursor:pointer" onclick="switchTab('profile', document.querySelector('.tab-btn[onclick*=\'profile\']'))">Nguyễn Văn A</span>
+        <div id="navAvatar" class="badge-icon badge-point" style="width:36px;height:36px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;cursor:pointer;color:#fff" onclick="switchTab('profile', document.querySelector('.tab-btn[onclick*=\'profile\']'))">A</div>
+        <button class="btn btn-sm btn-outline-secondary" onclick="logout()" title="Đăng xuất"><i class="bi bi-box-arrow-right text-white"></i></button>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="page">
+  <div class="row g-4 mb-4">
+    <div class="col-md-7">
+      <div class="member-card">
+        <div id="memberBadge" class="tier-badge tier-gold">★ Gold Member</div>
+        <div id="memberName" class="member-name">NGUYỄN VĂN A</div>
+        <div id="memberId" class="member-id">ID: SC-2024-000001</div>
+        <div class="stats">
+          <div class="stat"><div id="memberPoints" class="val">0</div><div class="lbl">Điểm tích lũy</div></div>
+          <div class="divider"></div>
+          <div class="stat"><div id="memberSpending" class="val">0</div><div class="lbl">Tổng chi tiêu</div></div>
+          <div class="divider"></div>
+          <div class="stat"><div id="memberBookings" class="val">0</div><div class="lbl">Lần đặt vé</div></div>
+        </div>
+        <div class="tier-progress">
+          <div class="tier-progress-label"><span id="tierLabel">Lên hạng <strong style="color:var(--gold)">Gold</strong></span><span id="tierValue" style="color:var(--gold)">0 / 2,000,000đ</span></div>
+          <div class="tier-bar"><div id="tierFill" class="tier-fill"></div></div>
+        </div>
+        <div id="memberChips" class="chips"></div>
+      </div>
+    </div>
+    <div class="col-md-5">
+      <div class="cardx p-4 h-100">
+        <div style="font-weight:700;margin-bottom:16px;font-size:.95rem">Ưu đãi hạng thành viên</div>
+        <div class="d-flex flex-column gap-2">
+          <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background:rgba(255,255,255,.03)"><span style="font-size:.85rem">Standard</span><span style="font-size:.78rem;color:var(--muted)">0đ+</span></div>
+          <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background:rgba(192,192,192,.05)"><span style="font-size:.85rem;color:#C0C0C0">★ Silver</span><span style="font-size:.78rem;color:var(--muted)">500K+</span><span style="font-size:.75rem;color:#C0C0C0">-5%</span></div>
+          <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background:rgba(245,166,35,.08)"><span style="font-size:.85rem;color:var(--gold)">★ Gold</span><span style="font-size:.78rem;color:var(--muted)">2M+</span><span style="font-size:.75rem;color:var(--gold)">-10%</span></div>
+          <div class="d-flex justify-content-between align-items-center p-2 rounded" style="background:rgba(100,200,255,.05)"><span style="font-size:.85rem;color:#64C8FF">★ Platinum</span><span style="font-size:.78rem;color:var(--muted)">5M+</span><span style="font-size:.75rem;color:#64C8FF">-15%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex align-items-center justify-content-between mb-3 toolbar">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('tickets',this)">🎫 Lịch sử vé</button>
+      <button class="tab-btn" onclick="switchTab('points',this)">💎 Điểm thưởng</button>
+      <button class="tab-btn" onclick="switchTab('payments',this)">💳 Thanh toán</button>
+      <button class="tab-btn" onclick="switchTab('notifications',this)">🔔 Thông báo</button>
+      <button class="tab-btn" onclick="switchTab('profile',this)">👤 Hồ sơ</button>
+    </div>
+    <div id="filterBar">
+      <select class="filter-select" onchange="filterTickets(this.value)">
+        <option value="all">Tất cả trạng thái</option>
+        <option value="CONFIRMED">Đã xác nhận</option>
+        <option value="CHECKED_IN">Đã check-in</option>
+        <option value="CANCELLED">Đã hủy</option>
+        <option value="PENDING">Chờ xử lý</option>
+      </select>
+    </div>
+  </div>
+  <div id="tab-tickets"><div id="ticketList"></div></div>
+
+  <div id="tab-points" style="display:none">
+    <div class="cardx p-4 mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+        <div>
+          <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Điểm hiện tại</div>
+          <div id="pointsNow" style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:var(--gold);line-height:1">0 điểm</div>
+        </div>
+        <div style="text-align:right"><div style="font-size:.8rem;color:var(--muted)">Quy đổi</div><div id="pointsMoney" style="font-size:1rem;font-weight:700">≈ 0đ</div></div>
+      </div>
+      <div id="pointsHint" style="background:var(--surface);border-radius:8px;padding:12px;font-size:.85rem;color:var(--muted)">★ Mỗi 10,000đ chi tiêu sẽ tích được 1 điểm thành viên.</div>
+    </div>
+    <div class="cardx p-4" id="pointsHistory"></div>
+  </div>
+
+  <div id="tab-payments" style="display:none"><div class="cardx p-4" id="paymentHistory"></div></div>
+
+  <div id="tab-notifications" style="display:none">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+      <div style="font-size:.85rem;color:var(--muted)">Danh sách thông báo cá nhân</div>
+      <button class="btn-soft" onclick="markAllNotificationsRead()">Đánh dấu đã đọc</button>
+    </div>
+    <div class="cardx p-4" id="notificationList"></div>
+  </div>
+
+  <div id="tab-profile" style="display:none">
+    <div class="cardx p-4">
+        <h4 class="fw-bold mb-4">THÔNG TIN CÁ NHÂN</h4>
+        <div class="row g-4">
+            <div class="col-md-12">
+                <label style="font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; display: block;">Họ và tên</label>
+                <input type="text" id="fullName" class="field" placeholder="Nhập họ tên đầy đủ">
+            </div>
+            <div class="col-md-6">
+                <label style="font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; display: block;">Tên đăng nhập</label>
+                <input type="text" id="usernameField" class="field" disabled>
+            </div>
+            <div class="col-md-6">
+                <label style="font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; display: block;">Số điện thoại</label>
+                <input type="text" id="phone" class="field" placeholder="Nhập số điện thoại">
+            </div>
+            <div class="col-md-12">
+                <label style="font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; display: block;">Email</label>
+                <input type="email" id="email" class="field" placeholder="Nhập email">
+            </div>
+            <div class="col-md-12">
+                <button class="btn btn-danger w-100 py-3 fw-bold mt-2" onclick="updateProfile()">CẬP NHẬT THÔNG TIN</button>
+            </div>
+
+            <div class="col-md-12 mt-4 pt-4 border-top border-secondary border-opacity-25">
+                <h5 class="fw-bold mb-3">ĐỔI MẬT KHẨU</h5>
+                <div class="mb-3">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; display: block;">Mật khẩu cũ</label>
+                    <input type="password" id="oldPassword" class="field" placeholder="••••••••">
+                </div>
+                <div class="mb-3">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; display: block;">Mật khẩu mới</label>
+                    <input type="password" id="newPassword" class="field" placeholder="Tối thiểu 6 ký tự">
+                </div>
+                <div class="mb-3">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; display: block;">Xác nhận mật khẩu mới</label>
+                    <input type="password" id="confirmPassword" class="field" placeholder="••••••••">
+                </div>
+                <button class="btn btn-outline-danger w-100 py-3 fw-bold mt-2" onclick="changePassword()">XÁC NHẬN ĐỔI MẬT KHẨU</button>
+            </div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('cinemaToken');
+const username = localStorage.getItem('cinemaUsername');
+if (!token) {
+  alert('Vui lòng đăng nhập để xem lịch sử vé!');
+  window.location.href = 'auth.html';
+}
+
+const STATUS_CLASS = { CONFIRMED:'status-confirmed', CHECKED_IN:'status-checked', CANCELLED:'status-cancelled', PENDING:'status-pending' };
+const STATUS_LABEL = { CONFIRMED:'Đã xác nhận', CHECKED_IN:'Đã check-in', CANCELLED:'Đã hủy', PENDING:'Chờ xử lý' };
+const TIER_META = {
+  STANDARD:{label:'Standard',className:'tier-std',icon:'★',discount:'0% ưu đãi vé'},
+  SILVER:{label:'Silver',className:'tier-silver',icon:'★',discount:'-5% giá vé'},
+  GOLD:{label:'Gold',className:'tier-gold',icon:'★',discount:'-10% giá vé'},
+  PLATINUM:{label:'Platinum',className:'tier-plat',icon:'★',discount:'-15% giá vé'}
+};
+
+let ALL_TICKETS = [];
+let ALL_PAYMENTS = [];
+let ALL_NOTIFICATIONS = [];
+let PROFILE = null;
+let currentFilter = 'all';
+
+const fmt = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.message || 'Không thể tải dữ liệu');
+  return data;
+}
+
+async function loadData() {
+  try {
+    const results = await Promise.allSettled([
+      fetchJson('/api/customers/me', { headers: { Authorization: `Bearer ${token}` } }),
+      fetchJson('/api/bookings/me', { headers: { Authorization: `Bearer ${token}` } }),
+      fetchJson('/api/payments/me', { headers: { Authorization: `Bearer ${token}` } }),
+      fetchJson('/api/notifications/me', { headers: { Authorization: `Bearer ${token}` } })
+    ]);
+
+    const profileRes = results[0];
+    const bookingsRes = results[1];
+    const paymentsRes = results[2];
+    const notificationsRes = results[3];
+
+    PROFILE = profileRes.status === 'fulfilled' ? profileRes.value : null;
+    ALL_TICKETS = bookingsRes.status === 'fulfilled' ? bookingsRes.value : [];
+    ALL_PAYMENTS = paymentsRes.status === 'fulfilled' ? paymentsRes.value : [];
+    ALL_NOTIFICATIONS = notificationsRes.status === 'fulfilled' ? notificationsRes.value : [];
+
+    if (!PROFILE) {
+        document.querySelector('.page').innerHTML = `
+            <div class="cardx p-5 text-center">
+                <div style="font-size: 4rem; opacity: 0.5">👤</div>
+                <h4 class="mt-3">Hồ sơ khách hàng chưa được thiết lập</h4>
+                <p class="text-muted">Tài khoản này (${username}) hiện đang được sử dụng với quyền quản trị/nhân viên và chưa có thông tin hồ sơ khách hàng.</p>
+                <a href="index.html" class="btn btn-outline-danger mt-3">Quay lại trang chủ</a>
+            </div>
+        `;
+        return;
+    }
+
+    renderTickets();
+    renderPoints();
+    renderPayments();
+    renderNotifications();
+    renderProfile(PROFILE);
+    fillProfileForm(PROFILE);
+  } catch (error) {
+    console.error("Error loading data:", error);
+  }
+}
+
+function fillProfileForm(profile) {
+    document.getElementById('fullName').value = profile.fullName || '';
+    document.getElementById('usernameField').value = profile.username || '';
+    document.getElementById('phone').value = profile.phone || '';
+    document.getElementById('email').value = profile.email || '';
+}
+
+async function updateProfile() {
+    const data = {
+        fullName: document.getElementById('fullName').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value
+    };
+    try {
+        await fetchJson('/api/customers/me', {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}` 
+            },
+            body: JSON.stringify(data)
+        });
+        alert('Cập nhật thông tin thành công!');
+        loadData();
+    } catch (e) {
+        alert('Lỗi: ' + e.message);
+    }
+}
+
+async function changePassword() {
+    const oldPassword = document.getElementById('oldPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (!oldPassword || !newPassword) {
+        alert('Vui lòng nhập đầy đủ thông tin mật khẩu!');
+        return;
+    }
+    if (newPassword !== confirmPassword) {
+        alert('Mật khẩu xác nhận không khớp!');
+        return;
+    }
+
+    try {
+        const res = await fetchJson('/api/auth/change-password', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}` 
+            },
+            body: JSON.stringify({ oldPassword, newPassword })
+        });
+        alert('Đổi mật khẩu thành công!');
+        document.getElementById('oldPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+    } catch (e) {
+        alert('Lỗi: Mật khẩu cũ không chính xác!');
+    }
+}
+
+function switchTab(tab, button) {
+  document.querySelectorAll('.tab-btn').forEach((item) => item.classList.remove('active'));
+  button.classList.add('active');
+  ['tickets','points','payments','notifications','profile'].forEach((name) => {
+    const panel = document.getElementById(`tab-${name}`);
+    if (panel) panel.style.display = name === tab ? 'block' : 'none';
+  });
+  document.getElementById('filterBar').style.display = tab === 'tickets' ? '' : 'none';
+}
+
+function activateRequestedTab() {
+  const requestedTab = new URLSearchParams(window.location.search).get('tab');
+  if (!requestedTab || requestedTab === 'profile') return;
+
+  const targetButton = Array.from(document.querySelectorAll('.tab-btn')).find((button) =>
+    button.getAttribute('onclick')?.includes(`'${requestedTab}'`)
+  );
+
+  if (targetButton) {
+    switchTab(requestedTab, targetButton);
+  }
+}
+
+function filterTickets(value) { currentFilter = value; renderTickets(); }
+function getTierProgress(tier, spending) {
+  if (tier === 'PLATINUM') return { label:'Bạn đang ở hạng <strong style="color:#64C8FF">Platinum</strong>', value:`${fmt(spending)} / ∞`, percent:100, hint:'★ Bạn đã ở hạng cao nhất. Hãy tiếp tục đặt vé để tích thêm điểm thưởng.' };
+  if (tier === 'GOLD') { const target = 5000000; const remain = Math.max(0, target - spending); return { label:'Lên hạng <strong style="color:#64C8FF">Platinum</strong>', value:`${fmt(spending)} / ${fmt(target)}`, percent:Math.min(100, Math.round(spending / target * 100)), hint:`★ Cần thêm <strong>${fmt(remain)}</strong> để lên <span style="color:#64C8FF;font-weight:600">Platinum</span> và nhận ưu đãi -15%!` }; }
+  if (tier === 'SILVER') { const target = 2000000; const remain = Math.max(0, target - spending); return { label:'Lên hạng <strong style="color:var(--gold)">Gold</strong>', value:`${fmt(spending)} / ${fmt(target)}`, percent:Math.min(100, Math.round(spending / target * 100)), hint:`★ Cần thêm <strong>${fmt(remain)}</strong> để lên <span style="color:var(--gold);font-weight:600">Gold</span> và nhận ưu đãi -10%!` }; }
+  const target = 500000; const remain = Math.max(0, target - spending); return { label:'Lên hạng <strong style="color:#C0C0C0">Silver</strong>', value:`${fmt(spending)} / ${fmt(target)}`, percent:Math.min(100, Math.round(spending / target * 100)), hint:`★ Cần thêm <strong>${fmt(remain)}</strong> để lên <span style="color:#C0C0C0;font-weight:600">Silver</span> và nhận ưu đãi -5%!` };
+}
+
+function renderProfile(profile) {
+  const fullName = profile.fullName || profile.username || 'Khách hàng';
+  const tier = String(profile.membershipTier || 'STANDARD').toUpperCase();
+  const spending = Number(profile.totalSpending || 0);
+  const points = Number(profile.points || 0);
+  const meta = TIER_META[tier] || TIER_META.STANDARD;
+  const progress = getTierProgress(tier, spending);
+
+  document.getElementById('memberBadge').className = `tier-badge ${meta.className}`;
+  document.getElementById('memberBadge').textContent = `${meta.icon} ${meta.label} Member`;
+  document.getElementById('memberName').textContent = fullName.toUpperCase();
+  document.getElementById('memberId').textContent = `ID: SC-2024-${String(profile.id || 0).padStart(6,'0')}`;
+  document.getElementById('memberPoints').textContent = points.toLocaleString('vi-VN');
+  document.getElementById('memberSpending').textContent = fmt(spending).replace('đ','');
+  document.getElementById('memberBookings').textContent = ALL_TICKETS.length.toLocaleString('vi-VN');
+  document.getElementById('tierLabel').innerHTML = progress.label;
+  document.getElementById('tierValue').textContent = progress.value;
+  document.getElementById('tierFill').style.width = `${progress.percent}%`;
+  document.getElementById('memberChips').innerHTML = `<span class="chip">${meta.discount}</span><span class="chip">1 điểm / 10,000đ</span><span class="chip">${points.toLocaleString('vi-VN')} điểm hiện có</span>`;
+  document.getElementById('pointsNow').textContent = `${points.toLocaleString('vi-VN')} điểm`;
+  document.getElementById('pointsMoney').textContent = `≈ ${fmt(points * 100)}`;
+  document.getElementById('pointsHint').innerHTML = progress.hint;
+  document.getElementById('navAvatar').textContent = fullName.charAt(0).toUpperCase();
+  document.getElementById('navName').textContent = fullName;
+}
+
+function renderTickets() {
+  const list = document.getElementById('ticketList');
+  const filtered = ALL_TICKETS.filter((ticket) => currentFilter === 'all' || ticket.status === currentFilter);
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty"><div class="icon">🎫</div><h5>Không có vé nào</h5><p>Bạn chưa có vé nào ở trạng thái này.</p><button class="btn-primary-soft" style="padding:10px 24px;background:var(--gradient);border:none;color:#fff" onclick="window.location.href='index.html'">🎬 Đặt vé ngay</button></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map((ticket) => {
+    const showDate = ticket.showTime ? new Date(ticket.showTime) : null;
+    const dateText = showDate ? showDate.toLocaleDateString('vi-VN') : 'N/A';
+    const timeText = showDate ? showDate.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' }) : 'N/A';
+    const seats = (ticket.seatCodes || []).map((seat) => `<span class="seat">${seat}</span>`).join('');
+    return `<div class="ticket"><div class="ticket-top"><div class="poster pg-${(ticket.id % 5) + 1}">🎬</div><div class="ticket-main"><div class="ticket-movie">${ticket.movieTitle || 'Không rõ phim'}</div><div class="ticket-meta"><span><i class="bi bi-calendar3"></i>${dateText}</span><span><i class="bi bi-clock"></i>${timeText}</span><span><i class="bi bi-door-open"></i>Phòng: ${ticket.roomName || 'N/A'}</span></div><div class="seat-list">${seats || '<span class="muted">Chưa có ghế</span>'}</div></div><div class="ticket-right"><span class="status ${STATUS_CLASS[ticket.status] || 'status-pending'}">${STATUS_LABEL[ticket.status] || ticket.status}</span><span class="price">${fmt(ticket.totalPrice)}</span></div></div><div class="ticket-divider"></div><div class="ticket-bottom"><div><div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">MÃ BOOKING</div><div class="code">${ticket.bookingCode}</div></div><div class="d-flex gap-2 flex-wrap">${(ticket.status === 'PENDING' || ticket.status === 'CONFIRMED') ? `<button class="btn-danger-soft" onclick="cancelBooking('${ticket.bookingCode}')">Hủy vé</button>` : ''}<button class="btn-primary-soft" onclick="showTicketDetail('${ticket.bookingCode}')">Chi tiết</button></div></div></div>`;
+  }).join('');
+}
+
+function renderPoints() {
+  const container = document.getElementById('pointsHistory');
+  const items = ALL_TICKETS.map((ticket) => {
+    const earned = Math.floor(Number(ticket.totalPrice || 0) / 10000);
+    const when = new Date(ticket.createdAt || ticket.showTime || new Date()).toLocaleString('vi-VN');
+    return `<div class="list-item"><div class="point-item"><div class="badge-icon badge-point">💎</div><div style="flex:1"><div style="font-weight:600">${ticket.movieTitle || 'Đặt vé xem phim'}</div><div style="font-size:.8rem;color:var(--muted)">${when}</div></div><div style="font-weight:700;color:var(--gold)">+${earned}</div></div></div>`;
+  }).join('');
+  container.innerHTML = items || '<div class="text-center py-3 muted">Chưa có lịch sử điểm thưởng.</div>';
+}
+
+function renderPayments() {
+  const container = document.getElementById('paymentHistory');
+  if (!ALL_PAYMENTS.length) { container.innerHTML = '<div class="text-center py-3 muted">Chưa có giao dịch thanh toán nào.</div>'; return; }
+  container.innerHTML = ALL_PAYMENTS.map((payment) => `<div class="ticket" style="margin-bottom:14px"><div class="ticket-top"><div class="ticket-main"><div class="ticket-movie">${payment.movieTitle || 'Giao dịch đặt vé'}</div><div class="ticket-meta"><span>Mã booking: ${payment.bookingCode}</span><span>Phương thức: ${payment.paymentMethod || 'N/A'}</span><span>Trạng thái: ${payment.paymentStatus || 'N/A'}</span></div></div><div class="ticket-right"><span class="price">${fmt(payment.amount)}</span></div></div><div class="ticket-divider"></div><div class="ticket-bottom"><div><div style="font-size:.72rem;color:var(--muted);margin-bottom:2px">TRANSACTION</div><div class="code">${payment.transactionId || 'N/A'}</div></div><div style="font-size:.82rem;color:var(--muted)">${payment.paidAt ? new Date(payment.paidAt).toLocaleString('vi-VN') : 'Chưa thanh toán'}</div></div></div>`).join('');
+}
+function renderNotifications() {
+  const container = document.getElementById('notificationList');
+  if (!ALL_NOTIFICATIONS.length) { container.innerHTML = '<div class="text-center py-3 muted">Chưa có thông báo nào.</div>'; return; }
+  container.innerHTML = ALL_NOTIFICATIONS.map((notification) => `<div class="list-item" style="opacity:${notification.isRead ? '.72' : '1'}"><div class="notification-item"><div class="badge-icon badge-bell"><i class="bi bi-bell-fill"></i></div><div style="flex:1"><div style="font-weight:700">${notification.title}</div><div style="font-size:.84rem;color:var(--muted);line-height:1.6">${notification.message}</div><div style="font-size:.74rem;color:var(--muted);margin-top:6px">${new Date(notification.createdAt).toLocaleString('vi-VN')}</div></div>${notification.isRead ? '' : `<button class="btn-primary-soft" onclick="markNotificationRead(${notification.id})">Đã đọc</button>`}</div></div>`).join('');
+}
+
+async function markNotificationRead(id) {
+  try {
+    await fetchJson(`/api/notifications/${id}/read`, { method:'PUT', headers:{ Authorization: `Bearer ${token}` } });
+    loadData();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function markAllNotificationsRead() {
+  try {
+    await fetchJson('/api/notifications/read-all', { method:'PUT', headers:{ Authorization: `Bearer ${token}` } });
+    loadData();
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function cancelBooking(code) {
+  if (!confirm('Bạn có chắc chắn muốn hủy vé này?')) return;
+  try {
+    await fetchJson(`/api/bookings/${code}/cancel`, { method:'PUT', headers:{ Authorization: `Bearer ${token}` } });
+    alert('Đã hủy vé thành công!');
+    loadData();
+  } catch (error) {
+    alert('Lỗi: ' + error.message);
+  }
+}
+
+function showTicketDetail(code) {
+  const ticket = ALL_TICKETS.find((item) => item.bookingCode === code);
+  if (!ticket) { alert('Không tìm thấy thông tin vé.'); return; }
+  const lines = [
+    `Mã booking: ${ticket.bookingCode}`,
+    `Phim: ${ticket.movieTitle || 'N/A'}`,
+    `Phòng: ${ticket.roomName || 'N/A'}`,
+    `Ghế: ${(ticket.seatCodes || []).join(', ') || 'N/A'}`,
+    `Thanh toán: ${ticket.paymentMethod || 'N/A'}`,
+    `Trạng thái thanh toán: ${ticket.paymentStatus || 'N/A'}`
+  ];
+  if (ticket.comboSummary?.length) lines.push(`Combo: ${ticket.comboSummary.join(', ')}`);
+  if (ticket.promotionCode) lines.push(`Mã ưu đãi: ${ticket.promotionCode}`);
+  alert(lines.join('\n'));
+}
+
+activateRequestedTab();
+loadData();
+</script>
+</body>
+</html>

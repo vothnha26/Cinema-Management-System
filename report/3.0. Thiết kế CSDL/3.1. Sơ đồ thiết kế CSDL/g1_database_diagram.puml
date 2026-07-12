@@ -1,0 +1,97 @@
+@startuml G1_DatabaseDiagram_Users
+!theme plain
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classFontName Courier
+skinparam classBackgroundColor #EBF5FB
+skinparam classBorderColor #2980B9
+skinparam classHeaderBackgroundColor #1A5276
+skinparam ArrowColor #2980B9
+skinparam ArrowThickness 1.5
+
+title <b>DATABASE DIAGRAM — Nhóm 1: Người dùng & Phân quyền</b>
+
+entity users {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * username   : VARCHAR(255) UNIQUE
+  * password   : VARCHAR(255)
+  * email      : VARCHAR(255) UNIQUE
+  * role       : VARCHAR(50)
+    -- CHECK: ADMIN|MANAGER|STAFF|CUSTOMER
+  * status     : BOOLEAN DEFAULT true
+    created_at : DATETIME
+}
+
+entity customers {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>user_id</u>              : BIGINT <<FK→users.id>>
+  * <u>membership_level_id</u>  : BIGINT <<FK→membership_levels.id>>
+  * full_name              : VARCHAR(255)
+    phone                  : VARCHAR(20)
+    points                 : INT DEFAULT 0
+    total_spending         : DECIMAL(15,2) DEFAULT 0
+}
+
+entity membership_levels {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * name          : VARCHAR(255) UNIQUE
+    min_spending   : DECIMAL(15,2)
+    priority       : INT
+}
+
+entity membership_benefits {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>membership_level_id</u> : BIGINT <<FK→membership_levels.id>>
+  * benefit_type             : VARCHAR(50)
+    -- CHECK: DISCOUNT|POINT_MULTIPLIER
+    benefit_value            : VARCHAR(255)
+}
+
+entity staffs {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>user_id</u>   : BIGINT <<FK→users.id>>
+  * <u>branch_id</u> : BIGINT <<FK→branches.id>>
+    staff_code      : VARCHAR(50) UNIQUE
+    full_name       : VARCHAR(255)
+    position        : VARCHAR(100)
+}
+
+entity audit_logs {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * username  : VARCHAR(255)
+    action    : VARCHAR(100)
+    -- CREATE|UPDATE|DELETE...
+    target    : VARCHAR(100)
+    target_id : BIGINT
+    details   : TEXT
+  * timestamp : DATETIME DEFAULT NOW()
+}
+
+entity notifications {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>user_id</u> : BIGINT <<FK→users.id>>
+  * title       : VARCHAR(255)
+    message     : TEXT
+    type        : VARCHAR(50)
+    -- SYSTEM|BOOKING|PROMOTION
+    is_read     : BOOLEAN DEFAULT false
+    created_at  : DATETIME
+}
+
+users           ||--o| customers         : "user_id"
+users           ||--o| staffs            : "user_id"
+users           ||--o{ notifications     : "user_id"
+membership_levels ||--|{ membership_benefits : "membership_level_id"
+membership_levels ||--o{ customers       : "membership_level_id"
+
+@enduml

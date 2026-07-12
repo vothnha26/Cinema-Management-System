@@ -1,0 +1,80 @@
+@startuml G4_DatabaseDiagram_Booking
+!theme plain
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classFontName Courier
+skinparam classBackgroundColor #F5EEF8
+skinparam classBorderColor #8E44AD
+skinparam classHeaderBackgroundColor #6C3483
+skinparam ArrowColor #8E44AD
+skinparam ArrowThickness 1.5
+
+title <b>DATABASE DIAGRAM — Nhóm 4: Giao dịch & Bắp nước</b>
+
+entity bookings {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+    <u>customer_id</u>  : BIGINT <<FK→customers.id, NULLABLE>>
+  * <u>showtime_id</u>  : BIGINT <<FK→showtimes.id>>
+  * booking_code       : VARCHAR(50) UNIQUE
+  * total_price        : DECIMAL(15,2)
+    status             : VARCHAR(50) DEFAULT 'PENDING'
+    -- CHECK: PENDING|CONFIRMED|CANCELLED|EXPIRED
+  * created_at         : DATETIME DEFAULT NOW()
+}
+
+entity booking_details {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>booking_id</u> : BIGINT <<FK→bookings.id>>
+  * <u>seat_id</u>    : BIGINT <<FK→seats.id>>
+    price            : DECIMAL(15,2)
+    -- UNIQUE(booking_id, seat_id)
+}
+
+entity payments {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>booking_id</u> : BIGINT <<FK→bookings.id, UNIQUE>>
+  * amount           : DECIMAL(15,2)
+    method           : VARCHAR(50)
+    -- CHECK: MOMO|VNPAY|CASH
+    transaction_id   : VARCHAR(255)
+    status           : VARCHAR(50)
+    -- CHECK: COMPLETED|FAILED
+}
+
+entity combos {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * name           : VARCHAR(255)
+  * price          : DECIMAL(10,2)
+    stock_quantity : INT DEFAULT 0
+  * is_active      : BOOLEAN DEFAULT true
+}
+
+entity booking_combos {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>booking_id</u> : BIGINT <<FK→bookings.id>>
+  * <u>combo_id</u>   : BIGINT <<FK→combos.id>>
+  * quantity         : INT
+}
+
+entity branch_combos {
+  * **branch_id** : BIGINT <<PK, FK→branches.id>>
+  * **combo_id**  : BIGINT <<PK, FK→combos.id>>
+  ==
+    stock_quantity : INT DEFAULT 0
+}
+
+bookings       ||--|{ booking_details  : "booking_id"
+bookings       ||--o| payments         : "booking_id"
+bookings       ||--o{ booking_combos   : "booking_id"
+combos         ||--o{ booking_combos   : "combo_id"
+combos         ||--|{ branch_combos    : "combo_id"
+
+@enduml

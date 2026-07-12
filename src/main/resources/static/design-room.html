@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thiết kế Chi Tiết Phòng – StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+          --seat-available: #252A3D; --seat-vip: #F5A623; --seat-couple: #9B59B6;
+          --sidebar-width: 320px;
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; margin: 0; display: flex; overflow: hidden; }
+        
+        /* ── SIDEBARS ── */
+        .setup-sidebar {
+            width: var(--sidebar-width); background: var(--surface); border-right: 1px solid var(--border);
+            height: 100vh; padding: 32px 24px; display: flex; flex-direction: column; z-index: 100;
+        }
+        .toolbar-sidebar {
+            width: var(--sidebar-width); background: var(--surface); border-left: 1px solid var(--border);
+            height: 100vh; padding: 32px 24px; display: flex; flex-direction: column; z-index: 100;
+        }
+
+        /* ── CANVAS AREA ── */
+        .canvas-area { flex: 1; height: 100vh; overflow: auto; display: flex; flex-direction: column; align-items: center; padding: 60px; position: relative; background: radial-gradient(circle at center, #111526 0%, #080b14 100%); }
+        .canvas-container { padding: 40px; background: rgba(255,255,255,0.02); border-radius: 24px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; min-width: min-content; }
+        
+        .screen { width: 80%; height: 6px; background: var(--accent); border-radius: 10px; box-shadow: 0 4px 25px rgba(229,19,58,0.5); margin-bottom: 80px; position: relative; }
+        .screen::after { content: 'MÀN HÌNH CHÍNH'; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; color: var(--text-muted); letter-spacing: 4px; font-weight: 700; white-space: nowrap; }
+
+        /* ── SEAT GRID ── */
+        .seat-grid { display: grid; gap: 8px; user-select: none; }
+        .seat {
+          width: 36px; height: 34px; border-radius: 6px; background: var(--seat-available);
+          border: 1.5px solid #3a4060; cursor: pointer; display: flex; align-items: center;
+          justify-content: center; font-size: 0.65rem; font-weight: 700; color: var(--text-muted);
+          transition: all 0.15s;
+        }
+        .seat:hover { transform: scale(1.1); border-color: #fff; }
+        .seat.selected { border-color: #fff; border-width: 2px; box-shadow: 0 0 15px rgba(255,255,255,0.4); z-index: 2; }
+        .seat.STANDARD { background: var(--seat-available); }
+        .seat.VIP { background: rgba(245,166,35,0.15); border-color: var(--accent-gold); color: var(--accent-gold); }
+        .seat.COUPLE { background: rgba(155,89,182,0.15); border-color: var(--seat-couple); color: var(--seat-couple); width: 80px; }
+        .seat.EMPTY { background: transparent; border: 1.5px dashed var(--border); color: transparent; }
+        .row-label { width: 30px; height: 34px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--text-muted); font-size: 0.8rem; }
+
+        /* ── UI COMPONENTS ── */
+        .section-title { font-family: 'Bebas Neue'; font-size: 1.8rem; color: var(--accent-gold); margin-bottom: 24px; letter-spacing: 1px; }
+        .tool-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: block; }
+        
+        .type-opt {
+          display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 12px;
+          border: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; transition: 0.2s;
+          background: var(--card);
+        }
+        .type-opt:hover { background: rgba(255,255,255,0.05); }
+        .type-opt.active { border-color: var(--accent); background: rgba(229,19,58,0.05); }
+
+        .btn-save { background: var(--gradient); color: #fff; border: none; padding: 16px; border-radius: 14px; font-weight: 700; margin-top: auto; transition: 0.3s; box-shadow: 0 4px 15px rgba(229,19,58,0.3); }
+        .btn-save:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        .form-control, .form-select { background: var(--card); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 10px; font-size: 0.9rem; }
+        .form-control:focus { background: var(--card); border-color: var(--accent); color: #fff; box-shadow: none; }
+
+        .back-btn { display: flex; align-items: center; gap: 8px; color: var(--text-muted); text-decoration: none; font-size: 0.9rem; margin-bottom: 24px; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<aside class="setup-sidebar">
+    <a href="manage-rooms.html" class="back-btn"><i class="bi bi-arrow-left"></i> QUẢN LÝ PHÒNG</a>
+    <h2 class="section-title" id="roomNameLabel">Phòng chiếu</h2>
+    
+    <div class="mb-4">
+        <label class="tool-label">Kích thước lưới</label>
+        <div class="row g-2">
+            <div class="col-6">
+                <input type="number" id="rowsInput" class="form-control" placeholder="Hàng">
+            </div>
+            <div class="col-6">
+                <input type="number" id="colsInput" class="form-control" placeholder="Cột">
+            </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm w-100 mt-2" onclick="adjustGrid()">CẬP NHẬT LƯỚI</button>
+    </div>
+
+    <div class="tool-label mb-3">Thư viện mẫu</div>
+    <select id="templateSelect" class="form-select mb-2">
+        <option value="">-- Chọn Template --</option>
+    </select>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-info btn-sm w-100" onclick="applyTemplate()">TẢI MẪU</button>
+        <button class="btn btn-outline-warning btn-sm w-100" onclick="exportAsTemplate()">LƯU THÀNH MẪU</button>
+    </div>
+
+    <div class="mt-auto p-3 rounded-4" style="background:rgba(255,255,255,0.03); border:1px solid var(--border)">
+        <div class="tool-label mb-2">Thống kê ghế</div>
+        <div class="d-flex justify-content-between small mb-1">
+            <span>Tổng số ghế:</span>
+            <span id="stat-total" class="fw-bold">0</span>
+        </div>
+        <div class="d-flex justify-content-between small mb-1 text-warning">
+            <span>Ghế VIP:</span>
+            <span id="stat-vip" class="fw-bold">0</span>
+        </div>
+        <div class="d-flex justify-content-between small mb-1 text-info">
+            <span>Ghế Đôi:</span>
+            <span id="stat-couple" class="fw-bold">0</span>
+        </div>
+        <hr class="my-2 border-border">
+        <div id="selectionStatus" class="fw-bold text-accent-gold mb-1">0 ghế được chọn</div>
+        <p class="small text-muted mb-0">Nhấp hoặc kéo chuột để chọn vùng ghế cần chỉnh sửa.</p>
+    </div>
+</aside>
+
+<div class="canvas-area">
+    <div class="d-flex gap-2 mb-4">
+        <button class="btn btn-dark btn-sm border-border" onclick="selectRowPrompt()"><i class="bi bi-distribute-horizontal me-1"></i> Chọn Hàng</button>
+        <button class="btn btn-dark btn-sm border-border" onclick="selectColPrompt()"><i class="bi bi-distribute-vertical me-1"></i> Chọn Cột</button>
+        <button class="btn btn-dark btn-sm border-border" onclick="selectAllSeats()"><i class="bi bi-check-all me-1"></i> Chọn tất cả</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="clearAllSeats()"><i class="bi bi-eraser me-1"></i> Xóa trắng</button>
+    </div>
+    <div class="canvas-container">
+        <div class="screen"></div>
+        <div id="seatGrid" class="seat-grid"></div>
+    </div>
+</div>
+
+<aside class="toolbar-sidebar">
+    <div class="tool-label mb-3">Loại ghế áp dụng</div>
+    <div class="type-opt" onclick="applyType('STANDARD')">
+        <div style="width:16px; height:16px; border-radius:4px; background: var(--seat-available); border: 1px solid #3a4060;"></div>
+        <span>Ghế Thường</span>
+    </div>
+    <div class="type-opt" onclick="applyType('VIP')">
+        <div style="width:16px; height:16px; border-radius:4px; background: var(--seat-vip);"></div>
+        <span class="text-warning">Ghế VIP</span>
+    </div>
+    <div class="type-opt" onclick="applyType('COUPLE')">
+        <div style="width:32px; height:16px; border-radius:4px; background: var(--seat-couple);"></div>
+        <span class="text-info">Ghế Đôi</span>
+    </div>
+    <div class="type-opt" onclick="applyType('EMPTY')">
+        <div style="width:16px; height:16px; border-radius:4px; border: 1.5px dashed #444;"></div>
+        <span>Ô Trống (Lối đi)</span>
+    </div>
+
+    <button class="btn-save" onclick="saveLayout()">
+        <i class="bi bi-cloud-check me-2"></i> LƯU SƠ ĐỒ PHÒNG
+    </button>
+</aside>
+
+<script src="/js/api.js"></script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('id');
+    let roomData = null;
+    let selectedIndices = new Set();
+    let isMouseDown = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadRoomDetail();
+        loadTemplates();
+        document.addEventListener('mousedown', () => isMouseDown = true);
+        document.addEventListener('mouseup', () => isMouseDown = false);
+    });
+
+    async function loadRoomDetail() {
+        const res = await api.get(`/rooms/${roomId}`);
+        if (res.success) {
+            roomData = res.data;
+            document.getElementById('roomNameLabel').textContent = roomData.name;
+            document.getElementById('rowsInput').value = roomData.rows;
+            document.getElementById('colsInput').value = roomData.cols;
+            renderGrid();
+        }
+    }
+
+    async function loadTemplates() {
+        const res = await api.get('/admin/room-templates');
+        if (res.success) {
+            document.getElementById('templateSelect').innerHTML = '<option value="">-- Chọn Template --</option>' + 
+                res.data.map(name => `<option value="${name}">${name.replace('.json','').replace(/_/g,' ')}</option>`).join('');
+        }
+    }
+
+    function renderGrid() {
+        const grid = document.getElementById('seatGrid');
+        const rows = roomData.rows;
+        const cols = roomData.cols;
+        
+        grid.style.gridTemplateColumns = `30px repeat(${cols}, auto)`;
+        grid.innerHTML = '';
+        selectedIndices.clear();
+        updateUI();
+
+        for (let r = 0; r < rows; r++) {
+            const rowChar = String.fromCharCode(65 + r);
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.textContent = rowChar;
+            grid.appendChild(label);
+
+            for (let c = 1; c <= cols; c++) {
+                const seat = roomData.seats ? roomData.seats.find(s => s.rowChar === rowChar && s.colNum === c) : null;
+                const type = seat ? seat.seatTypeId : 'EMPTY';
+                const index = `${rowChar}-${c}`;
+                
+                const el = document.createElement('div');
+                el.className = `seat ${type}`;
+                el.id = `cell-${index}`;
+                el.textContent = type === 'EMPTY' ? '' : `${rowChar}${c}`;
+                
+                el.onmousedown = (e) => { e.preventDefault(); toggleSelect(index); };
+                el.onmouseenter = () => { if(isMouseDown) toggleSelect(index); };
+                
+                grid.appendChild(el);
+            }
+        }
+    }
+
+    function toggleSelect(idx, forceAdd = false) {
+        if (!forceAdd && selectedIndices.has(idx)) {
+            selectedIndices.delete(idx);
+            document.getElementById(`cell-${idx}`).classList.remove('selected');
+        } else {
+            selectedIndices.add(idx);
+            document.getElementById(`cell-${idx}`).classList.add('selected');
+        }
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('selectionStatus').textContent = `${selectedIndices.size} ghế được chọn`;
+        
+        if (!roomData.seats) {
+            console.warn("Room has no seats data");
+            return;
+        }
+
+        // Update stats
+        const total = roomData.seats.filter(s => s.seatTypeId !== 'EMPTY').length;
+        const vip = roomData.seats.filter(s => s.seatTypeId === 'VIP').length;
+        const couple = roomData.seats.filter(s => s.seatTypeId === 'COUPLE').length;
+        
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-vip').textContent = vip;
+        document.getElementById('stat-couple').textContent = couple;
+    }
+
+    function selectRowPrompt() {
+        const row = prompt('Nhập tên hàng (A, B, C...):');
+        if (!row) return;
+        const rowChar = row.toUpperCase();
+        for (let c = 1; c <= roomData.cols; c++) {
+            const idx = `${rowChar}-${c}`;
+            if (document.getElementById(`cell-${idx}`)) toggleSelect(idx, true);
+        }
+    }
+
+    function selectColPrompt() {
+        const col = prompt(`Nhập số cột (1 - ${roomData.cols}):`);
+        if (!col) return;
+        const colNum = parseInt(col);
+        for (let r = 0; r < roomData.rows; r++) {
+            const rowChar = String.fromCharCode(65 + r);
+            const idx = `${rowChar}-${colNum}`;
+            if (document.getElementById(`cell-${idx}`)) toggleSelect(idx, true);
+        }
+    }
+
+    function selectAllSeats() {
+        for (let r = 0; r < roomData.rows; r++) {
+            const rowChar = String.fromCharCode(65 + r);
+            for (let c = 1; c <= roomData.cols; c++) {
+                toggleSelect(`${rowChar}-${c}`, true);
+            }
+        }
+    }
+
+    function clearAllSeats() {
+        if (!confirm('Bạn có chắc muốn xóa trắng toàn bộ ghế?')) return;
+        roomData.seats = [];
+        renderGrid();
+    }
+
+    function applyType(type) {
+        if (selectedIndices.size === 0) return alert('Vui lòng chọn ghế!');
+        selectedIndices.forEach(idx => {
+            const [r, c] = idx.split('-');
+            let seat = roomData.seats.find(s => s.rowChar === r && s.colNum == c);
+            if (!seat) {
+                seat = { rowChar: r, colNum: parseInt(c) };
+                roomData.seats.push(seat);
+            }
+            seat.seatTypeId = type;
+            seat.status = (type !== 'EMPTY');
+            
+            const el = document.getElementById(`cell-${idx}`);
+            el.className = `seat ${type}`;
+            el.textContent = type === 'EMPTY' ? '' : `${r}${c}`;
+        });
+        selectedIndices.clear();
+        document.querySelectorAll('.seat.selected').forEach(el => el.classList.remove('selected'));
+        updateUI();
+    }
+
+    function adjustGrid() {
+        const newRows = parseInt(document.getElementById('rowsInput').value);
+        const newCols = parseInt(document.getElementById('colsInput').value);
+        if (newRows > 26 || newCols > 30) return alert('Kích thước tối đa 26x30');
+        
+        roomData.rows = newRows;
+        roomData.cols = newCols;
+        renderGrid();
+    }
+
+    async function applyTemplate() {
+        const file = document.getElementById('templateSelect').value;
+        if (!file) return;
+        const res = await api.get(`/admin/room-templates/${file}`);
+        if (res.success) {
+            const temp = res.data;
+            roomData.rows = temp.rows;
+            roomData.cols = temp.cols;
+            roomData.seats = temp.seats.map(s => ({
+                rowChar: s.rowChar, colNum: s.colNum, seatTypeId: s.seatTypeId, status: s.status
+            }));
+            document.getElementById('rowsInput').value = temp.rows;
+            document.getElementById('colsInput').value = temp.cols;
+            renderGrid();
+        }
+    }
+
+    async function exportAsTemplate() {
+        const name = prompt('Tên template mới:');
+        if (!name) return;
+        const activeSeats = roomData.seats.filter(s => s.seatTypeId !== 'EMPTY');
+        const data = {
+            templateName: name,
+            roomTypeId: roomData.roomType ? roomData.roomType.id : (roomData.roomTypeId || 'HALL_2D'),
+            rows: roomData.rows, cols: roomData.cols,
+            seats: activeSeats.map(s => ({
+                rowChar: s.rowChar, colNum: s.colNum, seatTypeId: s.seatTypeId, status: s.status
+            }))
+        };
+        const res = await api.post('/admin/room-templates', data);
+        if (res.success) { alert('Đã lưu mẫu thành công!'); loadTemplates(); }
+    }
+
+    async function saveLayout() {
+        const allSeatsForGrid = [];
+        const rows = roomData.rows;
+        const cols = roomData.cols;
+        
+        for (let r = 0; r < rows; r++) {
+            const rowChar = String.fromCharCode(65 + r);
+            for (let c = 1; c <= cols; c++) {
+                const seat = roomData.seats.find(s => s.rowChar === rowChar && s.colNum === c);
+                allSeatsForGrid.push({
+                    rowChar: rowChar,
+                    colNum: c,
+                    seatTypeId: seat ? seat.seatTypeId : 'EMPTY',
+                    status: seat ? (seat.seatTypeId !== 'EMPTY') : false
+                });
+            }
+        }
+
+        const res = await api.put(`/rooms/${roomId}/layout`, {
+            rows: rows,
+            cols: cols,
+            seats: allSeatsForGrid
+        });
+        
+        if (res.success) {
+            alert('Đã lưu sơ đồ phòng và cập nhật kích thước thành công!');
+            loadRoomDetail();
+        } else {
+            alert('Lỗi: ' + res.message);
+        }
+    }
+</script>
+</body>
+</html>

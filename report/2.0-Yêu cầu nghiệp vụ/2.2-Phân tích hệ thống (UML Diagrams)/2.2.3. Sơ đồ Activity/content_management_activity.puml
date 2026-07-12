@@ -1,0 +1,38 @@
+@startuml content_management_activity
+title Activity Diagram: Quy trình Quản lý Nội dung (Đồng bộ TMDB)
+
+start
+:Quản lý yêu cầu thêm Phim mới;
+:Nhập tên phim cần tìm kiếm;
+
+partition "Hệ thống lấy dữ liệu phim ngoại vi (TMDB)" {
+  :Gửi yêu cầu tìm kiếm đến hệ thống TMDB;
+  :Hiển thị danh sách kết quả phù hợp;
+  :Quản lý chọn phim chính xác từ danh sách;
+  
+  :Tự động lấy thông tin chi tiết phim;
+  note right
+    - Tiêu đề, Mô tả, Thể loại
+    - Trailer, Poster, Backdrop
+    - Ngày phát hành, **Quốc gia (Origin)**
+    - Phân loại độ tuổi, **Ưu tiên (AI)**
+  end note
+  
+  :Tự động nhận diện định dạng kỹ thuật;
+  note left: Nhận diện IMAX, 3D, 4DX từ từ khóa
+}
+
+partition "Lưu trữ hệ thống" {
+  :Chuẩn hóa Poster & Ảnh nền;
+  :Lưu thông tin phim vào Cơ sở dữ liệu;
+  :Tải ảnh lên dịch vụ lưu trữ Media;
+}
+
+if (Đồng bộ thành công?) then (Có)
+  #Green:Thông báo "Nhập phim thành công";
+  :Cập nhật danh sách phim trong rạp;
+else (Không)
+  #Red:Xử lý lỗi kết nối hoặc dữ liệu;
+endif
+stop
+@enduml

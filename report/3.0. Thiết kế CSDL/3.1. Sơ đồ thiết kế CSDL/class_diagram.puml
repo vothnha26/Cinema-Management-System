@@ -1,0 +1,348 @@
+@startuml FlashCinema_ClassDiagram
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam classFontSize 13
+skinparam packageStyle rectangle
+skinparam ArrowColor #333333
+skinparam ClassBorderColor #555555
+skinparam ClassBackgroundColor #F9F9F9
+skinparam ClassHeaderBackgroundColor #3B5998
+skinparam ClassFontColor #FFFFFF
+
+' ==========================================
+'  NHÓM 1: NGƯỜI DÙNG & PHÂN QUYỀN
+' ==========================================
+package "Nhóm 1: Người dùng & Phân quyền" #EAF4FB {
+  class User <<Entity>> {
+    + id : BIGINT <<PK>>
+    --
+    # username : VARCHAR(255) <<Unique>>
+    # password : VARCHAR(255)
+    # email    : VARCHAR(255) <<Unique>>
+    # role     : VARCHAR(50)
+    # status   : BOOLEAN
+    # created_at : DATETIME
+  }
+
+  class Customer <<Entity>> {
+    + id : BIGINT <<PK>>
+    --
+    # full_name  : VARCHAR(255)
+    # phone      : VARCHAR(20)
+    # points     : INT
+    # total_spending : DECIMAL(15,2)
+  }
+
+  class MembershipLevel <<Master>> {
+    + id : BIGINT <<PK>>
+    --
+    # name         : VARCHAR(255) <<Unique>>
+    # min_spending  : DECIMAL(15,2)
+    # priority      : INT
+  }
+
+  class MembershipBenefit <<Detail>> {
+    + id : BIGINT <<PK>>
+    --
+    # benefit_type  : VARCHAR(50)
+    # benefit_value : VARCHAR(255)
+  }
+
+  class Staff <<Entity>> {
+    + id : BIGINT <<PK>>
+    --
+    # staff_code : VARCHAR(50) <<Unique>>
+    # full_name  : VARCHAR(255)
+    # position   : VARCHAR(100)
+  }
+
+  class AuditLog <<Log>> {
+    + id : BIGINT <<PK>>
+    --
+    # username   : VARCHAR(255)
+    # action     : VARCHAR(100)
+    # target     : VARCHAR(100)
+    # target_id  : BIGINT
+    # details    : TEXT
+    # timestamp  : DATETIME
+  }
+
+  class Notification <<Entity>> {
+    + id : BIGINT <<PK>>
+    --
+    # title      : VARCHAR(255)
+    # message    : TEXT
+    # type       : VARCHAR(50)
+    # is_read    : BOOLEAN
+    # created_at : DATETIME
+  }
+
+  User "1" --o "0..1" Customer        : "has profile"
+  User "1" --o "0..1" Staff           : "has profile"
+  User "1" --o "*"    Notification    : "receives"
+  Customer "*" --o "1" MembershipLevel : "belongs to"
+  MembershipLevel "1" *-- "*" MembershipBenefit : "has benefits"
+}
+
+' ==========================================
+'  NHÓM 2: CƠ SỞ VẬT CHẤT & RẠP
+' ==========================================
+package "Nhóm 2: Cơ sở vật chất & Rạp" #EAF9EA {
+  class Branch <<Entity>> {
+    + id : BIGINT <<PK>>
+    --
+    # name      : VARCHAR(255)
+    # address   : VARCHAR(255)
+    # city      : VARCHAR(100)
+    # phone     : VARCHAR(20)
+    # is_active : BOOLEAN
+  }
+
+  class Room <<Entity>> {
+    + id : BIGINT <<PK>>
+    --
+    # name     : VARCHAR(255)
+    # capacity : INT
+    # num_rows : INT
+    # num_cols : INT
+    # status   : VARCHAR(50)
+  }
+
+  class RoomType <<Master>> {
+    + id   : VARCHAR(50) <<PK>>
+    --
+    # name : VARCHAR(255)
+  }
+
+  class Seat <<Entity>> {
+    + id       : BIGINT <<PK>>
+    --
+    # row_char : VARCHAR(10)
+    # col_num  : INT
+    # status   : BOOLEAN
+  }
+
+  class SeatType <<Master>> {
+    + id          : VARCHAR(50) <<PK>>
+    --
+    # name        : VARCHAR(255)
+    # description : TEXT
+  }
+
+  class RoomTypeFormat <<Junction>> {
+    + room_type_id : VARCHAR(50) <<PK, FK>>
+    + format_id    : VARCHAR(50) <<PK, FK>>
+  }
+
+  Branch "1" *-- "*" Room         : "contains"
+  Branch "1" --o "*" Staff        : "employs"
+  Room "*" --o "1" RoomType       : "is of type"
+  Room "1" *-- "*" Seat           : "has seats"
+  Seat "*" --o "1" SeatType       : "classified as"
+  RoomType "1" -- "*" RoomTypeFormat : "supports"
+}
+
+' ==========================================
+'  NHÓM 3: PHIM & NỘI DUNG
+' ==========================================
+package "Nhóm 3: Phim & Nội dung" #FEF9E7 {
+  class Movie <<Entity>> {
+    + id            : BIGINT <<PK>>
+    --
+    # title         : VARCHAR(255)
+    # description   : TEXT
+    # duration      : INT
+    # release_date  : DATE
+    # age_rating    : VARCHAR(50)
+    # status        : VARCHAR(50)
+    # tmdb_id       : BIGINT <<Unique>>
+    # origin_country : VARCHAR(100)
+    # priority_level : INT
+  }
+
+  class Genre <<Master>> {
+    + id   : VARCHAR(50) <<PK>>
+    --
+    # name : VARCHAR(255)
+  }
+
+  class Format <<Master>> {
+    + id   : VARCHAR(50) <<PK>>
+    --
+    # name : VARCHAR(255)
+  }
+
+  class Actor <<Entity>> {
+    + id         : BIGINT <<PK>>
+    --
+    # name       : VARCHAR(255)
+    # avatar_url : VARCHAR(255)
+  }
+
+  class Director <<Entity>> {
+    + id         : BIGINT <<PK>>
+    --
+    # name       : VARCHAR(255)
+    # avatar_url : VARCHAR(255)
+  }
+
+  class Showtime <<Entity>> {
+    + id         : BIGINT <<PK>>
+    --
+    # start_time : DATETIME
+    # end_time   : DATETIME
+    # status     : VARCHAR(50)
+  }
+
+  class MovieActor <<Junction>> {
+    + movie_id : BIGINT <<PK,FK>>
+    + actor_id : BIGINT <<PK,FK>>
+  }
+
+  class MovieDirector <<Junction>> {
+    + movie_id : BIGINT <<PK,FK>>
+    + director_id : BIGINT <<PK,FK>>
+  }
+
+  class MovieGenre <<Junction>> {
+    + movie_id : BIGINT <<PK,FK>>
+    + genre_id : VARCHAR(50) <<PK,FK>>
+  }
+
+  class MovieFormat <<Junction>> {
+    + movie_id : BIGINT <<PK,FK>>
+    + format_id : VARCHAR(50) <<PK,FK>>
+  }
+
+  Movie "1" -- "*" MovieActor    : "features"
+  Movie "1" -- "*" MovieDirector : "directed by"
+  Movie "1" -- "*" MovieGenre    : "categorized as"
+  Movie "1" -- "*" MovieFormat   : "available in"
+  MovieActor    "*" -- "1" Actor    : "references"
+  MovieDirector "*" -- "1" Director : "references"
+  MovieGenre    "*" -- "1" Genre    : "references"
+  MovieFormat   "*" -- "1" Format   : "references"
+  RoomTypeFormat "*" -- "1" Format  : "references"
+
+  Movie "1" --o "*" Showtime : "scheduled as"
+  Room  "1" --o "*" Showtime : "hosts"
+  Format "1" --o "*" Showtime : "screened in"
+}
+
+' ==========================================
+'  NHÓM 4: GIAO DỊCH & BẮP NƯỚC
+' ==========================================
+package "Nhóm 4: Giao dịch & Bắp nước" #FDF2F8 {
+  class Booking <<Entity>> {
+    + id           : BIGINT <<PK>>
+    --
+    # booking_code : VARCHAR(50) <<Unique>>
+    # total_price  : DECIMAL(15,2)
+    # status       : VARCHAR(50)
+    # created_at   : DATETIME
+  }
+
+  class BookingDetail <<Detail>> {
+    + id    : BIGINT <<PK>>
+    --
+    # price : DECIMAL(15,2)
+  }
+
+  class Payment <<Entity>> {
+    + id             : BIGINT <<PK>>
+    --
+    # amount         : DECIMAL(15,2)
+    # method         : VARCHAR(50)
+    # transaction_id : VARCHAR(255)
+    # status         : VARCHAR(50)
+  }
+
+  class Combo <<Entity>> {
+    + id             : BIGINT <<PK>>
+    --
+    # name           : VARCHAR(255)
+    # price          : DECIMAL(10,2)
+    # stock_quantity : INT
+    # is_active      : BOOLEAN
+  }
+
+  class BookingCombo <<Detail>> {
+    + id       : BIGINT <<PK>>
+    --
+    # quantity : INT
+  }
+
+  class BranchCombo <<Junction>> {
+    + branch_id     : BIGINT <<PK, FK>>
+    + combo_id      : BIGINT <<PK, FK>>
+    --
+    # stock_quantity : INT
+  }
+
+  Customer "0..1" --o "*" Booking     : "makes"
+  Showtime "1"    --o "*" Booking     : "linked to"
+  Booking  "1"    *-- "*" BookingDetail : "has seats"
+  Booking  "1"    --o "1" Payment     : "paid via"
+  Booking  "1"    *-- "*" BookingCombo : "has FnB"
+  Seat     "1"    --o "*" BookingDetail : "reserved in"
+  Combo    "1"    --o "*" BookingCombo  : "ordered"
+  Branch   "1"    -- "*"  BranchCombo   : "stocks"
+  Combo    "1"    -- "*"  BranchCombo   : "available at"
+}
+
+' ==========================================
+'  NHÓM 5: KHUYẾN MÃI & GIÁ
+' ==========================================
+package "Nhóm 5: Khuyến mãi & Chính sách giá" #F4F6F7 {
+  class PricingRule <<Master>> {
+    + id            : BIGINT <<PK>>
+    --
+    # name          : VARCHAR(255)
+    # category      : VARCHAR(50)
+    # impact_type   : VARCHAR(20)
+    # impact_value  : DECIMAL(10,2)
+    # is_stackable  : BOOLEAN
+    # is_active     : BOOLEAN
+  }
+
+  class PricingCondition <<Detail>> {
+    + id          : BIGINT <<PK>>
+    --
+    # type        : VARCHAR(50)
+    # value       : VARCHAR(255)
+    # description : VARCHAR(255)
+  }
+
+  class SeatPrice <<Master>> {
+    + id         : BIGINT <<PK>>
+    --
+    # base_price : DECIMAL(10,2)
+  }
+
+  class Promotion <<Entity>> {
+    + id             : BIGINT <<PK>>
+    --
+    # code           : VARCHAR(50) <<Unique>>
+    # name           : VARCHAR(255)
+    # discount_type  : VARCHAR(20)
+    # discount_value : DECIMAL(10,2)
+    # start_date     : DATE
+    # end_date       : DATE
+    # usage_limit    : INT
+  }
+
+  class BranchPricingRule <<Junction>> {
+    + id        : BIGINT <<PK>>
+    --
+    # priority  : INT
+  }
+
+  PricingRule "1" *-- "*" PricingCondition    : "has conditions"
+  PricingRule "1" -- "*" BranchPricingRule    : "applied via"
+  Branch      "1" -- "*" BranchPricingRule    : "uses"
+  SeatType    "1" --o "*" SeatPrice           : "priced by"
+  Format      "1" --o "*" SeatPrice           : "priced by"
+}
+@enduml
