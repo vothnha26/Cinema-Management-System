@@ -28,6 +28,16 @@ public class CinemaApplication {
     }
 
     @Bean
+    public org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy flywayMigrationStrategy() {
+        return flyway -> {
+            // Tự động sửa lỗi dòng migration bị hỏng (failed migration) trong flyway_schema_history
+            flyway.repair();
+            // Tiếp tục migrate
+            flyway.migrate();
+        };
+    }
+
+    @Bean
     public CommandLineRunner initAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             User admin = userRepository.findByUsername("admin").orElse(new User());
