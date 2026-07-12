@@ -1,0 +1,31 @@
+@startuml ticket_checkin_sequence
+title Sequence Diagram: Xác thực mã vé & Check-in
+
+actor Staff
+participant "TicketWorkflowManager" as TWM
+participant "BookingRepository" as BR
+database "Database" as DB
+
+Staff -> TWM: lookupByCode(bookingCode)
+activate TWM
+TWM -> BR: findByBookingCode(code)
+BR -> DB: query
+DB --> BR: Booking Entity
+BR --> TWM: Optional<Booking>
+TWM --> Staff: Booking Details (Movie, Room, Status)
+
+Staff -> TWM: checkin(bookingCode)
+TWM -> TWM: validateTransition(CurrentStatus, CHECKED_IN)
+note right: Prevents double check-in or check-in on cancelled tickets
+
+alt Validation Success
+    TWM -> BR: save(booking.setStatus(CHECKED_IN))
+    BR -> DB: Update Status
+    DB --> BR: success
+    TWM --> Staff: Check-in Successful (Green)
+else Validation Fail (e.g. Already checked-in)
+    TWM --> Staff: Error Message (AppException)
+end
+deactivate TWM
+
+@enduml

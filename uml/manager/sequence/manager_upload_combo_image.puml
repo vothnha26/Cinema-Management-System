@@ -1,0 +1,37 @@
+@startuml Manager Upload Combo Image
+title Sequence Diagram: Quản lý ảnh thực tế cho Combo (Task 5.1)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-combos.html" as UI
+control "ComboController" as Ctrl
+entity "ComboMediaService" as MediaSvc
+entity "CloudinaryService" as Cloudinary
+entity "ComboService" as Svc
+database "Database" as DB
+
+== Tải lên ảnh Combo mới ==
+Manager -> UI: Chọn tệp hình ảnh đồ ăn
+UI -> UI: Hiển thị Preview ảnh local
+
+Manager -> UI: Nhấn "Lưu Combo"
+UI -> Ctrl: POST /api/combos (FormData: request + image)
+activate Ctrl
+
+Ctrl -> MediaSvc: uploadComboImage(imageFile)
+activate MediaSvc
+MediaSvc -> Cloudinary: upload(file, folder="combos")
+Cloudinary --> MediaSvc: Secure URL
+MediaSvc --> Ctrl: https://cloudinary.com/...
+deactivate MediaSvc
+
+Ctrl -> Svc: create/updateCombo(request, imageUrl)
+Svc -> DB: save(combo)
+Svc --> Ctrl: ComboResponse
+deactivate Svc
+
+Ctrl --> UI: 201 Created (Kèm URL ảnh thật)
+deactivate Ctrl
+
+UI -> Manager: Hiển thị Card Combo với ảnh vừa upload
+@enduml

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarCinema – Quản Lý Chi Nhánh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; }
+        .main-content { padding: 40px; margin-left: 280px; }
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
+        .custom-table { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+        .table { color: var(--text); margin-bottom: 0; vertical-align: middle; }
+        .table thead { background: var(--surface); }
+        .table th { border: none; padding: 20px; font-weight: 600; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+        .table td { border-top: 1px solid var(--border); padding: 20px; }
+        .btn-add { background: var(--gradient); border: none; color: #fff; padding: 10px 24px; border-radius: 10px; font-weight: 600; }
+        .action-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-muted); width: 36px; height: 36px; border-radius: 8px; transition: all 0.2s; }
+        .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
+        .form-control-custom { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 10px; padding: 10px 16px; }
+        .form-control-custom:focus { border-color: var(--accent); background: var(--surface); color: var(--text); box-shadow: none; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar"></aside>
+
+<main class="main-content">
+    <div class="header-section">
+        <div>
+            <h1 class="page-title">Quản lý hệ thống chi nhánh</h1>
+            <p class="text-muted m-0">Thiết lập và vận hành các rạp chiếu phim trong chuỗi StarCinema</p>
+        </div>
+        <button class="btn-add" onclick="showCreateModal()">
+            <i class="bi bi-plus-circle-fill me-2"></i> THÊM CHI NHÁNH
+        </button>
+    </div>
+
+    <div class="custom-table mt-4">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tên chi nhánh</th>
+                    <th>Địa chỉ / Thành phố</th>
+                    <th>Số điện thoại</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="branchTableBody">
+                <!-- Data loaded via JS -->
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- Modal -->
+<div class="modal fade" id="branchModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">Thông tin chi nhánh</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-4">
+                <form id="branchForm">
+                    <div class="mb-3">
+                        <label class="form-label">Tên chi nhánh</label>
+                        <input type="text" id="name" class="form-control form-control-custom" placeholder="VD: StarCinema Thủ Đức" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Địa chỉ</label>
+                        <input type="text" id="address" class="form-control form-control-custom" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label class="form-label">Thành phố</label>
+                            <input type="text" id="city" class="form-control form-control-custom" required>
+                        </div>
+                        <div class="col">
+                            <label class="form-label">Điện thoại</label>
+                            <input type="text" id="phone" class="form-control form-control-custom" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="isActive" checked>
+                            <label class="form-check-label">Đang hoạt động</label>
+                        </div>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-danger py-2 fw-bold">LƯU THAY ĐỔI</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+    let branchModal;
+    let editId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        branchModal = new bootstrap.Modal(document.getElementById('branchModal'));
+        loadBranches();
+
+        document.getElementById('branchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('name').value,
+                address: document.getElementById('address').value,
+                city: document.getElementById('city').value,
+                phone: document.getElementById('phone').value,
+                isActive: document.getElementById('isActive').checked
+            };
+
+            const url = editId ? `/admin/branches/${editId}` : '/admin/branches';
+            const method = editId ? 'put' : 'post';
+
+            const response = await api[method](url, data);
+            if (response.success) {
+                branchModal.hide();
+                loadBranches();
+            }
+        });
+    });
+
+    async function loadBranches() {
+        const response = await api.get('/admin/branches');
+        if (response.success) {
+            const tbody = document.getElementById('branchTableBody');
+            tbody.innerHTML = response.data.map(b => `
+                <tr>
+                    <td><div class="fw-bold">${b.name}</div></td>
+                    <td>${b.address}, ${b.city}</td>
+                    <td>${b.phone}</td>
+                    <td>
+                        <span class="badge ${b.isActive ? 'bg-success' : 'bg-secondary'}">
+                            ${b.isActive ? 'Hoạt động' : 'Tạm dừng'}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <button class="action-btn me-2" onclick="editBranch(${b.id})">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="action-btn text-danger" onclick="deleteBranch(${b.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    function showCreateModal() {
+        editId = null;
+        document.getElementById('modalTitle').innerText = 'Thêm chi nhánh mới';
+        document.getElementById('branchForm').reset();
+        document.getElementById('isActive').checked = true;
+        branchModal.show();
+    }
+
+    async function editBranch(id) {
+        editId = id;
+        const response = await api.get(`/admin/branches`); // Use load all and filter for simplicity or create get by id
+        const branch = response.data.find(b => b.id === id);
+        if (branch) {
+            document.getElementById('modalTitle').innerText = 'Chỉnh sửa chi nhánh';
+            document.getElementById('name').value = branch.name;
+            document.getElementById('address').value = branch.address;
+            document.getElementById('city').value = branch.city;
+            document.getElementById('phone').value = branch.phone;
+            document.getElementById('isActive').checked = branch.isActive;
+            branchModal.show();
+        }
+    }
+
+    async function deleteBranch(id) {
+        if (confirm('Xác nhận xóa chi nhánh này? Mọi dữ liệu phòng chiếu liên quan sẽ bị ảnh hưởng!')) {
+            const response = await api.delete(`/admin/branches/${id}`);
+            if (response.success) loadBranches();
+        }
+    }
+</script>
+</body>
+</html>

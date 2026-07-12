@@ -1,0 +1,21 @@
+@startuml staff_ticket_validation_activity
+title Activity Diagram: Staff Ticket Validation
+
+start
+:Staff selects "Ticket Validation";
+:System activates QR/Barcode Scanner or Manual Input;
+:Staff scans or inputs Booking Code;
+:System fetches Booking Details;
+if (Booking Exists & Status == PAID?) then (Yes)
+  if (Is Showtime valid (within timeframe)?) then (Yes)
+    :System updates Booking Status to "CHECKED_IN";
+    :System displays "Validation Success (Green check)";
+    :Staff allows Customer to enter Room;
+  else (No)
+    :System displays "Invalid Time (Too early or expired)";
+  endif
+else (No)
+  :System displays "Invalid Ticket or Already Checked-In";
+endif
+stop
+@enduml

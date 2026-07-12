@@ -1,0 +1,29 @@
+@startuml staff_pos_activity
+title Activity Diagram: Staff POS Booking
+
+start
+:Staff logs into POS System;
+:System displays Movie & Showtime List;
+:Staff selects Showtime;
+:System displays Seat Layout;
+:Staff selects Seats;
+if (Seats Available?) then (Yes)
+  :Staff selects Combos (Optional);
+  :Staff confirms Booking;
+  :System calculates Total Price (Base + Decorators);
+  :Staff selects Payment Method (Cash, Card);
+  if (Payment Successful?) then (Yes)
+    :System saves Booking & Details;
+    :System saves Payment Record;
+    :System triggers Ticket Booked Event;
+    :System generates Ticket/Receipt;
+    :Staff prints and hands Ticket to Customer;
+  else (No)
+    :System cancels transaction;
+    :System shows Payment Failed;
+  endif
+else (No)
+  :System shows "Seats already booked";
+endif
+stop
+@enduml

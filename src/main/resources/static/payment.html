@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán An Toàn | StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080B14;
+            --surface: #0F121F;
+            --card: #161B2E;
+            --border: #252A3D;
+            --accent: #E5133A;
+            --text: #E8EAF0;
+            --text-muted: #7B82A0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .payment-container {
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            background: var(--surface);
+            padding: 50px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .payment-container {
+                grid-template-columns: 1fr;
+                padding: 30px;
+            }
+        }
+
+        .qr-section {
+            background: #fff;
+            padding: 30px;
+            border-radius: 30px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .info-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .brand-logo {
+            height: 35px;
+            margin-bottom: 30px;
+        }
+
+        .payment-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(229, 19, 58, 0.1);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            width: fit-content;
+        }
+
+        .amount-display {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .booking-code {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .instruction-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 20px;
+            margin-top: 30px;
+        }
+
+        .instruction-item {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .instruction-item:last-child { margin-bottom: 0; }
+
+        .instruction-number {
+            width: 24px;
+            height: 24px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .instruction-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .instruction-text b { color: var(--text); }
+
+        .timer-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 10px;
+            margin-top: 30px;
+            overflow: hidden;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 100%;
+            transition: width 1s linear;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 12px 30px;
+            border-radius: 15px;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: 0.3s;
+        }
+
+        .btn-cancel:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Success Animation */
+        .success-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .success-overlay.active { display: flex; }
+
+        .success-icon {
+            font-size: 5rem;
+            color: #22c55e;
+            margin-bottom: 20px;
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="payment-container" id="paymentContent">
+    <div class="qr-section">
+        <div class="mb-3">
+            <img src="https://sepay.vn/assets/img/logos/sepay-logo.png" height="20">
+        </div>
+        <img src="" id="qrImage" class="qr-image" alt="QR Thanh toán">
+        <div class="mt-3 text-dark small fw-bold">
+            <i class="bi bi-qr-code-scan me-2"></i>Quét mã bằng App Ngân hàng bất kỳ
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <img src="/static/images/logo.png" class="brand-logo" alt="StarCinema" onerror="this.src='https://placehold.co/150x40/080B14/E5133A?text=StarCinema'">
+            <img src="https://sepay.vn/assets/img/logos/sepay-logo.png" height="20">
+        </div>
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+            ĐANG CHỜ THANH TOÁN...
+        </div>
+
+        <div class="amount-display" id="displayAmount">0đ</div>
+        <div class="booking-code" id="displayCode">MÃ: --</div>
+
+        <div class="detail-row">
+            <span class="detail-label">Nội dung chuyển khoản</span>
+            <span class="detail-value text-uppercase" id="transferContent">--</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Ngân hàng thụ hưởng</span>
+            <span class="detail-value" id="bankName">--</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">Chủ tài khoản</span>
+            <span class="detail-value" id="accountName">STAR CINEMA CORP</span>
+        </div>
+
+        <div class="instruction-card">
+            <div class="instruction-item">
+                <div class="instruction-number">1</div>
+                <div class="instruction-text">Mở ứng dụng <b>Ngân hàng</b> hoặc <b>Ví điện tử</b></div>
+            </div>
+            <div class="instruction-item">
+                <div class="instruction-number">2</div>
+                <div class="instruction-text">Chọn tính năng <b>Quét mã QR</b> và quét mã bên cạnh</div>
+            </div>
+            <div class="instruction-item">
+                <div class="instruction-number">3</div>
+                <div class="instruction-text">Giữ nguyên <b>Nội dung chuyển khoản</b> để được duyệt tự động</div>
+            </div>
+        </div>
+
+        <div class="timer-bar">
+            <div class="timer-fill" id="timerFill"></div>
+        </div>
+        <div class="text-center">
+            <button class="btn btn-cancel" onclick="cancelPayment()">HỦY GIAO DỊCH</button>
+        </div>
+    </div>
+</div>
+
+<div class="success-overlay" id="successOverlay">
+    <div class="success-icon"><i class="bi bi-check-circle-fill"></i></div>
+    <h1 class="fw-800">THANH TOÁN THÀNH CÔNG!</h1>
+    <p class="text-muted">Hệ thống đã ghi nhận thanh toán của bạn.<br>Đang chuẩn bị vé...</p>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const bookingCode = urlParams.get('bookingCode');
+    
+    if (!bookingCode) {
+        alert('Không tìm thấy mã đặt vé!');
+        window.location.href = '/';
+    }
+
+    let timeLeft = 600; // 10 phút
+    const totalTime = 600;
+    let stompClient = null;
+
+    async function init() {
+        try {
+            // 1. Lấy thông tin checkout từ backend
+            const checkoutRes = await api.post(`/payments/${bookingCode}/checkout`);
+            const configRes = await api.get('/public/config/payment');
+            
+            const res = checkoutRes.success ? checkoutRes.data : checkoutRes;
+            const config = configRes.success ? configRes.data : configRes;
+
+            if (!res || !res.amount) {
+                throw new Error("Không thể lấy thông tin thanh toán cho mã này.");
+            }
+            
+            document.getElementById('qrImage').src = res.qrCodeUrl || res.checkoutUrl;
+            document.getElementById('displayAmount').innerText = (res.amount || 0).toLocaleString() + 'đ';
+            document.getElementById('displayCode').innerText = 'MÃ: ' + (res.bookingCode || bookingCode);
+            document.getElementById('transferContent').innerText = (config.prefix || 'SEVQR ') + (res.bookingCode || bookingCode);
+            document.getElementById('bankName').innerText = config.bankName || 'Ngân hàng';
+            
+            // 2. Kết nối WebSocket để nhận kết quả tức thì
+            connectWebSocket();
+            
+            // 3. Fallback: Vẫn giữ Polling nhưng giãn cách xa hơn (đề phòng sự cố WS)
+            startPolling();
+            
+            startTimer();
+        } catch (e) {
+            console.error('Payment Init Error:', e);
+            alert('Lỗi tải thông tin thanh toán: ' + (e.message || 'Vui lòng thử lại'));
+        }
+    }
+
+    function connectWebSocket() {
+        const socket = new SockJS('/ws-cinema');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null; // Tắt log debug để console sạch
+        stompClient.connect({}, () => {
+            console.log('>>> Connected to WebSocket for Payment:', bookingCode);
+            stompClient.subscribe('/topic/payment/' + bookingCode, (msg) => {
+                const data = JSON.parse(msg.body);
+                if (data.status === 'SUCCESS') {
+                    console.log('>>> WebSocket received SUCCESS!');
+                    showSuccess();
+                }
+            });
+        }, (err) => {
+            console.warn('WebSocket connection failed, falling back to polling.', err);
+        });
+    }
+
+    function startTimer() {
+        const fill = document.getElementById('timerFill');
+        const interval = setInterval(() => {
+            timeLeft--;
+            const pct = (timeLeft / totalTime) * 100;
+            if (fill) fill.style.width = pct + '%';
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                alert('Thời gian thanh toán đã hết!');
+                cancelPayment();
+            }
+        }, 1000);
+    }
+
+    let pollInterval;
+    function startPolling() {
+        pollInterval = setInterval(async () => {
+            try {
+                const res = await api.get(`/bookings/${bookingCode}`);
+                if (res.status === 'CONFIRMED' || res.status === 'CHECKED_IN') {
+                    showSuccess();
+                }
+            } catch (e) { console.error('Polling error', e); }
+        }, 5000); // Polling mỗi 5s làm phương án dự phòng
+    }
+
+    function showSuccess() {
+        if (pollInterval) clearInterval(pollInterval);
+        if (stompClient) stompClient.disconnect();
+        
+        document.getElementById('successOverlay').classList.add('active');
+        setTimeout(() => {
+            window.location.href = '/history.html';
+        }, 3000);
+    }
+
+    function cancelPayment() {
+        if (confirm('Bạn có chắc muốn hủy giao dịch này?')) {
+            window.location.href = '/';
+        }
+    }
+
+    init();
+</script>
+
+</body>
+</html>

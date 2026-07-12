@@ -1,0 +1,82 @@
+@startuml starcinema_class_diagram
+package "com.example.cinema.model" {
+  
+  package "entity" {
+    class User {
+      +Long id
+      +String username
+      +String password
+      +Role role
+      +Boolean status
+    }
+
+    class Customer {
+      +Long id
+      +String fullName
+      +String phone
+      +MembershipTier membershipTier
+      +Integer points
+    }
+
+    class Movie {
+      +Long id
+      +String title
+      +String description
+      +Integer duration
+      +LocalDate releaseDate
+      +MovieStatus status
+    }
+
+    class Showtime {
+      +Long id
+      +LocalDateTime startTime
+      +LocalDateTime endTime
+      +ShowtimeStatus status
+    }
+
+    class Room {
+      +Long id
+      +String name
+      +RoomType roomType
+      +Integer totalSeats
+    }
+
+    class Seat {
+      +Long id
+      +String seatNumber
+      +SeatType seatType
+    }
+
+    class Booking {
+      +Long id
+      +LocalDateTime bookingDate
+      +BigDecimal totalAmount
+      +BookingStatus status
+    }
+
+    class Payment {
+      +Long id
+      +BigDecimal amount
+      +PaymentMethod method
+      +PaymentStatus status
+    }
+  }
+
+  package "enums" {
+    enum Role
+    enum MembershipTier
+    enum BookingStatus
+    enum SeatType
+    enum RoomType
+  }
+}
+
+User "1" -- "0..1" Customer : has
+Movie "1" -- "*" Showtime : scheduled in
+Room "1" -- "*" Showtime : hosts
+Room "1" -- "*" Seat : contains
+Showtime "1" -- "*" Booking : generates
+Customer "1" -- "*" Booking : makes
+Booking "1" -- "1" Payment : has
+Booking "*" -- "*" Seat : reserves
+@enduml

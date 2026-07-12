@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhật ký hệ thống – StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #E8EAF0; --text-muted: #7B82A0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; margin: 0; }
+        
+        .main-content { padding: 40px; }
+        .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; }
+        .audit-table-container { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .table { margin: 0; color: var(--text); border-color: var(--border); }
+        .table thead { background: var(--surface); }
+        .table th { border: none; padding: 16px 24px; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        .table td { border-top: 1px solid var(--border); padding: 16px 24px; vertical-align: middle; font-size: 0.9rem; }
+        .action-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+        .bg-create { background: rgba(80,200,100,0.1); color: #50C864; }
+        .bg-update { background: rgba(100,180,255,0.1); color: #64B4FF; }
+        .bg-delete { background: rgba(229,19,58,0.1); color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar"></aside>
+
+<main class="main-content">
+    <div class="header-section mb-4">
+        <h1 class="page-title">Nhật ký & Kiểm toán</h1>
+        <p class="text-muted">Ghi lại mọi thao tác thay đổi dữ liệu nhạy cảm trên hệ thống</p>
+    </div>
+
+    <div class="audit-table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Người dùng</th>
+                    <th>Hành động</th>
+                    <th>Đối tượng</th>
+                    <th>Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody id="auditList">
+                <!-- Data will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/auth-guard.js"></script>
+<script src="js/sidebar.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', loadLogs);
+
+    async function loadLogs() {
+        const response = await api.get('/audit-logs');
+        if (response.success) {
+            renderLogs(response.data);
+        }
+    }
+
+    function renderLogs(logs) {
+        const container = document.getElementById('auditList');
+        if (!logs || logs.length === 0) {
+            container.innerHTML = '<tr><td colspan="5" class="text-center p-5 text-muted">Chưa có nhật ký hoạt động nào</td></tr>';
+            return;
+        }
+
+        container.innerHTML = logs.map(log => {
+            const time = new Date(log.timestamp).toLocaleString('vi-VN');
+            const actionClass = getActionClass(log.action);
+            return `
+                <tr>
+                    <td class="text-muted">${time}</td>
+                    <td class="fw-bold">${log.username}</td>
+                    <td><span class="action-badge ${actionClass}">${log.action}</span></td>
+                    <td class="text-muted">${log.target}</td>
+                    <td style="font-size: 0.8rem; font-family: monospace;">${log.detail}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function getActionClass(action) {
+        if (action.includes('CREATE')) return 'bg-create';
+        if (action.includes('UPDATE')) return 'bg-update';
+        if (action.includes('DELETE')) return 'bg-delete';
+        return 'bg-secondary bg-opacity-10 text-muted';
+    }
+</script>
+</body>
+</html>

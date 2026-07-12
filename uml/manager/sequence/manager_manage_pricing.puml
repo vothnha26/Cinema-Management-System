@@ -1,0 +1,37 @@
+@startuml Manager Manage Pricing
+title Sequence Diagram: Quản lý Bảng giá & Pricing Engine (Task 4)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-pricing.html" as UI
+control "PricingController" as Ctrl
+entity "PricingService" as Svc
+entity "PricingEngine" as Engine
+entity "SeatPriceRepository" as Repo
+
+== Cấu hình bảng giá ==
+Manager -> UI: Cập nhật đơn giá cho loại ghế/phòng
+UI -> Ctrl: PUT /api/pricing (SeatPriceRequest)
+activate Ctrl
+Ctrl -> Svc: updateSeatPrice(request)
+Svc -> Repo: save(seatPrice)
+Svc --> Ctrl: 200 OK
+Ctrl --> UI: Thông báo thành công
+deactivate Ctrl
+
+== Tính toán giá vé (Dành cho Booking sau này) ==
+[-> Svc: calculateTicketPrice(showtime, seat)
+activate Svc
+Svc -> Engine: calculate(context)
+activate Engine
+
+Engine -> Engine: Apply SeatTypeStrategy (VIP/Couple surcharge)
+Engine -> Engine: Apply RoomTypeStrategy (IMAX/4DX surcharge)
+Engine -> Engine: Apply DateTimeStrategy (Weekend surcharge)
+
+Engine --> Svc: Final Price
+deactivate Engine
+[<-- Svc: Final Price
+deactivate Svc
+
+@enduml

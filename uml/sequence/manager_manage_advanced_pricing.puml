@@ -1,0 +1,41 @@
+@startuml
+title Quy trình tính giá vé động (Base Price + Pricing Rules)
+
+actor "Nhân viên/Khách hàng" as User
+participant "BookingController/POS" as Controller
+participant "PricingService" as PricingService
+participant "PricingRuleRepository" as RuleRepo
+participant "BasePriceProvider" as BasePrice
+participant "PriceDecoratorFactory" as Factory
+participant "PriceDecorator" as Decorator
+
+User -> Controller: Chọn ghế & Suất chiếu
+Controller -> PricingService: calculateTicketPrice(showtime, seat)
+
+PricingService -> RuleRepo: findActiveRulesByContext(date, roomType, format, seatType)
+activate RuleRepo
+RuleRepo --> PricingService: List<PricingRule>
+deactivate RuleRepo
+
+PricingService -> BasePrice: getBasePrice(seatType, roomType)
+activate BasePrice
+BasePrice --> PricingService: initialPrice
+deactivate BasePrice
+
+PricingService -> Factory: createDecoratorChain(initialPrice, rules)
+activate Factory
+loop Mỗi PricingRule
+    Factory -> Decorator: wrap(currentDecorator, rule)
+end
+Factory --> PricingService: finalDecorator
+deactivate Factory
+
+PricingService -> Decorator: calculate()
+activate Decorator
+note right: Decorator sẽ cộng dồn (Additive) \nhoặc nhân tỉ lệ (Percentage) \ntheo từng mắt xích.
+Decorator --> PricingService: finalPrice
+deactivate Decorator
+
+PricingService --> Controller: finalPrice
+Controller --> User: Hiển thị giá vé
+@enduml

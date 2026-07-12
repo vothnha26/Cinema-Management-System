@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chiến lược Giá thông minh – StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <style>
+        :root {
+          --bg: #05080F; --surface: #0D1117; --card: #161B2E; --border: #30363D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #FFFFFF; --text-muted: #CBD5E0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+        }
+        body { background: var(--bg); color: var(--text) !important; font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+        .main-content { padding: 40px; color: var(--text); }
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; color: #fff !important; }
+        
+        .nav-tabs { border: none; margin-bottom: 30px; gap: 20px; }
+        .nav-link { color: var(--text-muted) !important; font-weight: 700; border: none !important; padding: 12px 0; background: transparent !important; }
+        .nav-link.active { color: var(--accent) !important; }
+        .nav-link.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--accent); border-radius: 10px; }
+
+        .table-container { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .pricing-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: var(--text) !important; }
+        .pricing-table th { background: #1A202C; padding: 15px; color: var(--text-muted) !important; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border); text-align: center; }
+        .pricing-table td { padding: 15px; border-bottom: 1px solid var(--border); text-align: center; color: var(--text) !important; }
+        .room-type-cell { text-align: left !important; font-weight: 700; color: #fff !important; }
+        .price-val-sm { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; color: var(--accent-gold) !important; }
+
+        /* RULE CARDS */
+        .rule-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; transition: 0.3s; position: relative; overflow: hidden; height: 100%; color: var(--text); }
+        .rule-card::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--accent); }
+        .rule-impact-lg { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; color: var(--accent-gold) !important; }
+
+        /* COMPACT MODE */
+        .rule-card-compact { padding: 10px 16px !important; border-radius: 10px !important; margin-bottom: 8px !important; border-width: 1.2px !important; }
+        .rule-card-compact .rule-impact-lg { font-size: 1.1rem !important; }
+        .rule-card-compact .rule-details { display: none !important; }
+        .rule-card-compact h6 { font-size: 0.85rem !important; margin: 0 !important; color: #fff !important; }
+
+        .form-control, .form-select, textarea { background: #05080F !important; border: 1.5px solid #30363D !important; color: #fff !important; border-radius: 10px; font-size: 0.9rem; }
+        .modal-content { background: #0D1117; border: 1px solid var(--border); border-radius: 20px; color: var(--text) !important; }
+        .btn-add-rule { background: var(--gradient); border: none; color: #fff !important; padding: 10px 20px; border-radius: 10px; font-weight: 700; }
+        
+        .drag-handle { cursor: grab !important; }
+        .sortable-ghost { opacity: 0.3; background: var(--accent) !important; }
+
+        .quick-sim-box { background: rgba(229,19,58,0.05); border: 1px dashed var(--accent); padding: 20px; border-radius: 16px; margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar"></aside>
+
+<main class="main-content">
+    <div class="header-section">
+        <div>
+            <h1 class="page-title">CHÍNH SÁCH GIÁ VÉ</h1>
+            <p class="text-muted m-0 small text-uppercase fw-bold">Thiết lập và kiểm thử tháp ưu tiên giá vé</p>
+        </div>
+        <div class="d-flex gap-3 align-items-center">
+            <button class="btn btn-outline-warning border-warning fw-bold rounded-pill px-4 text-warning" onclick="openFullMatrixPreview()">
+                <i class="bi bi-grid-3x3 me-2"></i>XEM MA TRẬN GIÁ CUỐI
+            </button>
+            <button class="btn-add-rule" onclick="openRuleModal()"><i class="bi bi-plus-lg me-2"></i>TẠO QUY TẮC</button>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs" id="pricingTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabMatrix">MA TRẬN GIÁ GỐC</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRules">QUY TẮC NÂNG CAO</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- TAB 1: BASE MATRIX -->
+        <div class="tab-pane fade show active" id="tabMatrix">
+            <div class="table-container">
+                <table class="pricing-table">
+                    <thead><tr id="matrixHeader"></tr></thead>
+                    <tbody id="pricingMatrixBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 2: ADVANCED RULES -->
+        <div class="tab-pane fade" id="tabRules">
+            <!-- QUICK SIMULATOR -->
+            <div class="quick-sim-box">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-info mb-2 text-uppercase">Giá gốc giả lập (VNĐ)</label>
+                        <input type="number" id="quickSimBase" class="form-control form-control-lg border-info" value="89000" oninput="runQuickSim()">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-bold text-success mb-2 text-uppercase">Giá cuối dự kiến</label>
+                        <div id="quickSimResult" class="form-control form-control-lg bg-success bg-opacity-10 text-success fw-bold border-success fs-4" style="height: 54px; line-height: 28px;">89,000đ</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enableReorder" onchange="toggleReorderMode(this.checked)">
+                                <label class="form-check-label fw-bold text-info small" for="enableReorder">CHẾ ĐỘ SẮP XẾP ƯU TIÊN</label>
+                            </div>
+                            <div id="reorderActions" style="display:none" class="d-flex gap-2">
+                                <button class="btn btn-sm btn-danger fw-bold px-3 rounded-pill" onclick="saveReorder()">LƯU THỨ TỰ</button>
+                                <button class="btn btn-sm btn-outline-secondary px-3 rounded-pill" onclick="cancelReorder()">HỦY</button>
+                            </div>
+                        </div>
+                        <p class="small text-muted mt-2 mb-0 italic" id="reorderHint" style="display:none"><i class="bi bi-info-circle me-1"></i>Kéo thả để đổi ưu tiên. Thứ tự tính từ trên xuống.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="globalHeader" class="mb-3" style="display:none"><span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2">CÁC QUY TẮC PHỤ THU & GIẢM GIÁ</span></div>
+            <div id="globalRulesContainer" class="row g-3"></div>
+            <div id="noRulesMsg" class="text-center py-5 text-muted" style="display:none">CHƯA CÓ QUY TẮC GIÁ NÀO</div>
+        </div>
+    </div>
+</main>
+
+<!-- MODAL: BASE PRICE -->
+<div class="modal fade" id="priceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">CẬP NHẬT GIÁ VÉ</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="priceForm">
+                    <input type="hidden" id="roomType">
+                    <input type="hidden" id="seatType">
+                    <div class="mb-3">
+                        <label class="small fw-bold text-muted text-uppercase">Đối tượng</label>
+                        <div id="targetDisplay" class="fw-bold text-danger"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">GIÁ VÉ (VNĐ)</label>
+                        <input type="number" id="priceInput" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-danger w-100 py-3 fw-bold" onclick="savePrice()">LƯU THAY ĐỔI</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: RULE -->
+<div class="modal fade" id="ruleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">QUY TẮC GIÁ</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="ruleForm">
+                    <input type="hidden" id="ruleId">
+                    <input type="hidden" id="rulePriority">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="small fw-bold">TÊN QUY TẮC</label>
+                            <input type="text" id="ruleName" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold">LOẠI</label>
+                            <select id="ruleCategory" class="form-select">
+                                <option value="BASE">CƠ BẢN</option>
+                                <option value="SURCHARGE">PHỤ THU</option>
+                                <option value="DISCOUNT">GIẢM GIÁ</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold">TÁC ĐỘNG</label>
+                            <select id="ruleImpactType" class="form-select">
+                                <option value="ADDITIVE">Cộng (+)</option>
+                                <option value="SUBTRACTIVE">Trừ (-)</option>
+                                <option value="PERCENTAGE">Phần trăm (x)</option>
+                                <option value="FIXED">Cố định (=)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold">GIÁ TRỊ</label>
+                            <input type="number" id="ruleImpactValue" step="0.01" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold">GIỚI HẠN GIẢM TỐI ĐA (Đ)</label>
+                            <input type="number" id="ruleMaxDiscount" class="form-control" placeholder="Không chặn">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end pb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ruleStackable" checked>
+                                <label class="form-check-label small fw-bold">CỘNG DỒN</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end pb-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="ruleActive" checked>
+                                <label class="form-check-label small fw-bold text-success">ĐANG HOẠT ĐỘNG</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="small fw-bold">MÔ TẢ</label>
+                            <textarea id="ruleDesc" class="form-control" rows="1"></textarea>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <label class="small fw-bold text-info mb-2 d-block">ĐIỀU KIỆN ÁP DỤNG</label>
+                            <div id="conditionsContainer"></div>
+                            <button type="button" class="btn btn-sm btn-outline-info mt-2" onclick="addConditionRow()">+ THÊM ĐIỀU KIỆN</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-danger w-100 py-3 fw-bold" onclick="saveRule()">LƯU QUY TẮC</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: FULL MATRIX PREVIEW -->
+<div class="modal fade" id="fullMatrixModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold text-warning"><i class="bi bi-grid-3x3-gap-fill me-2"></i>MA TRẬN GIÁ CUỐI CÙNG (SAU ÁP DỤNG QUY TẮC)</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="table-container">
+                    <table class="pricing-table">
+                        <thead><tr id="fullMatrixHeader"></tr></thead>
+                        <tbody id="fullMatrixBody"></tbody>
+                    </table>
+                </div>
+                <div class="mt-3 p-3 bg-dark rounded border border-secondary border-opacity-25 small text-muted">
+                    <i class="bi bi-info-circle-fill me-2 text-info"></i>Bảng giá này hiển thị: <b>Giá gốc</b> <i class="bi bi-arrow-right"></i> <b>Giá sau khi áp dụng tháp quy tắc</b> (Dựa trên cấu hình hiện tại, không tính theo giờ/ngày cụ thể).
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DETAILED PREVIEW -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-info"><i class="bi bi-calculator-fill me-2"></i>GIẢ LẬP GIÁ VÉ CHI TIẾT</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-5 border-end border-secondary border-opacity-25">
+                        <div class="mb-3"><label class="small fw-bold text-muted">NGÀY CHIẾU</label><input type="date" id="prevDate" class="form-control" onchange="runPreview()"></div>
+                        <div class="mb-3"><label class="small fw-bold text-muted">GIỜ CHIẾU</label><input type="time" id="prevTime" class="form-control" value="19:00" onchange="runPreview()"></div>
+                        <div class="mb-3"><label class="small fw-bold text-muted">LOẠI PHÒNG</label><select id="prevRoomType" class="form-select" onchange="runPreview()"></select></div>
+                        <div class="mb-3"><label class="small fw-bold text-muted">LOẠI GHẾ</label><select id="prevSeatType" class="form-select" onchange="runPreview()"></select></div>
+                        <div class="mb-3"><label class="small fw-bold text-muted">HẠNG THÀNH VIÊN</label><select id="prevMemberTier" class="form-select" onchange="runPreview()"><option value="GUEST">GUEST</option><option value="STANDARD">STANDARD</option><option value="SILVER">SILVER</option><option value="GOLD">GOLD</option><option value="PLATINUM">PLATINUM</option></select></div>
+                        <div class="mb-3"><label class="small fw-bold text-muted">ĐỊNH DẠNG</label><select id="prevFormat" class="form-select" onchange="runPreview()"><option value="2D">2D</option><option value="3D">3D</option><option value="IMAX">IMAX</option><option value="4DX">4DX</option></select></div>
+                    </div>
+                    <div class="col-md-7">
+                        <div id="previewStepsContainer" class="p-2"></div>
+                        <div class="mt-4 pt-3 border-top border-secondary border-opacity-25 text-center">
+                            <div class="text-muted small mb-1">GIÁ VÉ DỰ KIẾN</div>
+                            <div id="prevFinalPrice" class="display-5 fw-bold text-danger" style="font-family:'Bebas Neue'">0đ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<template id="conditionRowTemplate">
+    <div class="condition-row row g-2 mb-2 align-items-center">
+        <div class="col-4">
+            <select class="form-select form-select-sm cond-type" onchange="updateConditionValueInput(this)">
+                <option value="DAY_OF_WEEK">Thứ</option>
+                <option value="TIME_RANGE">Giờ</option>
+                <option value="DATE_RANGE">Ngày</option>
+                <option value="ROOM_TYPE">Phòng</option>
+                <option value="SEAT_TYPE">Ghế</option>
+                <option value="BRANCH">Rạp</option>
+                <option value="MEMBER_TIER">Hạng</option>
+                <option value="SHOW_FORMAT">Định dạng</option>
+            </select>
+        </div>
+        <div class="col-7 cond-value-container"></div>
+        <div class="col-1 text-end">
+            <button type="button" class="btn btn-sm text-danger p-0 border-0" onclick="this.closest('.condition-row').remove()"><i class="bi bi-trash"></i></button>
+        </div>
+    </div>
+</template>
+
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/ui-utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="/js/pricing.js"></script>
+<script>
+    // Logic bổ sung cho MANAGER khi khởi tạo trang (nếu cần)
+    document.addEventListener('DOMContentLoaded', () => {
+        // Có thể thêm code khởi tạo riêng cho trang ở đây
+    });
+</script>
+</body>
+</html>

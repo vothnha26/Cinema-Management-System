@@ -1,0 +1,28 @@
+@startuml Manager Movie Activity
+title Quản lý Phim (Member 2)
+skinparam theme cerulean
+
+start
+:Truy cập trang Quản lý phim;
+:Nhấn nút "Thêm phim mới";
+:Nhập thông tin phim (Tên, Mô tả, Đạo diễn, Diễn viên);
+:Chọn tệp ảnh Poster;
+
+if (Ảnh hợp lệ?) then (có)
+    :Tải ảnh lên Cloudinary;
+    :Nhận URL ảnh từ Cloudinary;
+else (không)
+    :Hiển thị lỗi định dạng ảnh;
+    stop
+endif
+
+:Lưu thông tin phim vào Database;
+if (Thành công?) then (có)
+    :Hiển thị thông báo "Thành công";
+    :Cập nhật danh sách phim;
+else (lỗi)
+    :Hiển thị thông báo lỗi hệ thống;
+endif
+
+stop
+@enduml

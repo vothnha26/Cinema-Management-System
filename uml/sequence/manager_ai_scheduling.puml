@@ -1,0 +1,52 @@
+@startuml Manager AI Scheduling Sequence
+title Sequence Diagram: Đề xuất & Áp dụng lịch chiếu AI (Manager)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-scheduling.html" as UI
+control "SchedulingController" as Ctrl
+entity "SchedulingService" as Svc
+entity "GeneticAlgorithm" as GA
+database "MySQL" as DB
+
+Manager -> UI: Nhập tham số (Start Date, End Date, Room Types)
+UI -> Ctrl: POST /api/scheduling/ai-suggest (SchedulingRequest)
+activate Ctrl
+
+Ctrl -> Svc: generateAISuggestions(request)
+activate Svc
+
+Svc -> DB: findActiveMovies()
+Svc -> DB: findRooms()
+
+loop Mỗi Phòng & Ngày
+    Svc -> GA: optimizeShowtime(movies, room, date)
+    activate GA
+    GA --> Svc: optimalShowtimeList
+    deactivate GA
+end
+
+Svc --> Ctrl: List<ShowtimeResponse> (Suggestions)
+deactivate Svc
+
+Ctrl --> UI: 200 OK (Danh sách đề xuất)
+deactivate Ctrl
+
+Manager -> UI: Duyệt hoặc Chỉnh sửa đề xuất
+Manager -> UI: Click "Apply Suggestions"
+
+UI -> Ctrl: POST /api/scheduling/apply-suggestions (ApplyRequest)
+activate Ctrl
+
+Ctrl -> Svc: applySuggestions(suggestions, overwrite)
+activate Svc
+
+Svc -> DB: saveAll(showtimes)
+Svc --> Ctrl: void
+deactivate Svc
+
+Ctrl --> UI: 200 OK
+deactivate Ctrl
+
+UI -> Manager: Hiển thị hoàn tất & Cập nhật UI
+@enduml

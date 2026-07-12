@@ -1,0 +1,28 @@
+@startuml customer_online_booking_activity
+title Activity Diagram: Customer Online Booking
+
+start
+:Customer browses Movies & Showtimes;
+:Customer selects a Showtime;
+:System displays Seat Layout;
+:Customer selects Seats;
+:Customer selects Combos (Optional);
+:System calculates Subtotal;
+:Customer applies Promotion/Voucher;
+:System verifies Tier & calculates Discount;
+:System calculates Final Total;
+:Customer proceeds to Checkout;
+:System generates Payment Link & redirects;
+if (Customer pays within Time Limit?) then (Yes)
+  :Payment Gateway notifies System (Webhook);
+  :System updates Booking Status to PAID;
+  :System generates E-Ticket (QR Code);
+  :System sends Email to Customer;
+  :System updates Customer Reward Points;
+else (No/Timeout)
+  :System cancels Pending Booking;
+  :System releases Seats;
+  :System notifies Customer of Timeout;
+endif
+stop
+@enduml

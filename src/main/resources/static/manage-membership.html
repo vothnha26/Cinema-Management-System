@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Thành viên – StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F1320; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --accent-gold: #F5A623; --text: #FFFFFF; --text-muted: #A0AEC0;
+          --gradient: linear-gradient(135deg, #E5133A, #8B0020);
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+        .main-content { padding: 40px; min-height: 100vh; color: var(--text); }
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+        .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; letter-spacing: 1px; margin: 0; color: #fff; }
+
+        .btn-add { background: var(--gradient); border: none; color: #fff !important; padding: 10px 24px; border-radius: 10px; font-weight: 600; transition: 0.2s; }
+        
+        .benefit-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; transition: 0.3s; position: relative; color: var(--text); }
+        .benefit-card:hover { border-color: var(--accent-gold); transform: translateY(-5px); }
+        .tier-badge { font-weight: 800; font-size: 1.2rem; margin-bottom: 15px; display: block; }
+        .tier-standard { color: var(--text-muted) !important; }
+        .tier-silver { color: #C0C0C0 !important; }
+        .tier-gold { color: #FFD700 !important; }
+        .tier-platinum { color: #E5E4E2 !important; }
+        
+        .table-container { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-top: 30px; }
+        .table { margin: 0; color: var(--text) !important; }
+        .table thead { background: var(--surface); }
+        .table th { padding: 16px 24px; border: none; color: var(--text-muted) !important; font-size: 0.8rem; text-transform: uppercase; }
+        .table td { padding: 16px 24px; border-top: 1px solid var(--border); vertical-align: middle; color: var(--text) !important; }
+
+        .modal-content { background: var(--card); border: 1px solid var(--border); border-radius: 20px; color: var(--text); }
+        .modal-header { border-bottom: 1px solid var(--border); }
+        .modal-footer { border-top: 1px solid var(--border); }
+        .form-label { color: var(--text-muted); font-weight: 600; }
+        .form-control, .form-select { background: var(--surface) !important; border: 1px solid var(--border) !important; color: #fff !important; padding: 12px; border-radius: 10px; }
+        .form-control:focus { border-color: var(--accent); background: var(--surface); color: #fff; outline: none; box-shadow: none; }
+        
+        .text-muted { color: var(--text-muted) !important; }
+        .text-white { color: #fff !important; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar"></aside>
+
+<main class="main-content">
+    <div class="header-section">
+        <div>
+            <h1 class="page-title">Cấu hình Hạng thành viên</h1>
+            <p class="text-muted m-0">Thiết lập quyền lợi giảm giá cho từng phân hạng hội viên.</p>
+        </div>
+        <button class="btn-add" onclick="openAddBenefitModal()">
+            <i class="bi bi-plus-lg me-2"></i> THÊM HẠNG MỚI
+        </button>
+    </div>
+
+    <div class="row g-4" id="benefitGrid">
+        <div class="col-12 text-center py-5 text-muted">Đang tải cấu hình...</div>
+    </div>
+
+    <div class="header-section mt-5">
+        <div>
+            <h1 class="page-title" style="font-size: 1.8rem">Danh sách Hội viên</h1>
+            <p class="text-muted m-0">Quản lý điểm thưởng và phân hạng khách hàng.</p>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Khách hàng</th>
+                    <th>Phân hạng</th>
+                    <th>Điểm hiện có</th>
+                    <th>Tổng chi tiêu</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="customerTableBody">
+                <tr><td colspan="5" class="text-center py-5 text-muted">Đang tải danh sách khách hàng...</td></tr>
+            </tbody>
+        </table>
+        <!-- Pagination UI -->
+        <div class="d-flex justify-content-between align-items-center p-3 border-top border-secondary border-opacity-25">
+            <div class="small text-muted" id="customerPageInfo">Hiển thị 0 - 0 của 0 hội viên</div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0" id="customerPagination"></ul>
+            </nav>
+        </div>
+    </div>
+</main>
+
+<!-- BENEFIT MODAL -->
+<div class="modal fade" id="benefitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="benefitModalTitle">CẬP NHẬT QUYỀN LỢI</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="benefitForm">
+                    <div class="mb-3" id="tierSelectGroup">
+                        <label class="form-label small fw-bold text-muted">Chọn hạng thành viên</label>
+                        <select id="benefitTier" class="form-select">
+                            <option value="STANDARD">STANDARD</option>
+                            <option value="SILVER">SILVER</option>
+                            <option value="GOLD">GOLD</option>
+                            <option value="PLATINUM">PLATINUM</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Giảm giá (%)</label>
+                        <input type="number" id="benefitDiscount" class="form-control" required step="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Hệ số tích điểm (x)</label>
+                        <input type="number" id="benefitMultiplier" class="form-control" step="0.1" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" id="btnSaveBenefit" onclick="saveBenefit()">LƯU THÔNG TIN</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CUSTOMER EDIT MODAL -->
+<div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">CHỈNH SỬA THÀNH VIÊN</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="customerForm">
+                    <input type="hidden" id="editCustomerId">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Họ và tên</label>
+                        <input type="text" id="editCustomerName" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Số điện thoại</label>
+                            <input type="text" id="editCustomerPhone" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Email</label>
+                            <input type="email" id="editCustomerEmail" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Hạng thành viên</label>
+                        <select id="editCustomerTier" class="form-select">
+                            <option value="STANDARD">STANDARD</option>
+                            <option value="SILVER">SILVER</option>
+                            <option value="GOLD">GOLD</option>
+                            <option value="PLATINUM">PLATINUM</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Điểm thưởng</label>
+                            <input type="number" id="editCustomerPoints" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold text-muted">Tổng chi tiêu (VNĐ)</label>
+                            <input type="number" id="editCustomerSpending" class="form-control" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger px-4 fw-bold" id="btnSaveCustomer" onclick="saveCustomer()">CẬP NHẬT</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let benefitModal, customerModal;
+    let allBenefits = [], allCustomers = [];
+    let isEditingBenefit = false;
+    let customerPageSize = 10, customerCurrentPage = 1;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        benefitModal = new bootstrap.Modal(document.getElementById('benefitModal'));
+        customerModal = new bootstrap.Modal(document.getElementById('customerModal'));
+        loadBenefits();
+        loadCustomers();
+    });
+
+    async function loadBenefits() {
+        try {
+            const res = await api.get('/membership-benefits');
+            if (res.success) {
+                allBenefits = res.data;
+                renderBenefits(allBenefits);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function renderBenefits(benefits) {
+        const grouped = {};
+        benefits.forEach(b => {
+            const tier = b.membershipLevel?.name ?? 'UNKNOWN';
+            if (!grouped[tier]) grouped[tier] = { tier, discount: '0', multiplier: '1.0' };
+            if (b.benefitType === 'DISCOUNT') grouped[tier].discount = b.benefitValue;
+            if (b.benefitType === 'POINT_MULTIPLIER') grouped[tier].multiplier = b.benefitValue;
+        });
+
+        document.getElementById('benefitGrid').innerHTML = Object.values(grouped).map(b => {
+            const safeTier = b.tier || 'UNKNOWN';
+            return `
+            <div class="col-md-3">
+                <div class="benefit-card">
+                    <span class="tier-badge tier-${safeTier.toLowerCase()}">${safeTier} MEMBER</span>
+                    <div class="mb-2 text-muted small">Giảm giá: <strong class="text-white">${b.discount}%</strong></div>
+                    <div class="mb-3 text-muted small">Tích điểm: <strong class="text-white">x${b.multiplier}</strong></div>
+                    <button class="btn btn-sm btn-outline-light w-100" onclick="openEditBenefitModal('${safeTier}', '${b.discount}', '${b.multiplier}')">Chỉnh sửa</button>
+                </div>
+            </div>
+        `}).join('');
+    }
+
+    async function loadCustomers() {
+        try {
+            const res = await api.get('/admin/customers');
+            if (res.success) {
+                // Chỉ lấy khách hàng đã có hạng thành viên và không phải GUEST
+                allCustomers = (res.data || []).filter(c => c.membershipLevel && c.membershipLevel.name !== 'GUEST');
+                customerCurrentPage = 1;
+                renderCustomers();
+            }
+        } catch (e) { 
+            console.error(e); 
+            document.getElementById('customerTableBody').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Lỗi tải dữ liệu</td></tr>';
+        }
+    }
+
+    function renderCustomers() {
+        const start = (customerCurrentPage - 1) * customerPageSize;
+        const end = start + customerPageSize;
+        const pagedData = allCustomers.slice(start, end);
+        
+        document.getElementById('customerTableBody').innerHTML = pagedData.map(c => {
+            const tierName = c.membershipLevel?.name ?? 'GUEST';
+            return `
+            <tr>
+                <td>
+                    <div class="fw-bold text-white">${c.fullName || 'N/A'}</div>
+                    <div class="small text-muted">${c.phone || c.email || ''}</div>
+                </td>
+                <td><span class="badge bg-dark border border-secondary tier-${tierName.toLowerCase()}">${tierName}</span></td>
+                <td class="text-warning fw-bold">${new Intl.NumberFormat().format(c.points)} pts</td>
+                <td class="text-white">${new Intl.NumberFormat('vi-VN').format(c.totalSpending)}đ</td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-outline-danger me-2" onclick="openEditCustomerModal(${c.id})"><i class="bi bi-pencil-square"></i></button>
+                    <button class="btn btn-sm btn-outline-info" onclick="alert('Tính năng đang phát triển: Xem lịch sử giao dịch khách hàng')"><i class="bi bi-clock-history"></i></button>
+                </td>
+            </tr>
+        `}).join('');
+        updatePaginationUI();
+    }
+
+    function updatePaginationUI() {
+        const total = allCustomers.length;
+        const totalPages = Math.ceil(total / customerPageSize);
+        const startIdx = total === 0 ? 0 : (customerCurrentPage - 1) * customerPageSize + 1;
+        const endIdx = Math.min(customerCurrentPage * customerPageSize, total);
+        document.getElementById('customerPageInfo').innerText = `Hiển thị ${startIdx} - ${endIdx} của ${total} hội viên`;
+        let html = '';
+        html += `<li class="page-item ${customerCurrentPage === 1 ? 'disabled' : ''}"><a class="page-link bg-dark border-secondary text-white" href="#" onclick="changePage(${customerCurrentPage - 1})">Trước</a></li>`;
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= customerCurrentPage - 1 && i <= customerCurrentPage + 1)) {
+                html += `<li class="page-item ${i === customerCurrentPage ? 'active' : ''}"><a class="page-link ${i === customerCurrentPage ? 'bg-danger border-danger' : 'bg-dark border-secondary'} text-white" href="#" onclick="changePage(${i})">${i}</a></li>`;
+            } else if (i === customerCurrentPage - 2 || i === customerCurrentPage + 2) {
+                html += `<li class="page-item disabled"><span class="page-link bg-dark border-secondary text-white">...</span></li>`;
+            }
+        }
+        html += `<li class="page-item ${customerCurrentPage === totalPages || totalPages === 0 ? 'disabled' : ''}"><a class="page-link bg-dark border-secondary text-white" href="#" onclick="changePage(${customerCurrentPage + 1})">Sau</a></li>`;
+        document.getElementById('customerPagination').innerHTML = html;
+    }
+
+    function changePage(p) {
+        const totalPages = Math.ceil(allCustomers.length / customerPageSize);
+        if (p < 1 || p > totalPages) return;
+        customerCurrentPage = p;
+        renderCustomers();
+    }
+
+    function openAddBenefitModal() {
+        isEditingBenefit = false;
+        document.getElementById('benefitModalTitle').innerText = 'THÊM CẤU HÌNH HẠNG';
+        document.getElementById('tierSelectGroup').style.display = 'block';
+        document.getElementById('benefitForm').reset();
+        benefitModal.show();
+    }
+
+    function openEditBenefitModal(tier, discount, multiplier) {
+        isEditingBenefit = true;
+        document.getElementById('benefitModalTitle').innerText = 'CHỈNH SỬA QUYỀN LỢI';
+        document.getElementById('tierSelectGroup').style.display = 'none';
+        document.getElementById('benefitTier').value = tier;
+        document.getElementById('benefitDiscount').value = discount;
+        document.getElementById('benefitMultiplier').value = multiplier;
+        benefitModal.show();
+    }
+
+    async function saveBenefit() {
+        const tier = document.getElementById('benefitTier').value;
+        const discount = document.getElementById('benefitDiscount').value;
+        const multiplier = document.getElementById('benefitMultiplier').value;
+        try {
+            const p1 = api.post(`/membership-benefits/update?levelName=${tier}&type=DISCOUNT&value=${discount}`, {});
+            const p2 = api.post(`/membership-benefits/update?levelName=${tier}&type=POINT_MULTIPLIER&value=${multiplier}`, {});
+            const [r1, r2] = await Promise.all([p1, p2]);
+            if (r1.success && r2.success) { benefitModal.hide(); await loadBenefits(); alert('Cập nhật quyền lợi thành công!'); }
+            else alert('Lỗi: ' + (r1.message || r2.message));
+        } catch (e) { alert('Lỗi hệ thống.'); }
+    }
+
+    function openEditCustomerModal(id) {
+        const c = allCustomers.find(x => x.id === id);
+        if (!c) return;
+        document.getElementById('editCustomerId').value = c.id;
+        document.getElementById('editCustomerName').value = c.fullName;
+        document.getElementById('editCustomerPhone').value = c.phone || '';
+        document.getElementById('editCustomerEmail').value = c.email || '';
+        document.getElementById('editCustomerTier').value = c.membershipLevel ? c.membershipLevel.name : 'GUEST';
+        document.getElementById('editCustomerPoints').value = c.points;
+        document.getElementById('editCustomerSpending').value = c.totalSpending;
+        customerModal.show();
+    }
+
+    async function saveCustomer() {
+        const id = document.getElementById('editCustomerId').value;
+        const data = {
+            fullName: document.getElementById('editCustomerName').value,
+            phone: document.getElementById('editCustomerPhone').value,
+            email: document.getElementById('editCustomerEmail').value,
+            membershipLevelName: document.getElementById('editCustomerTier').value,
+            points: parseInt(document.getElementById('editCustomerPoints').value),
+            totalSpending: parseFloat(document.getElementById('editCustomerSpending').value)
+        };
+        try {
+            const res = await api.put(`/admin/customers/${id}`, data);
+            if (res.success) { customerModal.hide(); await loadCustomers(); alert('Thành công!'); }
+            else alert('Lỗi: ' + res.message);
+        } catch (e) { alert('Lỗi hệ thống.'); }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+@startuml G4_ClassDiagram_Booking
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam classFontSize 13
+skinparam ArrowColor #333333
+skinparam ClassBorderColor #8E44AD
+skinparam ClassBackgroundColor #F5EEF8
+skinparam ClassHeaderBackgroundColor #8E44AD
+
+title <b>CLASS DIAGRAM — Nhóm 4: Giao dịch & Bắp nước</b>
+
+class Booking <<Entity>> {
+  + id           : BIGINT <<PK>>
+  --
+  # booking_code : VARCHAR(50)
+  # total_price  : DECIMAL(15,2)
+  # status       : ENUM(PENDING, CONFIRMED, CANCELLED, EXPIRED)
+  # created_at   : DATETIME
+}
+
+class BookingDetail <<Detail>> {
+  + id    : BIGINT <<PK>>
+  --
+  # price : DECIMAL(15,2)
+}
+
+class Payment <<Entity>> {
+  + id             : BIGINT <<PK>>
+  --
+  # amount         : DECIMAL(15,2)
+  # method         : ENUM(MOMO, VNPAY, CASH)
+  # transaction_id : VARCHAR(255)
+  # status         : ENUM(COMPLETED, FAILED)
+}
+
+class Combo <<Entity>> {
+  + id             : BIGINT <<PK>>
+  --
+  # name           : VARCHAR(255)
+  # price          : DECIMAL(10,2)
+  # stock_quantity : INT
+  # is_active      : BOOLEAN
+}
+
+class BookingCombo <<Detail>> {
+  + id       : BIGINT <<PK>>
+  --
+  # quantity : INT
+}
+
+class BranchCombo <<Junction>> {
+  + branch_id     : BIGINT <<PK, FK>>
+  + combo_id      : BIGINT <<PK, FK>>
+  --
+  # stock_quantity : INT
+}
+
+note top of Booking
+  customer_id = NULL → khách vãng lai
+  booking_code = 6 ký tự ngẫu nhiên
+  UNIQUE dùng để tra cứu vé
+end note
+
+note right of Payment
+  Quan hệ 1-1 với Booking
+  (booking_id UNIQUE).
+  transaction_id: mã từ MOMO/VNPAY
+end note
+
+note bottom of BranchCombo
+  Phân biệt tồn kho toàn hệ thống
+  (combos.stock_quantity) và tồn kho
+  tại từng chi nhánh (branch_combos)
+end note
+
+Booking "1" *--    "*" BookingDetail  : "has seats >"
+Booking "1" --o    "1" Payment        : "paid via >"
+Booking "1" *--    "*" BookingCombo   : "has FnB >"
+Combo   "1" --o    "*" BookingCombo   : "< ordered"
+Combo   "1" --     "*" BranchCombo    : "available at >"
+
+@enduml

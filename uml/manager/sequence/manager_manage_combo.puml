@@ -1,0 +1,42 @@
+@startuml Manager Manage Combo
+title Sequence Diagram: Quản lý Combo & Đồ ăn (Task 5)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-combos.html" as UI
+control "ComboController" as Ctrl
+entity "ComboService" as Svc
+database "Database" as DB
+
+== Xem danh sách Combo ==
+Manager -> UI: Truy cập trang quản lý combo
+UI -> Ctrl: GET /api/combos
+Ctrl -> Svc: getAllCombos()
+Svc -> DB: findAll()
+DB --> Svc: List<Combo>
+Svc --> Ctrl: List<ComboResponse>
+Ctrl --> UI: 200 OK
+UI -> Manager: Hiển thị danh sách và số lượng tồn kho
+
+== Thêm Combo mới ==
+Manager -> UI: Nhập tên, giá, mô tả, số lượng
+UI -> Ctrl: POST /api/combos (ComboRequest)
+activate Ctrl
+Ctrl -> Svc: createCombo(request)
+Svc -> DB: save(combo)
+Svc --> Ctrl: ComboResponse
+Ctrl --> UI: 201 Created
+deactivate Ctrl
+
+== Cập nhật tồn kho ==
+Manager -> UI: Nhập số lượng nhập thêm
+UI -> Ctrl: PATCH /api/combos/{id}/stock?quantity=...
+activate Ctrl
+Ctrl -> Svc: updateStock(id, quantity)
+Svc -> DB: findById(id)
+Svc -> Svc: combo.setStockQuantity(new)
+Svc -> DB: save(combo)
+Svc --> Ctrl: ComboResponse
+Ctrl --> UI: 200 OK
+deactivate Ctrl
+@enduml

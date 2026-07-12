@@ -1,0 +1,108 @@
+@startuml G3_DatabaseDiagram_Content
+!theme plain
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classFontName Courier
+skinparam classBackgroundColor #FEF9E7
+skinparam classBorderColor #D4A017
+skinparam classHeaderBackgroundColor #9A7D0A
+skinparam ArrowColor #B7950B
+skinparam ArrowThickness 1.5
+
+title <b>DATABASE DIAGRAM — Nhóm 3: Phim & Nội dung</b>
+
+entity movies {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * title          : VARCHAR(255)
+    description    : TEXT
+  * duration       : INT
+    release_date   : DATE
+    age_rating     : VARCHAR(50)
+    -- CHECK: P|K|T13|T16|T18
+    status         : VARCHAR(50) DEFAULT 'COMING_SOON'
+    -- CHECK: COMING_SOON|SHOWING|ENDED
+    tmdb_id        : BIGINT UNIQUE
+    origin_country : VARCHAR(100)
+    priority_level : INT DEFAULT 1
+    -- CHECK: 1..10
+}
+
+entity genres {
+  * **id** : VARCHAR(50) <<PK>>
+  ==
+  * name : VARCHAR(255)
+}
+
+entity formats {
+  * **id** : VARCHAR(50) <<PK>>
+  ==
+  * name : VARCHAR(255)
+}
+
+entity actors {
+  * **id** : BIGINT <<PK>>
+  ==
+  * name       : VARCHAR(255)
+    avatar_url : VARCHAR(255)
+}
+
+entity directors {
+  * **id** : BIGINT <<PK>>
+  ==
+  * name       : VARCHAR(255)
+    avatar_url : VARCHAR(255)
+}
+
+entity showtimes {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>movie_id</u>  : BIGINT <<FK→movies.id>>
+  * <u>room_id</u>   : BIGINT <<FK→rooms.id>>
+  * <u>format_id</u> : VARCHAR(50) <<FK→formats.id>>
+  * start_time      : DATETIME
+  * end_time        : DATETIME
+    status          : VARCHAR(50) DEFAULT 'ACTIVE'
+    -- CHECK: ACTIVE|CANCELLED
+    -- UNIQUE(room_id, start_time)
+}
+
+entity movie_actors {
+  * **movie_id** : BIGINT <<PK, FK→movies.id>>
+  * **actor_id** : BIGINT <<PK, FK→actors.id>>
+}
+
+entity movie_directors {
+  * **movie_id**    : BIGINT <<PK, FK→movies.id>>
+  * **director_id** : BIGINT <<PK, FK→directors.id>>
+}
+
+entity movie_genres {
+  * **movie_id** : BIGINT <<PK, FK→movies.id>>
+  * **genre_id** : VARCHAR(50) <<PK, FK→genres.id>>
+}
+
+entity movie_formats {
+  * **movie_id**  : BIGINT <<PK, FK→movies.id>>
+  * **format_id** : VARCHAR(50) <<PK, FK→formats.id>>
+}
+
+movies    ||--|{ movie_actors    : "movie_id"
+actors    ||--|{ movie_actors    : "actor_id"
+
+movies    ||--|{ movie_directors : "movie_id"
+directors ||--|{ movie_directors : "director_id"
+
+movies    ||--|{ movie_genres    : "movie_id"
+genres    ||--|{ movie_genres    : "genre_id"
+
+movies    ||--|{ movie_formats   : "movie_id"
+formats   ||--|{ movie_formats   : "format_id"
+
+movies    ||--o{ showtimes       : "movie_id"
+formats   ||--o{ showtimes       : "format_id"
+
+@enduml

@@ -1,0 +1,24 @@
+@startuml admin_manage_user_activity
+title Activity Diagram: Admin Manage Users
+
+start
+:Admin selects "User Management";
+:System displays User List;
+if (Action?) then (Create User)
+  :Admin fills User Form (Username, Role, Email);
+  :Admin submits Form;
+  :System validates input;
+  if (Valid?) then (Yes)
+    :System encrypts Password;
+    :System saves User to DB;
+    :System returns Success Message;
+  else (No)
+    :System displays Validation Error;
+  endif
+else (Toggle Status)
+  :Admin toggles User Active/Inactive;
+  :System updates User Status in DB;
+  :System returns Success Message;
+endif
+stop
+@enduml

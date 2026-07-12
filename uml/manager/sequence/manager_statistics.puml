@@ -1,0 +1,33 @@
+@startuml Manager Statistics
+title Sequence Diagram: Thống kê & Báo cáo (Task 7)
+skinparam theme cerulean
+
+actor Manager
+boundary "dashboard.html" as UI
+control "StatisticsController" as Ctrl
+entity "StatisticsService" as Svc
+database "Database" as DB
+
+== Xem báo cáo tổng quan ==
+Manager -> UI: Truy cập Dashboard
+UI -> Ctrl: GET /api/statistics/overview?startDate=...&endDate=...
+activate Ctrl
+
+Ctrl -> Svc: getGeneralStatistics(startDate, endDate)
+activate Svc
+
+Svc -> DB: Query Doanh thu Vé (Sum Booking.totalAmount)
+Svc -> DB: Query Doanh thu Combo (Sum BookingCombo.totalPrice)
+Svc -> DB: Query Tỷ lệ lấp đầy (Booked Seats / Total Seats)
+
+DB --> Svc: Raw Data
+Svc -> Svc: Aggregate & Format Data (Chart.js Format)
+
+Svc --> Ctrl: StatisticsResponse
+deactivate Svc
+
+Ctrl --> UI: 200 OK (JSON Data)
+deactivate Ctrl
+
+UI -> Manager: Hiển thị Biểu đồ Doanh thu & Tỷ lệ lấp đầy
+@enduml

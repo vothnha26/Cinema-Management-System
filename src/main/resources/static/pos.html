@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashCinema POS – Bán vé & Soát vé</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --bg: #080B14; --surface: #0F121F; --card: #161B2E; --border: #252A3D;
+            --accent: #E5133A; --text: #E8EAF0; --text-muted: #7B82A0;
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        .sidebar { width: 260px; background: var(--surface); border-right: 1px solid var(--border); }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .pos-grid { display: grid; grid-template-columns: 300px 1fr 350px; height: calc(100vh - 70px); overflow: hidden; }
+        .movie-sidebar { border-right: 1px solid var(--border); overflow-y: auto; padding: 20px; background: rgba(255,255,255,0.01); }
+        .main-stage { overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 30px; }
+        .bill-panel { background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        .bill-items { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        .movie-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; margin-bottom: 12px; cursor: pointer; transition: 0.3s; display: flex; gap: 12px; border-left: 4px solid transparent; }
+        .movie-card:hover { background: rgba(255,255,255,0.05); }
+        .movie-card.active { border-color: var(--accent); border-left-color: var(--accent); background: rgba(229,19,58,0.05); }
+        .movie-card img { width: 50px; height: 75px; border-radius: 8px; object-fit: cover; box-shadow: 0 5px 10px rgba(0,0,0,0.3); }
+
+        .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .st-item { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .st-item:hover, .st-item.active { border-color: var(--accent); color: var(--accent); background: rgba(229,19,58,0.05); transform: translateY(-2px); }
+
+        .bill-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .bill-footer { padding: 25px; background: var(--bg); border-top: 1px solid var(--border); }
+
+        .seat-item { width: 32px; height: 30px; border-radius: 6px; background: #1F2940; border: 1.5px solid #2D3748; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; cursor: pointer; }
+        .seat-item.booked { background: #4A5568 !important; color: #718096; cursor: not-allowed; }
+        .seat-item.selected { background: #F5A623 !important; color: #000; border-color: #F5A623; }
+        .seat-item.vip { border-color: #F5A623; color: #F5A623; }
+
+        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; color: #fff; }
+        .toast-star { position: fixed; bottom: 30px; right: 30px; background: var(--card); border: 1px solid var(--border); padding: 16px 24px; border-radius: 16px; z-index: 9999; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main-content">
+    <header class="d-flex justify-content-between align-items-center px-4 py-3 bg-surface border-bottom border-secondary border-opacity-10" style="height: 70px;">
+        <div class="d-flex align-items-center gap-3">
+            <div class="btn-group shadow-sm">
+                <button class="btn btn-danger fw-800 px-4" id="btnModeSale" onclick="switchMode('SALE')">BÁN VÉ</button>
+                <button class="btn btn-outline-secondary fw-800 px-4" id="btnModeCheckin" onclick="switchMode('CHECKIN')">SOÁT VÉ</button>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-4">
+            <div class="text-end">
+                <div class="small fw-800 text-white" id="staffNameDisplay">Nhân viên</div>
+                <div class="small text-muted" style="font-size: 0.65rem; text-transform: uppercase;">Quầy POS #01</div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger px-3 rounded-pill fw-bold" onclick="logout()">ĐĂNG XUẤT</button>
+        </div>
+    </header>
+
+    <div id="modeSale" class="pos-grid">
+        <div class="movie-sidebar">
+            <div class="mb-3">
+                <label class="small fw-800 text-muted mb-2 d-block">NGÀY CHIẾU</label>
+                <input type="date" id="posDateSelector" class="form-control form-control-sm" onchange="init()">
+            </div>
+            <div id="movieContainer"></div>
+        </div>
+
+        <div class="main-stage">
+            <div id="showtimeSection" class="d-none animate__animated animate__fadeIn">
+                <h6 class="fw-800 text-muted small mb-3 text-uppercase">Chọn suất chiếu</h6>
+                <div id="showtimeGrid" class="st-grid"></div>
+            </div>
+
+            <div id="seatSection" class="d-none animate__animated animate__fadeIn">
+                <div class="d-flex justify-content-between align-items-end mb-3">
+                    <h6 class="fw-800 text-muted small m-0 text-uppercase">Sơ đồ ghế ngồi</h6>
+                    <div class="d-flex gap-3 small fw-600">
+                        <span class="text-muted"><i class="bi bi-square-fill opacity-25"></i> TRỐNG</span>
+                        <span class="text-secondary"><i class="bi bi-square-fill"></i> ĐÃ BÁN</span>
+                        <span class="text-warning"><i class="bi bi-square-fill"></i> ĐANG CHỌN</span>
+                    </div>
+                </div>
+                <div class="bg-black bg-opacity-25 p-5 rounded-4 text-center border border-secondary border-opacity-10">
+                    <div class="mx-auto mb-5" style="width: 80%; height: 4px; background: var(--accent); border-radius: 10px; box-shadow: 0 0 20px var(--accent);"></div>
+                    <div id="seatGrid" style="display: grid; gap: 6px; justify-content: center; overflow-x: auto; padding-bottom: 10px;"></div>
+                </div>
+            </div>
+
+            <div id="comboSection"><h6 class="fw-800 text-muted small mb-3 text-uppercase">Combo & Bắp nước</h6><div id="comboGrid" class="row g-3"></div></div>
+        </div>
+
+        <div class="bill-panel">
+            <div class="panel-header p-3 border-bottom border-secondary border-opacity-10 text-center">
+                <h6 class="m-0 fw-800 small text-muted tracking-widest text-uppercase">Hóa đơn chi tiết</h6>
+            </div>
+            
+            <div class="p-3 border-bottom border-secondary border-opacity-10">
+                <label class="small fw-800 text-muted mb-2 d-block">TRA CỨU HỘI VIÊN</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-telephone"></i></span>
+                    <input type="text" id="memberPhone" class="form-control" placeholder="Nhập SĐT..." onkeyup="if(event.key==='Enter') searchMember()">
+                    <button class="btn btn-outline-danger" onclick="searchMember()"><i class="bi bi-search"></i></button>
+                </div>
+                <div id="memberBadge" class="mt-2 d-none animate__animated animate__fadeIn">
+                    <div class="d-flex align-items-center justify-content-between bg-danger bg-opacity-10 p-2 rounded-3 border border-danger border-opacity-20">
+                        <div><div class="fw-bold text-white small" id="memberName">...</div><div class="extra-small text-danger fw-800" id="memberTier">...</div></div>
+                        <button class="btn btn-sm text-muted p-0" onclick="clearMember()"><i class="bi bi-x-circle"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bill-items" id="billItems">
+                <div class="text-center py-5 text-muted small">Chưa có sản phẩm nào</div>
+            </div>
+
+            <div class="bill-footer">
+                <div class="mb-3">
+                    <label class="extra-small fw-800 text-muted mb-1 d-block">MÃ GIẢM GIÁ (VOUCHER)</label>
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="text" id="voucherCode" class="form-control" placeholder="Nhập mã...">
+                        <button class="btn btn-dark border-secondary" onclick="applyVoucher()">ÁP DỤNG</button>
+                    </div>
+                    <div id="voucherSuggestions" class="d-flex flex-wrap gap-1"></div>
+                </div>
+
+                <div class="d-flex justify-content-between mb-1 small"><span class="text-muted">Tạm tính:</span><span id="billSubtotal" class="text-white fw-bold">0đ</span></div>
+                <div class="d-flex justify-content-between mb-3 small text-success"><span>Giảm giá:</span><span id="billDiscount" class="fw-bold">-0đ</span></div>
+                
+                <div class="d-flex gap-2 mb-4">
+                    <button class="btn btn-sm btn-outline-light flex-fill fw-bold py-2 active" id="payCash" onclick="selectPosPay('CASH')"><i class="bi bi-cash me-1"></i> TIỀN MẶT</button>
+                    <button class="btn btn-sm btn-outline-light flex-fill fw-bold py-2" id="payCard" onclick="selectPosPay('CARD')"><i class="bi bi-credit-card me-1"></i> THẺ</button>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="fw-800 text-muted small">TỔNG CỘNG</span>
+                    <span class="fs-3 fw-800 text-danger" id="billTotal">0đ</span>
+                </div>
+                <button class="btn btn-danger w-100 py-3 fw-800 rounded-3 shadow-lg" id="btnFinalize" disabled onclick="finalizeSale()">XÁC NHẬN & IN VÉ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modeCheckin" class="d-none p-5">
+        <div class="max-width-md mx-auto" style="max-width: 600px;">
+            <div class="text-center mb-5">
+                <div class="bg-danger bg-opacity-10 d-inline-block p-4 rounded-circle mb-3"><i class="bi bi-ticket-perforated text-danger" style="font-size: 3.5rem;"></i></div>
+                <h2 class="fw-800">SOÁT VÉ VÀO PHÒNG</h2>
+            </div>
+            <div class="input-group input-group-lg"><input type="text" id="checkinCode" class="form-control text-center fw-800 py-3" placeholder="NHẬP MÃ BKG-XXXXXX"><button class="btn btn-danger px-5 fw-800" onclick="handleCheckin()">KIỂM TRA</button></div>
+            <div id="checkinResult" class="mt-5"></div>
+        </div>
+    </div>
+</main>
+
+<!-- MODAL THANH TOÁN QR -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="background: #fff; color: #000;">
+            <div class="modal-body text-center p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-800 mb-0">QUÉT MÃ THANH TOÁN</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="bg-light p-3 rounded-4 mb-4">
+                    <img id="qrImage" src="" alt="VietQR" class="img-fluid rounded-3 shadow-sm" style="max-width: 300px;">
+                </div>
+                <div class="mb-3">
+                    <div class="small text-muted text-uppercase fw-bold tracking-widest mb-1">Số tiền cần trả</div>
+                    <div class="fs-2 fw-800 text-danger" id="qrAmount">0đ</div>
+                </div>
+                <div class="alert alert-info border-0 rounded-3 small py-2">
+                    <i class="bi bi-info-circle-fill me-2"></i>Hệ thống sẽ tự động hoàn tất khi nhận được tiền từ ngân hàng.
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-outline-secondary border-0 small" data-bs-dismiss="modal">HỦY GIAO DỊCH</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let allMovies = [], allShowtimes = [], allCombos = [];
+    let selectedMovieId = null, selectedShowtime = null, selectedSeats = [], selectedCombos = {}, currentMember = null, appliedVoucher = null;
+    let posPaymentMethod = 'CASH';
+
+    async function searchMember() {
+        const phone = document.getElementById('memberPhone').value.trim();
+        if(!phone) return;
+        const res = await api.get(`/public/customers/search?phone=${phone}`);
+        if(res.success && res.data) {
+            currentMember = res.data;
+            document.getElementById('memberName').innerText = currentMember.fullName;
+            const tier = currentMember.membershipLevel || 'GUEST';
+            const isOfficial = currentMember.isAccountLinked;
+            document.getElementById('memberTier').innerHTML = `
+                <span class="badge ${isOfficial?'bg-warning text-dark':'bg-secondary text-white'} me-1" style="font-size:0.5rem">${isOfficial?'HỘI VIÊN CHÍNH THỨC':'KHÁCH VÃNG LAI'}</span> ${tier}`;
+            document.getElementById('memberBadge').classList.remove('d-none');
+            showNotify('Thành công', `Hội viên: ${currentMember.fullName}`);
+            updateBill(); loadVoucherSuggestions();
+        } else { showNotify('Lỗi', 'Không tìm thấy hội viên', 'error'); clearMember(); }
+    }
+
+    function clearMember() { currentMember = null; document.getElementById('memberPhone').value = ''; document.getElementById('memberBadge').classList.add('d-none'); appliedVoucher = null; updateBill(); loadVoucherSuggestions(); }
+
+    async function loadVoucherSuggestions() {
+        const res = await api.get('/promotions/active');
+        if (res.success) {
+            const prio = currentMember ? (currentMember.membershipPriority || 0) : 0;
+            const filtered = res.data.filter(p => !p.minLevelPriority || prio >= p.minLevelPriority);
+            document.getElementById('voucherSuggestions').innerHTML = filtered.slice(0, 4).map(p => `<span class="badge bg-dark border border-secondary text-info p-2 cursor-pointer" style="font-size:0.6rem" onclick="quickApplyVoucher('${p.code}')"><i class="bi bi-tag-fill me-1"></i>${p.code}</span>`).join('');
+        }
+    }
+
+    function quickApplyVoucher(code) { document.getElementById('voucherCode').value = code; applyVoucher(); }
+
+    async function applyVoucher() {
+        const code = document.getElementById('voucherCode').value.trim();
+        const amount = parseFloat(document.getElementById('billSubtotal').innerText.replace(/[^0-9]/g, '')) || 0;
+        if (amount === 0) return showNotify('Lỗi', 'Vui lòng chọn ghế trước', 'error');
+        const phone = currentMember ? currentMember.phone : '';
+        const res = await api.get(`/promotions/validate?code=${code}&amount=${amount}&phone=${phone}`);
+        if(res.success) { appliedVoucher = res.data; showNotify('Thành công', `Áp dụng mã: ${code}`); updateBill(); }
+        else showNotify('Lỗi', res.message, 'error');
+    }
+
+    async function init() {
+        const token = localStorage.getItem('cinemaToken');
+        if(!token) window.location.href = 'auth.html';
+        document.getElementById('staffNameDisplay').textContent = localStorage.getItem('cinemaUsername') || 'Nhân viên';
+        
+        const dateInput = document.getElementById('posDateSelector');
+        if(!dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
+        const selectedDate = dateInput.value;
+
+        try {
+            // 1. Tải Suất chiếu của ngày đang chọn (Backend tự lọc theo rạp của nhân viên)
+            const [stRes, cRes] = await Promise.all([
+                api.get(`/showtimes?date=${selectedDate}`), 
+                api.get('/combos')
+            ]);
+            
+            allShowtimes = stRes.data || [];
+            allCombos = cRes.data || [];
+
+            // 2. TRÍCH XUẤT PHIM TỪ DANH SÁCH SUẤT CHIẾU THỰC TẾ
+            // Điều này đảm bảo POS chỉ hiện những phim CÓ LỊCH CHIẾU tại rạp này hôm nay
+            const movieMap = new Map();
+            allShowtimes.forEach(st => {
+                if (!movieMap.has(st.movieId)) {
+                    movieMap.set(st.movieId, {
+                        id: st.movieId,
+                        title: st.movieTitle,
+                        posterUrl: st.posterUrl || 'https://placehold.co/50x75',
+                        duration: st.movieDuration || 120,
+                        ageRating: st.ageRating || 'P'
+                    });
+                }
+            });
+            
+            allMovies = Array.from(movieMap.values());
+            
+            renderMovies(); 
+            renderCombos(); 
+            loadVoucherSuggestions();
+            
+            // 3. Tự động chọn phim đầu tiên để hiện các ô suất chiếu
+            if (allMovies.length > 0) {
+                selectMovie(allMovies[0].id);
+            } else {
+                document.getElementById('movieContainer').innerHTML = '<div class="text-center py-5 text-muted small">Không có lịch chiếu trong ngày này</div>';
+                document.getElementById('showtimeSection').classList.add('d-none');
+                document.getElementById('seatSection').classList.add('d-none');
+            }
+        } catch(e) { console.error(">>> POS SYNC ERROR:", e); }
+    }
+
+    function renderMovies() {
+        document.getElementById('movieContainer').innerHTML = allMovies.map(m => `
+            <div class="movie-card ${selectedMovieId === m.id ? 'active' : ''}" onclick="selectMovie(${m.id})">
+                <img src="${m.posterUrl}" onerror="this.src='https://placehold.co/50x75'">
+                <div>
+                    <div class="fw-bold small text-white">${m.title}</div>
+                    <div class="text-muted small" style="font-size: 0.65rem;">${m.duration}p • ${m.ageRating}</div>
+                </div>
+            </div>`).join('');
+    }
+
+    function selectMovie(id) {
+        selectedMovieId = id; selectedShowtime = null; selectedSeats = []; renderMovies();
+        document.getElementById('showtimeSection').classList.remove('d-none');
+        document.getElementById('seatSection').classList.add('d-none');
+        
+        const sts = allShowtimes.filter(s => s.movieId === id);
+        
+        // Nhóm suất chiếu theo định dạng (Format)
+        const formatGroups = {};
+        sts.forEach(s => {
+            const fmt = s.formatName || '2D';
+            if (!formatGroups[fmt]) formatGroups[fmt] = [];
+            formatGroups[fmt].push(s);
+        });
+
+        const now = new Date();
+        let html = '';
+        
+        Object.entries(formatGroups).forEach(([fmt, showtimes]) => {
+            html += `
+                <div class="mb-4">
+                    <h6 class="fw-800 text-accent small mb-3 text-uppercase" style="letter-spacing: 2px;">
+                        <i class="bi bi-layers-half me-2"></i>Định dạng ${fmt}
+                    </h6>
+                    <div class="st-grid">
+                        ${showtimes.map(s => {
+                            const stTime = new Date(s.startTime);
+                            const isStarted = stTime < now;
+                            return `
+                            <div class="st-item ${isStarted ? 'border-warning' : ''}" onclick="selectShowtime(${s.id}, this)">
+                                <div class="fw-800 ${isStarted ? 'text-warning' : 'text-white'}">${stTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false})}</div>
+                                <div class="small text-muted">${s.roomName}</div>
+                                ${isStarted ? '<div class="extra-small text-warning fw-bold mt-1">ĐANG CHIẾU</div>' : ''}
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>`;
+        });
+
+        document.getElementById('showtimeGrid').innerHTML = html || '<div class="text-muted small">Không có suất chiếu</div>';
+        updateBill();
+    }
+
+    async function selectShowtime(id, el) {
+        document.querySelectorAll('.st-item').forEach(i => i.classList.remove('active')); el.classList.add('active');
+        selectedShowtime = allShowtimes.find(s => s.id === id);
+        selectedSeats = []; document.getElementById('seatSection').classList.remove('d-none');
+        const res = await api.get(`/showtimes/${id}/seats`);
+        if (res.success) renderSeats(res.data);
+        updateBill();
+    }
+
+    function renderSeats(seats) {
+        const grid = document.getElementById('seatGrid');
+        const rows = [...new Set(seats.map(s => s.rowChar))].sort();
+        const maxCol = Math.max(...seats.map(s => s.colNum));
+        grid.style.gridTemplateColumns = `repeat(${maxCol}, 1fr)`;
+        grid.innerHTML = rows.map(r => {
+            let rowHtml = '';
+            for(let c=1; c<=maxCol; c++) {
+                const s = seats.find(x => x.rowChar === r && x.colNum === c);
+                if(!s) { rowHtml += '<div></div>'; continue; }
+                const isSel = selectedSeats.some(x => x.id === s.id);
+                const cls = `seat-item ${s.seatType.toLowerCase()} ${!s.available ? 'booked' : ''} ${isSel ? 'selected' : ''}`;
+                rowHtml += `<div class="${cls}" onclick='toggleSeat(${JSON.stringify(s).replace(/'/g, "&apos;")}, this)'>${s.available ? s.seatCode : ''}</div>`;
+            }
+            return rowHtml;
+        }).join('');
+    }
+
+    function toggleSeat(s, el) { if(!s.available) return; const idx = selectedSeats.findIndex(x => x.id === s.id); if(idx > -1) { selectedSeats.splice(idx, 1); el.classList.remove('selected'); } else { selectedSeats.push(s); el.classList.add('selected'); } updateBill(); }
+
+    function renderCombos() {
+        document.getElementById('comboGrid').innerHTML = allCombos.map(c => {
+            const out = (c.stockQuantity || 0) <= 0;
+            return `<div class="col-6"><div class="bg-black bg-opacity-20 p-2 rounded-3 border border-secondary border-opacity-10 d-flex align-items-center gap-2 ${out?'opacity-50':''}"><div class="flex-1"><div class="small fw-bold text-white">${c.name}</div><div class="text-danger small">${c.price.toLocaleString()}đ</div><div class="extra-small text-muted">Kho: ${c.stockQuantity||0}</div></div><div class="d-flex align-items-center gap-2"><button class="btn btn-sm btn-dark px-2" onclick="changeCombo(${c.id},-1)" ${out?'disabled':''}>-</button><span class="small fw-bold" id="qty-${c.id}">${selectedCombos[c.id]||0}</span><button class="btn btn-sm btn-dark px-2" onclick="changeCombo(${c.id},1)" ${out?'disabled':''}>+</button></div></div></div>`;
+        }).join('');
+    }
+
+    function changeCombo(id, delta) { selectedCombos[id] = Math.max(0, (selectedCombos[id]||0) + delta); if(selectedCombos[id]===0) delete selectedCombos[id]; document.getElementById(`qty-${id}`).innerText = selectedCombos[id]||0; updateBill(); }
+
+    function updateBill() {
+        const container = document.getElementById('billItems');
+        document.querySelector('.bill-panel .panel-header h6').innerText = currentMember ? currentMember.fullName : 'KHÁCH VÃNG LAI';
+        if(!selectedSeats.length && !Object.keys(selectedCombos).length) { container.innerHTML = '<div class="text-center py-5 text-muted small">Chưa có sản phẩm nào</div>'; document.getElementById('billSubtotal').innerText='0đ'; document.getElementById('billDiscount').innerText='-0đ'; document.getElementById('billTotal').innerText='0đ'; document.getElementById('btnFinalize').disabled=true; return; }
+        let sub = 0, html = '';
+        selectedSeats.forEach(s => { 
+            sub += s.price; 
+            const breakdown = s.priceBreakdown || [];
+            
+            // Lấy dòng GIÁ NIÊM YẾT (phần tử đầu tiên)
+            let baseLabel = "GIÁ NIÊM YẾT", baseValue = s.price.toLocaleString() + "đ";
+            if (breakdown.length > 0 && breakdown[0].includes(": ")) {
+                const parts = breakdown[0].split(": ");
+                baseLabel = parts[0];
+                baseValue = parts[1];
+            }
+            
+            const adjustments = breakdown.slice(1);
+            const adjustmentsHtml = adjustments.map(b => {
+                const parts = b.split(" (");
+                const name = parts[0];
+                const value = parts[1] ? "(" + parts[1] : "";
+                return `
+                <div class="extra-small text-info d-flex justify-content-between w-100 opacity-75" style="font-size: 0.65rem; padding-left: 12px; margin-top: 2px;">
+                    <span>• ${name}</span>
+                    <span class="fw-bold">${value}</span>
+                </div>`;
+            }).join('');
+
+            html += `
+                <div class="bill-item flex-column align-items-start py-3 border-bottom border-secondary border-opacity-10">
+                    <div class="d-flex justify-content-between w-100 mb-2">
+                        <div class="fw-800 small text-white">Ghế ${s.seatCode} <span class="badge bg-secondary extra-small ms-1" style="font-size:0.55rem; vertical-align: middle;">${s.seatTypeName || s.seatType}</span></div>
+                        <div class="fs-6 fw-800 text-danger">${s.price.toLocaleString()}đ</div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between w-100 text-muted extra-small mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                        <span class="fw-bold text-uppercase">${baseLabel}</span>
+                        <span class="fw-bold">${baseValue}</span>
+                    </div>
+                    
+                    ${adjustmentsHtml}
+                </div>`; 
+        });
+        Object.entries(selectedCombos).forEach(([id, q]) => { const c = allCombos.find(x => x.id == id); if(c) { sub += c.price*q; html += `<div class="bill-item"><div><div class="fw-bold small">${c.name}</div><div class="text-muted extra-small">x${q}</div></div><div class="small">${(c.price*q).toLocaleString()}đ</div></div>`; } });
+        
+        let memDisc = 0;
+        if (currentMember && currentMember.discountRate > 0) {
+            memDisc = sub * currentMember.discountRate / 100;
+            html += `<div class="bill-item text-success"><div class="small fw-bold">Chiết khấu hội viên (${currentMember.discountRate}%)</div><div class="small">-${memDisc.toLocaleString()}đ</div></div>`;
+        }
+
+        let vouDisc = 0;
+        if (appliedVoucher) {
+            vouDisc = (appliedVoucher.discountType === 'PERCENTAGE' || appliedVoucher.discountType === 'PERCENT') ? (sub * appliedVoucher.discountValue / 100) : appliedVoucher.discountValue;
+            html += `<div class="bill-item text-info"><div class="small fw-bold">Voucher: ${appliedVoucher.code}</div><div class="small">-${vouDisc.toLocaleString()}đ</div></div>`;
+        }
+
+        container.innerHTML = html;
+        document.getElementById('billSubtotal').innerText = sub.toLocaleString() + 'đ';
+        document.getElementById('billDiscount').innerText = '-' + Math.round(memDisc + vouDisc).toLocaleString() + 'đ';
+        document.getElementById('billTotal').innerText = Math.round(sub - memDisc - vouDisc).toLocaleString() + 'đ';
+        document.getElementById('btnFinalize').disabled = !selectedSeats.length;
+    }
+
+    async function finalizeSale() {
+        const body = { 
+            showtimeId: Number(selectedShowtime.id), 
+            seatIds: selectedSeats.map(s => s.id), 
+            combos: selectedCombos, 
+            paymentMethod: posPaymentMethod, 
+            fullName: currentMember ? currentMember.fullName : 'Khách vãng lai', 
+            phone: currentMember ? currentMember.phone : (document.getElementById('memberPhone').value.trim() || '0000000000'), 
+            email: currentMember ? currentMember.email : null, 
+            promotionCode: appliedVoucher ? appliedVoucher.code : null 
+        };
+
+        const res = await api.post('/bookings', body);
+        if(res.bookingCode) { 
+            if (posPaymentMethod === 'CARD') {
+                showQRModal(res.bookingCode, res.totalPrice);
+            } else {
+                showNotify('Thành công', 'Đã tạo đơn hàng!'); 
+                setTimeout(()=>location.reload(), 1500); 
+            }
+        } else {
+            showNotify('Lỗi', res.message, 'error');
+        }
+    }
+
+    let paymentPollInterval = null;
+    let qrBootstrapModal = null;
+
+    function showQRModal(code, amount) {
+        const bankBin = "970415"; // VietinBank
+        const bankAcc = "109879673245";
+        const description = "SEVQR " + code;
+        
+        const qrUrl = `https://img.vietqr.io/image/${bankBin}-${bankAcc}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(description)}&accountName=STAR%20CINEMA`;
+        
+        document.getElementById('qrImage').src = qrUrl;
+        document.getElementById('qrAmount').innerText = amount.toLocaleString() + 'đ';
+        
+        const qrEl = document.getElementById('qrModal');
+        if (!qrBootstrapModal) qrBootstrapModal = new bootstrap.Modal(qrEl);
+        qrBootstrapModal.show();
+
+        // Bắt đầu kiểm tra tự động mỗi 3 giây
+        if (paymentPollInterval) clearInterval(paymentPollInterval);
+        paymentPollInterval = setInterval(async () => {
+            try {
+                const res = await api.get(`/bookings/${code}`);
+                if (res.status === 'CONFIRMED' || res.status === 'CHECKED_IN') {
+                    clearInterval(paymentPollInterval);
+                    qrBootstrapModal.hide();
+                    showNotify('Thành công', 'Giao dịch chuyển khoản đã hoàn tất!');
+                    setTimeout(() => location.reload(), 2000);
+                }
+            } catch (e) { console.error("Polling error:", e); }
+        }, 3000);
+
+        qrEl.addEventListener('hidden.bs.modal', () => {
+            if (paymentPollInterval) clearInterval(paymentPollInterval);
+        });
+    }
+
+    function checkPaymentStatus() {
+        // Nút bấm thủ công vẫn giữ lại để nhân viên xác nhận nếu cần in vé ngay
+        showNotify('Thông tin', 'Đang kiểm tra giao dịch...');
+        // Logic polling ở trên sẽ tự xử lý, nếu nhấn đây tức là nhân viên xác nhận thu tiền mặt/ngoài hệ thống
+        setTimeout(() => location.reload(), 1000);
+    }
+
+    function switchMode(m) { document.getElementById('modeSale').classList.toggle('d-none', m!=='SALE'); document.getElementById('modeCheckin').classList.toggle('d-none', m!=='CHECKIN'); }
+    
+    async function handleCheckin() {
+        const code = document.getElementById('checkinCode').value.trim().toUpperCase();
+        if(!code) return showNotify('Lỗi', 'Vui lòng nhập mã vé', 'error');
+        
+        const container = document.getElementById('checkinResult');
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-danger"></div></div>';
+
+        try {
+            // SỬA: Dùng endpoint /lookup để tìm cả trong Redis và DB
+            const res = await api.get(`/bookings/lookup/${code}`);
+            
+            if (res.success === false) {
+                container.innerHTML = `<div class="alert alert-danger border-0 rounded-4 p-4 animate__animated animate__shakeX">
+                    <h5 class="fw-800 mb-2">KHÔNG TÌM THẤY VÉ</h5>
+                    <p class="m-0">${res.message || 'Mã vé không hợp lệ hoặc đã hết hạn.'}</p>
+                </div>`;
+                return;
+            }
+
+            const b = res; // Trực tiếp nhận object nếu thành công
+            const isConfirmed = b.status === 'CONFIRMED' || b.status === 'CHECKED_IN';
+            const isPending = b.status === 'PENDING';
+            
+            let statusHtml = '';
+            if (isConfirmed) statusHtml = `<span class="badge bg-success px-3 py-2 rounded-pill">ĐÃ THANH TOÁN</span>`;
+            else if (isPending) statusHtml = `<span class="badge bg-warning text-dark px-3 py-2 rounded-pill">CHỜ THANH TOÁN</span>`;
+            else statusHtml = `<span class="badge bg-danger px-3 py-2 rounded-pill">${b.status}</span>`;
+
+            container.innerHTML = `
+                <div class="cardx p-4 border-0 shadow-lg animate__animated animate__fadeInUp" style="background: var(--surface);">
+                    <div class="d-flex justify-content-between align-items-start mb-4">
+                        <div>
+                            <h4 class="fw-800 text-white mb-1">${b.movieTitle || 'Vé xem phim'}</h4>
+                            <div class="text-muted small">${new Date(b.showTime).toLocaleString('vi-VN')} • ${b.roomName}</div>
+                        </div>
+                        ${statusHtml}
+                    </div>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.6rem;">Mã đặt vé</div>
+                            <div class="fw-800 text-danger fs-5">${b.bookingCode}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 0.6rem;">Danh sách ghế</div>
+                            <div class="fw-800 text-white fs-5">${(b.seatCodes || []).join(', ') || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    ${isConfirmed && b.status !== 'CHECKED_IN' ? `
+                        <button class="btn btn-danger w-100 py-3 fw-800 rounded-3 shadow-lg" onclick="confirmCheckin('${b.bookingCode}')">XÁC NHẬN VÀO PHÒNG</button>
+                    ` : ''}
+                    
+                    ${b.status === 'CHECKED_IN' ? `
+                        <div class="alert alert-info border-0 rounded-3 text-center fw-bold py-3 m-0">
+                            <i class="bi bi-check-circle-fill me-2"></i>VÉ NÀY ĐÃ ĐƯỢC SOÁT VÀO CỔNG
+                        </div>
+                    ` : ''}
+
+                    ${isPending ? `
+                        <div class="alert alert-warning border-0 rounded-3 small py-3 m-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>Đơn hàng này chưa hoàn tất thanh toán. Vui lòng kiểm tra lại.
+                        </div>
+                    ` : ''}
+                </div>`;
+        } catch (e) {
+            container.innerHTML = `<div class="alert alert-danger border-0 rounded-4 p-4">Lỗi kết nối máy chủ</div>`;
+        }
+    }
+
+    async function confirmCheckin(code) {
+        const res = await api.put(`/bookings/${code}/checkin`);
+        if (res.success) {
+            showNotify('Thành công', 'Đã soát vé thành công!');
+            handleCheckin(); // Reload lại thông tin
+        } else {
+            showNotify('Lỗi', res.message, 'error');
+        }
+    }
+
+    function selectPosPay(m) { posPaymentMethod = m; document.getElementById('payCash').classList.toggle('active', m==='CASH'); document.getElementById('payCard').classList.toggle('active', m==='CARD'); }
+    function showNotify(t, m, type='success') {
+        const c = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast-star animate__animated animate__fadeInUp';
+        toast.innerHTML = `<i class="bi ${type==='success'?'bi-check-circle-fill text-success':'bi-exclamation-triangle-fill text-danger'} fs-4"></i><div><div class="fw-bold">${t}</div><div class="small">${m}</div></div>`;
+        c.appendChild(toast); setTimeout(() => toast.remove(), 4000);
+    }
+    function logout() { localStorage.clear(); window.location.href = 'auth.html'; }
+    init();
+</script>
+</body>
+</html>

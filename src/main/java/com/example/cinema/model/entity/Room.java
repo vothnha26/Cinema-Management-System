@@ -1,6 +1,6 @@
 package com.example.cinema.model.entity;
 
-import com.example.cinema.model.enums.RoomType;
+import com.example.cinema.model.enums.RoomStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -13,29 +13,115 @@ public class Room {
     @Column(nullable = false)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RoomType type;
+    @ManyToOne
+    @JoinColumn(name = "branch_id", nullable = false)
+    private Branch branch;
+
+    @ManyToOne
+    @JoinColumn(name = "room_type_id", nullable = false)
+    private RoomType roomType;
 
     @Column(nullable = false)
     private Integer capacity;
 
-    private Boolean status = true;
+    @Column(name = "num_rows")
+    private Integer rows;
 
-    public Room() {}
+    @Column(name = "num_cols")
+    private Integer cols;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    @Enumerated(EnumType.STRING)
+    private RoomStatus status = RoomStatus.ACTIVE;
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    @OneToMany(mappedBy = "room", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private java.util.List<Seat> seats = new java.util.ArrayList<>();
 
-    public RoomType getType() { return type; }
-    public void setType(RoomType type) { this.type = type; }
+    public Room() {
+    }
 
-    public Integer getCapacity() { return capacity; }
-    public void setCapacity(Integer capacity) { this.capacity = capacity; }
+    public java.util.List<Seat> getSeats() {
+        return seats;
+    }
 
-    public Boolean getStatus() { return status; }
-    public void setStatus(Boolean status) { this.status = status; }
+    public void setSeats(java.util.List<Seat> seats) {
+        this.seats = seats;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Branch getBranch() {
+        return branch;
+    }
+
+    public void setBranch(Branch branch) {
+        this.branch = branch;
+    }
+
+    public RoomType getRoomType() {
+        return roomType;
+    }
+
+    public void setRoomType(RoomType roomType) {
+        this.roomType = roomType;
+    }
+
+    public void setType(String typeId) {
+        if (typeId != null) {
+            this.roomType = new RoomType(typeId, null);
+        }
+    }
+
+    public String getType() {
+        return roomType != null ? roomType.getId() : null;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+    }
+
+    public Integer getRows() {
+        return rows;
+    }
+
+    public void setRows(Integer rows) {
+        this.rows = rows;
+    }
+
+    public Integer getCols() {
+        return cols;
+    }
+
+    public void setCols(Integer cols) {
+        this.cols = cols;
+    }
+
+    public RoomStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(RoomStatus status) {
+        this.status = status;
+    }
+
+    public java.util.Set<Format> getSupportedFormats() {
+        return roomType != null ? roomType.getSupportedFormats() : new java.util.HashSet<>();
+    }
 }

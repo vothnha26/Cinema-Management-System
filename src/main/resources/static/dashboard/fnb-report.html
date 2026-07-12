@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo F&B | StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg: #080B14; --surface: #0F121F; --card: #161B2E; --border: #252A3D; --accent: #E5133A; --text: #E8EAF0; --text-muted: #7B82A0; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .main-content { flex: 1; overflow-y: auto; padding: 40px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; height: 100%; transition: 0.3s; }
+        .stat-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 16px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .analytics-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; height: 100%; }
+        .chart-title { font-weight: 700; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+        .filter-bar { background: var(--surface); border: 1px solid var(--border); padding: 15px 25px; border-radius: 16px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .form-control-dark { background: #080a14; border: 1px solid var(--border); color: #fff; border-radius: 10px; }
+        .form-control-dark:focus { background: #080a14; color: #fff; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(229,19,58,0.2); }
+
+        /* Product cards */
+        .product-card { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; align-items: center; gap: 14px; transition: 0.3s; }
+        .product-card:hover { border-color: #f59e0b; transform: translateY(-2px); }
+        .product-emoji { font-size: 2rem; width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: rgba(245,158,11,0.1); }
+        .product-name { font-weight: 700; color: #fff; font-size: 0.9rem; margin-bottom: 2px; }
+        .product-qty { color: var(--text-muted); font-size: 0.75rem; }
+        .product-rev { font-weight: 800; color: #f59e0b; font-size: 1rem; margin-left: auto; }
+        .product-rank { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; }
+
+        /* Stock alert */
+        .stock-alert { background: rgba(229,19,58,0.08); border: 1px solid rgba(229,19,58,0.3); border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
+        .stock-ok { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
+        .stock-warn { background: rgba(234,179,8,0.08); border-color: rgba(234,179,8,0.3); }
+        
+        /* Attach rate gauge */
+        .attach-gauge { text-align: center; }
+        .attach-number { font-size: 3rem; font-weight: 800; color: #f59e0b; line-height: 1; }
+        .attach-label { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
+
+        .table-dark-custom { color: var(--text); }
+        .table-dark-custom thead th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); font-weight: 600; padding: 12px 16px; }
+        .table-dark-custom tbody tr { border-bottom: 1px solid rgba(37,42,61,0.5); transition: 0.2s; }
+        .table-dark-custom tbody tr:hover { background: rgba(245,158,11,0.05); }
+        .table-dark-custom tbody td { padding: 14px 16px; font-size: 0.88rem; vertical-align: middle; border: none; }
+
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+<aside class="sidebar"></aside>
+<main class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-800 m-0">BÁO CÁO F&B — BẮP NƯỚC</h2>
+            <p class="text-muted m-0">Doanh thu đồ ăn thức uống, tỷ lệ kèm vé, tồn kho</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-danger" onclick="loadStats()"><i class="bi bi-arrow-clockwise me-2"></i>LÀM MỚI</button>
+            <button class="btn btn-danger" onclick="window.print()"><i class="bi bi-download me-2"></i>XUẤT BÁO CÁO</button>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">TỪ NGÀY:</label>
+                <input type="date" id="startDate" class="form-control form-control-sm form-control-dark">
+                <input type="time" id="startTime" class="form-control form-control-sm form-control-dark" value="00:00">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">ĐẾN NGÀY:</label>
+                <input type="date" id="endDate" class="form-control form-control-sm form-control-dark">
+                <input type="time" id="endTime" class="form-control form-control-sm form-control-dark" value="23:59">
+            </div>
+            <button class="btn btn-sm btn-danger px-3 fw-bold" onclick="loadStats()">LỌC DỮ LIỆU</button>
+        </div>
+        <div class="text-muted small fw-bold"><i class="bi bi-clock-history me-1"></i> Cập nhật: <span id="lastUpdate">--:--</span></div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-cup-hot-fill"></i></div>
+                <div class="stat-value" id="fnbRevenue">0đ</div>
+                <div class="stat-label">Doanh thu F&B</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-bag-check-fill"></i></div>
+                <div class="stat-value" id="totalOrders">0</div>
+                <div class="stat-label">Số đơn F&B</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="bi bi-link-45deg"></i></div>
+                <div class="stat-value" id="attachRate">0%</div>
+                <div class="stat-label">Tỷ lệ kèm vé</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-receipt-cutoff"></i></div>
+                <div class="stat-value" id="avgOrderValue">0đ</div>
+                <div class="stat-label">Giá trị đơn TB</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Top sản phẩm -->
+        <div class="col-lg-7">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-trophy text-warning"></i>TOP SẢN PHẨM BÁN CHẠY</div>
+                <div class="d-flex flex-column gap-3" id="topProductsList"></div>
+            </div>
+        </div>
+
+        <!-- Category doughnut -->
+        <div class="col-lg-5">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-pie-chart text-info"></i>DOANH THU THEO DANH MỤC</div>
+                <div style="height: 220px; position: relative; margin-bottom: 16px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div id="categoryLegend" class="d-flex flex-column gap-2 mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Doanh thu F&B theo ngày -->
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-graph-up text-warning"></i>XU HƯỚNG DOANH THU F&B THEO NGÀY</div>
+                <div style="height: 260px; position: relative;">
+                    <canvas id="fnbTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tỷ lệ kèm vé theo giờ -->
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-clock text-success"></i>TỶ LỆ KÈM VÉ THEO GIỜ</div>
+                <div style="height: 260px; position: relative;">
+                    <canvas id="attachByHourChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tồn kho / Cảnh báo -->
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-boxes text-danger"></i>TÌNH TRẠNG TỒN KHO & CẢNH BÁO</div>
+                <div class="row g-3" id="stockGrid"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    let categoryChart, fnbTrendChart, attachByHourChart;
+    const CAT_COLORS = ['#f59e0b', '#E5133A', '#3b82f6', '#10b981', '#a855f7'];
+    const PRODUCTS_EMOJI = { 'Bắp rang bơ L': '🍿', 'Combo 2': '🎉', 'Pepsi L': '🥤', 'Bắp rang phô mai': '🧀', 'Nước suối': '💧', 'Hotdog': '🌭', 'Kem vani': '🍦', 'Cà phê': '☕' };
+
+    async function init() {
+        const now = new Date(), weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        document.getElementById('startDate').value = weekAgo.toISOString().split('T')[0];
+        document.getElementById('endDate').value = now.toISOString().split('T')[0];
+        loadStats();
+    }
+
+    async function loadStats() {
+        const start = document.getElementById('startDate').value;
+        const startTime = document.getElementById('startTime').value;
+        const end = document.getElementById('endDate').value;
+        const endTime = document.getElementById('endTime').value;
+        try {
+            const res = await api.get(`/statistics/fnb?startDate=${start}&startTime=${startTime}:00&endDate=${end}&endTime=${endTime}:59`);
+            if (res.success) { renderAll(res.data); document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString(); }
+        } catch (e) { mockRender(); }
+    }
+
+    function renderAll(d) {
+        document.getElementById('fnbRevenue').innerText = ((d.totalRevenue || 0) / 1000000).toFixed(1) + 'M';
+        document.getElementById('totalOrders').innerText = (d.totalOrders || 0).toLocaleString();
+        document.getElementById('attachRate').innerText = (d.attachRate || 0) + '%';
+        document.getElementById('avgOrderValue').innerText = ((d.avgOrderValue || 0) / 1000).toFixed(0) + 'K';
+        renderTopProducts(d.topProducts || []);
+        renderCategoryChart(d.categoryRevenue || {});
+        renderTrendChart(d.revenueByDay || {});
+        renderAttachByHour(d.attachByHour || {});
+        renderStock(d.stockStatus || []);
+    }
+
+    function renderTopProducts(products) {
+        const container = document.getElementById('topProductsList');
+        const maxRev = products.length ? products[0].revenue : 1;
+        const rankColors = ['#ffd700', '#c0c0c0', '#cd7f32'];
+        container.innerHTML = products.slice(0, 6).map((p, i) => `
+            <div class="product-card">
+                <div class="product-rank" style="background:${rankColors[i] || 'rgba(255,255,255,0.1)'}; color:${i < 3 ? '#000' : '#fff'}">${i + 1}</div>
+                <div class="product-emoji">${PRODUCTS_EMOJI[p.name] || '🛍️'}</div>
+                <div class="flex-1">
+                    <div class="product-name">${p.name}</div>
+                    <div class="product-qty">${(p.qty || 0).toLocaleString()} đã bán</div>
+                    <div style="height:4px; background:rgba(255,255,255,0.05); border-radius:2px; margin-top:6px; width:100%">
+                        <div style="height:100%; width:${(p.revenue/maxRev)*100}%; background:linear-gradient(90deg,#f59e0b,#fbbf24); border-radius:2px; transition:1s"></div>
+                    </div>
+                </div>
+                <div class="product-rev">${(p.revenue / 1000000).toFixed(1)}M</div>
+            </div>`).join('');
+    }
+
+    function renderCategoryChart(data) {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        if (categoryChart) categoryChart.destroy();
+        const labels = Object.keys(data), values = Object.values(data);
+        categoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data: values, backgroundColor: CAT_COLORS, borderWidth: 0, hoverOffset: 8 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+        });
+        document.getElementById('categoryLegend').innerHTML = labels.map((l, i) => `
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width:10px;height:10px;border-radius:3px;background:${CAT_COLORS[i]}"></div>
+                    <span class="small">${l}</span>
+                </div>
+                <span class="small fw-bold">${values[i]}%</span>
+            </div>`).join('');
+    }
+
+    function renderTrendChart(data) {
+        const ctx = document.getElementById('fnbTrendChart').getContext('2d');
+        if (fnbTrendChart) fnbTrendChart.destroy();
+        fnbTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: Object.keys(data), datasets: [
+                { label: 'Doanh thu F&B', data: Object.values(data).map(v => v.fnb || v), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.1)', fill: true, tension: 0.4, pointRadius: 4 },
+                { label: 'Doanh thu vé', data: Object.values(data).map(v => v.ticket || 0), borderColor: '#E5133A', backgroundColor: 'rgba(229,19,58,0.05)', fill: true, tension: 0.4, pointRadius: 4 }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#7B82A0', font: { family: 'Outfit' } } } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0', callback: v => (v / 1000000).toFixed(0) + 'M' } }, x: { grid: { display: false }, ticks: { color: '#7B82A0' } } } }
+        });
+    }
+
+    function renderAttachByHour(data) {
+        const ctx = document.getElementById('attachByHourChart').getContext('2d');
+        if (attachByHourChart) attachByHourChart.destroy();
+        const hours = Array.from({length: 14}, (_, i) => i + 9);
+        const values = hours.map(h => data[h] || 0);
+        attachByHourChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: hours.map(h => h + 'h'), datasets: [{ label: '% kèm vé', data: values, backgroundColor: values.map(v => v > 70 ? '#f59e0b' : v > 50 ? 'rgba(245,158,11,0.5)' : 'rgba(245,158,11,0.2)'), borderRadius: 6, borderSkipped: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0', callback: v => v + '%' }, max: 100 }, x: { grid: { display: false }, ticks: { color: '#7B82A0', font: { size: 9 } } } } }
+        });
+    }
+
+    function renderStock(items) {
+        const grid = document.getElementById('stockGrid');
+        const getClass = (pct) => pct < 20 ? '' : pct < 50 ? 'stock-warn' : 'stock-ok';
+        const getColor = (pct) => pct < 20 ? '#E5133A' : pct < 50 ? '#eab308' : '#22c55e';
+        const getIcon = (pct) => pct < 20 ? 'bi-exclamation-triangle-fill' : pct < 50 ? 'bi-exclamation-circle' : 'bi-check-circle-fill';
+        grid.innerHTML = items.map(item => {
+            const pct = Math.round((item.current / item.max) * 100);
+            return `
+            <div class="col-md-3 col-6">
+                <div class="stock-alert ${getClass(pct)}">
+                    <div>
+                        <div class="fw-bold small text-white">${item.name}</div>
+                        <div class="small text-muted">${item.current} / ${item.max} ${item.unit}</div>
+                        <div style="height:4px; background:rgba(255,255,255,0.05); border-radius:2px; margin-top:8px">
+                            <div style="height:100%; width:${pct}%; background:${getColor(pct)}; border-radius:2px; transition:1s"></div>
+                        </div>
+                    </div>
+                    <i class="bi ${getIcon(pct)}" style="color:${getColor(pct)}; font-size:1.2rem; margin-left:10px; flex-shrink:0"></i>
+                </div>
+            </div>`;
+        }).join('') || '<div class="col-12 text-center text-muted py-3">Không có dữ liệu tồn kho</div>';
+    }
+
+    function mockRender() {
+        renderAll({
+            totalRevenue: 48600000, totalOrders: 2840, attachRate: 62, avgOrderValue: 171000,
+            topProducts: [
+                { name: 'Bắp rang bơ L', qty: 980, revenue: 14700000 },
+                { name: 'Combo 2', qty: 620, revenue: 18600000 },
+                { name: 'Pepsi L', qty: 1120, revenue: 8960000 },
+                { name: 'Bắp rang phô mai', qty: 540, revenue: 7020000 },
+                { name: 'Hotdog', qty: 380, revenue: 4560000 },
+                { name: 'Kem vani', qty: 290, revenue: 2320000 },
+            ],
+            categoryRevenue: { 'Bắp': 42, 'Combo': 28, 'Nước uống': 18, 'Snack': 8, 'Khác': 4 },
+            revenueByDay: { '01/04': { fnb: 6200000, ticket: 32000000 }, '02/04': { fnb: 7800000, ticket: 41000000 }, '03/04': { fnb: 5400000, ticket: 28000000 }, '04/04': { fnb: 9200000, ticket: 48000000 }, '05/04': { fnb: 8100000, ticket: 42000000 }, '06/04': { fnb: 11900000, ticket: 59000000 } },
+            attachByHour: { 9: 38, 10: 42, 11: 48, 12: 65, 13: 58, 14: 55, 15: 60, 16: 68, 17: 72, 18: 78, 19: 85, 20: 82, 21: 74, 22: 61 },
+            stockStatus: [
+                { name: 'Bắp ngô', current: 15, max: 100, unit: 'kg' },
+                { name: 'Pepsi', current: 48, max: 200, unit: 'lon' },
+                { name: 'Hotdog', current: 8, max: 50, unit: 'cái' },
+                { name: 'Ly nhựa L', current: 120, max: 300, unit: 'cái' },
+                { name: 'Bơ động vật', current: 22, max: 50, unit: 'kg' },
+                { name: 'Kem', current: 3, max: 30, unit: 'hộp' },
+                { name: 'Nước suối', current: 85, max: 150, unit: 'chai' },
+                { name: 'Cốc giấy M', current: 200, max: 400, unit: 'cái' },
+            ]
+        });
+        document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
+    }
+    init();
+</script>
+</body>
+</html>

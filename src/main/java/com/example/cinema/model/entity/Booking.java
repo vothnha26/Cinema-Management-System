@@ -1,6 +1,7 @@
 package com.example.cinema.model.entity;
 
 import com.example.cinema.model.enums.BookingStatus;
+
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -16,7 +17,7 @@ public class Booking {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(name = "customer_id", nullable = true)
     private Customer customer;
 
     @ManyToOne
@@ -50,107 +51,39 @@ public class Booking {
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     private Payment payment;
 
-    public Booking() {}
-
-    public Booking(Long id, Customer customer, Showtime showtime, Promotion promotion, String bookingCode, BigDecimal totalPrice, BookingStatus status, LocalDateTime createdAt, List<BookingDetail> details, List<BookingCombo> combos, Payment payment) {
-        this.id = id;
-        this.customer = customer;
-        this.showtime = showtime;
-        this.promotion = promotion;
-        this.bookingCode = bookingCode;
-        this.totalPrice = totalPrice;
-        this.status = status;
-        this.createdAt = createdAt;
-        this.details = details;
-        this.combos = combos;
-        this.payment = payment;
+    public Booking() {
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
 
-    public Customer getCustomer() {
-        return customer;
-    }
+    public Showtime getShowtime() { return showtime; }
+    public void setShowtime(Showtime showtime) { this.showtime = showtime; }
 
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
-    }
+    public Promotion getPromotion() { return promotion; }
+    public void setPromotion(Promotion promotion) { this.promotion = promotion; }
 
-    public Showtime getShowtime() {
-        return showtime;
-    }
+    public String getBookingCode() { return bookingCode; }
+    public void setBookingCode(String bookingCode) { this.bookingCode = bookingCode; }
 
-    public void setShowtime(Showtime showtime) {
-        this.showtime = showtime;
-    }
+    public BigDecimal getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
 
-    public Promotion getPromotion() {
-        return promotion;
-    }
+    public BookingStatus getStatus() { return status; }
+    public void setStatus(BookingStatus status) { this.status = status; }
 
-    public void setPromotion(Promotion promotion) {
-        this.promotion = promotion;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public String getBookingCode() {
-        return bookingCode;
-    }
+    public List<BookingDetail> getDetails() { return details; }
+    public void setDetails(List<BookingDetail> details) { this.details = details; }
 
-    public void setBookingCode(String bookingCode) {
-        this.bookingCode = bookingCode;
-    }
+    public List<BookingCombo> getCombos() { return combos; }
+    public void setCombos(List<BookingCombo> combos) { this.combos = combos; }
 
-    public BigDecimal getTotalPrice() {
-        return totalPrice;
-    }
-
-    public void setTotalPrice(BigDecimal totalPrice) {
-        this.totalPrice = totalPrice;
-    }
-
-    public BookingStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(BookingStatus status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public List<BookingDetail> getDetails() {
-        return details;
-    }
-
-    public void setDetails(List<BookingDetail> details) {
-        this.details = details;
-    }
-
-    public List<BookingCombo> getCombos() {
-        return combos;
-    }
-
-    public void setCombos(List<BookingCombo> combos) {
-        this.combos = combos;
-    }
-
-    public Payment getPayment() {
-        return payment;
-    }
-
-    public void setPayment(Payment payment) {
-        this.payment = payment;
-    }
+    public Payment getPayment() { return payment; }
+    public void setPayment(Payment payment) { this.payment = payment; }
 }

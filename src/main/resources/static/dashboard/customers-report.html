@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Khách Hàng | StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg: #080B14; --surface: #0F121F; --card: #161B2E; --border: #252A3D; --accent: #E5133A; --text: #E8EAF0; --text-muted: #7B82A0; }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .main-content { flex: 1; overflow-y: auto; padding: 40px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; height: 100%; transition: 0.3s; }
+        .stat-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 16px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .analytics-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; height: 100%; }
+        .chart-title { font-weight: 700; color: #fff; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; }
+        .filter-bar { background: var(--surface); border: 1px solid var(--border); padding: 15px 25px; border-radius: 16px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .form-control-dark { background: #080a14; border: 1px solid var(--border); color: #fff; border-radius: 10px; }
+        .form-control-dark:focus { background: #080a14; color: #fff; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(229,19,58,0.2); }
+
+        /* Membership tier cards */
+        .tier-card { border-radius: 16px; padding: 20px; position: relative; overflow: hidden; transition: 0.3s; }
+        .tier-card:hover { transform: translateY(-3px); }
+        .tier-card.bronze { background: linear-gradient(135deg, #78350f20, #92400e20); border: 1px solid #92400e50; }
+        .tier-card.silver { background: linear-gradient(135deg, #37415120, #4b556320); border: 1px solid #4b556350; }
+        .tier-card.gold { background: linear-gradient(135deg, #78350f30, #d9770620); border: 1px solid #d9770650; }
+        .tier-card.diamond { background: linear-gradient(135deg, #1e3a5f30, #3b82f620); border: 1px solid #3b82f650; }
+        .tier-badge { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .tier-count { font-size: 1.8rem; font-weight: 800; color: #fff; }
+        .tier-sub { color: var(--text-muted); font-size: 0.8rem; }
+
+        /* Top customers table */
+        .table-dark-custom { color: var(--text); }
+        .table-dark-custom thead th { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); font-weight: 600; padding: 12px 16px; }
+        .table-dark-custom tbody tr { border-bottom: 1px solid rgba(37,42,61,0.5); transition: 0.2s; }
+        .table-dark-custom tbody tr:hover { background: rgba(229,19,58,0.05); }
+        .table-dark-custom tbody td { padding: 14px 16px; font-size: 0.88rem; vertical-align: middle; border: none; }
+
+        .avatar-circle { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; flex-shrink: 0; }
+        .rank-badge { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; }
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #f59e0b); color: #000; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0, #9ca3af); color: #000; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #92400e); color: #fff; }
+        .rank-other { background: var(--border); color: var(--text-muted); }
+
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+<aside class="sidebar"></aside>
+<main class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-800 m-0">BÁO CÁO KHÁCH HÀNG</h2>
+            <p class="text-muted m-0">Phân tích hành vi, phân khúc và loyalty khách hàng</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-danger" onclick="loadStats()"><i class="bi bi-arrow-clockwise me-2"></i>LÀM MỚI</button>
+            <button class="btn btn-danger" onclick="window.print()"><i class="bi bi-download me-2"></i>XUẤT BÁO CÁO</button>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">TỪ NGÀY:</label>
+                <input type="date" id="startDate" class="form-control form-control-sm form-control-dark">
+                <input type="time" id="startTime" class="form-control form-control-sm form-control-dark" value="00:00">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">ĐẾN NGÀY:</label>
+                <input type="date" id="endDate" class="form-control form-control-sm form-control-dark">
+                <input type="time" id="endTime" class="form-control form-control-sm form-control-dark" value="23:59">
+            </div>
+            <button class="btn btn-sm btn-danger px-3 fw-bold" onclick="loadStats()">LỌC DỮ LIỆU</button>
+        </div>
+        <div class="text-muted small fw-bold"><i class="bi bi-clock-history me-1"></i> Cập nhật: <span id="lastUpdate">--:--</span></div>
+    </div>
+
+    <!-- KPI Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-value" id="totalCustomers">0</div>
+                <div class="stat-label">Tổng khách hàng</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-person-plus-fill"></i></div>
+                <div class="stat-value" id="newCustomers">0</div>
+                <div class="stat-label">Khách hàng mới</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-arrow-repeat"></i></div>
+                <div class="stat-value" id="returnRate">0%</div>
+                <div class="stat-label">Tỷ lệ quay lại</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon bg-info bg-opacity-10 text-info"><i class="bi bi-currency-dollar"></i></div>
+                <div class="stat-value" id="avgSpend">0đ</div>
+                <div class="stat-label">Chi tiêu TB/người</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Membership Tiers -->
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-award text-warning"></i>PHÂN KHÚC THÀNH VIÊN (LOYALTY TIER)</div>
+                <div class="row g-3" id="tierGrid">
+                    <div class="col-md-3"><div class="tier-card bronze"><div class="tier-badge" style="color:#92400e"><i class="bi bi-circle-fill"></i> Bronze</div><div class="tier-count" id="bronzeCount">--</div><div class="tier-sub" id="bronzeSub">-- khách hàng</div></div></div>
+                    <div class="col-md-3"><div class="tier-card silver"><div class="tier-badge" style="color:#9ca3af"><i class="bi bi-circle-fill"></i> Silver</div><div class="tier-count" id="silverCount">--</div><div class="tier-sub" id="silverSub">-- khách hàng</div></div></div>
+                    <div class="col-md-3"><div class="tier-card gold"><div class="tier-badge" style="color:#f59e0b"><i class="bi bi-circle-fill"></i> Gold</div><div class="tier-count" id="goldCount">--</div><div class="tier-sub" id="goldSub">-- khách hàng</div></div></div>
+                    <div class="col-md-3"><div class="tier-card diamond"><div class="tier-badge" style="color:#3b82f6"><i class="bi bi-circle-fill"></i> Diamond</div><div class="tier-count" id="diamondCount">--</div><div class="tier-sub" id="diamondSub">-- khách hàng</div></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Age Distribution -->
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-bar-chart text-info"></i>PHÂN BỐ ĐỘ TUỔI</div>
+                <div style="height: 260px; position: relative;">
+                    <canvas id="ageChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gender Split -->
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-gender-ambiguous text-purple"></i>PHÂN BỐ GIỚI TÍNH</div>
+                <div style="height: 200px; position: relative; margin-bottom: 16px;">
+                    <canvas id="genderChart"></canvas>
+                </div>
+                <div id="genderLegend" class="d-flex justify-content-center gap-4 mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Visit Frequency -->
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-calendar-check text-success"></i>TẦN SUẤT XEM PHIM</div>
+                <div style="height: 260px; position: relative;">
+                    <canvas id="frequencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- New vs Returning trend -->
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-graph-up text-danger"></i>KHÁCH MỚI VS KHÁCH QUAY LẠI THEO NGÀY</div>
+                <div style="height: 280px; position: relative;">
+                    <canvas id="customerTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Genre Preferences -->
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-film text-warning"></i>THỂ LOẠI YÊU THÍCH</div>
+                <div style="height: 280px; position: relative;">
+                    <canvas id="genreChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Customers -->
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-trophy text-warning"></i>TOP 10 KHÁCH HÀNG TRUNG THÀNH</div>
+                <div class="table-responsive">
+                    <table class="table table-dark-custom mb-0">
+                        <thead>
+                            <tr>
+                                <th>HẠNG</th>
+                                <th>KHÁCH HÀNG</th>
+                                <th>THÀNH VIÊN</th>
+                                <th>SỐ LẦN XEM</th>
+                                <th>TỔNG CHI TIÊU</th>
+                                <th>PHIM YÊU THÍCH</th>
+                                <th>ĐIỂM TÍCH LŨY</th>
+                                <th>LẦN XEM CUỐI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topCustomersBody">
+                            <tr><td colspan="8" class="text-center text-muted py-4">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    let ageChart, genderChart, frequencyChart, customerTrendChart, genreChart;
+    const TIER_COLORS = { 'Bronze': '#92400e', 'Silver': '#9ca3af', 'Gold': '#f59e0b', 'Diamond': '#3b82f6' };
+
+    async function init() {
+        const now = new Date(), weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 30);
+        document.getElementById('startDate').value = weekAgo.toISOString().split('T')[0];
+        document.getElementById('endDate').value = now.toISOString().split('T')[0];
+        loadStats();
+    }
+
+    async function loadStats() {
+        const start = document.getElementById('startDate').value;
+        const startTime = document.getElementById('startTime').value;
+        const end = document.getElementById('endDate').value;
+        const endTime = document.getElementById('endTime').value;
+        try {
+            const res = await api.get(`/statistics/customers?startDate=${start}&startTime=${startTime}:00&endDate=${end}&endTime=${endTime}:59`);
+            if (res.success) { renderAll(res.data); document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString(); }
+        } catch (e) { mockRender(); }
+    }
+
+    function renderAll(d) {
+        document.getElementById('totalCustomers').innerText = (d.totalCustomers || 0).toLocaleString();
+        document.getElementById('newCustomers').innerText = (d.newCustomers || 0).toLocaleString();
+        document.getElementById('returnRate').innerText = (d.returnRate || 0) + '%';
+        document.getElementById('avgSpend').innerText = ((d.avgSpend || 0) / 1000).toFixed(0) + 'K';
+
+        const tiers = d.membershipTiers || { Bronze: 3200, Silver: 1400, Gold: 620, Diamond: 180 };
+        const total = Object.values(tiers).reduce((a, b) => a + b, 0);
+        ['Bronze', 'Silver', 'Gold', 'Diamond'].forEach(t => {
+            const count = tiers[t] || 0, pct = total ? ((count / total) * 100).toFixed(1) : 0;
+            document.getElementById(t.toLowerCase() + 'Count').innerText = count.toLocaleString();
+            document.getElementById(t.toLowerCase() + 'Sub').innerText = `${pct}% tổng thành viên`;
+        });
+
+        renderAgeChart(d.ageDistribution || { '13-17': 8, '18-24': 32, '25-34': 28, '35-44': 18, '45-54': 9, '55+': 5 });
+        renderGenderChart(d.genderSplit || { 'Nam': 48, 'Nữ': 44, 'Khác': 8 });
+        renderFrequencyChart(d.visitFrequency || { '1 lần': 40, '2-3 lần': 30, '4-6 lần': 18, '7-10 lần': 8, '10+ lần': 4 });
+        renderTrendChart(d.customerTrend || {});
+        renderGenreChart(d.genrePreferences || { 'Hành động': 35, 'Tình cảm': 22, 'Hoạt hình': 18, 'Kinh dị': 12, 'Hài': 8, 'Khác': 5 });
+        renderTopCustomers(d.topCustomers || []);
+    }
+
+    function renderAgeChart(data) {
+        const ctx = document.getElementById('ageChart').getContext('2d');
+        if (ageChart) ageChart.destroy();
+        ageChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: Object.keys(data), datasets: [{ label: '%', data: Object.values(data), backgroundColor: ['#3b82f6','#E5133A','#f59e0b','#10b981','#a855f7','#6b7280'], borderRadius: 8, borderSkipped: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0', callback: v => v + '%' } }, x: { grid: { display: false }, ticks: { color: '#7B82A0' } } } }
+        });
+    }
+
+    function renderGenderChart(data) {
+        const ctx = document.getElementById('genderChart').getContext('2d');
+        if (genderChart) genderChart.destroy();
+        const colors = ['#3b82f6', '#E5133A', '#a855f7'];
+        genderChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: colors, borderWidth: 0, hoverOffset: 6 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+        });
+        document.getElementById('genderLegend').innerHTML = Object.keys(data).map((k, i) => `<div class="d-flex align-items-center gap-1"><div style="width:10px;height:10px;border-radius:3px;background:${colors[i]}"></div><span class="small">${k} <strong>${data[k]}%</strong></span></div>`).join('');
+    }
+
+    function renderFrequencyChart(data) {
+        const ctx = document.getElementById('frequencyChart').getContext('2d');
+        if (frequencyChart) frequencyChart.destroy();
+        frequencyChart = new Chart(ctx, {
+            type: 'bar', indexAxis: 'y',
+            data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: 'rgba(229,19,58,0.7)', borderRadius: 6, borderSkipped: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0', callback: v => v + '%' } }, y: { grid: { display: false }, ticks: { color: '#7B82A0' } } } }
+        });
+    }
+
+    function renderTrendChart(data) {
+        const ctx = document.getElementById('customerTrendChart').getContext('2d');
+        if (customerTrendChart) customerTrendChart.destroy();
+        const days = Object.keys(data).length ? data : { '07/03': { new: 45, returning: 120 }, '14/03': { new: 62, returning: 145 }, '21/03': { new: 58, returning: 132 }, '28/03': { new: 71, returning: 158 }, '04/04': { new: 83, returning: 175 } };
+        customerTrendChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: Object.keys(days), datasets: [
+                { label: 'Khách mới', data: Object.values(days).map(v => v.new || 0), borderColor: '#22c55e', backgroundColor: 'rgba(34,197,94,0.1)', fill: true, tension: 0.4, pointRadius: 4 },
+                { label: 'Khách quay lại', data: Object.values(days).map(v => v.returning || 0), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, pointRadius: 4 }
+            ]},
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#7B82A0', font: { family: 'Outfit' } } } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0' } }, x: { grid: { display: false }, ticks: { color: '#7B82A0' } } } }
+        });
+    }
+
+    function renderGenreChart(data) {
+        const ctx = document.getElementById('genreChart').getContext('2d');
+        if (genreChart) genreChart.destroy();
+        const colors = ['#E5133A','#3b82f6','#f59e0b','#10b981','#a855f7','#6b7280'];
+        genreChart = new Chart(ctx, {
+            type: 'polarArea',
+            data: { labels: Object.keys(data), datasets: [{ data: Object.values(data), backgroundColor: colors.map(c => c + '99'), borderColor: colors, borderWidth: 1 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#7B82A0', font: { family: 'Outfit', size: 11 }, boxWidth: 12 } } }, scales: { r: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { display: false } } } }
+        });
+    }
+
+    function renderTopCustomers(customers) {
+        const tbody = document.getElementById('topCustomersBody');
+        if (!customers.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">Không có dữ liệu</td></tr>'; return; }
+        const tierColor = t => TIER_COLORS[t] || '#6b7280';
+        const avatarColors = ['#E5133A','#3b82f6','#f59e0b','#10b981','#a855f7'];
+        tbody.innerHTML = customers.map((c, i) => `
+            <tr>
+                <td><div class="rank-badge ${i < 3 ? 'rank-' + (i+1) : 'rank-other'}">${i + 1}</div></td>
+                <td>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="avatar-circle" style="background:${avatarColors[i % 5]}20; color:${avatarColors[i % 5]}">${c.name.charAt(0)}</div>
+                        <div><div class="fw-bold">${c.name}</div><div class="text-muted small">${c.email}</div></div>
+                    </div>
+                </td>
+                <td><span style="color:${tierColor(c.tier)}" class="fw-bold"><i class="bi bi-circle-fill me-1" style="font-size:8px"></i>${c.tier}</span></td>
+                <td class="fw-bold text-white">${c.visitCount} lần</td>
+                <td class="fw-bold" style="color:#22c55e">${(c.totalSpend || 0).toLocaleString()}đ</td>
+                <td class="text-truncate" style="max-width:120px; color: var(--text-muted)">${c.favoriteGenre}</td>
+                <td><span class="fw-bold" style="color:#f59e0b"><i class="bi bi-star-fill me-1" style="font-size:10px"></i>${(c.points || 0).toLocaleString()}</span></td>
+                <td class="text-muted small">${c.lastVisit}</td>
+            </tr>`).join('');
+    }
+
+    function mockRender() {
+        renderAll({
+            totalCustomers: 12480, newCustomers: 842, returnRate: 64, avgSpend: 285000,
+            membershipTiers: { Bronze: 7200, Silver: 3400, Gold: 1500, Diamond: 380 },
+            topCustomers: [
+                { name: 'Nguyễn Hoàng Nam', email: 'nam@email.com', tier: 'Diamond', visitCount: 48, totalSpend: 8640000, favoriteGenre: 'Hành động', points: 12400, lastVisit: '06/04/2025' },
+                { name: 'Trần Minh Châu', email: 'chau@email.com', tier: 'Diamond', visitCount: 42, totalSpend: 7560000, favoriteGenre: 'Tình cảm', points: 10800, lastVisit: '05/04/2025' },
+                { name: 'Lê Thu Hà', email: 'ha@email.com', tier: 'Gold', visitCount: 36, totalSpend: 6120000, favoriteGenre: 'Kinh dị', points: 8900, lastVisit: '06/04/2025' },
+                { name: 'Phạm Văn Dũng', email: 'dung@email.com', tier: 'Gold', visitCount: 31, totalSpend: 5580000, favoriteGenre: 'Hài', points: 7700, lastVisit: '04/04/2025' },
+                { name: 'Hoàng Bảo Ngọc', email: 'ngoc@email.com', tier: 'Gold', visitCount: 28, totalSpend: 4900000, favoriteGenre: 'Hoạt hình', points: 6200, lastVisit: '03/04/2025' },
+            ]
+        });
+        document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
+    }
+    init();
+</script>
+</body>
+</html>

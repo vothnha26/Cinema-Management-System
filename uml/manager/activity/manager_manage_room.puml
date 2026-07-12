@@ -1,0 +1,19 @@
+@startuml Manager Room Layout Activity
+title Quản lý Phòng chiếu & Sơ đồ (Member 2)
+skinparam theme cerulean
+
+start
+:Truy cập Quản lý Phòng;
+:Chọn phòng cần thiết lập (VD: Phòng 1);
+:Nhập số lượng hàng và cột;
+:Hệ thống tạo lưới ghế mặc định;
+
+repeat
+    :Chọn ghế hoặc vùng ghế trên lưới;
+    :Gán thuộc tính (VIP, Couple, Ghế hỏng);
+repeat while (Cần chỉnh sửa thêm?) is (có)
+
+:Lưu sơ đồ phòng;
+:Hệ thống tự động đồng bộ sơ đồ vào Booking UI;
+stop
+@enduml

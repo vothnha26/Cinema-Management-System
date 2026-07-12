@@ -1,0 +1,29 @@
+@startuml Manager View Statistics Sequence
+title Sequence Diagram: Xem báo cáo thống kê (Manager)
+skinparam theme cerulean
+
+actor Manager
+boundary "admin-dashboard.html" as UI
+control "StatisticsController" as Ctrl
+entity "StatisticsService" as Svc
+database "MySQL" as DB
+
+Manager -> UI: Chọn khoảng thời gian (Start Date, End Date)
+UI -> Ctrl: GET /api/statistics/overview?start=...&end=...
+activate Ctrl
+
+Ctrl -> Svc: getOverview(startDate, endDate)
+activate Svc
+
+Svc -> DB: calculateTotalRevenue(start, end)
+Svc -> DB: countTotalTickets(start, end)
+Svc -> DB: findTopMovies(start, end)
+
+Svc --> Ctrl: StatisticsResponse
+deactivate Svc
+
+Ctrl --> UI: 200 OK (JSON Statistics)
+deactivate Ctrl
+
+UI -> Manager: Hiển thị biểu đồ & Báo cáo số liệu
+@enduml

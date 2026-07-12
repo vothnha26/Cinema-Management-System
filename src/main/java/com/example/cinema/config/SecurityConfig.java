@@ -1,11 +1,13 @@
 package com.example.cinema.config;
 
 import com.example.cinema.security.JwtFilter;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -15,8 +17,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.List;
+
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
@@ -28,34 +33,50 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .authorizeHttpRequests(auth -> auth
-                // PUBLIC endpoints
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/movies/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/showtimes/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/combos/**").permitAll()
-                .requestMatchers("/static/**", "/", "/*.html", "/favicon.ico").permitAll()
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(org.springframework.security.config.Customizer.withDefaults())
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth
+                        // 1. PUBLIC ENDPOINTS
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/verify-otp", "/api/auth/reset-password", "/api/auth/forgot-password").permitAll()
+                        .requestMatchers("/api/public/**", "/api/payments/**", "/ws-cinema/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/movies/**", "/api/showtimes/**", "/api/combos/**", "/api/promotions/**").permitAll()
+                        .requestMatchers("/api/bookings/**").permitAll()
+                        .requestMatchers("/static/**", "/", "/*.html", "/dashboard/**", "/favicon.ico", "/error", "/payment/**", "/js/**", "/css/**", "/images/**").permitAll()
 
-                // CUSTOMER + STAFF
-                .requestMatchers(HttpMethod.POST, "/api/bookings").hasAnyRole("CUSTOMER", "STAFF")
-                .requestMatchers(HttpMethod.GET, "/api/bookings/{code}").hasAnyRole("CUSTOMER", "STAFF")
+                        // 2. SHARED MANAGER & ADMIN (Operation)
+                        .requestMatchers("/api/tmdb/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/audit/**", "/api/statistics/**", "/api/scheduling/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER", "ROLE_STAFF")
+                        
+                        // 3. MOVIE & COMBO CATALOG (Admin edits, Manager updates priority)
+                        .requestMatchers(HttpMethod.POST, "/api/movies", "/api/combos").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/movies/**", "/api/combos/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/movies/*/priority").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/movies/**", "/api/combos/**").hasAuthority("ROLE_ADMIN")
+                        
+                        // 4. BRANCH OPS (Showtimes, Rooms, Promotions, Branch Movie Priority)
+                        .requestMatchers("/api/showtimes/**", "/api/rooms/**", "/api/promotions/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/movies/branch/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/combos/branch/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
 
-                // STAFF only
-                .requestMatchers(HttpMethod.PUT, "/api/bookings/*/checkin").hasRole("STAFF")
+                        // 5. STAFF & POS FLOW
+                        .requestMatchers("/api/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/bookings/hold-seat", "/api/bookings/release-seat").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/my-locked-seats").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/{code}").permitAll() // Cho phép public để khách vãng lai check trạng thái thanh toán
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/me").hasAuthority("ROLE_CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/cancel").hasAuthority("ROLE_CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/bookings/*/checkin").hasAnyAuthority("ROLE_STAFF", "ROLE_MANAGER", "ROLE_ADMIN")
 
-                // MANAGER + ADMIN
-                .requestMatchers("/api/movies/**").hasAnyRole("MANAGER", "ADMIN")
-                .requestMatchers("/api/rooms/**").hasAnyRole("MANAGER", "ADMIN")
-                .requestMatchers("/api/statistics/**").hasAnyRole("MANAGER", "ADMIN")
+                        // 6. ADMIN ONLY (System & Users)
+                        .requestMatchers("/api/admin/staffs/assignments").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/admin/branch-movies/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/admin/branches/**", "/api/admin/branches", "/api/admin/pricing/**", "/api/admin/pricing").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/admin/pricing-rules/**", "/api/admin/pricing-rules").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")
+                        .requestMatchers("/api/users/**").hasAuthority("ROLE_ADMIN")
 
-                // ADMIN only
-                .requestMatchers("/api/users/**").hasRole("ADMIN")
-
-                .anyRequest().authenticated()
-            );
+                        .anyRequest().authenticated());
         return http.build();
     }
 
@@ -67,5 +88,21 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        org.springframework.web.cors.CorsConfiguration config = new org.springframework.web.cors.CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://localhost:3001"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control", "Accept"));
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(true);
+        org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

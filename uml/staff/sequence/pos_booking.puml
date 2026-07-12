@@ -1,0 +1,62 @@
+@startuml staff_pos_booking
+actor Staff
+participant "StaffPosController" as SPC
+participant "StaffPosFacade" as SPF
+participant "ShowtimeRepository" as STR
+participant "SeatRepository" as SR
+participant "BookingRepository" as BR
+participant "BookingDetailRepository" as BDR
+participant "PaymentRepository" as PR
+participant "NotificationService" as NS
+database "Database" as DB
+
+Staff -> SPC : POST /api/staff/pos/book (PosBookingRequest)
+activate SPC
+
+SPC -> SPF : createPosBooking(request)
+activate SPF
+
+SPF -> STR : findById(showtimeId)
+activate STR
+STR --> SPF : ShowtimeEntity
+deactivate STR
+
+SPF -> SR : findAllByIdIn(seatIds)
+activate SR
+SR --> SPF : List<Seat>
+deactivate SR
+
+SPF -> BR : save(BookingEntity)
+activate BR
+BR -> DB : INSERT Booking
+DB --> BR : OK
+BR --> SPF : savedBooking
+deactivate BR
+
+loop for each seat
+    SPF -> BDR : save(BookingDetail)
+    activate BDR
+    BDR -> DB : INSERT BookingDetail
+    DB --> BDR : OK
+    BDR --> SPF : OK
+    deactivate BDR
+end
+
+SPF -> PR : save(PaymentEntity)
+activate PR
+PR -> DB : INSERT Payment
+DB --> PR : OK
+PR --> SPF : OK
+deactivate PR
+
+SPF -> NS : publishBookingEvent(savedBooking)
+activate NS
+NS --> SPF : EventPublished
+deactivate NS
+
+SPF --> SPC : BookingResponse
+deactivate SPF
+
+SPC --> Staff : 201 Created (BookingResponse)
+deactivate SPC
+@enduml

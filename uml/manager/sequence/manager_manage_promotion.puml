@@ -1,0 +1,64 @@
+@startuml Manager Manage Promotion
+title Sequence Diagram: Quản lý Khuyến mãi & Promotion Engine (Task 6 Refactored)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-promotions.html" as UI
+control "PromotionController" as Ctrl
+entity "PromotionService" as Svc
+entity "DiscountStrategyFactory" as Factory
+entity "DiscountStrategy" as Strategy
+database "Database" as DB
+
+== Tạo chương trình khuyến mãi mới ==
+Manager -> UI: Nhập thông tin (Mã, Mức giảm, Hạng tối thiểu...)
+UI -> Ctrl: POST /api/promotions (PromotionRequest)
+activate Ctrl
+
+Ctrl -> Svc: createPromotion(request)
+activate Svc
+Svc -> DB: save(promotion)
+Svc --> Ctrl: PromotionResponse
+deactivate Svc
+
+Ctrl --> UI: 201 Created
+deactivate Ctrl
+
+== Kiểm tra hiệu lực & Tính giá giảm (Dành cho Booking) ==
+[-> Svc: validatePromotion(code, orderAmount)
+activate Svc
+
+Svc -> DB: findByCode(code)
+DB --> Svc: Promotion
+
+group Logic Kiểm tra (Validation Rules)
+    Svc -> Svc: Check isActive, Expiry Date
+    Svc -> Svc: Check Usage Limit (usedCount < limit)
+    Svc -> Svc: Check Min Order Amount
+    
+    note over Svc: Mandate: Tier Validation
+    Svc -> Svc: Lấy SecurityContext (Username)
+    Svc -> DB: findCustomerByUsername(username)
+    DB --> Svc: Customer (Tier)
+    Svc -> Svc: So sánh Tier (customer >= promotion)
+end
+
+alt Hợp lệ
+    Svc -> Factory: getStrategy(discountType)
+    activate Factory
+    Factory --> Svc: ConcreteStrategy (PERCENT/FIXED)
+    deactivate Factory
+    
+    Svc -> Strategy: calculateDiscount(promotion, orderAmount)
+    activate Strategy
+    Strategy -> Strategy: Tính toán (có xét Max Discount)
+    Strategy --> Svc: appliedDiscountAmount
+    deactivate Strategy
+    
+    Svc --> [ : PromotionResponse (Kèm số tiền giảm)
+else Không hợp lệ
+    Svc --> [ : throw AppException("Lý do lỗi cụ thể")
+end
+deactivate Svc
+
+@enduml
