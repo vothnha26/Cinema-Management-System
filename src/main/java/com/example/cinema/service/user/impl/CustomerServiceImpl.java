@@ -50,6 +50,10 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private CustomerResponse mapToResponse(Customer customer) {
+        return mapToResponseWithBenefits(customer, null);
+    }
+
+    private CustomerResponse mapToResponseWithBenefits(Customer customer, List<MembershipBenefit> preloadedBenefits) {
         CustomerResponse res = new CustomerResponse();
         res.setId(customer.getId());
         res.setFullName(customer.getFullName());
@@ -64,12 +68,24 @@ public class CustomerServiceImpl implements CustomerService {
             res.setMembershipLevel(customer.getMembershipLevel().getName());
             res.setMembershipPriority(customer.getMembershipLevel().getPriority());
             
-            // Lấy tỷ lệ giảm giá từ lợi ích hạng
-            double rate = membershipBenefitRepository.findByMembershipLevelAndBenefitType(customer.getMembershipLevel(), "DISCOUNT")
-                    .map(b -> {
-                        try { return Double.parseDouble(b.getBenefitValue()); }
-                        catch(Exception e) { return 0.0; }
-                    }).orElse(0.0);
+            // Lấy tỷ lệ giảm giá từ lợi ích hạng (sử dụng preloaded nếu có để tránh N+1 query)
+            double rate = 0.0;
+            if (preloadedBenefits != null) {
+                rate = preloadedBenefits.stream()
+                        .filter(b -> b.getMembershipLevel().getId().equals(customer.getMembershipLevel().getId()) 
+                                && "DISCOUNT".equals(b.getBenefitType()))
+                        .findFirst()
+                        .map(b -> {
+                            try { return Double.parseDouble(b.getBenefitValue()); }
+                            catch(Exception e) { return 0.0; }
+                        }).orElse(0.0);
+            } else {
+                rate = membershipBenefitRepository.findByMembershipLevelAndBenefitType(customer.getMembershipLevel(), "DISCOUNT")
+                        .map(b -> {
+                            try { return Double.parseDouble(b.getBenefitValue()); }
+                            catch(Exception e) { return 0.0; }
+                        }).orElse(0.0);
+            }
             res.setDiscountRate(rate);
         } else {
             res.setMembershipLevel(isOfficial ? "STANDARD" : "GUEST");
@@ -121,8 +137,10 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public List<CustomerResponse> getAllCustomers() {
-        return customerRepository.findAll().stream()
-                .map(this::mapToResponse)
+        List<Customer> customers = customerRepository.findAllWithUserAndLevel();
+        List<MembershipBenefit> benefits = membershipBenefitRepository.findAll();
+        return customers.stream()
+                .map(c -> this.mapToResponseWithBenefits(c, benefits))
                 .collect(Collectors.toList());
     }
 

@@ -12,6 +12,10 @@ public class AppConstants {
     public static final String POS_CODE_PREFIX = "POS-";
     public static final String TXN_CODE_PREFIX = "TXN-";
     public static final String MANUAL_CODE_PREFIX = "MANUAL-";
+    public static final String TXN_PREFIX_ONLINE = "ONL-";
+    public static final String BOOKING_CODE_PREFIX_SC = "SC-";
+    public static final String DEFAULT_GUEST_NAME = "Khách vãng lai";
+    public static final String DATE_TIME_FORMAT = "HH:mm dd/MM/yyyy";
     
     // Auth & Roles
     public static final String ROLE_ADMIN = "ROLE_ADMIN";

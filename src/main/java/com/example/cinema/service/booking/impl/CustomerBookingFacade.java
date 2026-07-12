@@ -39,6 +39,8 @@ public class CustomerBookingFacade {
     private final ComboRepository comboRepository;
     private final CustomerRepository customerRepository;
     private final ShowtimeRepository showtimeRepository;
+    private final com.example.cinema.repository.room.SeatRepository seatRepository;
+    private final com.example.cinema.service.commerce.PricingService pricingService;
     private final ApplicationEventPublisher eventPublisher;
 
     public CustomerBookingFacade(BookingRepository bookingRepository,
@@ -46,31 +48,36 @@ public class CustomerBookingFacade {
             ComboRepository comboRepository,
             CustomerRepository customerRepository,
             ShowtimeRepository showtimeRepository,
+            com.example.cinema.repository.room.SeatRepository seatRepository,
+            com.example.cinema.service.commerce.PricingService pricingService,
             ApplicationEventPublisher eventPublisher) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.comboRepository = comboRepository;
         this.customerRepository = customerRepository;
         this.showtimeRepository = showtimeRepository;
+        this.seatRepository = seatRepository;
+        this.pricingService = pricingService;
         this.eventPublisher = eventPublisher;
     }
 
     @Transactional
     public BookingResponse processOnlineBooking(OnlineBookingRequest request, String username) {
         if (request.getSeatIds() == null || request.getSeatIds().isEmpty()) {
-            throw new AppException("Vui lòng chọn ít nhất 1 ghế.");
+            throw new AppException(com.example.cinema.model.constant.ErrorMessages.CHOOSE_AT_LEAST_ONE_SEAT);
+        }
+        if (request.getShowtimeId() == null) {
+            throw new AppException(com.example.cinema.model.constant.ErrorMessages.CHOOSE_SHOWTIME);
         }
 
-        // 1. Xác định Customer
+        // 1. Xác định Customer (Loại bỏ N+1 query)
         Customer customer = null;
         String emailToNotify = request.getGuestEmail();
         String nameToNotify = request.getGuestName();
 
         if (username != null) {
             // Logged in
-            customer = customerRepository.findAll().stream()
-                    .filter(c -> c.getUser().getUsername().equals(username))
-                    .findFirst().orElse(null);
+            customer = customerRepository.findByUserUsername(username).orElse(null);
             if (customer != null) {
                 emailToNotify = customer.getUser().getEmail();
                 nameToNotify = customer.getFullName();
@@ -80,14 +87,24 @@ public class CustomerBookingFacade {
             if (request.getGuestName() == null || request.getGuestPhone() == null || request.getGuestEmail() == null ||
                     request.getGuestName().isBlank() || request.getGuestPhone().isBlank()
                     || request.getGuestEmail().isBlank()) {
-                throw new AppException("Vui lòng cung cấp đầy đủ thông tin khách vãng lai (Tên, Email, SĐT).");
+                throw new AppException(com.example.cinema.model.constant.ErrorMessages.GUEST_INFO_REQUIRED);
             }
         }
 
-        // 2. Tính tiền (Mockup Seat Price)
-        BigDecimal totalPrice = BigDecimal.valueOf(request.getSeatIds().size() * 95000L);
-        BigDecimal comboTotal = BigDecimal.ZERO;
+        com.example.cinema.model.entity.Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
+                .orElseThrow(() -> new AppException(com.example.cinema.model.constant.ErrorMessages.SHOWTIME_NOT_FOUND));
 
+        // 2. Tính tiền qua PricingService động (Không dùng giá vé cứng 95000L)
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        for (Long seatId : request.getSeatIds()) {
+            com.example.cinema.model.entity.Seat seat = seatRepository.findById(seatId)
+                    .orElseThrow(() -> new AppException(com.example.cinema.model.constant.ErrorMessages.SEAT_NOT_FOUND + " ID: " + seatId));
+            com.example.cinema.model.dto.response.PriceCalculationResult calcResult = 
+                    pricingService.calculateTicketPrice(showtime, seat, customer);
+            totalPrice = totalPrice.add(calcResult.getFinalPrice());
+        }
+
+        BigDecimal comboTotal = BigDecimal.ZERO;
         if (request.getCombos() != null && !request.getCombos().isEmpty()) {
             for (Map.Entry<Long, Integer> entry : request.getCombos().entrySet()) {
                 Combo combo = comboRepository.findById(entry.getKey()).orElse(null);
@@ -98,25 +115,14 @@ public class CustomerBookingFacade {
         }
         totalPrice = totalPrice.add(comboTotal);
 
-        // Giảm giá cho member
-        if (customer != null) {
-            // Tạm fix giảm 10%
-            BigDecimal discount = totalPrice.multiply(BigDecimal.valueOf(0.1));
-            totalPrice = totalPrice.subtract(discount);
-        }
-
-        // 3. Tạo Booking
-        String bookingCode = "BKG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // 3. Tạo Booking (Loại bỏ magic string bằng constants)
+        String bookingCode = com.example.cinema.model.constant.AppConstants.BOOKING_CODE_PREFIX 
+                + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         Booking booking = new Booking();
         booking.setBookingCode(bookingCode);
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.PENDING);
-        
-        // Gán showtime từ request
-        if (request.getShowtimeId() != null) {
-            booking.setShowtime(showtimeRepository.findById(request.getShowtimeId())
-                .orElseThrow(() -> new AppException("Suất chiếu không tồn tại")));
-        }
+        booking.setShowtime(showtime);
 
         if (customer != null) {
             booking.setCustomer(customer);
@@ -130,7 +136,7 @@ public class CustomerBookingFacade {
         payment.setPaymentMethod(PaymentMethod.valueOf(
                 request.getPaymentMethod() != null ? request.getPaymentMethod() : "MOMO"));
         payment.setPaymentStatus(PaymentStatus.PENDING);
-        payment.setTransactionId("ONL-" + bookingCode);
+        payment.setTransactionId(com.example.cinema.model.constant.AppConstants.TXN_PREFIX_ONLINE + bookingCode);
         payment.setPaidAt(LocalDateTime.now());
         paymentRepository.save(payment);
 
@@ -145,8 +151,8 @@ public class CustomerBookingFacade {
                 this,
                 targetUser,
                 bookingCode,
-                "Phim Online", // Lấy từ showtime thật sau
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")),
+                showtime.getMovie().getTitle(),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern(com.example.cinema.model.constant.AppConstants.DATE_TIME_FORMAT)),
                 request.getSeatIds().size() + " ghế",
                 totalPrice.toPlainString() + "đ"));
 
@@ -157,7 +163,7 @@ public class CustomerBookingFacade {
         response.setTotalPrice(totalPrice);
         response.setStatus(BookingStatus.CONFIRMED);
         response.setPaymentMethod(payment.getPaymentMethod());
-        response.setCustomerName(nameToNotify);
+        response.setCustomerName(nameToNotify != null ? nameToNotify : com.example.cinema.model.constant.AppConstants.DEFAULT_GUEST_NAME);
         response.setCreatedAt(booking.getCreatedAt());
 
         return response;

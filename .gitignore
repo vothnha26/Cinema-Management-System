@@ -22,3 +22,5 @@ replay_pid*
 .vscode/
 *.db
 bin/
+
+cinema_ui/

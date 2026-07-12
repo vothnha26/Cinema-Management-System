@@ -35,6 +35,8 @@ public class StaffPosFacade {
     private final ComboRepository comboRepository;
     private final CustomerRepository customerRepository;
     private final ShowtimeRepository showtimeRepository;
+    private final com.example.cinema.repository.room.SeatRepository seatRepository;
+    private final com.example.cinema.service.commerce.PricingService pricingService;
     private final ApplicationEventPublisher eventPublisher;
 
     public StaffPosFacade(BookingRepository bookingRepository,
@@ -42,42 +44,52 @@ public class StaffPosFacade {
             ComboRepository comboRepository,
             CustomerRepository customerRepository,
             ShowtimeRepository showtimeRepository,
+            com.example.cinema.repository.room.SeatRepository seatRepository,
+            com.example.cinema.service.commerce.PricingService pricingService,
             ApplicationEventPublisher eventPublisher) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.comboRepository = comboRepository;
         this.customerRepository = customerRepository;
         this.showtimeRepository = showtimeRepository;
+        this.seatRepository = seatRepository;
+        this.pricingService = pricingService;
         this.eventPublisher = eventPublisher;
     }
 
     @Transactional
     public BookingResponse processDirectBooking(PosBookingRequest request) {
         if (request.getSeatIds() == null || request.getSeatIds().isEmpty()) {
-            throw new AppException("Vui lòng chọn ít nhất 1 ghế.");
+            throw new AppException(com.example.cinema.model.constant.ErrorMessages.CHOOSE_AT_LEAST_ONE_SEAT);
         }
         if (request.getShowtimeId() == null) {
-            throw new AppException("Vui lòng chọn suất chiếu.");
+            throw new AppException(com.example.cinema.model.constant.ErrorMessages.CHOOSE_SHOWTIME);
         }
 
         Showtime showtime = showtimeRepository.findById(request.getShowtimeId())
-                .orElseThrow(() -> new AppException("Suất chiếu không tồn tại."));
+                .orElseThrow(() -> new AppException(com.example.cinema.model.constant.ErrorMessages.SHOWTIME_NOT_FOUND));
 
         Customer customer = null;
         if (request.getCustomerPhone() != null && !request.getCustomerPhone().isBlank()) {
-            customer = customerRepository.findAll().stream()
-                    .filter(c -> request.getCustomerPhone().equals(c.getPhone()))
-                    .findFirst()
-                    .orElse(null);
+            customer = customerRepository.findByPhone(request.getCustomerPhone()).orElse(null);
         }
 
         if (customer == null) {
-            throw new AppException(
-                    "Không tìm thấy thông tin khách hàng. Bán vé tại quầy yêu cầu thông tin khách hàng (nullable=false).");
+            throw new AppException(com.example.cinema.model.constant.ErrorMessages.CUSTOMER_NOT_FOUND);
         }
 
-        String bookingCode = "SC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        BigDecimal totalPrice = BigDecimal.valueOf(request.getSeatIds().size() * 95000L);
+        String bookingCode = com.example.cinema.model.constant.AppConstants.BOOKING_CODE_PREFIX_SC 
+                + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        
+        // Tính tiền qua PricingService động (Không dùng giá vé cứng 95000L)
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        for (Long seatId : request.getSeatIds()) {
+            com.example.cinema.model.entity.Seat seat = seatRepository.findById(seatId)
+                    .orElseThrow(() -> new AppException(com.example.cinema.model.constant.ErrorMessages.SEAT_NOT_FOUND + " ID: " + seatId));
+            com.example.cinema.model.dto.response.PriceCalculationResult calcResult = 
+                    pricingService.calculateTicketPrice(showtime, seat, customer);
+            totalPrice = totalPrice.add(calcResult.getFinalPrice());
+        }
 
         BigDecimal comboTotal = BigDecimal.ZERO;
         if (request.getCombos() != null && !request.getCombos().isEmpty()) {
@@ -104,17 +116,17 @@ public class StaffPosFacade {
         payment.setPaymentMethod(PaymentMethod.valueOf(
                 request.getPaymentMethod() != null ? request.getPaymentMethod() : "CASH"));
         payment.setPaymentStatus(PaymentStatus.SUCCESS);
-        payment.setTransactionId("POS-" + bookingCode);
+        payment.setTransactionId(com.example.cinema.model.constant.AppConstants.POS_CODE_PREFIX + bookingCode);
         payment.setPaidAt(LocalDateTime.now());
         paymentRepository.save(payment);
 
-        if (customer != null && customer.getUser() != null) {
+        if (customer.getUser() != null) {
             eventPublisher.publishEvent(new TicketBookedEvent(
                     this,
                     customer.getUser(),
                     bookingCode,
-                    "Phim tại quầy",
-                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")),
+                    showtime.getMovie().getTitle(),
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern(com.example.cinema.model.constant.AppConstants.DATE_TIME_FORMAT)),
                     request.getSeatIds().size() + " ghế",
                     totalPrice.toPlainString() + "đ"));
         }
@@ -125,7 +137,7 @@ public class StaffPosFacade {
         response.setTotalPrice(totalPrice);
         response.setStatus(BookingStatus.CONFIRMED);
         response.setPaymentMethod(payment.getPaymentMethod());
-        response.setCustomerName(customer != null ? customer.getFullName() : "Khách vãng lai");
+        response.setCustomerName(customer.getFullName());
         response.setCreatedAt(booking.getCreatedAt());
 
         return response;

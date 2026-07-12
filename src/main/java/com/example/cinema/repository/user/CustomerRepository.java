@@ -13,6 +13,10 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByUserId(Long userId);
     Optional<Customer> findFirstByUserUsernameOrderByIdDesc(String username);
+    
+    @Query("SELECT c FROM Customer c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.membershipLevel")
+    List<Customer> findAllWithUserAndLevel();
+
     default Optional<Customer> findByUserUsername(String username) {
         return findFirstByUserUsernameOrderByIdDesc(username);
     }
