@@ -61,7 +61,7 @@ jobs:
           DB_PASSWORD: root
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
-          JWT_SECRET: cinema-management-super-secret-key-2024-at-least-256-bit-for-github-actions
+          JWT_SECRET: 12345678901234567890123456789012
           TMDB_API_KEY: 919a2431095ad1d5a5a0bfe94b56acb3
           GEMINI_API_KEY: test-key
         run: |

@@ -55,7 +55,7 @@ public class DataSeeder implements CommandLineRunner {
         if (userFacade.findUserByUsername("admin").isEmpty()) {
             User admin = new User();
             admin.setUsername("admin");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword(passwordEncoder.encode(System.getProperty("SEED_ADMIN_PASSWORD", "admin_default_pass")));
             admin.setEmail("admin@flashcinema.com");
             admin.setRole(Role.ADMIN);
             // Lưu qua repo/facade
@@ -69,7 +69,7 @@ public class DataSeeder implements CommandLineRunner {
 
             User mUser = new User();
             mUser.setUsername("manager1");
-            mUser.setPassword(passwordEncoder.encode("manager123"));
+            mUser.setPassword(passwordEncoder.encode(System.getProperty("SEED_MANAGER_PASSWORD", "manager_default_pass")));
             mUser.setEmail("manager1@starcinema.com");
             mUser.setRole(Role.MANAGER);
             

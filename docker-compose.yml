@@ -46,7 +46,7 @@ services:
       - DB_PASSWORD=root
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - JWT_SECRET=cinema-management-super-secret-key-2024-at-least-256-bit
+      - JWT_SECRET=12345678901234567890123456789012
       - TMDB_API_KEY=919a2431095ad1d5a5a0bfe94b56acb3
     networks:
       - cinema-network
