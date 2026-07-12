@@ -12,12 +12,12 @@ Tệp này quản lý trạng thái phát triển và đối soát nghiệp vụ
 | Bước | Nhiệm vụ | Class liên quan | Trạng thái |
 | :--- | :--- | :--- | :--- |
 | **Step 1.1** | Vẽ Sequence Diagram cho luồng Đặt vé Online & POS có áp dụng `PricingService` | `uml/` | 🟢 Hoàn thành |
-| **Step 1.2** | Refactor `CustomerBookingFacade` (Tính giá vé động qua `PricingService`, xử lý N+1 query) | `CustomerBookingFacade.java` | 🔄 Đang thực hiện |
-| **Step 1.3** | Refactor `StaffPosFacade` (Tính giá vé động qua `PricingService`, xử lý N+1 query) | `StaffPosFacade.java` | ⏳ Chưa bắt đầu |
-| **Step 1.4** | Thêm các Query Method tránh N+1 load toàn bộ DB | `CustomerRepository.java` | ⏳ Chưa bắt đầu |
-| **Step 1.5** | Tích hợp **Flyway Migration** để thay thế `ddl-auto=update` | `pom.xml`, `application.properties` | ⏳ Chưa bắt đầu |
-| **Step 1.6** | Gom toàn bộ Magic Strings & Error Messages sang class Constant | `AppConstants.java`, `ErrorMessages.java` | ⏳ Chưa bắt đầu |
-| **Step 1.7** | Thay thế toàn bộ `System.err.println()` bằng SLF4J Logger | Các classes BE | ⏳ Chưa bắt đầu |
+| **Step 1.2** | Refactor `CustomerBookingFacade` (Tính giá vé động qua `PricingService`, xử lý N+1 query) | `CustomerBookingFacade.java` | 🟢 Hoàn thành |
+| **Step 1.3** | Refactor `StaffPosFacade` (Tính giá vé động qua `PricingService`, xử lý N+1 query) | `StaffPosFacade.java` | 🟢 Hoàn thành |
+| **Step 1.4** | Thêm các Query Method tránh N+1 load toàn bộ DB | `CustomerRepository.java` | 🟢 Hoàn thành |
+| **Step 1.5** | Tích hợp **Flyway Migration** để thay thế `ddl-auto=update` | `pom.xml`, `application.properties` | 🟢 Hoàn thành |
+| **Step 1.6** | Gom toàn bộ Magic Strings & Error Messages sang class Constant | `AppConstants.java`, `ErrorMessages.java` | 🟢 Hoàn thành |
+| **Step 1.7** | Thay thế toàn bộ `System.err.println()` bằng SLF4J Logger | Các classes BE | 🟢 Hoàn thành |
 | **Step 1.8** | Cấu hình CORS Whitelist cho cổng chạy Frontend Next.js | `SecurityConfig.java` | ⏳ Chưa bắt đầu |
 | **Step 1.9** | Chạy automated JUnit/MockMvc test cho toàn bộ luồng Backend | `src/test/java` | ⏳ Chưa bắt đầu |
 
@@ -39,4 +39,4 @@ Tệp này quản lý trạng thái phát triển và đối soát nghiệp vụ
 
 ## 📌 Nhật Ký Hoạt Động (Activity Logs)
 
-* **12/07/2026:** Khởi tạo tài liệu `CONDUCTOR.md`, thiết lập lộ trình phát triển.
+* **12/07/2026:** Khởi tạo tài liệu `CONDUCTOR.md`, hoàn thành refactor core logic đặt vé (dynamic pricing, N+1 query), gom hằng số Magic Strings, chuẩn hóa log bằng SLF4J cho 12 file nghiệp vụ chính, và tích hợp Flyway Migration/baseline V1 thành công.
