@@ -18,7 +18,7 @@ Tệp này quản lý trạng thái phát triển và đối soát nghiệp vụ
 | **Step 1.5** | Tích hợp **Flyway Migration** để thay thế `ddl-auto=update` | `pom.xml`, `application.properties` | 🟢 Hoàn thành |
 | **Step 1.6** | Gom toàn bộ Magic Strings & Error Messages sang class Constant | `AppConstants.java`, `ErrorMessages.java` | 🟢 Hoàn thành |
 | **Step 1.7** | Thay thế toàn bộ `System.err.println()` bằng SLF4J Logger | Các classes BE | 🟢 Hoàn thành |
-| **Step 1.8** | Cấu hình CORS Whitelist cho cổng chạy Frontend Next.js | `SecurityConfig.java` | ⏳ Chưa bắt đầu |
+| **Step 1.8** | Cấu hình CORS Whitelist cho cổng chạy Frontend Next.js | `SecurityConfig.java` | 🟢 Hoàn thành |
 | **Step 1.9** | Chạy automated JUnit/MockMvc test cho toàn bộ luồng Backend | `src/test/java` | ⏳ Chưa bắt đầu |
 
 ---
