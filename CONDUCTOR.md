@@ -40,3 +40,4 @@ Tệp này quản lý trạng thái phát triển và đối soát nghiệp vụ
 ## 📌 Nhật Ký Hoạt Động (Activity Logs)
 
 * **12/07/2026:** Khởi tạo tài liệu `CONDUCTOR.md`, hoàn thành refactor core logic đặt vé (dynamic pricing, N+1 query), gom hằng số Magic Strings, chuẩn hóa log bằng SLF4J cho 12 file nghiệp vụ chính, và tích hợp Flyway Migration/baseline V1 thành công.
+* **12/07/2026 (CI/CD & Docker):** Docker hóa toàn bộ dự án Spring Boot Backend, MySQL, Redis qua `Dockerfile` và `docker-compose.yml`. Tích hợp kiểm thử Selenium tự động chạy headless qua `BookingSeleniumTest.java` và thiết lập GitHub Actions CI pipeline (`selenium.yml`). Chạy thử nghiệm test thành công local với kết quả BUILD SUCCESS.
