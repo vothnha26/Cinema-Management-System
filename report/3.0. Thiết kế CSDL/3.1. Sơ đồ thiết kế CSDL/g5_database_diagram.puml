@@ -1,0 +1,75 @@
+@startuml G5_DatabaseDiagram_Pricing
+!theme plain
+hide methods
+hide stereotypes
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classFontName Courier
+skinparam classBackgroundColor #FDEDEC
+skinparam classBorderColor #E74C3C
+skinparam classHeaderBackgroundColor #922B21
+skinparam ArrowColor #C0392B
+skinparam ArrowThickness 1.5
+
+title <b>DATABASE DIAGRAM — Nhóm 5: Khuyến mãi & Chính sách giá</b>
+
+entity pricing_rules {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * name         : VARCHAR(255)
+    category     : VARCHAR(50)
+    -- CHECK: BASE|SURCHARGE|DISCOUNT
+    impact_type  : VARCHAR(20)
+    -- CHECK: ADDITIVE|PERCENTAGE|FIXED
+    impact_value : DECIMAL(10,2)
+    is_stackable : BOOLEAN DEFAULT false
+    is_active    : BOOLEAN DEFAULT true
+}
+
+entity pricing_conditions {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>rule_id</u> : BIGINT <<FK→pricing_rules.id>>
+    type          : VARCHAR(50)
+    -- CHECK: TIME|AGE|SEAT_TYPE|DAY_OF_WEEK...
+    value         : VARCHAR(255)
+    -- String hoặc JSON
+    description   : VARCHAR(255)
+}
+
+entity seat_prices {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>seat_type_id</u> : VARCHAR(50) <<FK→seat_types.id>>
+  * <u>format_id</u>    : VARCHAR(50) <<FK→formats.id>>
+  * base_price         : DECIMAL(10,2)
+    -- UNIQUE(seat_type_id, format_id)
+}
+
+entity promotions {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * code           : VARCHAR(50) UNIQUE
+  * name           : VARCHAR(255)
+    discount_type  : VARCHAR(20)
+    -- CHECK: PERCENTAGE|FIXED
+    discount_value : DECIMAL(10,2)
+    start_date     : DATE
+    end_date       : DATE
+    usage_limit    : INT
+}
+
+entity branch_pricing_rules {
+  * **id** : BIGINT <<PK, AUTO_INCREMENT>>
+  ==
+  * <u>branch_id</u> : BIGINT <<FK→branches.id>>
+  * <u>rule_id</u>   : BIGINT <<FK→pricing_rules.id>>
+    priority        : INT
+    -- UNIQUE(branch_id, rule_id)
+}
+
+pricing_rules ||--|{ pricing_conditions    : "rule_id"
+pricing_rules ||--|{ branch_pricing_rules  : "rule_id"
+
+@enduml

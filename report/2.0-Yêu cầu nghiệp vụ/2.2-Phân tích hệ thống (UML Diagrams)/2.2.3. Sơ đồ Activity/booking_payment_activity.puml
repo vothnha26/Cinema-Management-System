@@ -1,0 +1,57 @@
+@startuml booking_payment_activity
+skinparam backgroundColor #FFFFFF
+skinparam activity {
+  BackgroundColor #1A1A1A
+  BorderColor #E5133A
+  FontColor #FFFFFF
+  ArrowColor #E5133A
+}
+
+title Activity Diagram: Quy trình Đặt vé & Thanh toán (FlashCinema)
+
+start
+:Người dùng chọn Suất chiếu & Ghế;
+:Chọn Combo (Bắp, Nước);
+:Nhập thông tin liên hệ (nếu là khách vãng lai);
+
+partition "Xử lý đặt vé" {
+  :Xác thực danh tính (Thành viên/Khách);
+  :Tính tiền vé và dịch vụ kèm theo;
+  note right
+    Tính toán dựa trên:
+    - Loại ghế (Vip/Thường)
+    - Đối tượng khách hàng
+    - Thời điểm suất chiếu
+    - Chi nhánh rạp (Quy tắc giá riêng)
+  end note
+  
+  :Áp dụng giảm giá (nếu có);
+  :Tạo hồ sơ Đặt vé;
+  :Tạo yêu cầu Thanh toán;
+}
+
+:Chuyển hướng trang Thanh toán (SePay/VietQR)\nhoặc thanh toán tại quầy (Tiền mặt/Thẻ);
+
+if (Thanh toán hoàn tất?) then (Có)
+  partition "Xử lý Webhook (SePay)" {
+    :Nhận biến động số dư từ Ngân hàng;
+    :Khớp mã đơn hàng (SEVQR);
+  }
+  :Cập nhật trạng thái Đặt vé (CONFIRMED/CHECKED_IN);
+  :Ghi nhận giao dịch thành công;
+  
+  partition "Phản hồi thời gian thực" {
+    :Phát tín hiệu WebSocket tới trình duyệt;
+    :Trình duyệt tự động chuyển trang thành công;
+    :Gửi Email xác nhận mã vé điện tử;
+  }
+  
+  #Green:Hiển thị mã QR vé;
+  stop
+else (Không)
+  :Tự động hủy hồ sơ Đặt vé;
+  #Red:Thông báo "Thanh toán thất bại";
+  stop
+endif
+
+@enduml

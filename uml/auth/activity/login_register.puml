@@ -1,0 +1,40 @@
+@startuml auth_login_register_activity
+title Activity Diagram: User Registration & Login
+
+start
+if (Has Account?) then (No)
+  :User selects "Register";
+  :User fills Registration Form;
+  :System validates inputs (Email format, Password strength);
+  if (Valid?) then (Yes)
+    :System checks if Username/Email exists;
+    if (Exists?) then (Yes)
+      :System shows "Account already exists" error;
+    else (No)
+      :System hashes Password;
+      :System saves User to Database;
+      :System creates Customer Profile (if role=CUSTOMER);
+      :System returns Success Message;
+    endif
+  else (No)
+    :System shows validation errors;
+  endif
+else (Yes)
+  :User selects "Login";
+  :User inputs Credentials (Username, Password);
+  :System retrieves User by Username;
+  if (User Found?) then (Yes)
+    :System compares Hashes;
+    if (Password Matches?) then (Yes)
+      :System generates JWT Token;
+      :System returns Token & User Profile;
+      :User is Authenticated;
+    else (No)
+      :System shows "Invalid Credentials";
+    endif
+  else (No)
+    :System shows "Invalid Credentials";
+  endif
+endif
+stop
+@enduml

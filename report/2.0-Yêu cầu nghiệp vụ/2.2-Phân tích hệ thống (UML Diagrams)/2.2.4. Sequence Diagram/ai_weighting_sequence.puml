@@ -1,0 +1,54 @@
+@startuml ai_weighting_sequence
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #2ECC71
+    ActorBorderColor #2ECC71
+    LifeLineBorderColor #1A1A1A
+    ParticipantBackgroundColor #1A1A1A
+    ParticipantBorderColor #2ECC71
+    ParticipantFontColor #FFFFFF
+}
+
+actor Manager
+participant "SchedulingService" as SS
+participant "BuzzAnalysisService" as BAS
+participant "BranchMovieRepo" as BMR
+participant "MovieRepo" as MR
+
+Manager -> SS: getSuggestions(date)
+activate SS
+
+SS -> BAS: getExternalBuzzScores()
+activate BAS
+BAS --> SS: Map<MovieId, BuzzScore>
+deactivate BAS
+
+SS -> BMR: findByBranchId(branchId)
+activate BMR
+BMR --> SS: List<BranchMovie> (with priorities)
+deactivate BMR
+
+loop for each Room in Branch
+    loop for each Time Slot (cursor)
+        SS -> SS: Filter Candidate Movies by Room Format
+        
+        loop for each Candidate Movie
+            SS -> SS: calculateScore(movie, time)
+            note right
+                Score = Buzz + m.Rating*2 + m.Priority*10 + (m.Origin == 'VN' ? 30 : 0) - Usage*20
+                - Buzz: TMDB Popularity normalized (0-100)
+                - Origin: Boost for local content (Vietnam)
+                - Usage: Penalty per previous slot to ensure diversity
+            end note
+        end
+        
+        SS -> SS: Select Movie with max score
+        SS -> SS: Create suggested Showtime
+        SS -> SS: advance cursor (movie duration + 15m)
+    end
+end
+
+SS --> Manager: List<ShowtimeResponse>
+deactivate SS
+
+@enduml

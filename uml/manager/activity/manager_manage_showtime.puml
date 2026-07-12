@@ -1,0 +1,28 @@
+@startuml Manager Showtime Activity
+title Quản lý Suất chiếu (Member 2)
+skinparam theme cerulean
+
+start
+:Truy cập trang Quản lý suất chiếu;
+:Chọn Ngày và Phòng chiếu;
+:Nhấn nút "Thêm suất chiếu";
+:Chọn Phim và Thời gian bắt đầu;
+
+partition "Thuật toán kiểm tra xung đột" {
+    :Hệ thống lấy thời lượng phim;
+    :Tính toán thời gian kết thúc (Bắt đầu + Thời lượng + 15p dọn dẹp);
+    :Truy vấn các suất chiếu hiện có của Phòng trong Ngày;
+    
+    if (Trùng lặp thời gian?) then (có)
+        :Hiển thị cảnh báo "Phòng đang bận";
+        :Gợi ý khung giờ trống;
+        stop
+    else (không)
+        :Xác nhận khung giờ hợp lệ;
+    endif
+}
+
+:Lưu suất chiếu mới;
+:Cập nhật sơ đồ lịch chiếu (Grid/Timeline);
+stop
+@enduml

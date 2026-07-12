@@ -1,0 +1,41 @@
+@startuml Manager Manage Actors & Directors
+title Sequence Diagram: Quản lý Diễn viên & Đạo diễn (Task 1.1)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-movies.html (Modal)" as UI
+control "MovieController" as Ctrl
+entity "MovieService" as Svc
+entity "ActorRepository" as ActorDB
+entity "DirectorRepository" as DirDB
+
+== Phß║ºn 1: Search & Select trong Modal Movie ==
+Manager -> UI: Nhß║¡p t├¬n Diß╗àn vi├¬n/─Éß║ío diß╗àn
+UI -> Ctrl: GET /api/actors/search?name=... \nGET /api/directors/search?name=...
+Ctrl -> ActorDB: findByNameContaining(...)
+Ctrl -> DirDB: findByNameContaining(...)
+ActorDB --> UI: List<ActorResponse>
+DirDB --> UI: List<DirectorResponse>
+
+== Phß║ºn 2: Lưu th├┤ng tin Phim ==
+Manager -> UI: Nhß║Ñn "L╞░u Phim" (vß╗¢i list IDs ─æ├ú chß╗ìn)
+UI -> Ctrl: POST/PUT /api/movies (MovieRequest)
+activate Ctrl
+
+Ctrl -> Svc: create/updateMovie(request)
+activate Svc
+
+Svc -> ActorDB: findAllById(request.getActorIds())
+Svc -> DirDB: findAllById(request.getDirectorIds())
+
+Svc -> Svc: Map Actors -> MovieActor Entities \nMap Directors -> MovieDirector Entities
+Svc -> Svc: Save Movie (Cascade save relations)
+
+Svc --> Ctrl: MovieResponse (including Actors/Directors)
+deactivate Svc
+
+Ctrl --> UI: 200 OK / 201 Created
+deactivate Ctrl
+
+UI -> Manager: Cß║¡p nhß║¡t danh s├ích phim th├ánh c├┤ng
+@enduml

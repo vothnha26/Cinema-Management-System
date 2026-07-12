@@ -1,0 +1,41 @@
+@startuml staff_ticket_validation
+actor Staff
+participant "StaffTicketController" as STC
+participant "TicketWorkflowManager" as TWM
+participant "BookingRepository" as BR
+database "Database" as DB
+
+Staff -> STC : POST /api/staff/tickets/{bookingId}/validate
+activate STC
+
+STC -> TWM : validateTicket(bookingId)
+activate TWM
+
+TWM -> BR : findById(bookingId)
+activate BR
+BR --> TWM : BookingEntity
+deactivate BR
+
+TWM -> TWM : checkStatus(bookingStatus)
+TWM -> TWM : checkShowtimeStartTime()
+
+TWM -> BR : updateStatus(bookingId, CHECKED_IN)
+activate BR
+BR -> DB : UPDATE status = 'CHECKED_IN'
+DB --> BR : OK
+BR --> TWM : updatedBooking
+deactivate BR
+
+TWM --> STC : TicketValidationResponse
+deactivate TWM
+
+STC --> Staff : 200 OK (Validation Success)
+deactivate STC
+
+Staff -> STC : GET /api/staff/tickets/history (Check logs)
+STC -> TWM : getValidationHistory()
+TWM -> BR : findByStatus(CHECKED_IN)
+BR --> TWM : List<Booking>
+TWM --> STC : List<BookingResponse>
+STC --> Staff : 200 OK
+@enduml

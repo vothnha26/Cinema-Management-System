@@ -1,0 +1,46 @@
+@startuml Manager Manage Room CRUD
+title Sequence Diagram: Quản lý Phòng chiếu (Task 2.2)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-rooms.html" as UI
+control "RoomController" as Ctrl
+entity "RoomService" as Svc
+database "Database" as DB
+
+== Xem danh sách phòng ==
+Manager -> UI: Truy cập trang quản lý phòng
+UI -> Ctrl: GET /api/rooms
+Ctrl -> Svc: getAllRooms()
+Svc -> DB: findAll()
+DB --> Svc: List<Room>
+Svc --> Ctrl: List<RoomResponse>
+Ctrl --> UI: 200 OK
+UI -> Manager: Hiển thị danh sách phòng
+
+== Thêm phòng mới ==
+Manager -> UI: Nhập tên, loại, số hàng/cột
+UI -> Ctrl: POST /api/rooms (RoomRequest)
+activate Ctrl
+Ctrl -> Svc: createRoom(request)
+activate Svc
+Svc -> Svc: Khởi tạo Room Entity
+Svc -> DB: save(room)
+Svc -> Svc: Gọi SeatLayoutStrategy (Task 2.1)
+Svc -> DB: saveAll(seats)
+Svc --> Ctrl: RoomResponse
+deactivate Svc
+Ctrl --> UI: 201 Created
+deactivate Ctrl
+UI -> Manager: Thông báo thành công & Cập nhật danh sách
+
+== Xóa phòng ==
+Manager -> UI: Nhấn nút Xóa
+UI -> Ctrl: DELETE /api/rooms/{id}
+Ctrl -> Svc: deleteRoom(id)
+Svc -> DB: deleteSeatsByRoomId(id)
+Svc -> DB: deleteRoom(id)
+Svc --> Ctrl: void
+Ctrl --> UI: 200 OK
+UI -> Manager: Làm mới danh sách
+@enduml

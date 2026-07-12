@@ -1,0 +1,34 @@
+@startuml
+actor Manager
+participant "Design Template UI" as UI
+participant "RoomTemplateController" as CTRL
+participant "RoomTemplateService" as SVC
+database "FileSystem (data/room-templates)" as FS
+
+Manager -> UI: Khởi tạo lưới (rows, cols)
+UI -> Manager: Hiển thị lưới ô trống
+
+Manager -> UI: Chọn ô & Áp dụng loại ghế (STANDARD, VIP, COUPLE, EMPTY)
+UI -> Manager: Cập nhật giao diện ghế
+
+Manager -> UI: Nhấn "Lưu Template" & Nhập tên
+UI -> CTRL: POST /api/admin/room-templates (RoomTemplateRequest)
+activate CTRL
+
+CTRL -> SVC: saveTemplate(request)
+activate SVC
+
+SVC -> SVC: Tạo fileName (roomTypeId + templateName)
+SVC -> FS: Ghi file JSON (objectMapper.writeValue)
+activate FS
+FS --> SVC: Success
+deactivate FS
+
+SVC --> CTRL: void
+deactivate SVC
+
+CTRL --> UI: 200 OK ("Template saved successfully")
+deactivate CTRL
+
+UI -> Manager: Thông báo thành công & Điều hướng
+@enduml

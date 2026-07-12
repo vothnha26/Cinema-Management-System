@@ -1,0 +1,61 @@
+@startuml pricing_logic_sequence
+skinparam backgroundColor #FFFFFF
+skinparam sequence {
+    ArrowColor #E5133A
+    ActorBorderColor #E5133A
+    LifeLineBorderColor #1A1A1A
+    ParticipantBackgroundColor #1A1A1A
+    ParticipantBorderColor #E5133A
+    ParticipantFontColor #FFFFFF
+}
+
+actor Client
+participant "PricingService" as PS
+participant "BranchPricingRuleRepo" as BPR
+participant "SeatPriceRepo" as SPR
+participant "PricingRuleMatcher" as PRM
+participant "BasePriceCalculator" as BPC
+participant "ValueDecorator" as DEC
+
+Client -> PS: calculateTicketPrice(showtime, seat)
+activate PS
+
+PS -> SPR: findByRoomTypeAndSeatType(roomType, seatType)
+activate SPR
+SPR --> PS: basePrice
+deactivate SPR
+
+PS -> BPC**: new BasePriceCalculator(basePrice)
+activate BPC
+BPC --> PS: baseCalculator
+deactivate BPC
+
+PS -> BPR: findAllByBranchId(branchId)
+activate BPR
+BPR --> PS: List<BranchPricingRule>
+deactivate BPR
+
+PS -> PRM: findMatches(showtime, seat, branchRules)
+activate PRM
+PRM --> PS: List<PricingRule>
+deactivate PRM
+
+loop đối với từng PricingRule
+    PS -> PS: Wrap baseCalculator with Decorator
+    alt impactType == ADDITIVE
+        PS -> DEC**: new AdditiveDecorator(calculator, value)
+    else impactType == PERCENTAGE
+        PS -> DEC**: new PercentageDecorator(calculator, percentage)
+    end
+    PS -> PS: calculator = currentDecorator
+end
+
+PS -> DSF: getStrategy(promotionCode)
+activate DSF
+DSF --> PS: DiscountStrategy
+deactivate DSF
+
+PS --> Client: Final Price = strategy.apply(calculator.calculate())
+deactivate PS
+
+@enduml

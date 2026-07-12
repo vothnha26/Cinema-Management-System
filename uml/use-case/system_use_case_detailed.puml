@@ -1,0 +1,90 @@
+@startuml StarCinema System Use Case Diagram
+left to right direction
+skinparam packageStyle rectangle
+skinparam theme cerulean
+
+actor "Khách hàng" as Customer
+actor "Nhân viên" as Staff
+actor "Quản lý" as Manager
+actor "Quản trị viên" as Admin
+
+rectangle "StarCinema Management System" {
+    
+    ' --- Phân hệ Xác thực & Cá nhân ---
+    package "Tài khoản & Cá nhân" {
+        usecase "UC1: Đăng ký / Đăng nhập / Quên mật khẩu" as UC_Auth
+        usecase "UC2: Quản lý thông tin hồ sơ" as UC_Profile
+        usecase "UC3: Tích lũy & Xem điểm thưởng" as UC_Points
+    }
+
+    ' --- Phân hệ Đặt vé & POS ---
+    package "Đặt vé & Giao dịch" {
+        usecase "UC4: Xem phim & Lịch chiếu" as UC_ViewShowtime
+        usecase "UC5: Tìm kiếm Phim (TMDB Integration)" as UC_SearchMovie
+        usecase "UC6: Đặt vé & Combo trực tuyến" as UC_Booking
+        usecase "UC7: Thanh toán (VNPAY/Momo/Stripe)" as UC_Payment
+        usecase "UC8: Bán vé & Combo tại quầy (POS)" as UC_POS
+        usecase "UC9: Check-in vé (Quét mã QR/Code)" as UC_Checkin
+        usecase "UC10: Hủy vé & Hoàn tiền" as UC_Refund
+        
+        usecase "Chọn Ghế & Suất chiếu" as UC_SelectDetails
+        usecase "Áp dụng Khuyến mãi" as UC_ApplyPromo
+    }
+
+    ' --- Phân hệ Quản lý (Manager Role) ---
+    package "Quản lý (Manager)" {
+        usecase "UC11: Quản lý Phim (CRUD)" as UC_ManageMovie
+        usecase "UC12: Quản lý Suất chiếu & Sắp lịch AI" as UC_ManageShowtime
+        usecase "UC13: Quản lý Phòng & Sơ đồ ghế" as UC_ManageRoom
+        usecase "UC14: Quản lý Combo & Sản phẩm" as UC_ManageProduct
+        usecase "UC15: Quản lý Chương trình Khuyến mãi" as UC_ManagePromo
+        usecase "UC16: Xem Thống kê & Báo cáo doanh thu" as UC_Stats
+        usecase "UC17: Kiểm tra Nhật ký hệ thống (Audit Trail)" as UC_Audit
+    }
+
+    ' --- Phân hệ Quản trị (Admin Role) ---
+    package "Hệ thống (Admin)" {
+        usecase "UC18: Quản lý Người dùng & Phân quyền" as UC_ManageUser
+        usecase "UC19: Tra cứu thông tin khách hàng" as UC_LookupCustomer
+        usecase "UC20: Thiết lập Tham số hệ thống" as UC_Config
+    }
+}
+
+' --- Mối quan hệ giữa Actor & Use Case ---
+
+' Khách hàng
+Customer --> UC_Auth
+Customer --> UC_ViewShowtime
+Customer --> UC_SearchMovie
+Customer --> UC_Booking
+Customer --> UC_Profile
+Customer --> UC_Points
+Customer --> UC_Refund
+
+UC_Booking ..> UC_SelectDetails : <<include>>
+UC_Booking ..> UC_ApplyPromo : <<extend>>
+UC_Booking ..> UC_Payment : <<include>>
+
+' Nhân viên (Kế thừa từ Khách hàng + Quyền riêng)
+Staff --|> Customer
+Staff --> UC_POS
+Staff --> UC_Checkin
+Staff --> UC_LookupCustomer
+
+' Quản lý (Kế thừa từ Nhân viên + Quyền quản lý)
+Manager --|> Staff
+Manager --> UC_ManageMovie
+Manager --> UC_ManageShowtime
+Manager --> UC_ManageRoom
+Manager --> UC_ManageProduct
+Manager --> UC_ManagePromo
+Manager --> UC_Stats
+Manager --> UC_Audit
+
+' Quản trị viên
+Admin --> UC_Auth
+Admin --> UC_ManageUser
+Admin --> UC_LookupCustomer
+Admin --> UC_Config
+
+@enduml

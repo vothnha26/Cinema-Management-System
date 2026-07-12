@@ -1,0 +1,41 @@
+@startuml Manager Manage Showtime Sequence
+title Sequence Diagram: Thêm suất chiếu mới (Manager)
+skinparam theme cerulean
+
+actor Manager
+boundary "manage-showtimes.html" as UI
+control "ShowtimeController" as Ctrl
+entity "ShowtimeService" as Svc
+entity "PricingService" as Pricing
+database "MySQL" as DB
+
+Manager -> UI: Chọn Phim, Phòng, Định dạng & Giờ bắt đầu
+UI -> Ctrl: POST /api/showtimes (ShowtimeRequest)
+activate Ctrl
+
+Ctrl -> Svc: createShowtime(request)
+activate Svc
+
+Svc -> DB: findMovieById(movieId)
+Svc -> DB: findRoomById(roomId)
+
+note over Svc: Tính toán endTime = startTime + movie.duration
+
+Svc -> DB: save(showtime)
+activate DB
+DB --> Svc: showtimeEntity
+deactivate DB
+
+Svc -> Pricing: calculateInitialPrices(showtime)
+activate Pricing
+Pricing --> Svc: success
+deactivate Pricing
+
+Svc --> Ctrl: showtimeResponseDto
+deactivate Svc
+
+Ctrl --> UI: 201 Created
+deactivate Ctrl
+
+UI -> Manager: Hiển thị thông báo & Cập nhật lịch chiếu
+@enduml

@@ -1,0 +1,29 @@
+@startuml Manager Statistics Activity
+title Xem Thống kê & Báo cáo (Member 2)
+skinparam theme cerulean
+
+start
+:Truy cập Dashboard Quản lý;
+:Chọn Khoảng thời gian (Ngày/Tháng/Năm);
+
+fork
+    :Hệ thống tổng hợp Doanh thu đặt vé;
+    :Tính toán tăng trưởng so với kỳ trước;
+fork again
+    :Tổng hợp Tỷ lệ lấp đầy theo Phòng;
+fork again
+    :Phân tích Doanh thu theo Thể loại;
+end fork
+
+:Chuyển đổi dữ liệu sang định dạng JSON;
+:Render dữ liệu lên Chart.js (Line, Pie, Bar charts);
+:Hiển thị Dashboard hoàn chỉnh;
+
+if (Yêu cầu xuất báo cáo?) then (có)
+    :Tạo tệp báo cáo (Excel/PDF);
+    :Tải xuống máy local;
+else (không)
+endif
+
+stop
+@enduml

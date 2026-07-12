@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Điều phối Suất chiếu | FlashCinema Elite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <style>
+  :root {
+    --bg: #06080F; --surface: #0F121F; --card: #161B2E; --border: #252A3D;
+    --accent: #E5133A; --accent-glow: rgba(229, 19, 58, 0.4);
+    --text: #E8EAF0; --text-muted: #7B82A0;
+    --hour-width: 120px;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+
+  .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+  header { height: 80px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 40px; background: rgba(6, 8, 15, 0.8); backdrop-filter: blur(20px); z-index: 90; }
+  .scheduler-wrapper { flex: 1; overflow: hidden; display: flex; flex-direction: row; background: #080a14; }
+  .timeline-container { flex: 1; overflow: auto; position: relative; display: flex; }
+  .movie-panel { width: 280px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .movie-panel-header { padding: 20px; border-bottom: 1px solid var(--border); }
+  .movie-list-scroll { flex: 1; overflow-y: auto; padding: 15px; }
+  .movie-item-filter { padding: 12px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: flex; gap: 12px; align-items: center; }
+  .movie-item-filter:hover { background: rgba(255,255,255,0.05); }
+  .movie-item-filter.active { background: rgba(229,19,58,0.1); border-color: var(--accent); }
+  .movie-poster-tiny { width: 40px; height: 55px; border-radius: 6px; object-fit: cover; background: #1a1d29; }
+  .movie-info-tiny { flex: 1; overflow: hidden; }
+  .movie-info-tiny .title { font-size: 0.8rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .movie-info-tiny .meta { font-size: 0.65rem; color: var(--text-muted); }
+
+  .room-labels { width: 180px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); position: sticky; left: 0; z-index: 20; }
+  .room-label-item { height: 120px; border-bottom: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; justify-content: center; background: var(--surface); }
+  .room-name { font-weight: 800; font-size: 0.95rem; color: #fff; }
+  .room-meta { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; text-transform: uppercase; font-weight: 700; }
+
+  .timeline-content { position: relative; min-width: fit-content; }
+  .time-header { display: flex; height: 40px; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 15; }
+  .time-slot { width: var(--hour-width); flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+  .grid-row { height: 120px; border-bottom: 1px solid var(--border); position: relative; display: flex; width: calc(var(--hour-width) * 24); background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: calc(var(--hour-width) / 4) 100%; }
+  
+  .st-block { position: absolute; top: 15px; height: 90px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; cursor: pointer; transition: all 0.2s; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; z-index: 5; border-left: 4px solid var(--accent); }
+  .st-block:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 25px rgba(0,0,0,0.4), 0 0 15px var(--accent-glow); z-index: 10; }
+  .st-block.ai-draft { border-style: dashed; background: rgba(229, 19, 58, 0.05); border-left-style: solid; }
+  .st-block.ai-draft::before { content: 'AI DRAFT'; position: absolute; top: 0; right: 0; background: var(--accent); color: #fff; font-size: 0.5rem; padding: 2px 6px; font-weight: 900; border-bottom-left-radius: 8px; }
+  .st-title { font-size: 0.8rem; font-weight: 800; color: #fff; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .st-info { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+
+  /* ── SEAT MAP VIEWER ── */
+  .seat-map-container { display: grid; gap: 6px; justify-content: center; padding: 20px; }
+  .seat-item { width: 30px; height: 28px; border-radius: 6px; background: #1F2940; border: 1.5px solid #2D3748; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 800; color: #fff; }
+  .seat-item.booked { background: var(--accent) !important; border-color: var(--accent) !important; opacity: 0.3; position: relative; }
+  .seat-item.booked::after { content: '✕'; color: #fff; position: absolute; font-size: 0.7rem; }
+  .seat-item.vip { border-color: #F5A623; color: #F5A623; }
+  .screen-visual { width: 80%; height: 4px; background: var(--accent); margin: 0 auto 30px; border-radius: 10px; box-shadow: 0 5px 15px var(--accent-glow); position: relative; }
+  .screen-visual::after { content: 'MÀN HÌNH'; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 0.6rem; letter-spacing: 5px; color: var(--text-muted); font-weight: 800; }
+
+  .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; color: #fff; }
+  .form-control, .form-select { background: #080a14; border: 1px solid var(--border); color: #fff; border-radius: 12px; }
+  .toast-star { position: fixed; bottom: 30px; right: 30px; background: var(--card); border: 1px solid var(--border); padding: 16px 24px; border-radius: 16px; z-index: 9999; box-shadow: 0 20px 40px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 15px; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar"></aside>
+
+<main class="main-content">
+  <header>
+    <div class="d-flex align-items-center gap-3">
+      <div class="bg-danger bg-opacity-10 p-2 rounded-3"><i class="bi bi-calendar-range text-danger fs-4"></i></div>
+      <div><h4 class="fw-bold m-0">ĐIỀU PHỐI SUẤT CHIẾU</h4><p class="text-muted small m-0">Quản lý lịch chiếu phim thời gian thực</p></div>
+    </div>
+    <div class="d-flex gap-3">
+      <button class="btn btn-dark border-secondary px-4 fw-bold" onclick="openManualModal()">THÊM THỦ CÔNG</button>
+      <button class="btn btn-danger px-4 fw-bold" onclick="aiModal.show()">ĐIỀU PHỐI AI</button>
+    </div>
+  </header>
+  
+  <div class="p-3 px-4 bg-surface border-bottom border-secondary border-opacity-10 d-flex justify-content-between">
+    <div class="d-flex align-items-center gap-4">
+      <div class="d-flex align-items-center gap-2"><label class="small fw-bold text-muted m-0">Ngày:</label><input type="date" id="filterDate" class="form-control form-control-sm" style="width:160px" onchange="loadShowtimes()"></div>
+      <div class="d-flex align-items-center gap-2"><label class="small fw-bold text-muted m-0">Định dạng:</label><select id="filterFormat" class="form-select form-select-sm" style="width:120px" onchange="applyFilters()"><option value="">Tất cả</option></select></div>
+      <div id="aiStatusBadge" class="d-none badge bg-warning text-dark p-2 px-3 rounded-pill animate__animated animate__pulse animate__infinite">ĐANG XEM LỊCH AI GỢI Ý</div>
+    </div>
+    <div id="aiActions" class="d-none">
+      <button class="btn btn-sm btn-outline-light px-3 me-2" onclick="loadShowtimes()">HỦY BỎ</button>
+      <button class="btn btn-sm btn-success px-3" onclick="saveAI()">LƯU LỊCH CHÍNH THỨC</button>
+    </div>
+  </div>
+
+  <div class="scheduler-wrapper">
+    <div class="timeline-container">
+      <div class="room-labels" id="roomLabels"></div>
+      <div class="timeline-content">
+        <div class="time-header" id="timeHeader"></div>
+        <div id="timelineGrid"></div>
+      </div>
+    </div>
+    <div class="movie-panel">
+      <div class="movie-panel-header"><h6 class="m-0 fw-800">PHIM ĐANG CHIẾU</h6></div>
+      <div class="movie-list-scroll" id="movieFilterList"></div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL XEM CHI TIẾT & SƠ ĐỒ GHẾ -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="fw-800 m-0" id="detailTitle">CHI TIẾT SUẤT CHIẾU</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row g-4">
+          <div class="col-md-4 border-end border-secondary border-opacity-10">
+            <div id="detailInfo"></div>
+            <hr class="border-secondary opacity-10">
+            <button class="btn btn-outline-danger w-100 fw-bold" onclick="handleDeleteShowtime()">HỦY SUẤT CHIẾU</button>
+          </div>
+          <div class="col-md-8">
+            <div class="text-center mb-3"><span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3" id="seatStats">0/0 Vé đã bán</span></div>
+            <div class="screen-visual"></div>
+            <div id="liveSeatGrid" class="seat-map-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LẬP LỊCH (HỖ TRỢ HÀNG LOẠT) -->
+<div class="modal fade" id="addModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="fw-800 m-0">LẬP LỊCH SUẤT CHIẾU</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body p-4">
+    <form id="addForm">
+      <div class="mb-3"><label class="form-label small fw-bold text-muted">PHIM</label><select id="addMovieId" class="form-select" onchange="onMovieSelectChange('add')"></select></div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6"><label class="form-label small fw-bold text-muted">PHÒNG</label><select id="addRoomId" class="form-select" onchange="onMovieSelectChange('add')"></select></div>
+        <div class="col-md-6"><label class="form-label small fw-bold text-muted">ĐỊNH DẠNG</label><select id="addFormatId" class="form-select"></select></div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label small fw-bold text-muted">CHỌN KHUNG GIỜ BẮT ĐẦU</label>
+        <div class="input-group">
+            <input type="datetime-local" id="addStartTime" class="form-control">
+            <button class="btn btn-outline-info" type="button" onclick="addTimeSlot()"><i class="bi bi-plus-circle"></i> THÊM</button>
+        </div>
+        <div id="timeSlotsContainer" class="mt-3 d-flex flex-wrap gap-2"></div>
+      </div>
+      <button type="button" id="btnSubmitBulk" class="btn btn-danger w-100 py-3 fw-bold mt-2" onclick="handleCreateBulkShowtimes()">XÁC NHẬN TẠO LỊCH</button>
+    </form>
+  </div></div></div>
+</div>
+
+<!-- MODAL BÁO CÁO XUNG ĐỘT CHI TIẾT -->
+<div class="modal fade" id="conflictModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-warning">
+      <div class="modal-header bg-warning bg-opacity-10 border-warning border-opacity-25">
+        <h5 class="fw-800 m-0 text-warning"><i class="bi bi-exclamation-triangle-fill me-2"></i>BÁO CÁO XUNG ĐỘT LỊCH CHIẾU</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-4">Một số suất chiếu không thể khởi tạo do trùng lặp thời gian hoặc phòng chiếu. Các suất khác không bị xung đột đã được lưu thành công.</p>
+        <div class="table-responsive">
+            <table class="table table-dark table-hover border-secondary border-opacity-10">
+                <thead class="small text-uppercase">
+                    <tr>
+                        <th>Khung giờ yêu cầu</th>
+                        <th>Nguyên nhân</th>
+                        <th>Xung đột với</th>
+                    </tr>
+                </thead>
+                <tbody id="conflictTableBody"></tbody>
+            </table>
+        </div>
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn btn-dark px-4" data-bs-dismiss="modal">ĐÃ HIỂU</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ĐIỀU PHỐI AI -->
+<div class="modal fade" id="aiModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="fw-800 m-0">ĐIỀU PHỐI SUẤT CHIẾU BẰNG AI</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body p-4">
+        <div class="alert alert-info border-info border-opacity-25 bg-info bg-opacity-10 small mb-4">
+          <i class="bi bi-info-circle-fill me-2"></i> AI sẽ phân tích hiệu suất phòng, độ ưu tiên phim và lịch sử bán vé để gợi ý khung giờ tối ưu nhất.
+        </div>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="form-label small fw-bold text-muted">NGÀY ÁP DỤNG</label><input type="date" id="aiTargetDate" class="form-control"></div>
+          <div class="col-md-6"><label class="form-label small fw-bold text-muted">CHẾ ĐỘ LẬP LỊCH</label>
+            <select id="aiMode" class="form-select">
+              <option value="APPEND">Bổ sung (Giữ lại lịch cũ)</option>
+              <option value="OVERWRITE">Ghi đè (Xóa sạch lịch cũ)</option>
+            </select>
+          </div>
+          <div class="col-md-6"><label class="form-label small fw-bold text-muted">GIỜ BẮT ĐẦU</label><input type="time" id="aiStartTime" class="form-control" value="08:00"></div>
+          <div class="col-md-6"><label class="form-label small fw-bold text-muted">GIỜ KẾT THÚC</label><input type="time" id="aiEndTime" class="form-control" value="23:59"></div>
+          <div class="col-md-12"><label class="form-label small fw-bold text-muted">CHIẾN LƯỢC TỐI ƯU</label>
+            <select id="aiStrategy" class="form-select">
+              <option value="MAX_REVENUE">Tối đa hóa doanh thu (Phim hot phòng to)</option>
+              <option value="MAX_OCCUPANCY">Tối đa hóa tỷ lệ lấp đầy</option>
+              <option value="BALANCED">Cân bằng độ phủ phim</option>
+            </select>
+          </div>
+          <div class="col-md-12"><label class="form-label small fw-bold text-muted">CHỈ THỊ TÙY CHỈNH (TÙY CHỌN)</label><textarea id="customDirectives" class="form-control" rows="2" placeholder="Ví dụ: Ưu tiên phim hành động vào buổi tối..."></textarea></div>
+        </div>
+        <button type="button" id="btnRunAI" class="btn btn-danger w-100 py-3 fw-bold mt-4" onclick="generateAI()">BẮT ĐẦU PHÂN TÍCH AI</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/ui-utils.js"></script>
+<script src="/js/api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let allMovies = [], allRooms = [], currentShowtimes = [], currentAIResult = [], currentBranchId = localStorage.getItem('cinemaBranchId');
+    // Fix: localStorage returns string "null" sometimes
+    if (currentBranchId === 'null') currentBranchId = null;
+
+    let selectedMovieId = null, currentViewStId = null, addedTimeSlots = [];
+    const addModal = new bootstrap.Modal(document.getElementById('addModal'));
+    const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
+    const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+    const conflictModal = new bootstrap.Modal(document.getElementById('conflictModal'));
+
+    async function init() {
+        UIUtils.applyRoleVisibility();
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterDate').value = today;
+        document.getElementById('aiTargetDate').value = today;
+        
+        if (!currentBranchId && AuthGuard.getRole() !== 'ADMIN') {
+            const staffRes = await api.get('/staff/me');
+            if (staffRes.success && staffRes.data?.branch) {
+                currentBranchId = staffRes.data.branch.id;
+                localStorage.setItem('cinemaBranchId', currentBranchId);
+            }
+        }
+
+        const movieUrl = currentBranchId ? `/movies/branch/${currentBranchId}` : '/movies';
+        const [mRes, rRes, fRes] = await Promise.all([
+            api.get(movieUrl), api.get('/rooms'), api.get('/public/master-data/formats')
+        ]);
+        
+        allMovies = (mRes.data || []).filter(m => ['SHOWING', 'COMING', 'NOW_SHOWING', 'PRE_RELEASE'].includes(m.status));
+        allRooms = currentBranchId ? (rRes.data || []).filter(r => String(r.branchId) === String(currentBranchId)) : (rRes.data || []);
+        
+        if (fRes.success) {
+            document.getElementById('filterFormat').innerHTML = '<option value="">Tất cả</option>' + 
+                fRes.data.map(f => `<option value="${f.name}">${f.name}</option>`).join('');
+        }
+
+        renderTimeHeader(); renderRoomLabels(); renderMovieList(); loadShowtimes();
+        
+        document.getElementById('addMovieId').innerHTML = allMovies.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+        document.getElementById('addRoomId').innerHTML = allRooms.map(r => `<option value="${r.id}">${r.name} (${r.type})</option>`).join('');
+    }
+
+    function addTimeSlot() {
+        const val = document.getElementById('addStartTime').value;
+        if (!val) return;
+        if (addedTimeSlots.includes(val)) { UIUtils.showToast('Khung giờ này đã có trong danh sách', 'warning'); return; }
+        addedTimeSlots.push(val);
+        renderTimeSlots();
+    }
+
+    function removeTimeSlot(index) {
+        addedTimeSlots.splice(index, 1);
+        renderTimeSlots();
+    }
+
+    function renderTimeSlots() {
+        const container = document.getElementById('timeSlotsContainer');
+        container.innerHTML = addedTimeSlots.map((t, i) => `
+            <div class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 p-2 px-3 d-flex align-items-center gap-2">
+                <span>${new Date(t).toLocaleString('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'})}</span>
+                <i class="bi bi-x-circle-fill" style="cursor:pointer" onclick="removeTimeSlot(${i})"></i>
+            </div>
+        `).join('');
+    }
+
+    async function handleCreateBulkShowtimes() {
+        if (addedTimeSlots.length === 0) { UIUtils.showToast('Vui lòng chọn ít nhất một khung giờ', 'warning'); return; }
+        
+        const btn = document.getElementById('btnSubmitBulk');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ĐANG XỬ LÝ...';
+
+        const data = {
+            movieId: document.getElementById('addMovieId').value,
+            roomId: document.getElementById('addRoomId').value,
+            formatId: document.getElementById('addFormatId').value,
+            startTimes: addedTimeSlots.map(t => t + ':00')
+        };
+
+        const res = await api.post('/showtimes/bulk', data);
+        btn.disabled = false; btn.innerHTML = 'XÁC NHẬN TẠO LỊCH';
+
+        if (res.success) {
+            const report = res.data;
+            if (report.conflicts && report.conflicts.length > 0) {
+                showConflictReport(report.conflicts);
+                UIUtils.showToast(`Đã tạo ${report.success.length} suất. Có ${report.conflicts.length} suất bị trùng.`, 'warning');
+            } else {
+                UIUtils.showToast(`Đã tạo thành công toàn bộ ${report.success.length} suất chiếu.`);
+            }
+            addModal.hide();
+            loadShowtimes();
+        } else {
+            UIUtils.showToast(res.message, 'danger');
+        }
+    }
+
+    function showConflictReport(conflicts) {
+        document.getElementById('conflictTableBody').innerHTML = conflicts.map(c => `
+            <tr>
+                <td class="fw-bold text-info">${new Date(c.requestedStartTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                <td><span class="text-danger">${c.reason}</span></td>
+                <td>
+                    <div class="fw-bold">${c.conflictingMovie}</div>
+                    <div class="small text-muted">${c.conflictingTime}</div>
+                </td>
+            </tr>
+        `).join('');
+        conflictModal.show();
+    }
+
+    async function loadShowtimes() {
+        const date = document.getElementById('filterDate').value;
+        const res = await api.get(`/showtimes?date=${date}${currentBranchId ? '&branchId='+currentBranchId : ''}`);
+        if (res.success) {
+            currentShowtimes = res.data || [];
+            currentAIResult = [];
+            document.getElementById('aiActions').classList.add('d-none');
+            document.getElementById('aiStatusBadge').classList.add('d-none');
+            renderTimeline(currentShowtimes);
+        }
+    }
+
+    function renderTimeline(list) {
+        if (!list) return;
+        console.log("Rendering timeline with", list.length, "items");
+        
+        let html = '';
+        allRooms.forEach(room => {
+            const stInRoom = list.filter(s => {
+                // Đảm bảo so sánh đúng ID phòng (AI có thể trả về roomId là string hoặc number)
+                return String(s.roomId) === String(room.id);
+            });
+            
+            html += `<div class="grid-row">`;
+            stInRoom.forEach(s => {
+                try {
+                    // Xử lý cả định dạng chuỗi ISO và mảng [Y,M,D,h,m] từ Java Jackson
+                    const start = parseJavaDate(s.startTime);
+                    const end = parseJavaDate(s.endTime);
+                    
+                    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                        console.error("Invalid date for showtime:", s);
+                        return;
+                    }
+
+                    const left = (start.getHours() + start.getMinutes()/60) * 120;
+                    const width = ((end - start)/3600000) * 120;
+                    const startStr = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+                    
+                    html += `<div class="st-block ${s.id < 0 ? 'ai-draft' : ''}" 
+                                  style="left:${left}px; width:${width}px;" 
+                                  onclick="openDetailById(${s.id})">
+                                <div class="st-title">${s.movieTitle || 'Không rõ tên'}</div>
+                                <div class="st-info"><span class="fw-bold">${startStr}</span></div>
+                             </div>`;
+                } catch (e) {
+                    console.error("Error rendering showtime block:", e, s);
+                }
+            });
+            html += `</div>`;
+        });
+        document.getElementById('timelineGrid').innerHTML = html;
+    }
+
+    /**
+     * Chuyển đổi dữ liệu ngày tháng từ Java (Array hoặc ISO String) sang JS Date
+     */
+    function parseJavaDate(dateInput) {
+        if (!dateInput) return new Date();
+        if (Array.isArray(dateInput)) {
+            // Java LocalDateTime trả về mảng [year, month, day, hour, minute, second, nano]
+            // Lưu ý: Tháng trong JS bắt đầu từ 0
+            return new Date(dateInput[0], dateInput[1] - 1, dateInput[2], dateInput[3], dateInput[4], dateInput[5] || 0);
+        }
+        return new Date(dateInput);
+    }
+
+    function openDetailById(id) {
+        if (!id) return;
+        const list = (id < 0) ? currentAIResult : currentShowtimes;
+        const s = list.find(item => item.id == id);
+        if (s) openDetailModal(s);
+    }
+
+    async function openDetailModal(s) {
+        if (!s || !s.id) return;
+        currentViewStId = s.id;
+        document.getElementById('detailTitle').innerText = s.movieTitle;
+        document.getElementById('detailInfo').innerHTML = `
+            <div class="small text-muted mb-1 text-uppercase fw-800">PHÒNG CHIẾU</div><div class="fw-bold mb-3">${s.roomName} (${s.roomType})</div>
+            <div class="small text-muted mb-1 text-uppercase fw-800">ĐỊNH DẠNG</div><div class="fw-bold mb-3">${s.formatName}</div>
+            <div class="small text-muted mb-1 text-uppercase fw-800">THỜI GIAN</div><div class="fw-bold">${UIUtils.formatDateTime(s.startTime)} - ${UIUtils.formatDateTime(s.endTime).split(' ')[1]}</div>
+        `;
+        
+        const grid = document.getElementById('liveSeatGrid');
+        grid.innerHTML = '<div class="py-5 text-muted text-center w-100">Đang tải sơ đồ...</div>';
+        detailModal.show();
+
+        if (s.id > 0) {
+            const res = await api.get(`/showtimes/${s.id}/seats`);
+            if (res.success) {
+                document.getElementById('seatStats').innerText = `${s.soldSeats}/${s.totalSeats} Vé đã bán`;
+                renderSeatMap(res.data);
+            }
+        } else {
+            document.getElementById('seatStats').innerText = `0/${s.totalSeats} (BẢN NHÁP AI)`;
+            grid.innerHTML = '<div class="py-5 text-muted text-center w-100">Suất chiếu nháp không có dữ liệu ghế.</div>';
+        }
+    }
+
+    function renderSeatMap(seats) {
+        const grid = document.getElementById('liveSeatGrid');
+        if (!seats || !seats.length) return;
+        const rows = [...new Set(seats.map(s => s.rowChar))].sort();
+        const maxCol = Math.max(...seats.map(s => s.colNum));
+        grid.style.gridTemplateColumns = `repeat(${maxCol}, 1fr)`;
+        grid.innerHTML = '';
+        rows.forEach(r => {
+            for(let c=1; c<=maxCol; c++) {
+                const s = seats.find(x => x.rowChar === r && x.colNum === c);
+                if(!s) { grid.insertAdjacentHTML('beforeend', '<div></div>'); continue; }
+                const cls = `seat-item ${s.seatType.toLowerCase()} ${!s.available ? 'booked' : ''}`;
+                grid.insertAdjacentHTML('beforeend', `<div class="${cls}">${s.available ? s.seatCode : ''}</div>`);
+            }
+        });
+    }
+
+    async function handleDeleteShowtime() {
+        if (!confirm('Bạn có chắc muốn hủy suất chiếu này? (Chỉ thực hiện được khi chưa bán vé)')) return;
+        const res = await api.delete(`/showtimes/${currentViewStId}`);
+        if(res.success) { UIUtils.showToast('Đã hủy suất chiếu thành công'); detailModal.hide(); loadShowtimes(); }
+        else UIUtils.showToast(res.message, 'danger');
+    }
+
+    function renderTimeHeader() {
+        let h = ''; for(let i=0; i<24; i++) h += `<div class="time-slot">${String(i).padStart(2,'0')}:00</div>`;
+        document.getElementById('timeHeader').innerHTML = h;
+    }
+
+    function renderRoomLabels() {
+        document.getElementById('roomLabels').innerHTML = '<div style="height:40px"></div>' + 
+            allRooms.map(r => `<div class="room-label-item"><div class="room-name">${r.name}</div><div class="room-meta">${r.type}</div></div>`).join('');
+    }
+
+    function renderMovieList() {
+        document.getElementById('movieFilterList').innerHTML = allMovies.map(m => `
+            <div class="movie-item-filter ${selectedMovieId==m.id?'active':''}" onclick="filterByMovie(${m.id})">
+                <img src="${m.posterUrl || 'https://placehold.co/40x55'}" class="movie-poster-tiny" onerror="this.src='https://placehold.co/40x55'">
+                <div class="movie-info-tiny"><div class="title">${m.title}</div><div class="meta">${m.duration}p</div></div>
+            </div>`).join('');
+    }
+
+    function filterByMovie(id) { selectedMovieId = (selectedMovieId == id) ? null : id; renderMovieList(); applyFilters(); }
+    function applyFilters() {
+        const fmt = document.getElementById('filterFormat').value;
+        const base = currentAIResult.length > 0 ? currentAIResult : currentShowtimes;
+        renderTimeline(base.filter(s => (!selectedMovieId || s.movieId == selectedMovieId) && (!fmt || s.formatName == fmt)));
+    }
+
+    function onMovieSelectChange(prefix) {
+        const mid = document.getElementById(`${prefix}MovieId`).value;
+        const rid = document.getElementById(`${prefix}RoomId`).value;
+        const movie = allMovies.find(m => m.id == mid);
+        const room = allRooms.find(r => r.id == rid);
+        if (movie && room) {
+            const fmts = movie.formats || [];
+            const filtered = fmts.filter(f => (room.supportedFormats || []).includes(typeof f === 'string' ? f : f.name));
+            document.getElementById(`${prefix}FormatId`).innerHTML = filtered.map(f => `<option value="${f.id || f}">${f.name || f}</option>`).join('');
+        }
+    }
+
+    function openManualModal() {
+        const d = document.getElementById('filterDate').value;
+        // Thiết lập sẵn một số khung giờ phổ biến cho ngày đang chọn
+        addedTimeSlots = [
+            `${d}T09:00`,
+            `${d}T13:00`,
+            `${d}T16:00`,
+            `${d}T20:00`
+        ];
+        renderTimeSlots();
+        document.getElementById('addStartTime').value = d + 'T' + new Date().toTimeString().substring(0,5);
+        onMovieSelectChange('add');
+        addModal.show();
+    }
+
+    async function generateAI() {
+        const btn = document.getElementById('btnRunAI'); btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> ĐANG PHÂN TÍCH...';
+        const res = await api.post('/scheduling/suggest', { 
+            date: document.getElementById('aiTargetDate').value, 
+            mode: document.getElementById('aiMode').value,
+            startTime: document.getElementById('aiStartTime').value,
+            endTime: document.getElementById('aiEndTime').value,
+            strategy: document.getElementById('aiStrategy').value, 
+            customDirectives: document.getElementById('customDirectives').value,
+            branchId: currentBranchId 
+        });
+        btn.disabled = false; btn.innerHTML = 'BẮT ĐẦU PHÂN TÍCH AI';
+        if (res.success) { 
+            currentAIResult = res.data; renderTimeline(currentAIResult); 
+            document.getElementById('aiActions').classList.remove('d-none'); 
+            document.getElementById('aiStatusBadge').classList.remove('d-none'); 
+            aiModal.hide(); UIUtils.showToast('AI đã tạo lịch nháp, vui lòng kiểm tra và lưu.');
+        }
+        else UIUtils.showToast(res.message, 'danger');
+    }
+
+    async function saveAI() {
+        const overwrite = document.getElementById('aiMode').value === 'OVERWRITE';
+        const res = await api.post(`/scheduling/apply?overwrite=${overwrite}`, currentAIResult);
+        if (res.success) { UIUtils.showToast('Đã lưu lịch chiếu chính thức'); loadShowtimes(); }
+        else UIUtils.showToast(res.message, 'danger');
+    }
+
+    init();
+</script>

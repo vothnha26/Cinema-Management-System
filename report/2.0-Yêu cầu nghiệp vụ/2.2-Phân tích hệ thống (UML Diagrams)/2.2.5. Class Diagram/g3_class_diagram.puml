@@ -1,0 +1,107 @@
+@startuml G3_ClassDiagram_Content
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam classFontSize 13
+skinparam ArrowColor #333333
+skinparam ClassBorderColor #D4A017
+skinparam ClassBackgroundColor #FEF9E7
+skinparam ClassHeaderBackgroundColor #B7950B
+
+title <b>CLASS DIAGRAM — Nhóm 3: Phim & Nội dung</b>
+
+class Movie <<Entity>> {
+  + id             : BIGINT <<PK>>
+  --
+  # title          : VARCHAR(255)
+  # description    : TEXT
+  # duration       : INT
+  # release_date   : DATE
+  # age_rating     : ENUM(P, K, T13, T16, T18)
+  # status         : ENUM(COMING_SOON, SHOWING, ENDED)
+  # tmdb_id        : BIGINT
+  # origin_country : VARCHAR(100)
+  # priority_level : INT
+}
+
+class Genre <<Master>> {
+  + id   : VARCHAR(50) <<PK>>
+  --
+  # name : VARCHAR(255)
+}
+
+class Format <<Master>> {
+  + id   : VARCHAR(50) <<PK>>
+  --
+  # name : VARCHAR(255)
+}
+
+class Actor <<Entity>> {
+  + id         : BIGINT <<PK>>
+  --
+  # name       : VARCHAR(255)
+  # avatar_url : VARCHAR(255)
+}
+
+class Director <<Entity>> {
+  + id         : BIGINT <<PK>>
+  --
+  # name       : VARCHAR(255)
+  # avatar_url : VARCHAR(255)
+}
+
+class Showtime <<Entity>> {
+  + id         : BIGINT <<PK>>
+  --
+  # start_time : DATETIME
+  # end_time   : DATETIME
+  # status     : ENUM(ACTIVE, CANCELLED)
+}
+
+class MovieActor <<Junction>> {
+  + movie_id : BIGINT <<PK, FK>>
+  + actor_id : BIGINT <<PK, FK>>
+}
+
+class MovieDirector <<Junction>> {
+  + movie_id    : BIGINT <<PK, FK>>
+  + director_id : BIGINT <<PK, FK>>
+}
+
+class MovieGenre <<Junction>> {
+  + movie_id : BIGINT <<PK, FK>>
+  + genre_id : VARCHAR(50) <<PK, FK>>
+}
+
+class MovieFormat <<Junction>> {
+  + movie_id  : BIGINT <<PK, FK>>
+  + format_id : VARCHAR(50) <<PK, FK>>
+}
+
+note top of Movie
+  priority_level (1-10): dùng cho
+  AI scheduling — phim có level cao
+  được ưu tiên giờ chiếu đẹp hơn.
+end note
+
+note right of Showtime
+  end_time = start_time + movie.duration
+  Một phòng không được có 2
+  suất chiếu trùng khung giờ.
+end note
+
+Movie    "1" -- "*" MovieActor    : "features >"
+Movie    "1" -- "*" MovieDirector : "directed by >"
+Movie    "1" -- "*" MovieGenre    : "categorized >"
+Movie    "1" -- "*" MovieFormat   : "available in >"
+
+MovieActor    "*" -- "1" Actor    : "< references"
+MovieDirector "*" -- "1" Director : "< references"
+MovieGenre    "*" -- "1" Genre    : "< references"
+MovieFormat   "*" -- "1" Format   : "< references"
+
+Movie    "1" --o "*" Showtime     : "scheduled as >"
+Format   "1" --o "*" Showtime     : "screened in >"
+
+@enduml

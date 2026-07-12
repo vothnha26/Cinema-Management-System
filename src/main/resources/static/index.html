@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StarCinema – Trải Nghiệm Điện Ảnh Đỉnh Cao</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --bg: #06080F; --surface: #0F121F; --card: #161B2E; --border: #252A3D;
+            --accent: #E5133A; --accent-glow: rgba(229, 19, 58, 0.4);
+            --text: #E8EAF0; --text-muted: #7B82A0;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; }
+        
+        /* ── NAVBAR ── */
+        .navbar-star { background: rgba(6, 8, 15, 0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 15px 0; position: sticky; top: 0; z-index: 1000; }
+        .brand { font-weight: 800; font-size: 1.5rem; color: #fff; text-decoration: none; letter-spacing: 1px; }
+        .brand span { color: var(--accent); }
+        .nav-link-star { color: var(--text-muted); font-weight: 600; font-size: 0.9rem; transition: 0.3s; padding: 8px 16px; border-radius: 10px; text-decoration: none; }
+        .nav-link-star:hover, .nav-link-star.active { color: #fff; background: rgba(255,255,255,0.05); }
+        
+        .search-box-nav { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 6px 15px; display: flex; align-items: center; gap: 10px; width: 250px; transition: 0.3s; }
+        .search-box-nav:focus-within { border-color: var(--accent); width: 320px; box-shadow: 0 0 15px rgba(229,19,58,0.15); }
+        .search-box-nav input { background: transparent; border: none; color: #fff; font-size: 0.85rem; width: 100%; outline: none; }
+
+        /* ── HERO ── */
+        .hero { position: relative; height: 85vh; display: flex; align-items: center; overflow: hidden; }
+        .hero-bg-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #06080F 10%, rgba(6,8,15,0.4) 50%, #06080F 90%), linear-gradient(to top, #06080F, transparent 40%); z-index: 2; }
+        .hero-backdrop { position: absolute; inset: 0; background-size: cover; background-position: center; transition: 1s ease-in-out; scale: 1.1; }
+        .hero-content { position: relative; z-index: 3; max-width: 700px; padding: 0 60px; }
+        .hero-title { font-size: 4rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .hero-desc { color: var(--text-muted); font-size: 1.1rem; line-height: 1.6; margin-bottom: 35px; }
+        
+        .btn-hero { padding: 14px 32px; border-radius: 14px; font-weight: 700; transition: 0.3s; border: none; font-size: 0.95rem; }
+        .btn-hero-primary { background: var(--accent); color: #fff; box-shadow: 0 10px 25px var(--accent-glow); }
+        .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 35px var(--accent-glow); background: #ff1a40; }
+        .btn-hero-secondary { background: rgba(255,255,255,0.1); color: #fff; backdrop-filter: blur(10px); margin-left: 15px; }
+        .btn-hero-secondary:hover { background: rgba(255,255,255,0.2); }
+
+        /* ── QUICK BOOKING ── */
+        .quick-booking { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-top: -30px; position: relative; z-index: 10; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .quick-booking-card { padding: 20px 60px; }
+        .filter-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block; }
+        .form-select-star, .form-control-star { background: var(--card); border: 1px solid var(--border); color: #fff; padding: 12px 16px; border-radius: 12px; font-size: 0.9rem; width: 100%; }
+        .form-select-star:focus, .form-control-star:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(229,19,58,0.2); }
+
+        /* ── MOVIE CARD ── */
+        .section-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 30px; position: relative; display: inline-block; }
+        .section-title::after { content: ''; position: absolute; bottom: -8px; left: 0; width: 60px; height: 4px; background: var(--accent); border-radius: 2px; }
+        
+        .movie-card { background: var(--card); border-radius: 20px; overflow: hidden; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid var(--border); height: 100%; position: relative; }
+        .movie-card:hover { transform: translateY(-10px) scale(1.02); border-color: var(--accent); box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(229,19,58,0.1); }
+        
+        .poster-wrapper { position: relative; aspect-ratio: 2/3; overflow: hidden; }
+        .movie-poster { width: 100%; height: 100%; object-fit: cover; transition: 0.6s; }
+        .movie-card:hover .movie-poster { scale: 1.1; filter: brightness(0.5); }
+        
+        .movie-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; opacity: 0; transition: 0.3s; padding: 20px; }
+        .movie-card:hover .movie-overlay { opacity: 1; }
+        
+        .movie-info { padding: 20px; }
+        .movie-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; color: #fff; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.8rem; }
+        .movie-meta { display: flex; align-items: center; gap: 12px; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+        
+        .rating-badge { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); color: #FFC107; padding: 5px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 5px; z-index: 5; border: 1px solid rgba(255,255,255,0.1); }
+        .age-badge { position: absolute; top: 15px; right: 15px; padding: 5px 8px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; z-index: 5; }
+        .age-p { background: #4CAF50; color: #fff; } .age-t13 { background: #2196F3; color: #fff; } .age-t16 { background: #FF9800; color: #fff; } .age-t18 { background: var(--accent); color: #fff; }
+
+        .btn-card { width: 100%; padding: 10px; border-radius: 12px; font-weight: 700; font-size: 0.8rem; transition: 0.3s; border: none; }
+        .btn-book { background: var(--accent); color: #fff; }
+        .btn-detail { background: rgba(255,255,255,0.1); color: #fff; backdrop-filter: blur(10px); }
+
+        /* ── FOOTER ── */
+        footer { background: var(--surface); border-top: 1px solid var(--border); padding: 80px 0 40px; margin-top: 100px; }
+        .footer-brand { font-size: 2rem; font-weight: 800; margin-bottom: 25px; display: block; color: #fff; text-decoration: none; }
+        .footer-link { color: var(--text-muted); text-decoration: none; display: block; margin-bottom: 12px; transition: 0.3s; font-size: 0.9rem; }
+        .footer-link:hover { color: var(--accent); transform: translateX(5px); }
+        .social-btn { width: 40px; height: 40px; border-radius: 50%; background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: #fff; transition: 0.3s; }
+        .social-btn:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-5px); }
+
+        .user-avatar { width: 36px; height: 36px; border-radius: 12px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; cursor: pointer; border: 2px solid rgba(255,255,255,0.1); transition: 0.3s; }
+        .user-avatar:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--accent-glow); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 20px; background: #000; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar-star">
+    <div class="container-xxl d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-4">
+            <a href="index.html" class="brand">STAR<span>CINEMA</span></a>
+            <div class="d-none d-lg-flex gap-2">
+                <a href="index.html" class="nav-link-star active">Phim</a>
+                <a href="history.html" class="nav-link-star">Vé của tôi</a>
+            </div>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+            <!-- Search Box in Navbar -->
+            <div class="search-box-nav d-none d-md-flex">
+                <i class="bi bi-search text-muted"></i>
+                <input type="text" id="navSearchInput" placeholder="Tìm tên phim..." oninput="filterMovies()">
+            </div>
+            
+            <div id="authSection" class="d-flex align-items-center gap-3">
+                <button class="btn btn-danger btn-sm px-4 rounded-3 fw-bold" onclick="window.location.href='auth.html'">ĐĂNG NHẬP</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<section class="hero" id="heroSlider">
+    <div class="hero-bg-overlay"></div>
+    <div class="hero-backdrop" id="heroBackdrop"></div>
+    <div class="hero-content">
+        <div class="text-accent fw-bold mb-2 small text-uppercase" style="letter-spacing:2px; color: var(--accent)">Phim nổi bật</div>
+        <h1 class="hero-title" id="heroTitle">Đang tải...</h1>
+        <p class="hero-desc" id="heroDesc">...</p>
+        <div class="d-flex gap-3">
+            <button class="btn-hero btn-hero-primary" id="btnHeroBook"><i class="bi bi-ticket-perforated"></i> ĐẶT VÉ NGAY</button>
+            <button class="btn-hero btn-hero-secondary" id="btnHeroTrailer"><i class="bi bi-play-circle"></i> XEM TRAILER</button>
+        </div>
+    </div>
+    <div class="hero-dots" id="heroDots"></div>
+</section>
+
+<section class="quick-booking">
+    <div class="container-xxl">
+        <div class="quick-booking-card d-flex flex-wrap align-items-end gap-3">
+             <div style="flex: 1.5; min-width: 200px;">
+                 <label class="filter-label"><i class="bi bi-geo-alt"></i> Chi nhánh</label>
+                 <select id="qbBranch" class="form-select-star" onchange="qbOnBranchChange()">
+                     <option value="">Chọn chi nhánh</option>
+                 </select>
+             </div>
+             <div style="flex: 2; min-width: 200px;">
+                 <label class="filter-label"><i class="bi bi-film"></i> Phim</label>
+                 <select id="qbMovie" class="form-select-star" onchange="qbOnMovieChange()" disabled>
+                     <option value="">Chọn phim</option>
+                 </select>
+             </div>
+             <div style="flex: 1.2; min-width: 150px;">
+                 <label class="filter-label"><i class="bi bi-calendar3"></i> Ngày</label>
+                 <select id="qbDate" class="form-select-star" onchange="qbOnDateChange()" disabled>
+                     <option value="">Chọn ngày</option>
+                 </select>
+             </div>
+             <div style="flex: 1.2; min-width: 150px;">
+                 <label class="filter-label"><i class="bi bi-clock"></i> Suất chiếu</label>
+                 <select id="qbShowtime" class="form-select-star" disabled>
+                     <option value="">Chọn suất</option>
+                 </select>
+             </div>
+             <div>
+                 <button class="btn btn-danger fw-bold px-4" style="height: 48px; border-radius: 12px;" onclick="qbBookNow()">MUA VÉ</button>
+             </div>
+        </div>
+    </div>
+</section>
+
+<main class="container-xxl py-5">
+    <!-- Filter Bar (Minimal) -->
+    <div class="filter-bar p-4 bg-surface border border-secondary border-opacity-10 rounded-4 mb-5 shadow-lg d-flex align-items-center justify-content-between flex-wrap gap-4">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            <div style="min-width: 200px;">
+                <label class="filter-label">Chọn chi nhánh</label>
+                <select id="branchSelect" class="form-select-star" onchange="onBranchFilterChange()">
+                    <option value="">Tất cả chi nhánh</option>
+                </select>
+            </div>
+            <div style="min-width: 200px;">
+                <label class="filter-label">Thể loại</label>
+                <select id="genreSelect" class="form-select-star" onchange="filterMovies()">
+                    <option value="">Tất cả thể loại</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <button class="btn btn-outline-secondary px-4 rounded-3 py-2 fw-bold" onclick="resetFilters()">LÀM MỚI BỘ LỌC</button>
+        </div>
+    </div>
+
+    <!-- Phim Đang Chiếu -->
+    <div id="showingSection">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div class="section-title">PHIM ĐANG CHIẾU</div>
+        </div>
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4" id="showingGrid">
+            <!-- Loading -->
+        </div>
+    </div>
+
+    <!-- Phim Sắp Chiếu -->
+    <div id="comingSection" class="mt-5 pt-5">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div class="section-title">PHIM SẮP CHIẾU</div>
+        </div>
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4" id="comingGrid">
+            <!-- Loading -->
+        </div>
+    </div>
+</main>
+
+<div class="modal fade" id="trailerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark border-0">
+            <div class="modal-header border-0 pb-0"><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body p-0"><div class="video-container" id="videoContainer"></div></div>
+        </div>
+    </div>
+</div>
+
+<footer class="footer">
+    <div class="container-xxl">
+        <div class="row g-5">
+            <div class="col-lg-4">
+                <a href="#" class="footer-brand">STAR<span>CINEMA</span></a>
+                <p class="text-muted small mb-4">Hệ thống rạp chiếu phim hiện đại hàng đầu Việt Nam, mang đến cho bạn những trải nghiệm điện ảnh chân thực và sống động nhất.</p>
+                <div class="d-flex gap-3">
+                    <a href="#" class="social-btn"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="social-btn"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="social-btn"><i class="bi bi-tiktok"></i></a>
+                    <a href="#" class="social-btn"><i class="bi bi-youtube"></i></a>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <h6 class="fw-bold mb-4 text-white">StarCinema</h6>
+                <a href="#" class="footer-link">Về Chúng Tôi</a>
+                <a href="#" class="footer-link">Hệ Thống Rạp</a>
+                <a href="#" class="footer-link">Tuyển Dụng</a>
+                <a href="#" class="footer-link">Liên Hệ</a>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <h6 class="fw-bold mb-4 text-white">Chính Sách</h6>
+                <a href="#" class="footer-link">Điều Khoản Chung</a>
+                <a href="#" class="footer-link">Chính Sách Bảo Mật</a>
+                <a href="#" class="footer-link">Chính Sách Thanh Toán</a>
+                <a href="#" class="footer-link">Câu Hỏi Thường Gặp</a>
+            </div>
+            <div class="col-lg-4 col-md-4">
+                <h6 class="fw-bold mb-4 text-white">Đăng Ký Nhận Tin</h6>
+                <p class="text-muted small mb-3">Nhận thông báo về phim mới và khuyến mãi hấp dẫn nhất.</p>
+                <div class="d-flex gap-2">
+                    <input type="email" class="form-control-star" placeholder="Email của bạn...">
+                    <button class="btn btn-danger rounded-3"><i class="bi bi-send"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="mt-5 pt-4 border-top border-secondary border-opacity-10 text-center">
+            <p class="small text-muted m-0">&copy; 2026 StarCinema Elite. All rights reserved. Designed for Excellence.</p>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    let showingMovies = [], comingMovies = [], heroIdx = 0, heroTimer;
+    const trailerModal = new bootstrap.Modal(document.getElementById('trailerModal'));
+
+    function getFullImageUrl(path) {
+        if (!path) return 'https://placehold.co/300x450?text=No+Poster';
+        if (path.startsWith('http')) return path;
+        return `https://image.tmdb.org/t/p/w500${path.startsWith('/') ? path : '/' + path}`;
+    }
+
+    async function init() {
+        await loadMetadata();
+        await loadAllMovies();
+        
+        const user = localStorage.getItem('cinemaUsername');
+        if (user) {
+            document.getElementById('authSection').innerHTML = `
+                <div class="d-flex align-items-center gap-3">
+                    <span class="small text-muted fw-bold">${user}</span>
+                    <div class="user-avatar" onclick="window.location.href='history.html?tab=profile'">${user.charAt(0).toUpperCase()}</div>
+                    <button class="btn btn-sm btn-outline-secondary rounded-3" onclick="logout()" title="Đăng xuất"><i class="bi bi-box-arrow-right"></i></button>
+                </div>
+            `;
+        }
+    }
+
+    async function loadMetadata() {
+        const [branches, genres] = await Promise.all([
+            api.get('/public/branches'),
+            api.get('/public/genres')
+        ]);
+        if (branches.success) {
+            const options = branches.data.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            document.getElementById('branchSelect').innerHTML += options;
+            document.getElementById('qbBranch').innerHTML += options;
+        }
+        if (genres.success) {
+            document.getElementById('genreSelect').innerHTML += genres.data.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+        }
+    }
+
+    async function loadAllMovies() {
+        const [showingRes, comingRes] = await Promise.all([
+            api.get('/movies/showing'),
+            api.get('/movies/coming')
+        ]);
+        if (showingRes.success) showingMovies = showingRes.data;
+        if (comingRes.success) comingMovies = comingRes.data;
+        
+        filterMovies();
+        initHero();
+    }
+
+    async function onBranchFilterChange() {
+        const branchId = document.getElementById('branchSelect').value;
+        if (!branchId) {
+            await loadAllMovies();
+            return;
+        }
+        const res = await api.get(`/movies/branch/${branchId}`);
+        if (res.success) {
+            // Khi lọc theo chi nhánh, chỉ hiện phim có suất chiếu tại chi nhánh đó (mặc định endpoint đã lọc)
+            showingMovies = res.data.filter(m => m.status === 'SHOWING');
+            comingMovies = res.data.filter(m => m.status === 'COMING');
+            filterMovies();
+        }
+    }
+
+    function filterMovies() {
+        const search = document.getElementById('navSearchInput').value.toLowerCase();
+        const genreName = document.getElementById('genreSelect').selectedOptions[0].text;
+        const genreValue = document.getElementById('genreSelect').value;
+
+        const filteredShowing = showingMovies.filter(m => {
+            const matchesSearch = m.title.toLowerCase().includes(search);
+            const matchesGenre = !genreValue || (m.genres && m.genres.includes(genreName));
+            return matchesSearch && matchesGenre;
+        });
+
+        const filteredComing = comingMovies.filter(m => {
+            const matchesSearch = m.title.toLowerCase().includes(search);
+            const matchesGenre = !genreValue || (m.genres && m.genres.includes(genreName));
+            return matchesSearch && matchesGenre;
+        });
+
+        renderGrid('showingGrid', filteredShowing);
+        renderGrid('comingGrid', filteredComing);
+    }
+
+    function renderGrid(gridId, movies) {
+        const grid = document.getElementById(gridId);
+        if (!movies.length) {
+            grid.innerHTML = '<div class="col-12 text-center py-5 text-muted">Không tìm thấy phim phù hợp</div>';
+            return;
+        }
+        grid.innerHTML = movies.map(m => `
+            <div class="col animate__animated animate__fadeIn">
+                <div class="movie-card">
+                    <div class="rating-badge"><i class="bi bi-star-fill"></i> ${m.rating || '8.5'}</div>
+                    <div class="age-badge age-${(m.ageRating || 'P').toLowerCase()}">${m.ageRating || 'P'}</div>
+                    <div class="poster-wrapper">
+                        <img src="${getFullImageUrl(m.posterUrl)}" class="movie-poster" alt="${m.title}">
+                        <div class="movie-overlay">
+                            <button class="btn-card btn-book" onclick="window.location.href='movie-detail.html?id=${m.id}'">ĐẶT VÉ</button>
+                            <button class="btn-card btn-detail" onclick="window.location.href='movie-detail.html?id=${m.id}'">CHI TIẾT</button>
+                        </div>
+                    </div>
+                    <div class="movie-info">
+                        <div class="movie-title" title="${m.title}">${m.title}</div>
+                        <div class="movie-meta">
+                            <span><i class="bi bi-clock me-1"></i> ${m.duration}p</span>
+                            <span class="text-accent fw-bold">${m.formats ? m.formats.join('/') : '2D'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function resetFilters() {
+        document.getElementById('navSearchInput').value = '';
+        document.getElementById('branchSelect').value = '';
+        document.getElementById('genreSelect').value = '';
+        loadAllMovies();
+    }
+
+    // --- QUICK BOOKING & HERO LOGIC ---
+    async function qbOnBranchChange() {
+        const branchId = document.getElementById('qbBranch').value;
+        const movieSelect = document.getElementById('qbMovie');
+        movieSelect.innerHTML = '<option value="">Chọn phim</option>';
+        document.getElementById('qbDate').innerHTML = '<option value="">Chọn ngày</option>';
+        document.getElementById('qbShowtime').innerHTML = '<option value="">Chọn suất</option>';
+        document.getElementById('qbDate').disabled = document.getElementById('qbShowtime').disabled = true;
+
+        if (!branchId) { movieSelect.disabled = true; return; }
+        const res = await api.get(`/movies/branch/${branchId}`);
+        if (res.success) {
+            movieSelect.innerHTML += res.data.map(m => `<option value="${m.id}">${m.title}</option>`).join('');
+            movieSelect.disabled = false;
+        }
+    }
+
+    async function qbOnMovieChange() {
+        const branchId = document.getElementById('qbBranch').value;
+        const movieId = document.getElementById('qbMovie').value;
+        const dateSelect = document.getElementById('qbDate');
+        dateSelect.innerHTML = '<option value="">Chọn ngày</option>';
+        document.getElementById('qbShowtime').innerHTML = '<option value="">Chọn suất</option>';
+        document.getElementById('qbShowtime').disabled = true;
+
+        if (!movieId) { dateSelect.disabled = true; return; }
+        const res = await api.get(`/showtimes/dates?movieId=${movieId}&branchId=${branchId}`);
+        if (res.success) {
+            dateSelect.innerHTML += res.data.map(d => `<option value="${d}">${new Date(d).toLocaleDateString('vi-VN', {weekday:'long', day:'2-digit', month:'2-digit'})}</option>`).join('');
+            dateSelect.disabled = false;
+        }
+    }
+
+    async function qbOnDateChange() {
+        const branchId = document.getElementById('qbBranch').value;
+        const movieId = document.getElementById('qbMovie').value;
+        const date = document.getElementById('qbDate').value;
+        const stSelect = document.getElementById('qbShowtime');
+        stSelect.innerHTML = '<option value="">Chọn suất</option>';
+        if (!date) { stSelect.disabled = true; return; }
+        const res = await api.get(`/showtimes?movieId=${movieId}&branchId=${branchId}&date=${date}`);
+        if (res.success) {
+            stSelect.innerHTML += res.data.map(s => `<option value="${s.id}">${new Date(s.startTime).toLocaleTimeString('vi-VN',{hour:'2-digit', minute:'2-digit'})} - ${s.formatName}</option>`).join('');
+            stSelect.disabled = false;
+        }
+    }
+
+    function qbBookNow() {
+        const stId = document.getElementById('qbShowtime').value;
+        if (!stId) return alert('Vui lòng chọn đầy đủ thông tin!');
+        window.location.href = `booking.html?showtimeId=${stId}`;
+    }
+
+    function initHero() {
+        const heroMovies = showingMovies.slice(0, 5);
+        if (!heroMovies.length) return;
+        const dots = document.getElementById('heroDots');
+        dots.innerHTML = heroMovies.map((_, i) => `<div class="hero-dot ${i===0?'active':''}" onclick="setHero(${i})"></div>`).join('');
+        setHero(0);
+        if (heroTimer) clearInterval(heroTimer);
+        heroTimer = setInterval(() => setHero((heroIdx + 1) % heroMovies.length), 8000);
+    }
+
+    function setHero(idx) {
+        heroIdx = idx;
+        const m = showingMovies[idx];
+        if (!m) return;
+        document.getElementById('heroBackdrop').style.backgroundImage = `url(${m.horizontalPosterUrl || getFullImageUrl(m.posterUrl)})`;
+        document.getElementById('heroTitle').innerText = m.title;
+        document.getElementById('heroDesc').innerText = m.description || 'Chưa có mô tả cho bộ phim này. Hãy đến rạp để cùng trải nghiệm những giây phút tuyệt vời.';
+        document.querySelectorAll('.hero-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        document.getElementById('btnHeroBook').onclick = () => window.location.href = `movie-detail.html?id=${m.id}`;
+        document.getElementById('btnHeroTrailer').onclick = () => playTrailer(m.trailerUrl);
+    }
+
+    function playTrailer(url) {
+        if (!url) return alert('Hiện chưa có trailer cho phim này.');
+        let id = '';
+        if (url.includes('v=')) id = url.split('v=')[1].split('&')[0];
+        else if (url.includes('be/')) id = url.split('be/')[1];
+        document.getElementById('videoContainer').innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        trailerModal.show();
+    }
+
+    function logout() {
+        if (confirm('Bạn muốn đăng xuất?')) {
+            localStorage.removeItem('cinemaToken'); localStorage.removeItem('cinemaUsername'); localStorage.removeItem('cinemaRole');
+            window.location.href = 'index.html';
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

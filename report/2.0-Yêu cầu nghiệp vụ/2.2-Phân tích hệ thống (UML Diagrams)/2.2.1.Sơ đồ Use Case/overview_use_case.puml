@@ -1,0 +1,52 @@
+@startuml overview_use_case
+left to right direction
+skinparam packageStyle rectangle
+skinparam backgroundColor #FFFFFF
+skinparam usecase {
+    BackgroundColor #F8F9FA
+    BorderColor #E5133A
+    ArrowColor #333333
+}
+
+actor "Khách hàng" as Customer
+actor "Nhân viên" as Staff
+actor "Quản lý" as Manager
+actor "Quản trị viên" as Admin
+
+Staff <|-- Manager
+Manager <|-- Admin
+
+rectangle "Hệ thống FlashCinema" {
+    package "Nhóm chức năng Khách hàng" {
+        usecase "Xem phim & Lịch chiếu" as UC_View
+        usecase "Đặt vé & Thanh toán" as UC_Booking
+        usecase "Quản lý tài khoản" as UC_Account
+    }
+    
+    package "Nhóm chức năng Vận hành" {
+        usecase "Bán vé & Check-in" as UC_Staff_Ops
+        usecase "Quản lý Suất chiếu & Phim" as UC_Manager_Ops
+        usecase "Xem báo cáo thống kê" as UC_Analytics
+    }
+    
+    package "Nhóm chức năng Quản trị" {
+        usecase "Quản lý Chi nhánh & Phòng" as UC_Admin_Rooms
+        usecase "Quản trị Người dùng & Nhân sự" as UC_Admin_Users
+        usecase "Theo dõi Audit Logs" as UC_Audit
+    }
+}
+
+Customer --> UC_View
+Customer --> UC_Booking
+Customer --> UC_Account
+
+Staff --> UC_Staff_Ops
+
+Manager --> UC_Manager_Ops
+Manager --> UC_Analytics
+
+Admin --> UC_Admin_Rooms
+Admin --> UC_Admin_Users
+Admin --> UC_Audit
+
+@enduml

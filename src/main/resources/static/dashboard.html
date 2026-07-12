@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng điều khiển Manager | StarCinema</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+          --bg: #080B14; --surface: #0F121F; --card: #161B2E; --border: #252A3D;
+          --accent: #E5133A; --text: #E8EAF0; --text-muted: #7B82A0;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+
+        .main-content { flex: 1; overflow-y: auto; padding: 40px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; height: 100%; transition: 0.3s; }
+        .stat-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 16px; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+        .stat-label { color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+        .chart-container { 
+            background: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 24px; 
+            padding: 30px; 
+            margin-top: 30px; 
+            height: 400px; 
+            position: relative; 
+        }
+        .chart-container.large { height: 350px; }
+        .chart-title { font-weight: 700; color: #fff; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        
+        .filter-bar { background: var(--surface); border: 1px solid var(--border); padding: 15px 25px; border-radius: 16px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; }
+        .form-control-dark { background: #080a14; border: 1px solid var(--border); color: #fff; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar"></aside>
+
+<main class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-800 m-0">BÁO CÁO CHIẾN LƯỢC</h2>
+            <p class="text-muted m-0">Tổng hợp dữ liệu kinh doanh rạp phim</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-danger" onclick="loadStats()"><i class="bi bi-arrow-clockwise me-2"></i>LÀM MỚI</button>
+            <button class="btn btn-danger" onclick="window.print()"><i class="bi bi-download me-2"></i>XUẤT BÁO CÁO</button>
+        </div>
+    </div>
+
+    <div class="filter-bar">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">TỪ NGÀY:</label>
+                <input type="date" id="startDate" class="form-control form-control-sm form-control-dark">
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <label class="small fw-bold text-muted">ĐẾN NGÀY:</label>
+                <input type="date" id="endDate" class="form-control form-control-sm form-control-dark">
+            </div>
+            <div class="d-flex align-items-center gap-2 ms-2 border-start ps-3">
+                <label class="small fw-bold text-muted">KHUNG GIỜ:</label>
+                <input type="time" id="startTime" class="form-control form-control-sm form-control-dark" value="00:00">
+                <span class="text-muted">-</span>
+                <input type="time" id="endTime" class="form-control form-control-sm form-control-dark" value="23:59">
+            </div>
+            <button class="btn btn-sm btn-danger px-3 fw-bold ms-auto" onclick="loadStats()">LỌC DỮ LIỆU</button>
+        </div>
+        <div class="text-muted small fw-bold mt-2"><i class="bi bi-clock-history me-1"></i> Cập nhật lúc: <span id="lastUpdate">--:--</span></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-currency-dollar"></i></div>
+                <div class="stat-value" id="totalRevenue">0đ</div>
+                <div class="stat-label">Tổng doanh thu</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-ticket-perforated"></i></div>
+                <div class="stat-value" id="totalTickets">0</div>
+                <div class="stat-label">Vé đã bán</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-people"></i></div>
+                <div class="stat-value" id="newCustomers">0</div>
+                <div class="stat-label">Khách hàng mới</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+        <!-- DOANH THU THEO PHIM (TOP MOVIES) -->
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-trophy text-warning"></i>TOP DOANH THU THEO PHIM</div>
+                <div id="movieRevenueList" class="mt-4">
+                    <!-- Phim sẽ được render ở đây -->
+                </div>
+            </div>
+        </div>
+
+        <!-- DOANH THU THEO KHUNG GIỜ -->
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-clock-history text-info"></i>PHÂN BỔ DOANH THU THEO GIỜ</div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="hourChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- BIỂU ĐỒ DOANH THU THEO NGÀY (VẪN GIỮ NHƯNG LÀM GỌN) -->
+        <div class="col-lg-12">
+            <div class="analytics-card">
+                <div class="chart-title"><i class="bi bi-graph-up text-danger"></i>XU HƯỚNG DOANH THU THEO NGÀY</div>
+                <div style="height: 300px; position: relative;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<style>
+    .analytics-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; height: 100%; }
+    .movie-rank-item { margin-bottom: 20px; }
+    .movie-rank-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
+    .progress-star { height: 8px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+    .progress-star-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #FF4D6D); border-radius: 10px; transition: 1s ease-out; }
+    
+    .room-perf-card { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 20px; transition: 0.3s; }
+    .room-perf-card:hover { border-color: var(--accent); }
+    .occupancy-gauge { width: 60px; height: 60px; border-radius: 50%; border: 4px solid rgba(229,19,58,0.1); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: var(--accent); position: relative; }
+    .occupancy-gauge::after { content: ''; position: absolute; top: -4px; left: -4px; right: -4px; bottom: -4px; border-radius: 50%; border: 4px solid var(--accent); border-bottom-color: transparent; border-left-color: transparent; transform: rotate(45deg); }
+</style>
+
+<script src="/js/auth-guard.js"></script>
+<script src="/js/sidebar.js"></script>
+<script src="/js/api.js"></script>
+<script>
+    let revenueChart, movieChart, hourChart;
+
+    async function init() {
+        // Sidebar được tự động render bởi sidebar.js
+        
+        // Mặc định lọc 7 ngày gần nhất
+        const now = new Date();
+        const weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        
+        document.getElementById('startDate').value = weekAgo.toISOString().split('T')[0];
+        document.getElementById('endDate').value = now.toISOString().split('T')[0];
+        
+        loadStats();
+    }
+
+    async function loadStats() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        const startTime = document.getElementById('startTime').value;
+        const endTime = document.getElementById('endTime').value;
+        
+        try {
+            const res = await api.get(`/statistics/overview?startDate=${start}&endDate=${end}&startTime=${startTime}:00&endTime=${endTime}:59`);
+            if (res.success) {
+                const data = res.data;
+                updateOverview(data);
+                updateCharts(data);
+                document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function updateOverview(data) {
+        document.getElementById('totalRevenue').innerText = data.totalRevenue.toLocaleString() + 'đ';
+        document.getElementById('totalTickets').innerText = data.totalTicketsSold.toLocaleString();
+        document.getElementById('newCustomers').innerText = data.newCustomersCount.toLocaleString();
+    }
+
+    function updateCharts(data) {
+        // 1. TOP DOANH THU THEO PHIM (Progress Bars)
+        const movieBox = document.getElementById('movieRevenueList');
+        const sortedMovies = Object.entries(data.revenueByMovie).sort((a, b) => b[1] - a[1]);
+        const maxRev = sortedMovies.length > 0 ? sortedMovies[0][1] : 1;
+        
+        movieBox.innerHTML = sortedMovies.map(([title, rev]) => {
+            const percent = (rev / maxRev) * 100;
+            return `
+                <div class="movie-rank-item">
+                    <div class="movie-rank-info">
+                        <span class="text-white text-truncate me-2">${title}</span>
+                        <span class="text-accent">${new Intl.NumberFormat('vi-VN').format(rev)}đ</span>
+                    </div>
+                    <div class="progress-star">
+                        <div class="progress-star-bar" style="width: ${percent}%"></div>
+                    </div>
+                </div>
+            `;
+        }).join('') || '<div class="text-center py-5 text-muted">Không có dữ liệu phim</div>';
+
+        // 2. DOANH THU THEO GIỜ (Bar Chart)
+        const hourCtx = document.getElementById('hourChart').getContext('2d');
+        if (hourChart) hourChart.destroy();
+
+        // Tạo đủ 24 giờ để biểu đồ trông đầy đủ
+        const hours = Array.from({length: 24}, (_, i) => i);
+        const hourData = hours.map(h => data.revenueByHour[h] || 0);
+        const hourLabels = hours.map(h => h + 'h');
+
+        hourChart = new Chart(hourCtx, {
+            type: 'bar',
+            data: {
+                labels: hourLabels,
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: hourData,
+                    backgroundColor: hours.map(h => (h >= 18 || h <= 22) ? '#E5133A' : '#3B82F6'),
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN').format(context.raw) + 'đ';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { 
+                            color: '#7B82A0',
+                            callback: value => (value / 1000000) + 'M'
+                        }
+                    },
+                    x: { 
+                        grid: { display: false }, 
+                        ticks: { color: '#7B82A0', font: { size: 10 } } 
+                    }
+                }
+            }
+        });
+
+
+        // 3. BIỂU ĐỒ XU HƯỚNG (Vẫn giữ cho Dashboard đầy đủ)
+        const revCtx = document.getElementById('revenueChart').getContext('2d');
+        if (revenueChart) revenueChart.destroy();
+        revenueChart = new Chart(revCtx, {
+            type: 'line',
+            data: {
+                labels: Object.keys(data.revenueByDay),
+                datasets: [{
+                    label: 'Doanh thu',
+                    data: Object.values(data.revenueByDay),
+                    borderColor: '#E5133A',
+                    backgroundColor: 'rgba(229, 19, 58, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7B82A0' } },
+                    x: { grid: { display: false }, ticks: { color: '#7B82A0' } }
+                }
+            }
+        });
+    }
+
+    init();
+</script>
+</body>
+</html>

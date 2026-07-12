@@ -1,0 +1,59 @@
+@startuml customer_online_booking
+actor Customer
+participant "PublicBookingController" as PBC
+participant "CustomerBookingFacade" as CBF
+participant "UserService" as US
+participant "PromotionService" as PS
+participant "BookingRepository" as BR
+participant "NotificationService" as NS
+participant "PaymentGateway" as PG
+database "Database" as DB
+
+Customer -> PBC : POST /api/public/bookings/online (OnlineBookingRequest)
+activate PBC
+
+PBC -> CBF : createOnlineBooking(request)
+activate CBF
+
+CBF -> US : getCustomerProfile(userId)
+activate US
+US --> CBF : CustomerProfile (Points, Tier)
+deactivate US
+
+CBF -> PS : calculateDiscount(totalAmount, promotionCode, customerTier)
+activate PS
+PS --> CBF : finalAmount
+deactivate PS
+
+CBF -> BR : createPendingBooking()
+activate BR
+BR -> DB : INSERT Pending Booking
+DB --> BR : OK
+BR --> CBF : pendingBooking
+deactivate BR
+
+CBF -> PG : generatePaymentUrl(finalAmount, bookingId)
+activate PG
+PG --> CBF : paymentUrl
+deactivate PG
+
+CBF --> PBC : BookingResponse (with paymentUrl)
+deactivate CBF
+
+PBC --> Customer : 200 OK (Payment URL)
+deactivate PBC
+
+Customer -> PG : Proceeds with Payment via URL
+PG -> PBC : Webhook Callback (Payment Success)
+activate PBC
+
+PBC -> CBF : handlePaymentCallback(bookingId, SUCCESS)
+activate CBF
+CBF -> BR : updateStatus(bookingId, PAID)
+CBF -> NS : publishBookingEvent(booking)
+NS -> Customer : Sends Email with Ticket QR
+CBF --> PBC : OK
+deactivate CBF
+PBC --> PG : 200 OK
+deactivate PBC
+@enduml
