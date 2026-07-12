@@ -5,7 +5,7 @@ services:
     image: mysql:8.0
     container_name: cinema-db
     ports:
-      - "3306:3306"
+      - "3307:3306"
     environment:
       MYSQL_DATABASE: cinema_db
       MYSQL_ROOT_PASSWORD: root
@@ -31,7 +31,7 @@ services:
       - cinema-network
 
   backend:
-    build: .
+    build: ./backend
     container_name: cinema-backend
     ports:
       - "8082:8082"
@@ -48,6 +48,18 @@ services:
       - REDIS_PORT=6379
       - JWT_SECRET=12345678901234567890123456789012
       - TMDB_API_KEY=test_tmdb_api_key_placeholder
+    networks:
+      - cinema-network
+
+  frontend:
+    build: ./frontend
+    container_name: cinema-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8082/api
     networks:
       - cinema-network
 
