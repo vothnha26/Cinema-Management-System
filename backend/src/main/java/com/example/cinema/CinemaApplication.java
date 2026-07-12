@@ -38,10 +38,16 @@ public class CinemaApplication {
     }
 
     @Bean
-    public CommandLineRunner initAdmin(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public CommandLineRunner initDefaultUsers(
+            UserRepository userRepository, 
+            com.example.cinema.repository.user.CustomerRepository customerRepository,
+            PasswordEncoder passwordEncoder) {
         return args -> {
-            User admin = userRepository.findByUsername("admin").orElse(new User());
-            admin.setUsername("admin");
+            // 1. Tạo tài khoản Admin
+            User admin = userRepository.findByUsername("admin@starcinema.com")
+                    .or(() -> userRepository.findByEmail("admin@starcinema.com"))
+                    .orElse(new User());
+            admin.setUsername("admin@starcinema.com");
             admin.setPassword(passwordEncoder.encode("123456"));
             admin.setEmail("admin@starcinema.com");
             admin.setRole(Role.ADMIN);
@@ -50,7 +56,36 @@ public class CinemaApplication {
                 admin.setCreatedAt(LocalDateTime.now());
             }
             userRepository.save(admin);
-            System.out.println(">>> ADMIN USER READY: admin / 123456");
+            System.out.println(">>> ADMIN USER READY: admin@starcinema.com / 123456");
+
+            // 2. Tạo tài khoản Customer
+            User customerUser = userRepository.findByUsername("user@starcinema.com")
+                    .or(() -> userRepository.findByEmail("user@starcinema.com"))
+                    .orElse(new User());
+            if (customerUser.getId() == null) {
+                customerUser.setUsername("user@starcinema.com");
+                customerUser.setPassword(passwordEncoder.encode("123456"));
+                customerUser.setEmail("user@starcinema.com");
+                customerUser.setRole(Role.CUSTOMER);
+                customerUser.setStatus(true);
+                customerUser.setCreatedAt(LocalDateTime.now());
+                userRepository.save(customerUser);
+
+                com.example.cinema.model.entity.Customer customerEntity = new com.example.cinema.model.entity.Customer();
+                customerEntity.setUser(customerUser);
+                customerEntity.setFullName("Star Cinema Customer");
+                customerEntity.setEmail("user@starcinema.com");
+                customerEntity.setPoints(0);
+                customerEntity.setTotalSpending(java.math.BigDecimal.ZERO);
+                customerRepository.save(customerEntity);
+                System.out.println(">>> CUSTOMER USER READY: user@starcinema.com / 123456");
+            } else if (!"user@starcinema.com".equals(customerUser.getUsername())) {
+                customerUser.setUsername("user@starcinema.com");
+                userRepository.save(customerUser);
+                System.out.println(">>> CUSTOMER USER UPDATED TO GMAIL USERNAME: user@starcinema.com / 123456");
+            } else {
+                System.out.println(">>> CUSTOMER USER ALREADY EXISTS AND READY: user@starcinema.com / 123456");
+            }
         };
     }
 }

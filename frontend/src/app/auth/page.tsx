@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Eye, EyeOff, Film, Check, Mail } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { useAuthStore } from '../../store/authStore';
+import { getRedirectPath } from '../../utils/rbac';
 
 export default function AuthPage() {
   return (
@@ -42,13 +43,7 @@ function AuthForm() {
   // Kiểm tra nếu đã đăng nhập thì tự động chuyển hướng
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'ADMIN' || user.role === 'MANAGER') {
-        router.push('/admin');
-      } else if (user.role === 'STAFF') {
-        router.push('/pos');
-      } else {
-        router.push('/');
-      }
+      router.push(getRedirectPath(user.role));
     }
 
     const message = searchParams.get('message');
@@ -87,19 +82,22 @@ function AuthForm() {
       });
 
       if (responseData && responseData.success) {
-        const { token, user: userData } = responseData.data;
-        storeLogin(token, userData);
+        const { token, username, role, fullName, branchId } = responseData.data;
+        
+        const userData = {
+          username: username,
+          email: username,
+          fullName: fullName || username.split('@')[0],
+          role: role,
+          branchId: branchId
+        };
+
+        storeLogin(token, userData as any);
         setSuccessMsg('Đăng nhập thành công!');
         
         // Chuyển hướng theo vai trò (Role)
         setTimeout(() => {
-          if (userData.role === 'ADMIN' || userData.role === 'MANAGER') {
-            router.push('/admin');
-          } else if (userData.role === 'STAFF') {
-            router.push('/pos');
-          } else {
-            router.push('/');
-          }
+          router.push(getRedirectPath(role));
         }, 800);
       } else {
         setErrorMsg(responseData?.message || 'Đăng nhập thất bại!');
