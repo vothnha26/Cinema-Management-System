@@ -38,5 +38,9 @@ public class AppConstants {
     public static final String ROOM_STATUS_MAINTENANCE = "MAINTENANCE";
     public static final String ROOM_STATUS_INACTIVE = "INACTIVE";
 
+    // Verification Purposes
+    public static final String PURPOSE_REGISTER = "REGISTER";
+    public static final String PURPOSE_RESET_PASSWORD = "RESET_PASSWORD";
+
     private AppConstants() {}
 }

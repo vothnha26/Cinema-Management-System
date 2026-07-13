@@ -8,6 +8,8 @@ import com.example.cinema.model.enums.Role;
 import com.example.cinema.security.JwtUtil;
 import com.example.cinema.service.auth.IAuthService;
 import com.example.cinema.service.infrastructure.facade.UserDomainFacade;
+import com.example.cinema.model.constant.AppConstants;
+import com.example.cinema.model.constant.ErrorMessages;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,14 +43,14 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         User user = userRepo.findUserByUsername(request.getUsername())
-                .orElseThrow(() -> new AppException("Tài khoản hoặc mật khẩu không chính xác"));
+                .orElseThrow(() -> new AppException(ErrorMessages.INVALID_CREDENTIALS));
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new AppException("Tài khoản hoặc mật khẩu không chính xác");
+            throw new AppException(ErrorMessages.INVALID_CREDENTIALS);
         }
         if (Boolean.FALSE.equals(user.getEmailVerified())) {
             String code = generateOtp();
-            createVerificationCode(user, "REGISTER", code);
-            throw new AppException("Tài khoản chưa được xác thực email. Một mã OTP mới đã được gửi tới email của bạn.");
+            createVerificationCode(user, AppConstants.PURPOSE_REGISTER, code);
+            throw new AppException(ErrorMessages.EMAIL_NOT_VERIFIED);
         }
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
@@ -66,10 +68,10 @@ public class AuthServiceImpl implements IAuthService {
     @Transactional
     public String register(RegisterRequest request) {
         if (userRepo.findUserByUsername(request.getUsername()).isPresent()) {
-            throw new AppException("Username đã tồn tại");
+            throw new AppException(ErrorMessages.USERNAME_ALREADY_EXISTS);
         }
         if (userRepo.findUserByEmail(request.getEmail()).isPresent()) {
-            throw new AppException("Email đã được sử dụng");
+            throw new AppException(ErrorMessages.EMAIL_ALREADY_IN_USE);
         }
         User user = new User();
         user.setUsername(request.getUsername());
@@ -85,33 +87,33 @@ public class AuthServiceImpl implements IAuthService {
         userRepo.saveCustomer(customer);
 
         String code = generateOtp();
-        createVerificationCode(user, "REGISTER", code);
+        createVerificationCode(user, AppConstants.PURPOSE_REGISTER, code);
 
-        return "Đăng ký thành công. Vui lòng kiểm tra email để xác thực.";
+        return ErrorMessages.REGISTRATION_SUCCESS;
     }
 
     @Override
     @Transactional
     public void verifyOtp(VerifyOtpRequest request) {
         User user = userRepo.findUserByEmail(request.getEmail())
-                .orElseThrow(() -> new AppException("Không tìm thấy tài khoản với email này"));
+                .orElseThrow(() -> new AppException(ErrorMessages.EMAIL_NOT_FOUND));
         
         Optional<VerificationCode> optCode = verificationCodeRepository
                 .findTopByUserAndCodeAndPurposeAndUsedAtIsNullAndExpiresAtAfterOrderByCreatedAtDesc(
-                        user, request.getOtp(), "REGISTER", LocalDateTime.now());
+                        user, request.getOtp(), AppConstants.PURPOSE_REGISTER, LocalDateTime.now());
         
         if (optCode.isEmpty()) {
             optCode = verificationCodeRepository
                     .findTopByUserAndCodeAndPurposeAndUsedAtIsNullAndExpiresAtAfterOrderByCreatedAtDesc(
-                            user, request.getOtp(), "RESET_PASSWORD", LocalDateTime.now());
+                            user, request.getOtp(), AppConstants.PURPOSE_RESET_PASSWORD, LocalDateTime.now());
         }
 
         if (optCode.isEmpty()) {
-            throw new AppException("Mã OTP không hợp lệ hoặc đã hết hạn");
+            throw new AppException(ErrorMessages.INVALID_OR_EXPIRED_OTP);
         }
 
         VerificationCode vc = optCode.get();
-        if ("REGISTER".equals(vc.getPurpose())) {
+        if (AppConstants.PURPOSE_REGISTER.equals(vc.getPurpose())) {
             user.setEmailVerified(true);
             userRepo.saveUser(user);
             vc.setUsedAt(LocalDateTime.now());
@@ -123,9 +125,9 @@ public class AuthServiceImpl implements IAuthService {
     @Transactional
     public void changePassword(String username, ChangePasswordRequest request) {
         User user = userRepo.findUserByUsername(username)
-                .orElseThrow(() -> new AppException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new AppException(ErrorMessages.USER_NOT_FOUND));
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
-            throw new AppException("Mật khẩu cũ không chính xác");
+            throw new AppException(ErrorMessages.INCORRECT_OLD_PASSWORD);
         }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepo.saveUser(user);
@@ -135,10 +137,10 @@ public class AuthServiceImpl implements IAuthService {
     @Transactional
     public void requestPasswordReset(String email) {
         User user = userRepo.findUserByEmail(email)
-                .orElseThrow(() -> new AppException("Không tìm thấy tài khoản với email này"));
+                .orElseThrow(() -> new AppException(ErrorMessages.EMAIL_NOT_FOUND));
         
         String code = generateOtp();
-        createVerificationCode(user, "RESET_PASSWORD", code);
+        createVerificationCode(user, AppConstants.PURPOSE_RESET_PASSWORD, code);
     }
 
     @Override
@@ -146,8 +148,8 @@ public class AuthServiceImpl implements IAuthService {
     public void resetPasswordWithToken(String token, String newPassword) {
         VerificationCode vc = verificationCodeRepository
                 .findTopByCodeAndPurposeAndUsedAtIsNullAndExpiresAtAfterOrderByCreatedAtDesc(
-                        token, "RESET_PASSWORD", LocalDateTime.now())
-                .orElseThrow(() -> new AppException("Mã OTP không hợp lệ hoặc đã hết hạn"));
+                        token, AppConstants.PURPOSE_RESET_PASSWORD, LocalDateTime.now())
+                .orElseThrow(() -> new AppException(ErrorMessages.INVALID_OR_EXPIRED_OTP));
 
         User user = vc.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
