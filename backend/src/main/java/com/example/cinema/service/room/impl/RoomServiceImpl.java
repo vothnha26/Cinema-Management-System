@@ -73,7 +73,7 @@ public class RoomServiceImpl implements RoomService {
     private RoomResponse mapToResponse(Room r) {
         RoomResponse res = modelMapper.map(r, RoomResponse.class);
         if (r.getRoomType() != null) {
-            res.setRoomTypeId(r.getRoomType().getId());
+            res.setRoomTypeId(r.getRoomType().getCode());
             res.setRoomTypeName(r.getRoomType().getName());
         }
         if (r.getBranch() != null) {
@@ -89,9 +89,10 @@ public class RoomServiceImpl implements RoomService {
             res.setSeats(r.getSeats().stream().map(s -> {
                 RoomResponse.SeatResponse sr = modelMapper.map(s, RoomResponse.SeatResponse.class);
                 if (s.getSeatType() != null) {
-                    sr.setSeatTypeId(s.getSeatType().getId());
+                    sr.setSeatTypeId(s.getSeatType().getCode());
                     sr.setSeatTypeName(s.getSeatType().getName());
                 }
+                sr.setStatus(s.getStatus() == com.example.cinema.model.enums.SeatStatus.ACTIVE);
                 return sr;
             }).collect(Collectors.toList()));
         }

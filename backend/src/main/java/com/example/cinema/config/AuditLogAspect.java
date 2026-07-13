@@ -19,9 +19,11 @@ public class AuditLogAspect {
     private static final Logger log = LoggerFactory.getLogger(AuditLogAspect.class);
 
     private final AuditLogRepository auditLogRepository;
+    private final com.example.cinema.repository.user.UserRepository userRepository;
 
-    public AuditLogAspect(AuditLogRepository auditLogRepository) {
+    public AuditLogAspect(AuditLogRepository auditLogRepository, com.example.cinema.repository.user.UserRepository userRepository) {
         this.auditLogRepository = auditLogRepository;
+        this.userRepository = userRepository;
     }
 
     @AfterReturning(pointcut = "@annotation(logAction)", returning = "result")
@@ -35,6 +37,14 @@ public class AuditLogAspect {
             log.setAction(logAction.action());
             log.setTarget(logAction.target());
             log.setTimestamp(LocalDateTime.now());
+            
+            if (auth != null) {
+                if (auth.getPrincipal() instanceof com.example.cinema.model.entity.User) {
+                    log.setUser((com.example.cinema.model.entity.User) auth.getPrincipal());
+                } else {
+                    userRepository.findByUsername(username).ifPresent(log::setUser);
+                }
+            }
             
             // Có thể trích xuất ID từ kết quả trả về nếu cần
             log.setDetails("Thực hiện " + logAction.action() + " trên " + logAction.target());

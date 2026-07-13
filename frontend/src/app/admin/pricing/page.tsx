@@ -76,18 +76,19 @@ export default function AdminPricingPage() {
         adminPricingService.getRules(), // fetch rules/prices
       ]);
 
-      setRoomTypes(rtRes.data || []);
-      const filteredSeatTypes = (stRes.data || []).filter((s: any) => s.id !== 'EMPTY' && s.id !== 'DISABLED');
+      setRoomTypes(rtRes.data?.data || []);
+      const seatData = stRes.data?.data || [];
+      const filteredSeatTypes = seatData.filter((s: any) => s.id !== 'EMPTY' && s.id !== 'DISABLED');
       setSeatTypes(filteredSeatTypes);
-      setFormats(fRes.data || []);
-      setBranches(bRes.data || []);
+      setFormats(fRes.data?.data || []);
+      setBranches(bRes?.data || []);
 
       // Lấy toàn bộ giá gốc (từ api /api/admin/pricing)
       const basePricesRes = await api.get('/admin/pricing');
-      setPrices(basePricesRes.data || []);
+      setPrices(basePricesRes.data?.data || []);
 
       // Set mặc định cho simulator
-      if (rtRes.data?.length > 0) setSimRoomType(rtRes.data[0].id);
+      if (rtRes.data?.data?.length > 0) setSimRoomType(rtRes.data.data[0].id);
       if (filteredSeatTypes.length > 0) setSimSeatType(filteredSeatTypes[0].id);
     } catch (err: any) {
       console.error(err);

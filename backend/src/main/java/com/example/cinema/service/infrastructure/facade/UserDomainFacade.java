@@ -28,4 +28,6 @@ public class UserDomainFacade {
     public Optional<Customer> findCustomerByUsername(String username) { return customerRepo.findByUserUsername(username); }
     public Optional<Customer> findCustomerByPhone(String phone) { return customerRepo.findByPhone(phone); }
     public Customer saveCustomer(Customer c) { return customerRepo.save(c); }
+    public Optional<User> findUserByEmail(String email) { return userRepo.findByEmail(email); }
+    public User saveUser(User u) { return userRepo.save(u); }
 }

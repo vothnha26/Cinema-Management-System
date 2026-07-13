@@ -13,6 +13,7 @@ export default function AdminCombosPage() {
   const isAdmin = hasPermission(user?.role, 'MANAGE_USERS');
   const isManagerOrStaff = !isAdmin && hasPermission(user?.role, 'ACCESS_POS');
 
+  const [mounted, setMounted] = useState(false);
   const [combos, setCombos] = useState<any[]>([]);
   const [branches, setBranches] = useState<BranchData[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<number | ''>('');
@@ -65,14 +66,14 @@ export default function AdminCombosPage() {
     setErrorMsg('');
     try {
       let res;
-      if (selectedBranchId !== '') {
+      if (typeof selectedBranchId === 'number') {
         res = await adminComboService.getCombosByBranch(Number(selectedBranchId));
       } else {
         res = await adminComboService.getCombos();
       }
 
       if (res?.success) {
-        setCombos(res.data || []);
+        setCombos(Array.isArray(res.data) ? res.data : []);
       } else {
         setErrorMsg(res?.message || 'Không thể tải danh sách combo!');
       }
@@ -85,12 +86,16 @@ export default function AdminCombosPage() {
   };
 
   useEffect(() => {
-    fetchBranches();
-  }, [user]);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    fetchCombos();
-  }, [selectedBranchId]);
+    if (mounted) fetchBranches();
+  }, [user, mounted]);
+
+  useEffect(() => {
+    if (mounted) fetchCombos();
+  }, [selectedBranchId, mounted]);
 
   const handleOpenCreateModal = () => {
     setEditId(null);
@@ -200,6 +205,14 @@ export default function AdminCombosPage() {
       alert(err.response?.data?.message || 'Có lỗi xảy ra.');
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="bg-[#FAFAFA] p-8 text-center text-[#6B7280] font-medium">
+        Đang tải...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -344,7 +357,7 @@ export default function AdminCombosPage() {
                 </div>
 
                 {/* Tồn kho và Trạng thái tại Chi Nhánh (Dành cho Manager/Staff hoặc Admin khi chọn cụ thể chi nhánh) */}
-                {selectedBranchId !== '' && (
+                {typeof selectedBranchId === 'number' && (
                   <div className="mt-4 pt-3 border-t border-black/5 bg-[#FAFAFA] -mx-4 -mb-4 p-4 rounded-b-2xl">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280]">Kinh doanh tại rạp</span>

@@ -14,13 +14,6 @@ public class Customer {
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
-
-    private String phone;
-
-    private String email;
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "membership_level_id")
     private MembershipLevel membershipLevel;
@@ -30,6 +23,9 @@ public class Customer {
 
     @Column(nullable = false)
     private Integer points = 0;
+
+    @Column(name = "date_of_birth")
+    private java.time.LocalDate dateOfBirth;
 
     @org.hibernate.annotations.CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -55,27 +51,33 @@ public class Customer {
     }
 
     public String getFullName() {
-        return fullName;
+        return user != null ? user.getFullName() : null;
     }
 
     public void setFullName(String fullName) {
-        this.fullName = fullName;
+        if (user != null) {
+            user.setFullName(fullName);
+        }
     }
 
     public String getPhone() {
-        return phone;
+        return user != null ? user.getPhone() : null;
     }
 
     public void setPhone(String phone) {
-        this.phone = phone;
+        if (user != null) {
+            user.setPhone(phone);
+        }
     }
 
     public String getEmail() {
-        return email;
+        return user != null ? user.getEmail() : null;
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        if (user != null) {
+            user.setEmail(email);
+        }
     }
 
     public MembershipLevel getMembershipLevel() {
@@ -100,6 +102,14 @@ public class Customer {
 
     public void setPoints(Integer points) {
         this.points = points;
+    }
+
+    public java.time.LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(java.time.LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     public java.time.LocalDateTime getCreatedAt() {

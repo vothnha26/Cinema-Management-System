@@ -1,5 +1,6 @@
 package com.example.cinema.model.entity;
 
+import com.example.cinema.model.enums.SeatStatus;
 import jakarta.persistence.*;
 
 @Entity
@@ -23,7 +24,9 @@ public class Seat {
     @JoinColumn(name = "seat_type_id", nullable = false)
     private SeatType seatType;
 
-    private Boolean status = true;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SeatStatus status = SeatStatus.ACTIVE;
 
     public Seat() {
     }
@@ -68,21 +71,24 @@ public class Seat {
         this.seatType = seatType;
     }
 
-    public void setType(String typeId) {
-        if (typeId != null) {
-            this.seatType = new SeatType(typeId, null);
+    public void setType(String code) {
+        if (code != null) {
+            if (this.seatType == null) {
+                this.seatType = new SeatType();
+            }
+            this.seatType.setCode(code);
         }
     }
 
     public String getType() {
-        return seatType != null ? seatType.getId() : null;
+        return seatType != null ? seatType.getCode() : null;
     }
 
-    public Boolean getStatus() {
+    public SeatStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Boolean status) {
+    public void setStatus(SeatStatus status) {
         this.status = status;
     }
 

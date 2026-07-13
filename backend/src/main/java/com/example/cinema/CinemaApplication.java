@@ -38,6 +38,7 @@ public class CinemaApplication {
     }
 
     @Bean
+    @org.springframework.core.annotation.Order(1)
     public CommandLineRunner initDefaultUsers(
             UserRepository userRepository, 
             com.example.cinema.repository.user.CustomerRepository customerRepository,

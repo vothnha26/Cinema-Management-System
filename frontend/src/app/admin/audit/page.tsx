@@ -20,7 +20,7 @@ export default function AdminAuditPage() {
     try {
       const res = await adminAuditService.getAuditLogs();
       if (res?.success) {
-        const list = res.data || [];
+        const list = Array.isArray(res.data) ? res.data : [];
         setLogs(list);
 
         // Technical Debt Performance Warning
@@ -43,12 +43,12 @@ export default function AdminAuditPage() {
   }, []);
 
   // Client-side searching
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = (Array.isArray(logs) ? logs : []).filter(log => {
     const q = searchTerm.toLowerCase();
-    const usernameMatch = log.username.toLowerCase().includes(q);
-    const actionMatch = log.action.toLowerCase().includes(q);
-    const targetMatch = log.target.toLowerCase().includes(q);
-    const detailMatch = log.detail.toLowerCase().includes(q);
+    const usernameMatch = log.username ? log.username.toLowerCase().includes(q) : false;
+    const actionMatch = log.action ? log.action.toLowerCase().includes(q) : false;
+    const targetMatch = log.target ? log.target.toLowerCase().includes(q) : false;
+    const detailMatch = log.detail ? log.detail.toLowerCase().includes(q) : false;
     return usernameMatch || actionMatch || targetMatch || detailMatch;
   });
 

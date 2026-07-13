@@ -19,6 +19,9 @@ public class MembershipLevel {
     @Column(nullable = false)
     private Integer priority;
 
+    @Column(name = "min_points", nullable = false)
+    private Integer minPoints = 0;
+
     public MembershipLevel() {
     }
 
@@ -26,6 +29,14 @@ public class MembershipLevel {
         this.name = name;
         this.minSpending = minSpending;
         this.priority = priority;
+        this.minPoints = 0;
+    }
+
+    public MembershipLevel(String name, BigDecimal minSpending, Integer priority, Integer minPoints) {
+        this.name = name;
+        this.minSpending = minSpending;
+        this.priority = priority;
+        this.minPoints = minPoints;
     }
 
     public Long getId() {
@@ -58,5 +69,13 @@ public class MembershipLevel {
 
     public void setPriority(Integer priority) {
         this.priority = priority;
+    }
+
+    public Integer getMinPoints() {
+        return minPoints;
+    }
+
+    public void setMinPoints(Integer minPoints) {
+        this.minPoints = minPoints;
     }
 }

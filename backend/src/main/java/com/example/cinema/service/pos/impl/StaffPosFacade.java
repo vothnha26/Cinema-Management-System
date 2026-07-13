@@ -38,6 +38,7 @@ public class StaffPosFacade {
     private final com.example.cinema.repository.room.SeatRepository seatRepository;
     private final com.example.cinema.service.commerce.PricingService pricingService;
     private final ApplicationEventPublisher eventPublisher;
+    private final com.example.cinema.repository.commerce.BranchComboRepository branchComboRepository;
 
     public StaffPosFacade(BookingRepository bookingRepository,
             PaymentRepository paymentRepository,
@@ -46,7 +47,8 @@ public class StaffPosFacade {
             ShowtimeRepository showtimeRepository,
             com.example.cinema.repository.room.SeatRepository seatRepository,
             com.example.cinema.service.commerce.PricingService pricingService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            com.example.cinema.repository.commerce.BranchComboRepository branchComboRepository) {
         this.bookingRepository = bookingRepository;
         this.paymentRepository = paymentRepository;
         this.comboRepository = comboRepository;
@@ -55,6 +57,7 @@ public class StaffPosFacade {
         this.seatRepository = seatRepository;
         this.pricingService = pricingService;
         this.eventPublisher = eventPublisher;
+        this.branchComboRepository = branchComboRepository;
     }
 
     @Transactional
@@ -93,10 +96,14 @@ public class StaffPosFacade {
 
         BigDecimal comboTotal = BigDecimal.ZERO;
         if (request.getCombos() != null && !request.getCombos().isEmpty()) {
+            com.example.cinema.model.entity.Branch branch = showtime.getRoom().getBranch();
             for (Map.Entry<Long, Integer> entry : request.getCombos().entrySet()) {
                 Combo combo = comboRepository.findById(entry.getKey()).orElse(null);
                 if (combo != null) {
-                    comboTotal = comboTotal.add(combo.getPrice().multiply(BigDecimal.valueOf(entry.getValue())));
+                    BigDecimal price = branchComboRepository.findByBranchAndCombo(branch, combo)
+                            .map(com.example.cinema.model.entity.BranchCombo::getPrice)
+                            .orElse(BigDecimal.ZERO);
+                    comboTotal = comboTotal.add(price.multiply(BigDecimal.valueOf(entry.getValue())));
                 }
             }
         }

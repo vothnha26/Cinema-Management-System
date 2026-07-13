@@ -180,6 +180,41 @@ public class Promotion {
         isRedeemable = redeemable;
     }
 
+    @Column(name = "stock_quantity")
+    private Integer stockQuantity;
+
+    public Integer getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(Integer stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public static class Builder {
         private String code;
         private String name;
@@ -193,6 +228,7 @@ public class Promotion {
         private MembershipLevel minLevel;
         private Integer requiredPoints;
         private Boolean isRedeemable;
+        private Integer stockQuantity;
 
         public Builder(String code, String name, DiscountType discountType, BigDecimal discountValue) {
             this.code = code;
@@ -208,6 +244,11 @@ public class Promotion {
 
         public Builder redeemable(Boolean redeemable) {
             this.isRedeemable = redeemable;
+            return this;
+        }
+
+        public Builder stockQuantity(Integer stockQuantity) {
+            this.stockQuantity = stockQuantity;
             return this;
         }
 
@@ -251,6 +292,7 @@ public class Promotion {
             p.setMinLevel(this.minLevel);
             p.setRequiredPoints(this.requiredPoints != null ? this.requiredPoints : 0);
             p.setIsRedeemable(this.isRedeemable != null ? this.isRedeemable : false);
+            p.setStockQuantity(this.stockQuantity);
             p.setIsActive(true);
             return p;
         }

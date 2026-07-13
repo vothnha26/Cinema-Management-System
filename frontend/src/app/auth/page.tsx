@@ -21,7 +21,7 @@ export default function AuthPage() {
 }
 
 function AuthForm() {
-  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot' | 'verify'>('login');
   const [forgotStep, setForgotStep] = useState(1);
   const [showPass, setShowPass] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -31,6 +31,8 @@ function AuthForm() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -150,6 +152,118 @@ function AuthForm() {
     }
   };
 
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+    const otpValue = otp.join('');
+    if (!email || otpValue.length < 6) {
+      setErrorMsg('Vui lòng điền email và mã OTP 6 số!');
+      return;
+    }
+    setLoading(true);
+    try {
+      const responseData = await authService.verifyOtp({ email, otp: otpValue });
+      if (responseData && responseData.success) {
+        setSuccessMsg('Xác thực tài khoản thành công! Bạn có thể đăng nhập.');
+        setMode('login');
+        setOtp(['', '', '', '', '', '']);
+      } else {
+        setErrorMsg(responseData?.message || 'Xác thực thất bại!');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err.response?.data?.message || 'Mã OTP không chính xác hoặc đã hết hạn!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPasswordRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+    if (!email) {
+      setErrorMsg('Vui lòng điền email của bạn!');
+      return;
+    }
+    setLoading(true);
+    try {
+      const responseData = await authService.forgotPassword(email);
+      if (responseData && responseData.success) {
+        setSuccessMsg('Mã OTP khôi phục mật khẩu đã được gửi!');
+        setForgotStep(2);
+      } else {
+        setErrorMsg(responseData?.message || 'Yêu cầu thất bại!');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err.response?.data?.message || 'Không tìm thấy tài khoản với email này!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyResetOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+    const otpValue = otp.join('');
+    if (otpValue.length < 6) {
+      setErrorMsg('Vui lòng nhập đầy đủ mã OTP 6 số!');
+      return;
+    }
+    setLoading(true);
+    try {
+      const responseData = await authService.verifyOtp({ email, otp: otpValue });
+      if (responseData && responseData.success) {
+        setSuccessMsg('Xác nhận mã OTP thành công! Vui lòng đặt mật khẩu mới.');
+        setForgotStep(3);
+      } else {
+        setErrorMsg(responseData?.message || 'Mã OTP không hợp lệ!');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err.response?.data?.message || 'Mã OTP không chính xác hoặc đã hết hạn!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+    if (!newPassword || newPassword.length < 8) {
+      setErrorMsg('Mật khẩu mới phải có ít nhất 8 ký tự!');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setErrorMsg('Mật khẩu xác nhận không khớp!');
+      return;
+    }
+    setLoading(true);
+    try {
+      const otpValue = otp.join('');
+      const responseData = await authService.resetPassword({ token: otpValue, newPassword });
+      if (responseData && responseData.success) {
+        setSuccessMsg('Đặt lại mật khẩu thành công! Hãy đăng nhập lại.');
+        setMode('login');
+        setForgotStep(1);
+        setOtp(['', '', '', '', '', '']);
+        setNewPassword('');
+        setConfirmNewPassword('');
+      } else {
+        setErrorMsg(responseData?.message || 'Đặt lại mật khẩu thất bại!');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err.response?.data?.message || 'Đặt lại mật khẩu thất bại!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     // Trick: fixed inset-0 z-50 bg-[#FAFAFA] để che đi Navbar/Footer của layout cha
     <div className="fixed inset-0 z-50 bg-[#FAFAFA] flex overflow-y-auto">
@@ -227,7 +341,7 @@ function AuthForm() {
             </div>
           )}
 
-          {mode !== 'forgot' ? (
+          {mode === 'login' || mode === 'register' ? (
             <form onSubmit={mode === 'login' ? handleLogin : handleRegister}>
               {/* Tab selector */}
               <div className="flex bg-[#F4F4F5] rounded-xl p-1 mb-7">
@@ -317,10 +431,17 @@ function AuthForm() {
               </div>
 
               {mode === 'login' && (
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-between mt-3">
                   <button
                     type="button"
-                    onClick={() => setMode('forgot')}
+                    onClick={() => { setMode('verify'); setErrorMsg(''); setSuccessMsg(''); }}
+                    className="text-xs text-[#F5A623] hover:text-[#C47D0A] font-medium"
+                  >
+                    Xác thực email?
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMode('forgot'); setErrorMsg(''); setSuccessMsg(''); }}
                     className="text-xs text-[#F5A623] hover:text-[#C47D0A] font-medium"
                   >
                     Quên mật khẩu?
@@ -356,6 +477,59 @@ function AuthForm() {
                 Đăng nhập bằng Google
               </button>
             </form>
+          ) : mode === 'verify' ? (
+            <form onSubmit={handleVerifyOtp}>
+              <h1 className="text-2xl font-extrabold text-[#22232B] mb-1">Xác thực tài khoản</h1>
+              <p className="text-sm text-[#6B7280] mb-7">Nhập email và mã OTP 6 số để xác thực tài khoản của bạn.</p>
+              
+              <div className="space-y-4 mb-5">
+                <div>
+                  <label className="block text-sm font-medium text-[#22232B] mb-1.5">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    className="w-full px-4 py-3 rounded-xl border border-black/10 bg-white text-sm outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 transition-all"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[#22232B] mb-1.5">Mã OTP</label>
+                  <div className="flex gap-2 justify-center">
+                    {otp.map((v, i) => (
+                      <input
+                        key={i}
+                        id={`otp-${i}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={v}
+                        onChange={(e) => handleOtpChange(i, e.target.value)}
+                        className="w-11 h-14 text-center text-xl font-bold rounded-xl border border-black/10 bg-white outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 transition-all"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl bg-[#F5A623] text-white font-bold hover:bg-[#E09415] transition-all shadow-md shadow-[#F5A623]/25 active:scale-[0.98] disabled:opacity-50"
+              >
+                {loading ? 'Đang xử lý...' : 'Xác thực tài khoản'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); }}
+                className="w-full mt-4 text-sm text-[#6B7280] hover:text-[#22232B] text-center block"
+              >
+                ← Quay lại đăng nhập
+              </button>
+            </form>
           ) : (
             /* Forgot password flow */
             <div>
@@ -376,7 +550,7 @@ function AuthForm() {
               </div>
 
               {forgotStep === 1 && (
-                <>
+                <form onSubmit={handleForgotPasswordRequest}>
                   <h1 className="text-2xl font-extrabold text-[#22232B] mb-1">Quên mật khẩu?</h1>
                   <p className="text-sm text-[#6B7280] mb-7">Nhập email để nhận mã xác nhận.</p>
                   <div className="relative mb-5">
@@ -384,18 +558,20 @@ function AuthForm() {
                     <input
                       type="email"
                       required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       placeholder="email@example.com"
                       className="w-full pl-11 pr-4 py-3 rounded-xl border border-black/10 bg-white text-sm outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 transition-all"
                     />
                   </div>
-                  <button onClick={() => setForgotStep(2)} className="w-full py-3.5 rounded-xl bg-[#F5A623] text-white font-bold hover:bg-[#E09415] transition-all">
-                    Gửi mã OTP
+                  <button type="submit" disabled={loading} className="w-full py-3.5 rounded-xl bg-[#F5A623] text-white font-bold hover:bg-[#E09415] transition-all disabled:opacity-50">
+                    {loading ? 'Đang gửi...' : 'Gửi mã OTP'}
                   </button>
-                </>
+                </form>
               )}
 
               {forgotStep === 2 && (
-                <>
+                <form onSubmit={handleVerifyResetOtp}>
                   <h1 className="text-2xl font-extrabold text-[#22232B] mb-1">Nhập mã OTP</h1>
                   <p className="text-sm text-[#6B7280] mb-7">Mã đã được gửi đến email của bạn.</p>
                   <div className="flex gap-2 justify-center mb-5">
@@ -412,37 +588,43 @@ function AuthForm() {
                       />
                     ))}
                   </div>
-                  <button onClick={() => setForgotStep(3)} className="w-full py-3.5 rounded-xl bg-[#F5A623] text-white font-bold hover:bg-[#E09415] transition-all">
-                    Xác nhận
+                  <button type="submit" disabled={loading} className="w-full py-3.5 rounded-xl bg-[#F5A623] text-white font-bold hover:bg-[#E09415] transition-all disabled:opacity-50">
+                    {loading ? 'Đang xác nhận...' : 'Xác nhận'}
                   </button>
-                </>
+                </form>
               )}
 
               {forgotStep === 3 && (
-                <>
+                <form onSubmit={handleResetPasswordSubmit}>
                   <h1 className="text-2xl font-extrabold text-[#22232B] mb-1">Đặt mật khẩu mới</h1>
                   <p className="text-sm text-[#6B7280] mb-7">Mật khẩu mới phải có ít nhất 8 ký tự.</p>
                   <div className="space-y-4 mb-5">
                     <input
                       type="password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Mật khẩu mới"
                       className="w-full px-4 py-3 rounded-xl border border-black/10 bg-white text-sm outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 transition-all"
                     />
                     <input
                       type="password"
+                      required
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
                       placeholder="Xác nhận mật khẩu"
                       className="w-full px-4 py-3 rounded-xl border border-black/10 bg-white text-sm outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 transition-all"
                     />
                   </div>
-                  <button onClick={() => { setMode('login'); setForgotStep(1) }} className="w-full py-3.5 rounded-xl bg-[#F5A623] text-white font-bold hover:bg-[#E09415] transition-all">
-                    Đặt mật khẩu
+                  <button type="submit" disabled={loading} className="w-full py-3.5 rounded-xl bg-[#F5A623] text-white font-bold hover:bg-[#E09415] transition-all disabled:opacity-50">
+                    {loading ? 'Đang lưu...' : 'Đặt mật khẩu'}
                   </button>
-                </>
+                </form>
               )}
 
               <button
                 type="button"
-                onClick={() => { setMode('login'); setForgotStep(1); }}
+                onClick={() => { setMode('login'); setForgotStep(1); setErrorMsg(''); setSuccessMsg(''); }}
                 className="w-full mt-4 text-sm text-[#6B7280] hover:text-[#22232B] text-center block"
               >
                 ← Quay lại đăng nhập

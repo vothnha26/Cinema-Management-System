@@ -33,4 +33,28 @@ export const authService = {
     const response = await api.put('/users/change-password', payload);
     return response.data;
   },
+
+  /**
+   * Xác thực mã OTP
+   */
+  async verifyOtp(payload: { email: string; otp: string }) {
+    const response = await api.post('/auth/verify-otp', payload);
+    return response.data;
+  },
+
+  /**
+   * Yêu cầu gửi mã OTP quên mật khẩu
+   */
+  async forgotPassword(email: string) {
+    const response = await api.post(`/auth/forgot-password?email=${encodeURIComponent(email)}`);
+    return response.data;
+  },
+
+  /**
+   * Đặt lại mật khẩu mới bằng token (mã OTP)
+   */
+  async resetPassword(payload: any) {
+    const response = await api.post(`/auth/reset-password?token=${encodeURIComponent(payload.token)}&newPassword=${encodeURIComponent(payload.newPassword)}`);
+    return response.data;
+  },
 };

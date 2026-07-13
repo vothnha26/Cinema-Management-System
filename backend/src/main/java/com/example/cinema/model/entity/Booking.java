@@ -51,6 +51,16 @@ public class Booking {
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL)
     private Payment payment;
 
+    @Column(name = "checked_in_at")
+    private LocalDateTime checkedInAt;
+
+    @ManyToOne
+    @JoinColumn(name = "checked_in_by")
+    private User checkedInBy;
+
+    @Column(name = "discount_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
     public Booking() {
     }
 
@@ -86,4 +96,13 @@ public class Booking {
 
     public Payment getPayment() { return payment; }
     public void setPayment(Payment payment) { this.payment = payment; }
+
+    public LocalDateTime getCheckedInAt() { return checkedInAt; }
+    public void setCheckedInAt(LocalDateTime checkedInAt) { this.checkedInAt = checkedInAt; }
+
+    public User getCheckedInBy() { return checkedInBy; }
+    public void setCheckedInBy(User checkedInBy) { this.checkedInBy = checkedInBy; }
+
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
 }

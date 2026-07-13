@@ -155,9 +155,10 @@ export default function AdminDistributionsPage() {
   };
 
   // Filter out movies already distributed in the current branch
-  const availableMovies = allMovies.filter(m => {
-    const isDistributed = branchMovies.some(bm => bm.movie.id === m.id);
-    const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase());
+  const availableMovies = (Array.isArray(allMovies) ? allMovies : []).filter(m => {
+    const list = Array.isArray(branchMovies) ? branchMovies : [];
+    const isDistributed = list.some(bm => bm.movie && bm.movie.id === m.id);
+    const matchesSearch = m.title ? m.title.toLowerCase().includes(searchQuery.toLowerCase()) : false;
     return !isDistributed && matchesSearch;
   });
 

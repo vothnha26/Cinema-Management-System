@@ -7,7 +7,6 @@ function decodeJwt(token: string) {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const payload = parts[1];
-    // Edge runtime support atob
     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(decoded);
   } catch (e) {
@@ -15,7 +14,7 @@ function decodeJwt(token: string) {
   }
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Chỉ bảo vệ các route admin
@@ -36,7 +35,6 @@ export function middleware(request: NextRequest) {
     }
 
     // Role được giải mã từ JWT (Spring Boot thường để key là 'role' hoặc 'roles' hoặc 'authorities')
-    // Để chắc chắn, chúng ta kiểm tra cả decoded.role và decoded.role_code hoặc tương tự
     const role = decoded.role || decoded.roles || decoded.role_code;
     
     if (!hasPermission(role, 'ACCESS_ADMIN_DASHBOARD')) {
@@ -48,7 +46,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Cấu hình matcher để middleware chỉ chạy trên các route admin
+// Cấu hình matcher để proxy chỉ chạy trên các route admin
 export const config = {
   matcher: ['/admin/:path*'],
 };

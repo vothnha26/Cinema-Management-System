@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, Copy, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react';
 import { bookingService } from '../../../services/bookingService';
 import { formatPrice } from '../../../utils/format';
+import { DEMO_MODE, DEMO_AUTO_PAID_TIMEOUT_MS } from '../../../constants';
 
 interface BookingCombo {
   comboId: number;
@@ -123,16 +124,21 @@ export default function PaymentPage({ params }: { params: Promise<{ bookingId: s
       }
     }, 3000);
 
-    // Demo: Tự động giả lập thanh toán sau 15 giây cho môi trường Test/Demo nếu không kết nối được Ngân hàng thật
-    const demoSuccessTimeout = setTimeout(() => {
-      // Để phục vụ demo, nếu vẫn ở trạng thái PENDING thì tự động đặt paid = true
-      setPaid(true);
-    }, 18000);
+    // Demo: Tự động giả lập thanh toán sau 18 giây cho môi trường Test/Demo nếu không kết nối được Ngân hàng thật
+    let demoSuccessTimeout: NodeJS.Timeout | null = null;
+    if (DEMO_MODE) {
+      demoSuccessTimeout = setTimeout(() => {
+        // Để phục vụ demo, nếu vẫn ở trạng thái PENDING thì tự động đặt paid = true
+        setPaid(true);
+      }, DEMO_AUTO_PAID_TIMEOUT_MS);
+    }
 
     return () => {
       clearInterval(timer);
       clearInterval(checkPaidStatus);
-      clearTimeout(demoSuccessTimeout);
+      if (demoSuccessTimeout) {
+        clearTimeout(demoSuccessTimeout);
+      }
     };
   }, [paid, secondsLeft, errorMsg, bookingId]);
 

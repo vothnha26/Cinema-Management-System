@@ -43,7 +43,7 @@ public class RoomTemplateServiceImpl implements RoomTemplateService {
         if (request.getCols() == null || request.getCols() <= 0 || request.getCols() > 30) {
             throw new AppException("Số cột không hợp lệ (1-30)");
         }
-        if (!roomTypeRepository.existsById(request.getRoomTypeId())) {
+        if (roomTypeRepository.findByCode(request.getRoomTypeId()).isEmpty()) {
             throw new AppException("Loại phòng không tồn tại: " + request.getRoomTypeId());
         }
         if (request.getSeats() == null || request.getSeats().isEmpty()) {

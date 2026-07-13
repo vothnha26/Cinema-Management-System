@@ -47,6 +47,9 @@ public class BookingControllerTest {
     private com.example.cinema.repository.user.UserRepository userRepository;
 
     @MockBean
+    private com.example.cinema.repository.user.CustomerRepository customerRepository;
+
+    @MockBean
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Autowired

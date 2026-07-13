@@ -49,6 +49,8 @@ export const useAuthStore = create<AuthState>((set) => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
+        // Thiết lập cookie auth_token để Middleware có thể đọc được trên Server side
+        document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Lax`;
       }
       set({ token, user, isAuthenticated: true, loading: false });
     },
@@ -57,6 +59,8 @@ export const useAuthStore = create<AuthState>((set) => {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        // Xóa cookie auth_token khi đăng xuất
+        document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
       }
       set({ token: null, user: null, isAuthenticated: false, loading: false });
     },

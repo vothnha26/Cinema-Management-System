@@ -60,8 +60,8 @@ public class PricingServiceImpl implements PricingService {
     @Transactional
     @LogAction(action = "UPDATE", target = "PRICING")
     public SeatPriceResponse updateSeatPrice(SeatPriceRequest request) {
-        RoomType roomType = roomTypeRepository.findById(request.getRoomTypeId()).orElseThrow();
-        SeatType seatType = seatTypeRepository.findById(request.getSeatTypeId()).orElseThrow();
+        RoomType roomType = roomTypeRepository.findByCode(request.getRoomTypeId()).orElseThrow();
+        SeatType seatType = seatTypeRepository.findByCode(request.getSeatTypeId()).orElseThrow();
         List<SeatPrice> existing = seatPriceRepository.findByRoomTypeAndSeatType(roomType, seatType);
         SeatPrice seatPrice = existing.isEmpty() ? new SeatPrice() : existing.get(0);
         seatPrice.setRoomType(roomType); seatPrice.setSeatType(seatType); seatPrice.setPrice(request.getPrice()); seatPrice.setIsActive(true);

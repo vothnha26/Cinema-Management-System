@@ -80,4 +80,28 @@ public class PricingRule {
     public void setConditions(List<PricingCondition> conditions) { this.conditions = conditions; }
     public void addCondition(PricingCondition condition) { conditions.add(condition); condition.setRule(this); }
     public void removeCondition(PricingCondition condition) { conditions.remove(condition); condition.setRule(null); }
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

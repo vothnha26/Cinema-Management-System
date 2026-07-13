@@ -23,9 +23,9 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     Optional<Customer> findByUser(com.example.cinema.model.entity.User user);
     
-    Optional<Customer> findFirstByPhoneOrderByIdDesc(String phone);
+    Optional<Customer> findFirstByUserPhoneOrderByIdDesc(String phone);
     default Optional<Customer> findByPhone(String phone) {
-        return findFirstByPhoneOrderByIdDesc(phone);
+        return findFirstByUserPhoneOrderByIdDesc(phone);
     }
 
     @Query("SELECT COUNT(DISTINCT c) FROM Customer c JOIN Booking b ON c.id = b.customer.id " +

@@ -35,7 +35,7 @@ export default function AdminPromotionsPage() {
     try {
       const res = await adminPromotionService.getPromotions();
       if (res?.success) {
-        setPromotions(res.data || []);
+        setPromotions(Array.isArray(res.data) ? res.data : []);
       } else {
         setErrorMsg(res?.message || 'Không thể tải danh sách khuyến mãi!');
       }

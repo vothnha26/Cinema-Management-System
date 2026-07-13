@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash, X, Save, Users, Key, Briefcase, Mail, RefreshCw, ShieldAlert, Check, Shield } from 'lucide-react';
 import { adminUserService, adminBranchService, BranchData } from '../../../services/admin';
+import { USER_ROLES } from '../../../constants';
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -47,7 +48,8 @@ export default function AdminUsersPage() {
       // 3. Lấy tất cả user (ở client ta filter loại bỏ CUSTOMER để chỉ hiển thị nhân sự hệ thống)
       const userRes = await adminUserService.getUsers();
       if (userRes?.success) {
-        const staffUsers = (userRes.data || []).filter((u: any) => u.role !== 'CUSTOMER');
+        const userDataList = Array.isArray(userRes.data) ? userRes.data : [];
+        const staffUsers = userDataList.filter((u: any) => u.role !== USER_ROLES.CUSTOMER);
         setUsers(staffUsers);
       } else {
         setErrorMsg(userRes?.message || 'Không thể tải danh sách nhân sự!');
@@ -106,7 +108,7 @@ export default function AdminUsersPage() {
         const res = await adminUserService.updateUser(editId, { email, role });
         if (res?.success) {
           // Nếu role không phải ADMIN, cập nhật thêm chi nhánh làm việc
-          if (role !== 'ADMIN' && branchId !== '') {
+          if (role !== USER_ROLES.ADMIN && branchId !== '') {
             await adminUserService.assignStaffToBranch({
               userId: editId,
               branchId: Number(branchId),
@@ -132,7 +134,7 @@ export default function AdminUsersPage() {
         if (res?.success) {
           const newUser = res.data;
           // Phân công chi nhánh
-          if (role !== 'ADMIN' && branchId !== '') {
+          if (role !== USER_ROLES.ADMIN && branchId !== '') {
             await adminUserService.assignStaffToBranch({
               userId: newUser.id,
               branchId: Number(branchId),
@@ -258,9 +260,9 @@ export default function AdminUsersPage() {
                   const staffInfo = staffAssignments[u.id];
                   // Phân biệt màu sắc role
                   const roleColors =
-                    u.role === 'ADMIN'
+                    u.role === USER_ROLES.ADMIN
                       ? 'bg-red-50 text-red-700 border border-red-200'
-                      : u.role === 'MANAGER'
+                      : u.role === USER_ROLES.MANAGER
                       ? 'bg-amber-50 text-amber-700 border border-amber-200'
                       : 'bg-blue-50 text-blue-700 border border-blue-200';
 
@@ -414,15 +416,15 @@ export default function AdminUsersPage() {
                       onChange={(e) => setRole(e.target.value as any)}
                       className="w-full px-4 py-2.5 rounded-xl border border-black/10 bg-white text-sm outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/25 transition-all text-[#22232B] font-semibold"
                     >
-                      <option value="STAFF">Nhân viên bán vé (STAFF)</option>
-                      <option value="MANAGER">Quản lý rạp (MANAGER)</option>
-                      <option value="ADMIN">Quản trị viên hệ thống (ADMIN)</option>
+                      <option value={USER_ROLES.STAFF}>Nhân viên bán vé (STAFF)</option>
+                      <option value={USER_ROLES.MANAGER}>Quản lý rạp (MANAGER)</option>
+                      <option value={USER_ROLES.ADMIN}>Quản trị viên hệ thống (ADMIN)</option>
                     </select>
                   </div>
                 </div>
 
                 {/* Section Thông tin công tác nếu không phải ADMIN */}
-                {role !== 'ADMIN' && (
+                {role !== USER_ROLES.ADMIN && (
                   <div className="border border-black/5 rounded-2xl p-4 bg-[#FAFAFA] space-y-4 animate-in fade-in duration-200">
                     <h4 className="text-xs font-bold text-[#6B7280] uppercase tracking-wider flex items-center gap-1.5">
                       <Briefcase className="w-4 h-4 text-[#F5A623]" /> Thông tin công tác

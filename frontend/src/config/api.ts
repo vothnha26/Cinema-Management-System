@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '../store/authStore';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8082/api';
 
@@ -31,11 +32,15 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        // Tránh loop redirect
-        if (!window.location.pathname.startsWith('/auth')) {
-          window.location.href = `/auth?message=${encodeURIComponent('Phiên đăng nhập hết hạn')}`;
+        const authState = useAuthStore.getState();
+        // Guard chống loop: Chỉ kích hoạt logout/redirect nếu trạng thái hiện tại là đã đăng nhập
+        if (authState.isAuthenticated) {
+          authState.logout();
+          
+          // Tránh loop redirect nếu đã ở trang đăng nhập
+          if (!window.location.pathname.startsWith('/auth')) {
+            window.location.href = `/auth?message=${encodeURIComponent('Phiên đăng nhập hết hạn')}`;
+          }
         }
       }
     }

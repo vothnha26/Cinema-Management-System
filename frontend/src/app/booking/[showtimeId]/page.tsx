@@ -9,6 +9,8 @@ import { bookingService } from '../../../services/bookingService';
 import { formatPrice } from '../../../utils/format';
 import { useAuthStore } from '../../../store/authStore';
 
+import { getWsUrl } from '../../../constants';
+
 interface Showtime {
   id: number;
   movieTitle: string;
@@ -149,7 +151,7 @@ export default function BookingPage({ params }: { params: Promise<{ showtimeId: 
 
     const connectWebSocket = () => {
       // Kết nối trực tiếp qua endpoint WebSocket của Spring Boot
-      const wsUrl = `ws://${window.location.hostname}:8082/ws-cinema/websocket`;
+      const wsUrl = getWsUrl();
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

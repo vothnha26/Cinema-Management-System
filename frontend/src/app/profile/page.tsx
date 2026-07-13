@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { User, Ticket, Lock, LogOut, Star, TrendingUp } from 'lucide-react';
 import { customerService } from '../../services/customerService';
 import { useAuthStore } from '../../store/authStore';
+import { USER_ROLES } from '../../constants';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -201,7 +202,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-3 gap-4">
                 {[
                   { label: 'Hạng thành viên', value: 'Bạc', icon: Star },
-                  { label: 'Vai trò', value: user.role === 'ADMIN' ? 'Admin' : user.role === 'STAFF' ? 'Nhân viên' : 'Khách hàng', icon: User },
+                  { label: 'Vai trò', value: user.role === USER_ROLES.ADMIN ? 'Admin' : user.role === USER_ROLES.STAFF ? 'Nhân viên' : 'Khách hàng', icon: User },
                   { label: 'Điểm tích lũy', value: '150 điểm', icon: TrendingUp },
                 ].map((stat) => {
                   const Icon = stat.icon;

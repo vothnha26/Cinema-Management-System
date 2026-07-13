@@ -29,7 +29,7 @@ public class StandardLayoutStrategy implements SeatLayoutStrategy {
                     seat.setType("STANDARD");
                 }
 
-                seat.setStatus(true);
+                seat.setStatus(com.example.cinema.model.enums.SeatStatus.ACTIVE);
                 seats.add(seat);
             }
         }

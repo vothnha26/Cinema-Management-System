@@ -17,5 +17,5 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     @Query("DELETE FROM Seat s WHERE s.room.id = :roomId")
     void deleteByRoomId(@org.springframework.data.repository.query.Param("roomId") Long roomId);
     
-    List<Seat> findByRoomIdAndStatusTrue(Long roomId);
+    List<Seat> findByRoomIdAndStatus(Long roomId, com.example.cinema.model.enums.SeatStatus status);
 }

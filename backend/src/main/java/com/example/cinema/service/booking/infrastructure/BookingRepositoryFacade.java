@@ -26,7 +26,7 @@ public class BookingRepositoryFacade {
     public Booking save(Booking b) { return bookingRepository.save(b); }
     public Optional<Booking> findByCode(String code) { return bookingRepository.findByBookingCode(code); }
     public Customer saveCustomer(Customer c) { return customerRepository.save(c); }
-    public Optional<Customer> findCustomerByPhone(String phone) { return customerRepository.findFirstByPhoneOrderByIdDesc(phone); }
+    public Optional<Customer> findCustomerByPhone(String phone) { return customerRepository.findByPhone(phone); }
     public Optional<Customer> findCustomerByUsername(String user) { return customerRepository.findFirstByUserUsernameOrderByIdDesc(user); }
     public void savePayment(Payment p) { paymentRepository.save(p); }
     public java.util.List<Long> findBookedSeatIds(Long showtimeId) { return detailRepository.findBookedSeatIdsByShowtime(showtimeId); }

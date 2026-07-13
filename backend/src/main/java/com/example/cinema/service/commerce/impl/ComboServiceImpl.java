@@ -42,7 +42,12 @@ public class ComboServiceImpl implements ComboService {
     @Override
     public List<ComboResponse> getAllCombos() {
         return comboRepository.findAll().stream()
-                .map(c -> modelMapper.map(c, ComboResponse.class))
+                .map(c -> {
+                    ComboResponse resp = modelMapper.map(c, ComboResponse.class);
+                    resp.setPrice(null);
+                    resp.setStockQuantity(null);
+                    return resp;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -58,13 +63,14 @@ public class ComboServiceImpl implements ComboService {
                         BranchCombo newBc = new BranchCombo();
                         newBc.setBranch(branch);
                         newBc.setCombo(c);
-                        newBc.setPrice(c.getPrice());
+                        newBc.setPrice(java.math.BigDecimal.ZERO);
                         newBc.setStockQuantity(0);
                         newBc.setIsActive(true);
                         return branchComboRepository.save(newBc);
                     });
             
             ComboResponse resp = modelMapper.map(c, ComboResponse.class);
+            resp.setPrice(bc.getPrice());
             resp.setStockQuantity(bc.getStockQuantity());
             resp.setIsActive(bc.getIsActive()); // Lấy trạng thái từ chi nhánh
             return resp;
@@ -86,6 +92,7 @@ public class ComboServiceImpl implements ComboService {
         branchComboRepository.save(bc);
         
         ComboResponse resp = modelMapper.map(combo, ComboResponse.class);
+        resp.setPrice(bc.getPrice());
         resp.setStockQuantity(bc.getStockQuantity());
         resp.setIsActive(bc.getIsActive());
         return resp;
@@ -106,12 +113,16 @@ public class ComboServiceImpl implements ComboService {
             BranchCombo bc = new BranchCombo();
             bc.setBranch(b);
             bc.setCombo(saved);
-            bc.setPrice(saved.getPrice());
-            bc.setStockQuantity(0);
+            bc.setPrice(request.getPrice() != null ? request.getPrice() : java.math.BigDecimal.ZERO);
+            bc.setStockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 0);
+            bc.setIsActive(true);
             branchComboRepository.save(bc);
         }
 
-        return modelMapper.map(saved, ComboResponse.class);
+        ComboResponse resp = modelMapper.map(saved, ComboResponse.class);
+        resp.setPrice(request.getPrice());
+        resp.setStockQuantity(request.getStockQuantity() != null ? request.getStockQuantity() : 0);
+        return resp;
     }
 
     @Override
@@ -121,12 +132,25 @@ public class ComboServiceImpl implements ComboService {
         Combo combo = comboRepository.findById(id)
                 .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
 
-        modelMapper.map(request, combo);
+        combo.setName(request.getName());
+        combo.setDescription(request.getDescription());
         if (imageUrl != null) {
             combo.setImageUrl(imageUrl);
         }
         Combo updated = comboRepository.save(combo);
-        return modelMapper.map(updated, ComboResponse.class);
+
+        // Cập nhật giá bán cho tất cả chi nhánh từ yêu cầu
+        if (request.getPrice() != null) {
+            List<BranchCombo> branchCombos = branchComboRepository.findByCombo(updated);
+            for (BranchCombo bc : branchCombos) {
+                bc.setPrice(request.getPrice());
+                branchComboRepository.save(bc);
+            }
+        }
+
+        ComboResponse resp = modelMapper.map(updated, ComboResponse.class);
+        resp.setPrice(request.getPrice());
+        return resp;
     }
 
     @Override
@@ -143,7 +167,7 @@ public class ComboServiceImpl implements ComboService {
                     BranchCombo newBc = new BranchCombo();
                     newBc.setBranch(branch);
                     newBc.setCombo(combo);
-                    newBc.setPrice(combo.getPrice());
+                    newBc.setPrice(java.math.BigDecimal.ZERO);
                     return newBc;
                 });
 
@@ -155,7 +179,9 @@ public class ComboServiceImpl implements ComboService {
         branchComboRepository.save(bc);
         
         ComboResponse resp = modelMapper.map(combo, ComboResponse.class);
+        resp.setPrice(bc.getPrice());
         resp.setStockQuantity(bc.getStockQuantity());
+        resp.setIsActive(bc.getIsActive());
         return resp;
     }
 
@@ -163,16 +189,7 @@ public class ComboServiceImpl implements ComboService {
     @Transactional
     @LogAction(action = "UPDATE_STOCK", target = "COMBO")
     public ComboResponse updateStock(Long id, Integer quantity) {
-        Combo combo = comboRepository.findById(id)
-                .orElseThrow(() -> new AppException("Không tìm thấy Combo"));
-
-        combo.setStockQuantity(combo.getStockQuantity() + quantity);
-        if (combo.getStockQuantity() < 0) {
-            throw new AppException("Số lượng tồn kho không thể âm");
-        }
-
-        Combo updated = comboRepository.save(combo);
-        return modelMapper.map(updated, ComboResponse.class);
+        throw new AppException("Không thể cập nhật trực tiếp tồn kho hệ thống. Vui lòng cập nhật theo từng chi nhánh.");
     }
 
     @Override

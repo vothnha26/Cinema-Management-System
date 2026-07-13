@@ -79,14 +79,17 @@ public class Room {
         this.roomType = roomType;
     }
 
-    public void setType(String typeId) {
-        if (typeId != null) {
-            this.roomType = new RoomType(typeId, null);
+    public void setType(String code) {
+        if (code != null) {
+            if (this.roomType == null) {
+                this.roomType = new RoomType();
+            }
+            this.roomType.setCode(code);
         }
     }
 
     public String getType() {
-        return roomType != null ? roomType.getId() : null;
+        return roomType != null ? roomType.getCode() : null;
     }
 
     public Integer getCapacity() {
@@ -123,5 +126,29 @@ public class Room {
 
     public java.util.Set<Format> getSupportedFormats() {
         return roomType != null ? roomType.getSupportedFormats() : new java.util.HashSet<>();
+    }
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

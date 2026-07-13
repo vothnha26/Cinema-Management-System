@@ -8,6 +8,7 @@ import { bookingService } from '../../services/bookingService';
 import { customerService } from '../../services/customerService';
 import { formatPrice } from '../../utils/format';
 import { useAuthStore } from '../../store/authStore';
+import { getWsUrl, USER_ROLES } from '../../constants';
 
 interface Movie {
   id: number;
@@ -96,7 +97,7 @@ export default function POSPage() {
     if (!authLoading) {
       if (!isAuthenticated) {
         router.push('/auth?message=' + encodeURIComponent('Vui lòng đăng nhập tài khoản nhân viên!'));
-      } else if (user && !['STAFF', 'MANAGER', 'ADMIN'].includes(user.role)) {
+      } else if (user && !([USER_ROLES.STAFF, USER_ROLES.MANAGER, USER_ROLES.ADMIN] as string[]).includes(user.role)) {
         router.push('/auth?message=' + encodeURIComponent('Tài khoản của bạn không có quyền truy cập POS!'));
       }
     }
@@ -191,7 +192,7 @@ export default function POSPage() {
     let connectTimeout: NodeJS.Timeout;
 
     const connectWebSocket = () => {
-      const wsUrl = `ws://${window.location.hostname}:8082/ws-cinema/websocket`;
+      const wsUrl = getWsUrl();
       socket = new WebSocket(wsUrl);
 
       socket.onopen = () => {

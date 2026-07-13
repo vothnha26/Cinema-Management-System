@@ -47,8 +47,7 @@ public class BuzzAnalysisServiceImpl implements BuzzAnalysisService {
         // Chỉ lấy điểm Buzz cho các phim đang hoạt động để tránh gọi API lãng phí
         List<Movie> activeMovies = movieRepository.findAll().stream()
                 .filter(m -> m.getStatus() == MovieStatus.SHOWING || 
-                            m.getStatus() == MovieStatus.NOW_SHOWING || 
-                            m.getStatus() == MovieStatus.PRE_RELEASE)
+                            m.getStatus() == MovieStatus.COMING)
                 .collect(Collectors.toList());
         
         Map<Long, Double> scores = new HashMap<>();

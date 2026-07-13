@@ -75,10 +75,10 @@ public class SchedulingServiceImpl implements SchedulingService {
             movies = branchMovieRepository.findByBranchIdAndIsActiveTrue(request.getBranchId())
                     .stream()
                     .map(BranchMovie::getMovie)
-                    .filter(m -> List.of(MovieStatus.SHOWING, MovieStatus.NOW_SHOWING, MovieStatus.PRE_RELEASE).contains(m.getStatus()))
+                    .filter(m -> List.of(MovieStatus.SHOWING, MovieStatus.COMING).contains(m.getStatus()))
                     .collect(Collectors.toList());
         } else {
-            movies = movieRepository.findAllByStatusIn(List.of(MovieStatus.SHOWING, MovieStatus.NOW_SHOWING, MovieStatus.PRE_RELEASE));
+            movies = movieRepository.findAllByStatusIn(List.of(MovieStatus.SHOWING, MovieStatus.COMING));
         }
 
         List<Room> rooms = request.getBranchId() != null 

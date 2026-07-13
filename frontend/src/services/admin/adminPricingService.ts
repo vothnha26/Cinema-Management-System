@@ -24,29 +24,29 @@ export interface PricingRuleData {
 
 export const adminPricingService = {
   getRules: async (branchId?: number) => {
-    const res = await api.get(`${ADMIN_API_ENDPOINTS.PRICING}`, {
+    const res = await api.get(`${ADMIN_API_ENDPOINTS.PRICING_RULES}`, {
       params: branchId ? { branchId } : undefined,
     });
     return res.data;
   },
 
   createRule: async (data: PricingRuleData) => {
-    const res = await api.post(`${ADMIN_API_ENDPOINTS.PRICING}`, data);
+    const res = await api.post(`${ADMIN_API_ENDPOINTS.PRICING_RULES}`, data);
     return res.data;
   },
 
   updateRule: async (id: number, data: PricingRuleData) => {
-    const res = await api.put(`${ADMIN_API_ENDPOINTS.PRICING}/${id}`, data);
+    const res = await api.put(`${ADMIN_API_ENDPOINTS.PRICING_RULES}/${id}`, data);
     return res.data;
   },
 
   deleteRule: async (id: number) => {
-    const res = await api.delete(`${ADMIN_API_ENDPOINTS.PRICING}/${id}`);
+    const res = await api.delete(`${ADMIN_API_ENDPOINTS.PRICING_RULES}/${id}`);
     return res.data;
   },
 
   reorderRules: async (ruleIds: number[], branchId?: number) => {
-    const res = await api.post(`${ADMIN_API_ENDPOINTS.PRICING}/reorder`, ruleIds, {
+    const res = await api.post(`${ADMIN_API_ENDPOINTS.PRICING_RULES}/reorder`, ruleIds, {
       params: branchId ? { branchId } : undefined,
     });
     return res.data;

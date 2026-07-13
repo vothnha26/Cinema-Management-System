@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -19,15 +19,21 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Share2,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { ADMIN_ROUTES } from '../constants/admin';
 
 export default function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -46,6 +52,12 @@ export default function AdminSidebar() {
       label: 'Quản lý Phim',
       path: ADMIN_ROUTES.MOVIES,
       icon: Film,
+      roles: ['ADMIN', 'MANAGER'],
+    },
+    {
+      label: 'Phân bổ Phim',
+      path: ADMIN_ROUTES.DISTRIBUTIONS,
+      icon: Share2,
       roles: ['ADMIN', 'MANAGER'],
     },
     {
@@ -139,24 +151,33 @@ export default function AdminSidebar() {
 
         {/* Menu Navigation */}
         <nav className="p-3 space-y-1">
-          {filteredMenu.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                  isActive
-                    ? 'bg-[#F5A623] text-white font-bold shadow-lg shadow-[#F5A623]/25'
-                    : 'text-[#6B7280] hover:text-[#FAFAFA] hover:bg-white/5'
-                }`}
-              >
-                <Icon className="w-5 h-5 shrink-0" />
-                {!collapsed && <span className="text-sm">{item.label}</span>}
-              </Link>
-            );
-          })}
+          {mounted ? (
+            filteredMenu.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    isActive
+                      ? 'bg-[#F5A623] text-white font-bold shadow-lg shadow-[#F5A623]/25'
+                      : 'text-[#6B7280] hover:text-[#FAFAFA] hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-5 h-5 shrink-0" />
+                  {!collapsed && <span className="text-sm">{item.label}</span>}
+                </Link>
+              );
+            })
+          ) : (
+            Array.from({ length: menuItems.length }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl animate-pulse bg-white/5">
+                <div className="w-5 h-5 rounded-md bg-white/10 shrink-0" />
+                {!collapsed && <div className="h-4 bg-white/10 rounded w-2/3" />}
+              </div>
+            ))
+          )}
         </nav>
       </div>
 

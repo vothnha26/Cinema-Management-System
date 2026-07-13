@@ -24,3 +24,6 @@ replay_pid*
 bin/
 
 cinema_ui/
+bug.txt
+evaluate.txt
+prompt.md

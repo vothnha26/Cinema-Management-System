@@ -26,6 +26,10 @@ public class AuditLog {
 
     private LocalDateTime timestamp;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     public AuditLog() {
         this.timestamp = LocalDateTime.now();
     }
@@ -45,4 +49,6 @@ public class AuditLog {
     public void setDetails(String details) { this.details = details; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }

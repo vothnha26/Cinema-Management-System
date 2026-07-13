@@ -16,27 +16,19 @@ public class Combo {
 
     private String description;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
-
     @Column(name = "image_url")
     private String imageUrl;
-
-    @Column(name = "stock_quantity", nullable = false)
-    private Integer stockQuantity = 0;
 
     @Column(name = "is_active")
     private Boolean isActive = true;
 
     public Combo() {}
 
-    public Combo(Long id, String name, String description, BigDecimal price, String imageUrl, Integer stockQuantity, Boolean isActive) {
+    public Combo(Long id, String name, String description, String imageUrl, Boolean isActive) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.price = price;
         this.imageUrl = imageUrl;
-        this.stockQuantity = stockQuantity;
         this.isActive = isActive;
     }
 
@@ -64,14 +56,6 @@ public class Combo {
         this.description = description;
     }
 
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
     public String getImageUrl() {
         return imageUrl;
     }
@@ -80,19 +64,35 @@ public class Combo {
         this.imageUrl = imageUrl;
     }
 
-    public Integer getStockQuantity() {
-        return stockQuantity;
-    }
-
-    public void setStockQuantity(Integer stockQuantity) {
-        this.stockQuantity = stockQuantity;
-    }
-
     public Boolean getIsActive() {
         return isActive;
     }
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

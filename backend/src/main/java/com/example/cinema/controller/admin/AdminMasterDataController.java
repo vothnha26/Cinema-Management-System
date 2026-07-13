@@ -71,7 +71,7 @@ public class AdminMasterDataController {
     @PutMapping("/room-types/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<RoomType>> updateRoomType(@PathVariable String id, @RequestBody RoomType roomTypeDetails) {
-        RoomType roomType = roomTypeRepository.findById(id).orElseThrow();
+        RoomType roomType = roomTypeRepository.findByCode(id).orElseThrow();
         roomType.setName(roomTypeDetails.getName());
         roomType.setSupportedFormats(roomTypeDetails.getSupportedFormats());
         return ResponseEntity.ok(ApiResponse.ok(roomTypeRepository.save(roomType)));
@@ -80,7 +80,8 @@ public class AdminMasterDataController {
     @DeleteMapping("/room-types/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteRoomType(@PathVariable String id) {
-        roomTypeRepository.deleteById(id);
+        RoomType roomType = roomTypeRepository.findByCode(id).orElseThrow();
+        roomTypeRepository.delete(roomType);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 

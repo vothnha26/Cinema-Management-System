@@ -89,9 +89,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             res.setSeatCode(seat.getRowChar() + seat.getColNum());
             res.setAvailable(!bookedSeatIds.contains(seat.getId()) && !lockedSeatIds.contains(seat.getId()));
             if (seat.getSeatType() != null) {
-                res.setSeatTypeId(seat.getSeatType().getId());
+                res.setSeatTypeId(seat.getSeatType().getCode());
                 res.setSeatTypeName(seat.getSeatType().getName());
-                res.setSeatType(seat.getSeatType().getId()); // Dùng ID làm type cho CSS class ở FE
+                res.setSeatType(seat.getSeatType().getCode()); // Dùng code làm type cho CSS class ở FE
             }
             PriceCalculationResult calculation = pricingService.calculateTicketPrice(showtime, seat, customer);
             res.setPrice(calculation.getFinalPrice());
@@ -169,7 +169,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             res.setGenres(s.getMovie().getGenres().stream().map(Genre::getName).collect(Collectors.toList()));
             res.setAgeRating(s.getMovie().getAgeRating().name());
         }
-        if (s.getRoom() != null) res.setRoomType(s.getRoom().getRoomType().getId());
+        if (s.getRoom() != null) res.setRoomType(s.getRoom().getRoomType().getCode());
         if (s.getFormat() != null) res.setFormatName(s.getFormat().getName());
         else res.setFormatName("2D");
         

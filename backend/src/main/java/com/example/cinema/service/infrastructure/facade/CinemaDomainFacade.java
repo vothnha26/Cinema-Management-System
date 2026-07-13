@@ -34,7 +34,12 @@ public class CinemaDomainFacade {
     public void deleteRoom(Long id) { roomRepo.deleteById(id); }
     
     public List<RoomType> findAllRoomTypes() { return roomTypeRepo.findAll(); }
-    public Optional<RoomType> findRoomType(String id) { return roomTypeRepo.findById(id); }
+    public Optional<RoomType> findRoomType(String code) { return roomTypeRepo.findByCode(code); }
+    public RoomType saveRoomType(RoomType rt) { return roomTypeRepo.save(rt); }
+    
+    public List<SeatType> findAllSeatTypes() { return seatTypeRepo.findAll(); }
+    public Optional<SeatType> findSeatType(String code) { return seatTypeRepo.findByCode(code); }
+    public SeatType saveSeatType(SeatType st) { return seatTypeRepo.save(st); }
     
     public List<Seat> findSeatsByRoom(Long roomId) { return seatRepo.findByRoomId(roomId); }
     public Optional<Seat> findSeat(Long id) { return seatRepo.findById(id); }

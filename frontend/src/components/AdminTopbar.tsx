@@ -1,12 +1,19 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bell, User } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { USER_ROLES } from '../constants';
 
 export default function AdminTopbar() {
   const pathname = usePathname();
   const { user } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Tạo breadcrumbs đơn giản
   const getBreadcrumbs = () => {
@@ -63,13 +70,25 @@ export default function AdminTopbar() {
 
         {/* User profile dropdown info */}
         <div className="flex items-center gap-3 border-l border-black/5 pl-4">
-          <div className="text-right">
-            <div className="text-sm font-bold text-[#22232B]">{user?.fullName || 'Quản trị viên'}</div>
-            <div className="text-xs text-[#6B7280]">{user?.role || 'ADMIN'}</div>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-[#F5A623]/10 text-[#F5A623] flex items-center justify-center font-bold">
-            <User className="w-5 h-5" />
-          </div>
+          {mounted ? (
+            <>
+              <div className="text-right">
+                <div className="text-sm font-bold text-[#22232B]">{user?.fullName || 'Quản trị viên'}</div>
+                <div className="text-xs text-[#6B7280]">{user?.role || USER_ROLES.ADMIN}</div>
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-[#F5A623]/10 text-[#F5A623] flex items-center justify-center font-bold">
+                <User className="w-5 h-5" />
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3 animate-pulse">
+              <div className="text-right space-y-1">
+                <div className="w-20 h-4 bg-black/5 rounded" />
+                <div className="w-12 h-3 bg-black/5 rounded ml-auto" />
+              </div>
+              <div className="w-9 h-9 rounded-xl bg-black/5" />
+            </div>
+          )}
         </div>
       </div>
     </header>

@@ -22,9 +22,6 @@ public class Staff {
 
     private String position;
 
-    @Column(name = "full_name")
-    private String fullName;
-
     public Staff() {}
 
     public Long getId() { return id; }
@@ -42,6 +39,12 @@ public class Staff {
     public String getPosition() { return position; }
     public void setPosition(String position) { this.position = position; }
 
-    public String getFullName() { return fullName; }
-    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getFullName() {
+        return user != null ? user.getFullName() : null;
+    }
+    public void setFullName(String fullName) {
+        if (user != null) {
+            user.setFullName(fullName);
+        }
+    }
 }

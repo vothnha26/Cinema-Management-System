@@ -19,6 +19,15 @@ public class Branch {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    private Double latitude;
+    private Double longitude;
+
+    @Column(name = "emergency_hotline")
+    private String emergencyHotline;
+
+    @Column(name = "opening_hours")
+    private String openingHours;
+
     public Branch() {}
 
     public Branch(Long id, String name, String address, String city, String phone, Boolean isActive) {
@@ -47,4 +56,40 @@ public class Branch {
 
     public Boolean getIsActive() { return isActive; }
     public void setIsActive(Boolean isActive) { this.isActive = isActive; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+
+    public String getEmergencyHotline() { return emergencyHotline; }
+    public void setEmergencyHotline(String emergencyHotline) { this.emergencyHotline = emergencyHotline; }
+
+    public String getOpeningHours() { return openingHours; }
+    public void setOpeningHours(String openingHours) { this.openingHours = openingHours; }
+
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private java.time.LocalDateTime createdAt;
+
+    @org.hibernate.annotations.UpdateTimestamp
+    @Column(name = "updated_at")
+    private java.time.LocalDateTime updatedAt;
+
+    public java.time.LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public java.time.LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
